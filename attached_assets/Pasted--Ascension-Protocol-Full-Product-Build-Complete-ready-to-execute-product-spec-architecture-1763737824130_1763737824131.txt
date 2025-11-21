@@ -1,0 +1,392 @@
+# Ascension Protocol — Full Product Build
+
+> Complete, ready-to-execute product spec, architecture, database schema, AI prompts, XP formulas, code templates, 10-day build plan, testing checklist, deployment & launch checklist.
+
+---
+
+## 1) Project Summary
+
+**Product name (working):** Ascension Protocol
+
+**Concept:** Gamified self-improvement platform where users ("Ascendants") level up real-life stats (Strength, Agility, Stamina, Vitality, Intelligence, Willpower, Charisma) by completing AI-generated quests. Progress maps to XP and a Rank (D → C → B → A → S). 1-month free for new users at launch.
+
+**Primary goals:** rapid MVP launch, high virality via shareable weekly "Ascension Reports", leaderboards, and habit-forming loops.
+
+**MVP scope:** Authentication, user profile, stats engine, XP & leveling, daily quests (AI + static), weekly challenge, rank system, ascension report (AI-generated), leaderboard, responsive UI, firestore persistence, deployment.
+
+---
+
+## 2) Tech Stack (solo-friendly)
+
+* Frontend: Next.js (React) + TailwindCSS
+* Backend: Firebase Functions (Node.js / TypeScript) + Firestore
+* Auth: Firebase Auth (Google, Email)
+* Hosting: Vercel (frontend) + Firebase Hosting or cloud functions endpoints as needed
+* AI: OpenAI API (GPT-4.1 / GPT-5 Thinking mini or whichever available)
+* Analytics: Firebase Analytics + optional Plausible
+* Payments (post-1-month): Stripe
+
+---
+
+## 3) Data Model (Firestore) — exact schema
+
+```
+users (collection)
+  {userId} (doc)
+    profile: {
+      name: string
+      email: string
+      createdAt: timestamp
+      timezone: string
+      avatarUrl: string
+      freeTrialStart: timestamp
+      isPro: boolean
+    }
+    meta: {
+      level: number
+      xp: number
+      tier: string // D/C/B/A/S
+      streak: number
+      lastActive: timestamp
+    }
+    stats: {
+      strength: number (1-100)
+      agility: number
+      stamina: number
+      vitality: number
+      intelligence: number
+      willpower: number
+      charisma: number
+    }
+    quests (subcollection)
+      {questId} (doc)
+        title: string
+        description: string
+        type: string // daily/weekly/ai
+        rewardXP: number
+        rewardStats: { stat: number } // e.g., {strength: 2}
+        createdAt: timestamp
+        dueAt: timestamp
+        completed: boolean
+        completedAt: timestamp
+    challenges (subcollection)
+      {challengeId} ...
+    history (subcollection)
+      {logId}
+        action: string
+        xpDelta: number
+        statDeltas: { ... }
+        timestamp: timestamp
+
+config (collection)
+  xpThresholds (doc): { D:0, C:500, B:1500, A:3500, S:6000 }
+  questTemplates (doc): [...] // seed templates
+  aiPrompts (doc): { questPrompt: string, reportPrompt: string }
+
+leaderboard (collection) // optional materialized view
+  {userId}: { xp: number, level: number, tier: string }
+```
+
+Notes: keep stat integers small. Level formula uses xp → explicit thresholds or function (see XP formulas).
+
+---
+
+## 4) XP & Leveling Formulas (balanced, gradual)
+
+**XP per level approach (recommended):**
+
+* Use absolute XP accumulation with thresholds for ranks (level cap 100 optional)
+* Simpler: keep XP as the single metric; level = floor(XP / 100) + 1; rank thresholds defined separately.
+
+Example formula set used in MVP:
+
+* `level = floor(xp / 100) + 1`
+* `tier thresholds` (as config):
+
+  * D: 0–499 XP
+  * C: 500–1499
+  * B: 1500–3499
+  * A: 3500–5999
+  * S: 6000+
+
+**XP Gains (reference):**
+
+* 1 hour study = +30 XP
+* 30 min workout = +20 XP
+* Complete daily quest = +50 XP
+* Weekly challenge = +150 XP
+* Cold shower = +10 XP
+* No phone 2 hours = +15 XP
+
+**Stat growth model:**
+
+* Each quest grants small stat deltas (integer). Example: pushups -> strength +2, stamina +1.
+* Add soft cap: stats max at 100.
+
+**Rank upgrade trials:**
+
+* When XP crosses threshold, generate a "Rank Trial" challenge; success upgrades tier, failure delays by 7 days (or XP penalty).
+
+---
+
+## 5) Firebase Functions (logic) — list + pseudo
+
+1. `assignDailyQuests(userId)`
+
+   * runs at login or 00:00 local
+   * seeds 3–5 daily quests (mix static + AI-generated)
+
+2. `completeQuest(userId, questId)`
+
+   * verifies quest ownership and not yet completed
+   * apply xpDelta, statDeltas
+   * append to history
+   * check `rankCheck()`
+
+3. `rankCheck(userId)`
+
+   * read xp, determine tier
+   * if crossing threshold, create trial challenge
+
+4. `generateAIQuest(userId, context)`
+
+   * calls OpenAI with `questPrompt` (see prompts)
+   * returns quest struct saved into quests subcollection
+
+5. `generateAscensionReport(userId)`
+
+   * weekly cron or user-triggered
+   * fetch history, stats delta; call OpenAI `reportPrompt`
+   * store report doc and email/push to user
+
+6. `leaderboardRefresh()`
+
+   * optional scheduled job to aggregate top users into 'leaderboard' collection
+
+7. `usageCleanup()`
+
+   * housekeeping: cleanup expired quests, reset daily flags
+
+Include Security Rules to limit writes and ensure users can only modify their own data.
+
+---
+
+## 6) OpenAI Prompts (MVP-ready)
+
+**Quest generation prompt (short):**
+
+```
+You are a concise growth coach. Given a user's stats and recent activity, generate 3 practical, achievable daily quests (title, short description, rewardXP, rewardStats). Keep each quest 5-12 words title and 1 sentence description. Return JSON only.
+```
+
+**Sample JSON output format expected:**
+
+```
+[
+  {"title":"60 push-ups","description":"Do three sets of 20 push-ups with 1 min rest","rewardXP":20,"rewardStats":{"strength":2,"stamina":1}},
+  ...
+]
+```
+
+**Ascension Report prompt (longer):**
+
+```
+You are a motivating performance analyst. Given user's weekly activity logs (XP earned, quests completed, stat deltas), produce a 5-part weekly ascension report: 1) Summary paragraph, 2) Top stat gains, 3) Weaknesses to fix, 4) 3 concrete tasks next week, 5) Motivational line. Keep it 150-220 words and in friendly, energetic tone. Return JSON with fields: summary, topGains[], weaknesses[], tasks[], motivational.
+```
+
+Use system-level tokens to ensure consistent voice. Cache prompts in Firestore `config/aiPrompts` for quick edits.
+
+---
+
+## 7) Frontend File Structure (Next.js)
+
+```
+/pages
+  /_app.tsx
+  /index.tsx (landing)
+  /auth.tsx
+  /dashboard.tsx
+  /quests.tsx
+  /challenge.tsx
+  /stats.tsx
+  /rank.tsx
+  /profile.tsx
+/components
+  StatBar.tsx
+  QuestCard.tsx
+  XPProgress.tsx
+  Leaderboard.tsx
+/lib
+  firebaseClient.ts
+  api.ts (helpers calling firebase functions)
+/styles
+  globals.css (Tailwind)
+```
+
+Include a `hooks/useUser.ts` for auth & profile fetching.
+
+---
+
+## 8) Minimal UI/UX (copy + behaviors)
+
+**Dashboard:** XP progress, today's quests, quick-complete buttons, stat bars, "Ascension Report" widget
+
+**Quests page:** list, filter (daily/weekly/ai), complete action, reward preview
+
+**Stats page:** radar chart or stacked bars, history sparkline, level & tier badge
+
+**Rank page:** leaderboard, your position, compare buttons
+
+**Onboarding:** short 4-step flow: name→goals→baseline stats (auto-generated)→tutorial
+
+---
+
+## 9) 10-Day Build Plan (accelerated — use if you want full product fast)
+
+**Day 0**: Repo, Firebase project, env secrets, OpenAI key
+**Day 1-2**: Auth + basic UI + Firestore schema + assignDailyQuests
+**Day 3-4**: Quests UI + completeQuest + xp/stat updates
+**Day 5**: AI prompts integration for quest generation
+**Day 6**: Ascension report generation + email/push
+**Day 7**: Leaderboard + Rank Trial flow
+**Day 8**: UI polish, animations, responsiveness
+**Day 9**: Testing, load test, analytics, bug fixes
+**Day 10**: Deploy, landing page, marketing assets, launch
+
+(For your 48-hour prototype compress above into Day 1 & Day 2 tasks.)
+
+---
+
+## 10) Starter Code — Minimal Examples
+
+### firebaseClient.ts (snippet)
+
+```ts
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+}
+
+const app = initializeApp(firebaseConfig)
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+```
+
+### Firebase Function: completeQuest (pseudo/TypeScript)
+
+```ts
+import * as functions from 'firebase-functions'
+import * as admin from 'firebase-admin'
+admin.initializeApp()
+const db = admin.firestore()
+
+export const completeQuest = functions.https.onCall(async (data, ctx) => {
+  const { userId, questId } = data
+  if (!ctx.auth) throw new functions.https.HttpsError('unauthenticated', 'Login required')
+
+  const questRef = db.collection('users').doc(userId).collection('quests').doc(questId)
+  const questSnap = await questRef.get()
+  if (!questSnap.exists) throw new Error('Quest not found')
+  const quest = questSnap.data()
+  if (quest.completed) throw new Error('Already completed')
+
+  // apply xp
+  const userRef = db.collection('users').doc(userId)
+  await db.runTransaction(async (tx) => {
+    const uSnap = await tx.get(userRef)
+    const u = uSnap.data()
+    const newXP = (u.meta.xp || 0) + (quest.rewardXP || 0)
+    const newStats = {...u.stats}
+    if (quest.rewardStats) {
+      for (const [s, delta] of Object.entries(quest.rewardStats)) {
+        newStats[s] = Math.min(100, (newStats[s] || 0) + delta)
+      }
+    }
+    tx.update(userRef, {
+      'meta.xp': newXP,
+      'stats': newStats,
+      'meta.lastActive': admin.firestore.FieldValue.serverTimestamp()
+    })
+    tx.update(questRef, { completed: true, completedAt: admin.firestore.FieldValue.serverTimestamp() })
+    tx.collection(userRef.path + '/history').add({ action: 'completeQuest', xpDelta: quest.rewardXP, statDeltas: quest.rewardStats, timestamp: admin.firestore.FieldValue.serverTimestamp() })
+  })
+
+  // optionally trigger rank check
+  return { success: true }
+})
+```
+
+### OpenAI call example (server-side)
+
+```ts
+import OpenAI from 'openai'
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+export async function generateQuestsForUser(user){
+  const prompt = `...` // use aiPrompts.questPrompt from Firestore
+  const resp = await client.responses.create({ model: 'gpt-4.1-mini', input: prompt })
+  // parse resp.output
+}
+```
+
+---
+
+## 11) Security & Rules
+
+* Firestore rules: users can read public leaderboard but write only their own profile and quests.
+* Limit Cloud Function execution quotas; add rate limiting.
+* Never expose OpenAI key to client.
+
+---
+
+## 12) Testing Checklist
+
+* Auth flows (sign-up, sign-in)
+* New user onboarding — profile + baseline stats
+* Quest assignment & completion
+* XP accumulation & level changes
+* Rank crossing & trial generation
+* Ascension report generation
+* Leaderboard shows correct sort
+* Edge cases: offline completes, duplicate submissions
+
+---
+
+## 13) Launch & Growth (first 30 days)
+
+**Pre-launch:** landing page, email capture, waitlist, teaser reels.
+**Launch day:** release on Instagram, Reels, Reddit (r/Anime, r/GetDisciplined, r/Productivity), student groups.
+**Referral loop:** "Invite 3 friends → extra XP" or clan creation.
+**KPI targets:** DAU/MAU ratio > 20%, retention D7 > 20%, conversion to Pro after month target 2–5%.
+
+---
+
+## 14) Monetization Model (post-free month)
+
+* Pro subscription (₹99–₹199/month) with advanced analytics, AI mentor, custom quests, premium themes
+* One-off digital products: 30-day transformation guides
+* Affiliate (fitness gear, supplements)
+* Team/clan subscription
+
+---
+
+## 15) Next immediate actions (I will produce code & assets if you confirm)
+
+I included starter code above. I can now:
+
+* Generate finished `/lib/firebaseClient.ts`, `/pages/_app.tsx`, and auth flow code
+* Create Quest UI components and Connect them to Firestore
+* Produce Firebase functions in full TypeScript for `completeQuest`, `assignDailyQuests`, `generateAscensionReport`
+* Produce OpenAI prompt templates stored in Firestore JSON
+* Create landing page copy and social rollout scripts
+
+Tell me which parts you want first and I will generate files next.
+
+---
+
+*Document created: Ascension Protocol — Full Product Build (Spec, Roadmap & Starter Code)*
