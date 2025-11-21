@@ -43,8 +43,8 @@
   --chart-3: 339 90% 51%;
   --chart-4: 43 96% 56%;
   --chart-5: 142 76% 36%;
-  --font-sans: Open Sans, sans-serif;
-  --font-serif: Georgia, serif;
+  --font-sans: Inter, sans-serif;
+  --font-display: Exo 2, sans-serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
@@ -127,6 +127,7 @@
   --chart-3: 339 90% 68%;
   --chart-4: 43 96% 72%;
   --chart-5: 142 76% 60%;
+  --font-display: Exo 2, sans-serif;
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
   --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);

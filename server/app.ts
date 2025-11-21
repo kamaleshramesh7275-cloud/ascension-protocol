@@ -8,6 +8,7 @@ import express, {
 } from "express";
 
 import { registerRoutes } from "./routes";
+import { extractFirebaseUid } from "./firebase-auth";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -33,6 +34,9 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+// Extract Firebase UID from requests
+app.use(extractFirebaseUid);
 
 app.use((req, res, next) => {
   const start = Date.now();
