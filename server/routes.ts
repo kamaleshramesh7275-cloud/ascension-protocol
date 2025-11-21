@@ -41,7 +41,7 @@ async function assignDailyQuests(userId: string) {
   
   // Check if user already has today's quests
   const existingQuests = await storage.getUserQuests(userId);
-  const todayQuests = existingQuests.filter(q => {
+  const todayQuests = existingQuests.filter((q: any) => {
     const questDate = new Date(q.createdAt);
     return questDate >= today && questDate < tomorrow && q.type === "daily";
   });
@@ -80,7 +80,7 @@ async function assignWeeklyQuest(userId: string) {
   
   // Check if user already has this week's quest
   const existingQuests = await storage.getUserQuests(userId);
-  const weeklyQuest = existingQuests.find(q => {
+  const weeklyQuest = existingQuests.find((q: any) => {
     const questDate = new Date(q.createdAt);
     return questDate >= weekStart && questDate < weekEnd && q.type === "weekly";
   });
@@ -234,7 +234,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const [stat, delta] of Object.entries(quest.rewardStats)) {
           if (STAT_NAMES.includes(stat as any)) {
             const currentValue = user[stat as keyof typeof user] as number;
-            statUpdates[stat] = Math.min(100, currentValue + delta);
+            const deltaNum = typeof delta === "number" ? delta : 0;
+            statUpdates[stat] = Math.min(100, currentValue + deltaNum);
           }
         }
       }
