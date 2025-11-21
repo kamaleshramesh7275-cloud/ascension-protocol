@@ -228,3 +228,41 @@ export function getRandomWeeklyQuest(): QuestTemplate {
   const randomIndex = Math.floor(Math.random() * weeklyQuestTemplates.length);
   return weeklyQuestTemplates[randomIndex];
 }
+
+// Rank Trial quests - special challenges for tier progression
+const rankTrialQuests: QuestTemplate[] = [
+  {
+    title: "C-Tier Trial: Ascendant's Challenge",
+    description: "Complete 10 daily quests in 3 consecutive days without missing a day",
+    type: "daily",
+    rewardXP: 500,
+    rewardStats: { willpower: 5, strength: 3, intelligence: 2 },
+  },
+  {
+    title: "B-Tier Trial: Warrior's Ascension",
+    description: "Achieve maximum stats (100) in at least 3 different attributes this week",
+    type: "weekly",
+    rewardXP: 1000,
+    rewardStats: { strength: 8, agility: 8, stamina: 8 },
+  },
+  {
+    title: "A-Tier Trial: Legendary Pursuit",
+    description: "Complete 50 quests total and maintain a 14-day streak",
+    type: "weekly",
+    rewardXP: 2000,
+    rewardStats: { willpower: 10, charisma: 6, intelligence: 6 },
+  },
+  {
+    title: "S-Tier Trial: Ultimate Ascension",
+    description: "Reach level 70 and achieve a 30-day streak of perfect daily completion",
+    type: "weekly",
+    rewardXP: 5000,
+    rewardStats: { strength: 15, agility: 15, stamina: 15, intelligence: 15, willpower: 15, charisma: 15, vitality: 15 },
+  },
+];
+
+// Helper function to get a rank trial quest
+export function getRankTrialQuest(): QuestTemplate {
+  const randomIndex = Math.floor(Math.random() * rankTrialQuests.length);
+  return rankTrialQuests[randomIndex];
+}

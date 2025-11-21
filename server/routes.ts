@@ -1,8 +1,10 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { DrizzleStorage } from "./drizzle-storage";
 import { TIER_THRESHOLDS, Tier, STAT_NAMES } from "@shared/schema";
-import { getRandomDailyQuests, getRandomWeeklyQuest } from "./quest-templates";
+import { getRandomDailyQuests, getRandomWeeklyQuest, getRankTrialQuest } from "./quest-templates";
+
+const storage = new DrizzleStorage();
 
 // Middleware to check Firebase auth (simplified for MVP)
 // In production, you'd verify Firebase tokens here
@@ -257,6 +259,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         xpDelta: quest.rewardXP,
         statDeltas: quest.rewardStats || {},
       });
+
+      // Check if user crossed a tier threshold - trigger rank trial
+      const oldTier = calculateTier(user.xp);
+      if (oldTier !== newTier && newTier !== "D") {
+        // Create rank trial challenge
+        const trialTemplate = getRankTrialQuest();
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 7); // Due in 7 days
+        
+        const trialQuest = await storage.createQuest({
+          userId: user.id,
+          title: trialTemplate.title,
+          description: trialTemplate.description,
+          type: "weekly",
+          rewardXP: trialTemplate.rewardXP,
+          rewardStats: trialTemplate.rewardStats,
+          dueAt: dueDate,
+        });
+
+        // Create rank trial record
+        await storage.createRankTrial({
+          userId: user.id,
+          tier: newTier,
+          questId: trialQuest.id,
+        });
+      }
       
       res.json({ quest, user: updatedUser });
     } catch (error) {

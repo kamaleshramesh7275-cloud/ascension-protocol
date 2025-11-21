@@ -57,6 +57,17 @@ export const activityHistory = pgTable("activity_history", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// Rank Trial challenges triggered when crossing tier thresholds
+export const rankTrials = pgTable("rank_trials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  tier: text("tier").notNull(), // The tier being challenged for (C, B, A, S)
+  questId: varchar("quest_id").notNull().references(() => quests.id),
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
   firebaseUid: true,
@@ -78,6 +89,13 @@ export const insertActivitySchema = createInsertSchema(activityHistory).omit({
   timestamp: true,
 });
 
+export const insertRankTrialSchema = createInsertSchema(rankTrials).omit({
+  id: true,
+  completed: true,
+  completedAt: true,
+  createdAt: true,
+});
+
 // TypeScript types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -87,6 +105,9 @@ export type Quest = typeof quests.$inferSelect;
 
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activityHistory.$inferSelect;
+
+export type InsertRankTrial = z.infer<typeof insertRankTrialSchema>;
+export type RankTrial = typeof rankTrials.$inferSelect;
 
 // Helper types for frontend
 export type UserStats = {
