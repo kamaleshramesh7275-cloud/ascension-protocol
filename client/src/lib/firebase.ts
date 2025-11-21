@@ -4,11 +4,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "FIRE_BASE_API_KEYY",
+  authDomain: "ascension-957b6.firebaseapp.com",
+  projectId: "ascension-957b6",
+  storageBucket: "ascension-957b6.firebasestorage.app",
+  appId: "1:1077180336436:web:23631ba82fc1100b03bd61",
+  messagingSenderId: "1077180336436",
 };
 
 const app = initializeApp(firebaseConfig);

@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithGoogle, handleAuthRedirect } from "@/lib/firebase";
 import { useAuth } from "@/hooks/use-auth";
-import { Trophy, Zap, Target, TrendingUp } from "lucide-react";
+import { Trophy, Zap, Target, TrendingUp, AlertCircle } from "lucide-react";
 
 export default function AuthPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -36,6 +36,40 @@ export default function AuthPage() {
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show Firebase configuration error
+  if (error && error.message.includes("invalid-api-key")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
+        <Card className="max-w-md w-full border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <CardTitle className="text-destructive">Firebase Configuration Error</CardTitle>
+            </div>
+            <CardDescription>
+              The Firebase API key is invalid or missing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-background rounded-lg p-4 border border-border text-sm space-y-2">
+              <p className="font-semibold text-foreground">Setup Required:</p>
+              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">Firebase Console</a></li>
+                <li>Select your project "ascension-957b6"</li>
+                <li>Click ⚙️ → Project Settings</li>
+                <li>Copy the actual API Key (starts with "AIza")</li>
+                <li>Ask the developer to update it in Replit Secrets as VITE_FIREBASE_API_KEY</li>
+              </ol>
+            </div>
+            <div className="text-xs text-muted-foreground bg-muted rounded p-3">
+              <strong>Current issue:</strong> The API key appears to be a placeholder. Firebase requires a real API key to authenticate users.
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -76,11 +110,11 @@ export default function AuthPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
+                  <TrendingUp className="h-5 w-5 text-primary" />
                   7 Core Stats
                 </CardTitle>
                 <CardDescription>
-                  Track Strength, Agility, Stamina, Vitality, Intelligence, Willpower, and Charisma
+                  Progress in Strength, Agility, Stamina, Vitality, Intelligence, Willpower & Charisma
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -88,11 +122,11 @@ export default function AuthPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Rank System
+                  <Zap className="h-5 w-5 text-primary" />
+                  Rank Progression
                 </CardTitle>
                 <CardDescription>
-                  Progress through 5 tiers from D to S rank as you gain experience
+                  Climb from D-Tier to S-Tier through dedicated gameplay
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -101,51 +135,25 @@ export default function AuthPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
-                  Compete
+                  Leaderboards
                 </CardTitle>
                 <CardDescription>
-                  Climb the global leaderboard and compare your progress with others
+                  Compete globally and showcase your legendary ascension
                 </CardDescription>
               </CardHeader>
             </Card>
           </div>
 
-          <Card className="max-w-md mx-auto">
-            <CardHeader className="text-center">
-              <CardTitle>Begin Your Ascension</CardTitle>
-              <CardDescription>
-                Sign in with Google to start your journey
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={handleSignIn} 
-                size="lg" 
-                className="w-full"
-                data-testid="button-sign-in"
-              >
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                Continue with Google
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              onClick={handleSignIn}
+              className="text-base h-12"
+              data-testid="button-signin-google"
+            >
+              Sign In with Google
+            </Button>
+          </div>
         </div>
       </div>
     </div>
