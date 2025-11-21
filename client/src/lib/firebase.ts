@@ -4,7 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "FIRE_BASE_API_KEYY",
+  apiKey: "AIzaSyCG6MOlkw0EREki69YhwA2qm1I0EmrTQAI",
   authDomain: "ascension-957b6.firebaseapp.com",
   projectId: "ascension-957b6",
   storageBucket: "ascension-957b6.firebasestorage.app",
