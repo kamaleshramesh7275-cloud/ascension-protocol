@@ -31,53 +31,25 @@ export default async function handler(req: any, res: any) {
             // Update user profile
             const { name, email, avatarUrl, currentGoal, studySubject, studyAvailability } = req.body;
 
-            // First get the user to get their ID
+            // First get the user
             const [user] = await sql`
-                SELECT id FROM users WHERE firebase_uid = ${firebaseUid}
+                SELECT * FROM users WHERE firebase_uid = ${firebaseUid}
             `;
 
             if (!user) {
                 return res.status(404).json({ error: "User not found" });
             }
 
-            // Build update query dynamically
-            const updates: string[] = [];
-            const values: any[] = [];
-            let paramIndex = 1;
-
-            if (name !== undefined) {
-                updates.push(`name = $${paramIndex++}`);
-                values.push(name);
-            }
-            if (email !== undefined) {
-                updates.push(`email = $${paramIndex++}`);
-                values.push(email);
-            }
-            if (avatarUrl !== undefined) {
-                updates.push(`avatar_url = $${paramIndex++}`);
-                values.push(avatarUrl);
-            }
-            if (currentGoal !== undefined) {
-                updates.push(`current_goal = $${paramIndex++}`);
-                values.push(currentGoal);
-            }
-            if (studySubject !== undefined) {
-                updates.push(`study_subject = $${paramIndex++}`);
-                values.push(studySubject);
-            }
-            if (studyAvailability !== undefined) {
-                updates.push(`study_availability = $${paramIndex++}`);
-                values.push(studyAvailability);
-            }
-
-            if (updates.length === 0) {
-                return res.status(400).json({ error: "No fields to update" });
-            }
-
-            // Execute update using neon's tagged template
+            // Update with new values, keeping existing values if not provided
             const [updatedUser] = await sql`
                 UPDATE users 
-                SET ${sql(updates.join(', '))}
+                SET 
+                    name = COALESCE(${name}, name),
+                    email = COALESCE(${email}, email),
+                    avatar_url = CASE WHEN ${avatarUrl !== undefined} THEN ${avatarUrl} ELSE avatar_url END,
+                    current_goal = CASE WHEN ${currentGoal !== undefined} THEN ${currentGoal} ELSE current_goal END,
+                    study_subject = CASE WHEN ${studySubject !== undefined} THEN ${studySubject} ELSE study_subject END,
+                    study_availability = CASE WHEN ${studyAvailability !== undefined} THEN ${studyAvailability} ELSE study_availability END
                 WHERE id = ${user.id}
                 RETURNING *
             `;
