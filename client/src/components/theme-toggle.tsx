@@ -1,23 +1,19 @@
-import { Moon, Sun } from "lucide-react";
+import { Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/hooks/use-theme";
+import { useLocation } from "wouter";
 
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const [, setLocation] = useLocation();
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={toggleTheme}
-      data-testid="button-theme-toggle"
+      onClick={() => setLocation("/store")}
+      title="Browse Themes"
     >
-      {theme === "light" ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
-      <span className="sr-only">Toggle theme</span>
+      <Palette className="h-5 w-5" />
+      <span className="sr-only">Browse Themes</span>
     </Button>
   );
 }

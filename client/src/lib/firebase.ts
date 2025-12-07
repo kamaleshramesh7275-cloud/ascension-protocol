@@ -1,7 +1,8 @@
 // Firebase configuration and initialization
 // Based on firebase_barebones_javascript blueprint
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, User } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG6MOlkw0EREki69YhwA2qm1I0EmrTQAI",
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = () => {
@@ -38,4 +40,6 @@ export const onAuthChange = (callback: (user: FirebaseUser | null) => void) => {
   return onAuthStateChanged(auth, callback);
 };
 
-export type { FirebaseUser };
+export type FirebaseUser = User & {
+  onboardingCompleted?: boolean;
+};

@@ -1,14 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RankBadge } from "@/components/rank-badge";
 import { XPProgress } from "@/components/xp-progress";
 import { StatBar } from "@/components/stat-bar";
 import { QuestCard } from "@/components/quest-card";
 import { User, Quest, STAT_NAMES } from "@shared/schema";
-import { Flame, Target } from "lucide-react";
+import { Flame, Target, CheckSquare, Plus, Trash2, TrendingUp, Zap, Award, BookOpen, Calendar, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
+  const { toast } = useToast();
   const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/user"],
   });
@@ -17,8 +28,71 @@ export default function Dashboard() {
     queryKey: ["/api/quests"],
   });
 
+  const completeQuestMutation = useMutation({
+    mutationFn: async (questId: string) => {
+      const res = await apiRequest("POST", `/api/quests/${questId}/complete`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+
+      toast({
+        title: "Quest Completed!",
+        description: `You earned ${data.quest.rewardXP} XP and ${data.quest.rewardCoins} coins!`,
+        variant: "default",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to complete quest",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const activeQuests = quests?.filter(q => !q.completed) || [];
   const completedToday = quests?.filter(q => q.completed) || [];
+
+  // To-Do List State
+  const [todos, setTodos] = useState([
+    { id: 1, text: "Review Calculus notes", completed: false },
+    { id: 2, text: "Complete Physics assignment", completed: true },
+    { id: 3, text: "Read Chapter 4 of History", completed: false },
+  ]);
+  const [newTodo, setNewTodo] = useState("");
+
+  const addTodo = () => {
+    if (!newTodo.trim()) return;
+    setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
+    setNewTodo("");
+  };
+
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
+
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter(t => t.id !== id));
+  };
+
+  // Motivational quotes
+  const quotes = [
+    "The secret of getting ahead is getting started.",
+    "Success is the sum of small efforts repeated day in and day out.",
+    "Don't watch the clock; do what it does. Keep going.",
+    "The future depends on what you do today.",
+    "Believe you can and you're halfway there."
+  ];
+
+  const [currentQuote, setCurrentQuote] = useState(quotes[0]);
+
+  useEffect(() => {
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    setCurrentQuote(randomQuote);
+  }, []);
 
   if (userLoading || !user) {
     return (
@@ -32,47 +106,231 @@ export default function Dashboard() {
     );
   }
 
+  // Weekly Progress Data (mock data - in real app, fetch from backend)
+  const weeklyData = [
+    { day: 'Mon', xp: 120 },
+    { day: 'Tue', xp: 180 },
+    { day: 'Wed', xp: 150 },
+    { day: 'Thu', xp: 220 },
+    { day: 'Fri', xp: 190 },
+    { day: 'Sat', xp: 250 },
+    { day: 'Sun', xp: user.xp % 100 }, // Current day
+  ];
+
+  // Daily Goal
+  const dailyGoal = 200;
+  const todayXP = weeklyData[6].xp;
+  const goalProgress = Math.min((todayXP / dailyGoal) * 100, 100);
+
+  // Recent Activity (mock data)
+  const recentActivities = [
+    { id: 1, action: 'Completed quest: Study Session', xp: 50, time: '2 hours ago' },
+    { id: 2, action: 'Leveled up to Level ' + user.level, xp: 0, time: '5 hours ago' },
+    { id: 3, action: 'Completed quest: Read Chapter 3', xp: 30, time: '1 day ago' },
+    { id: 4, action: 'Earned achievement: Week Warrior', xp: 100, time: '2 days ago' },
+  ];
+
   return (
     <div className="space-y-6" data-testid="page-dashboard">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-display font-bold mb-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-2">
             Welcome back, {user.name}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Continue your ascension journey
           </p>
         </div>
-        
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-card-border">
-            <Flame className="h-5 w-5 text-orange-500" />
+
+        <div className="flex items-center gap-3 sm:gap-6 flex-wrap">
+          <div className="flex items-center gap-2 px-3 py-2 md:px-4 bg-card rounded-lg border border-card-border">
+            <Flame className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
             <div>
               <p className="text-xs text-muted-foreground">Streak</p>
-              <p className="text-lg font-bold" data-testid="text-streak">{user.streak} days</p>
+              <p className="text-base md:text-lg font-bold" data-testid="text-streak">{user.streak} days</p>
             </div>
           </div>
-          
-          <RankBadge tier={user.tier} level={user.level} />
+
+          <RankBadge tier={user.tier as any} level={user.level} />
         </div>
       </div>
 
       {/* XP Progress */}
       <Card>
         <CardContent className="pt-6">
-          <XPProgress xp={user.xp} tier={user.tier} />
+          <XPProgress xp={user.xp} tier={user.tier as any} />
+        </CardContent>
+      </Card>
+
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-purple-500 hover:scale-105">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Total XP</p>
+                <p className="text-xl md:text-2xl font-bold">{user.xp}</p>
+              </div>
+              <Zap className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-blue-500 hover:scale-105">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Level</p>
+                <p className="text-xl md:text-2xl font-bold">{user.level}</p>
+              </div>
+              <Award className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-green-500 hover:scale-105">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Completed</p>
+                <p className="text-xl md:text-2xl font-bold">{completedToday.length}</p>
+              </div>
+              <CheckSquare className="h-6 w-6 md:h-8 md:w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-orange-500 hover:scale-105">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground">Streak</p>
+                <p className="text-xl md:text-2xl font-bold">{user.streak}</p>
+              </div>
+              <Flame className="h-6 w-6 md:h-8 md:w-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Motivational Quote */}
+      <Card className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20 hover:shadow-lg transition-all hover:scale-[1.02]">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <BookOpen className="h-6 w-6 text-purple-500 flex-shrink-0 mt-1" />
+            <div>
+              <p className="text-lg font-medium italic">&ldquo;{currentQuote}&rdquo;</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Weekly Progress Chart & Daily Goal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* Weekly Progress Chart */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+              Weekly Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={weeklyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="day" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="xp"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  dot={{ fill: '#8b5cf6', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Daily Goal Progress */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-green-500" />
+              Daily Goal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <p className="text-4xl font-bold">{todayXP} / {dailyGoal}</p>
+              <p className="text-sm text-muted-foreground mt-1">XP earned today</p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progress</span>
+                <span className="font-semibold">{goalProgress.toFixed(0)}%</span>
+              </div>
+              <Progress value={goalProgress} className="h-3" />
+            </div>
+            {goalProgress >= 100 ? (
+              <p className="text-center text-green-500 font-semibold">🎉 Goal achieved!</p>
+            ) : (
+              <p className="text-center text-muted-foreground text-sm">
+                {dailyGoal - todayXP} XP to go
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity Feed */}
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-purple-500" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[250px]">
+            <div className="space-y-3">
+              {recentActivities.map((activity, index) => (
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <div className="p-2 rounded-full bg-purple-500/20">
+                    <Zap className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.action}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                  {activity.xp > 0 && (
+                    <span className="text-sm font-bold text-purple-400">+{activity.xp} XP</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
       {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Stats Panel */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Your Stats</CardTitle>
+            <CardTitle className="text-base md:text-lg">Your Stats</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4">
             {STAT_NAMES.map((stat) => (
               <StatBar
                 key={stat}
@@ -85,15 +343,15 @@ export default function Dashboard() {
         </Card>
 
         {/* Quests Panel */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                  <Target className="h-4 w-4 md:h-5 md:w-5" />
                   Active Quests
                 </CardTitle>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs md:text-sm text-muted-foreground">
                   {completedToday.length} completed today
                 </span>
               </div>
@@ -114,10 +372,79 @@ export default function Dashboard() {
               ) : (
                 <div className="grid gap-4">
                   {activeQuests.slice(0, 3).map((quest) => (
-                    <QuestCard key={quest.id} quest={quest} />
+                    <QuestCard
+                      key={quest.id}
+                      quest={quest}
+                      onComplete={(id) => completeQuestMutation.mutate(id)}
+                      isCompletingQuest={completeQuestMutation.isPending}
+                    />
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* To-Do List Widget */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckSquare className="h-5 w-5 text-green-500" />
+                Quick Tasks
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a task..."
+                    value={newTodo}
+                    onChange={(e) => setNewTodo(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTodo();
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addTodo();
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ScrollArea className="h-[200px]">
+                  <div className="space-y-2">
+                    {todos.map((todo) => (
+                      <div key={todo.id} className="flex items-center gap-2 p-2 rounded hover:bg-accent group">
+                        <Checkbox
+                          checked={todo.completed}
+                          onCheckedChange={() => toggleTodo(todo.id)}
+                        />
+                        <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-muted-foreground' : ''}`}>
+                          {todo.text}
+                        </span>
+                        <button
+                          onClick={() => deleteTodo(todo.id)}
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {todos.length === 0 && (
+                      <p className="text-center text-muted-foreground text-sm py-4">
+                        No tasks yet. Add one!
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </div>

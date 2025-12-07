@@ -4,11 +4,11 @@
 
 /* LIGHT MODE */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  --button-outline: rgba(0, 0, 0, .10);
+  --badge-outline: rgba(0, 0, 0, .05);
   --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0, 0, 0, .03);
+  --elevate-2: rgba(0, 0, 0, .08);
   --background: 0 0% 100%;
   --foreground: 0 0% 9%;
   --border: 0 0% 91%;
@@ -58,7 +58,7 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
-/* Fallback for older browsers */
+  /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
@@ -88,11 +88,11 @@
 }
 
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255, 255, 255, .10);
+  --badge-outline: rgba(255, 255, 255, .05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255, 255, 255, .04);
+  --elevate-2: rgba(255, 255, 255, .09);
   --background: 0 0% 7%;
   --foreground: 0 0% 98%;
   --border: 0 0% 16%;
@@ -137,7 +137,7 @@
   --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 8px 10px -1px hsl(0 0% 0% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
 
-/* Fallback for older browsers */
+  /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 
@@ -164,6 +164,674 @@
   /* Fallback for older browsers */
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+/* ============================================
+   ENHANCED THEME ANIMATIONS & EFFECTS
+   ============================================ */
+
+/* Keyframe Animations */
+@keyframes moonGlow {
+
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 8px hsl(217 91% 60% / 0.5));
+  }
+
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 16px hsl(217 91% 60% / 0.8));
+  }
+}
+
+@keyframes bloodPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 10px hsl(0 72% 51% / 0.3), inset 0 0 10px hsl(0 72% 51% / 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 20px hsl(0 72% 51% / 0.6), inset 0 0 20px hsl(0 72% 51% / 0.2);
+  }
+}
+
+@keyframes neonFlicker {
+
+  0%,
+  100% {
+    text-shadow: 0 0 10px hsl(320 100% 60%), 0 0 20px hsl(180 100% 50%);
+  }
+
+  50% {
+    text-shadow: 0 0 20px hsl(320 100% 60%), 0 0 40px hsl(180 100% 50%);
+  }
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes leafRustle {
+
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateX(-2px) rotate(-1deg);
+  }
+
+  75% {
+    transform: translateX(2px) rotate(1deg);
+  }
+}
+
+@keyframes frostCrystal {
+
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  50% {
+    transform: scale(1.05) rotate(180deg);
+  }
+}
+
+@keyframes solarFlare {
+
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+
+  50% {
+    filter: brightness(1.3) saturate(1.5);
+  }
+}
+
+@keyframes royalPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px hsl(270 80% 60% / 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 30px hsl(270 80% 60% / 0.7), 0 0 60px hsl(270 80% 60% / 0.3);
+  }
+}
+
+@keyframes gearRotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes matrixRain {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Midnight Eclipse Theme */
+.midnight-eclipse {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 32% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 32% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 32% 17%;
+  --input: 217 32% 17%;
+  --ring: 224 76% 48%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-accent: 217 32% 17%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 32% 17%;
+  --sidebar-ring: 217 91% 60%;
+}
+
+.midnight-eclipse button:hover,
+.midnight-eclipse .hover-elevate:hover {
+  animation: moonGlow 2s ease-in-out infinite;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.midnight-eclipse .card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.midnight-eclipse .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px hsl(217 91% 60% / 0.2);
+}
+
+/* Crimson Warlord Theme */
+.crimson-warlord {
+  --background: 0 0% 5%;
+  --foreground: 0 0% 95%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 95%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 0 72% 51%;
+  --primary-foreground: 0 0% 95%;
+  --secondary: 0 30% 15%;
+  --secondary-foreground: 0 0% 95%;
+  --muted: 0 30% 15%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 30% 15%;
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 95%;
+  --border: 0 30% 15%;
+  --input: 0 30% 15%;
+  --ring: 0 72% 51%;
+  --sidebar: 0 0% 5%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 0 72% 51%;
+  --sidebar-primary-foreground: 0 0% 95%;
+  --sidebar-accent: 0 30% 15%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 0 30% 15%;
+  --sidebar-ring: 0 72% 51%;
+}
+
+.crimson-warlord button,
+.crimson-warlord .card {
+  animation: bloodPulse 3s ease-in-out infinite;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.crimson-warlord button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px hsl(0 72% 51% / 0.6);
+}
+
+.crimson-warlord .card:hover {
+  transform: scale(1.02) rotate(0.5deg);
+  border-color: hsl(0 72% 51%);
+}
+
+/* Neon Cyberpunk Theme */
+.neon-cyberpunk {
+  --background: 280 50% 5%;
+  --foreground: 180 100% 90%;
+  --card: 280 50% 8%;
+  --card-foreground: 180 100% 90%;
+  --popover: 280 50% 8%;
+  --popover-foreground: 180 100% 90%;
+  --primary: 320 100% 60%;
+  --primary-foreground: 180 100% 90%;
+  --secondary: 260 50% 20%;
+  --secondary-foreground: 180 100% 90%;
+  --muted: 260 50% 20%;
+  --muted-foreground: 260 30% 70%;
+  --accent: 260 50% 20%;
+  --accent-foreground: 180 100% 90%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 180 100% 90%;
+  --border: 260 50% 20%;
+  --input: 260 50% 20%;
+  --ring: 180 100% 50%;
+  --sidebar: 280 50% 5%;
+  --sidebar-foreground: 180 100% 90%;
+  --sidebar-primary: 320 100% 60%;
+  --sidebar-primary-foreground: 180 100% 90%;
+  --sidebar-accent: 260 50% 20%;
+  --sidebar-accent-foreground: 180 100% 90%;
+  --sidebar-border: 260 50% 20%;
+  --sidebar-ring: 180 100% 50%;
+}
+
+.neon-cyberpunk h1,
+.neon-cyberpunk h2,
+.neon-cyberpunk h3 {
+  animation: neonFlicker 3s ease-in-out infinite;
+}
+
+.neon-cyberpunk button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.neon-cyberpunk button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, hsl(180 100% 50% / 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.neon-cyberpunk button:hover::before {
+  left: 100%;
+}
+
+.neon-cyberpunk button:hover {
+  box-shadow: 0 0 20px hsl(320 100% 60%), 0 0 40px hsl(180 100% 50%);
+  transform: translateY(-2px);
+}
+
+/* Golden Luxury Theme */
+.golden-luxury {
+  --background: 45 20% 5%;
+  --foreground: 45 30% 95%;
+  --card: 45 20% 8%;
+  --card-foreground: 45 30% 95%;
+  --popover: 45 20% 8%;
+  --popover-foreground: 45 30% 95%;
+  --primary: 45 100% 50%;
+  --primary-foreground: 45 20% 5%;
+  --secondary: 45 20% 15%;
+  --secondary-foreground: 45 30% 95%;
+  --muted: 45 20% 15%;
+  --muted-foreground: 45 10% 60%;
+  --accent: 45 20% 15%;
+  --accent-foreground: 45 30% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 45 30% 95%;
+  --border: 45 30% 20%;
+  --input: 45 30% 20%;
+  --ring: 45 100% 50%;
+  --sidebar: 45 20% 5%;
+  --sidebar-foreground: 45 30% 95%;
+  --sidebar-primary: 45 100% 50%;
+  --sidebar-primary-foreground: 45 20% 5%;
+  --sidebar-accent: 45 20% 15%;
+  --sidebar-accent-foreground: 45 30% 95%;
+  --sidebar-border: 45 30% 20%;
+  --sidebar-ring: 45 100% 50%;
+}
+
+.golden-luxury button,
+.golden-luxury .card {
+  background: linear-gradient(135deg, hsl(45 20% 8%), hsl(45 100% 50% / 0.1), hsl(45 20% 8%));
+  background-size: 200% 200%;
+  animation: goldShimmer 3s linear infinite;
+  transition: all 0.4s ease;
+}
+
+.golden-luxury button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 32px hsl(45 100% 50% / 0.4);
+  border-color: hsl(45 100% 50%);
+}
+
+.golden-luxury .card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 40px hsl(45 100% 50% / 0.3);
+}
+
+/* Forest Guardian Theme */
+.forest-guardian {
+  --background: 140 30% 5%;
+  --foreground: 140 20% 95%;
+  --card: 140 30% 8%;
+  --card-foreground: 140 20% 95%;
+  --popover: 140 30% 8%;
+  --popover-foreground: 140 20% 95%;
+  --primary: 140 60% 40%;
+  --primary-foreground: 140 20% 95%;
+  --secondary: 140 20% 15%;
+  --secondary-foreground: 140 20% 95%;
+  --muted: 140 20% 15%;
+  --muted-foreground: 140 10% 60%;
+  --accent: 140 20% 15%;
+  --accent-foreground: 140 20% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 140 20% 95%;
+  --border: 140 20% 20%;
+  --input: 140 20% 20%;
+  --ring: 140 60% 40%;
+  --sidebar: 140 30% 5%;
+  --sidebar-foreground: 140 20% 95%;
+  --sidebar-primary: 140 60% 40%;
+  --sidebar-primary-foreground: 140 20% 95%;
+  --sidebar-accent: 140 20% 15%;
+  --sidebar-accent-foreground: 140 20% 95%;
+  --sidebar-border: 140 20% 20%;
+  --sidebar-ring: 140 60% 40%;
+}
+
+.forest-guardian button,
+.forest-guardian .card {
+  animation: leafRustle 4s ease-in-out infinite;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.forest-guardian button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px hsl(140 60% 40% / 0.4);
+  filter: brightness(1.2);
+}
+
+.forest-guardian .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px hsl(140 60% 40% / 0.3);
+}
+
+/* Arctic Frost Theme */
+.arctic-frost {
+  --background: 200 30% 95%;
+  --foreground: 200 50% 10%;
+  --card: 200 30% 98%;
+  --card-foreground: 200 50% 10%;
+  --popover: 200 30% 98%;
+  --popover-foreground: 200 50% 10%;
+  --primary: 200 90% 60%;
+  --primary-foreground: 200 50% 10%;
+  --secondary: 200 20% 90%;
+  --secondary-foreground: 200 50% 10%;
+  --muted: 200 20% 90%;
+  --muted-foreground: 200 10% 40%;
+  --accent: 200 20% 90%;
+  --accent-foreground: 200 50% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 200 20% 85%;
+  --input: 200 20% 85%;
+  --ring: 200 90% 60%;
+  --sidebar: 200 30% 95%;
+  --sidebar-foreground: 200 50% 10%;
+  --sidebar-primary: 200 90% 60%;
+  --sidebar-primary-foreground: 200 50% 10%;
+  --sidebar-accent: 200 20% 90%;
+  --sidebar-accent-foreground: 200 50% 10%;
+  --sidebar-border: 200 20% 85%;
+  --sidebar-ring: 200 90% 60%;
+}
+
+.arctic-frost button,
+.arctic-frost .card {
+  animation: frostCrystal 6s ease-in-out infinite;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.arctic-frost button:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 32px hsl(200 90% 60% / 0.4);
+  filter: brightness(1.1);
+}
+
+.arctic-frost .card:hover {
+  transform: translateY(-6px) rotate(-1deg);
+  box-shadow: 0 12px 40px hsl(200 90% 60% / 0.3);
+}
+
+/* Solar Flare Theme */
+.solar-flare {
+  --background: 20 30% 10%;
+  --foreground: 30 50% 95%;
+  --card: 20 30% 13%;
+  --card-foreground: 30 50% 95%;
+  --popover: 20 30% 13%;
+  --popover-foreground: 30 50% 95%;
+  --primary: 30 100% 50%;
+  --primary-foreground: 20 30% 10%;
+  --secondary: 20 30% 20%;
+  --secondary-foreground: 30 50% 95%;
+  --muted: 20 30% 20%;
+  --muted-foreground: 30 20% 60%;
+  --accent: 20 30% 20%;
+  --accent-foreground: 30 50% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 30 50% 95%;
+  --border: 20 30% 25%;
+  --input: 20 30% 25%;
+  --ring: 30 100% 50%;
+  --sidebar: 20 30% 10%;
+  --sidebar-foreground: 30 50% 95%;
+  --sidebar-primary: 30 100% 50%;
+  --sidebar-primary-foreground: 20 30% 10%;
+  --sidebar-accent: 20 30% 20%;
+  --sidebar-accent-foreground: 30 50% 95%;
+  --sidebar-border: 20 30% 25%;
+  --sidebar-ring: 30 100% 50%;
+}
+
+.solar-flare button,
+.solar-flare .card {
+  animation: solarFlare 2s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.solar-flare button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 40px hsl(30 100% 50% / 0.6), 0 0 80px hsl(30 100% 50% / 0.3);
+}
+
+.solar-flare .card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px hsl(30 100% 50% / 0.4);
+  filter: brightness(1.3);
+}
+
+/* Royal Amethyst Theme */
+.royal-amethyst {
+  --background: 270 40% 10%;
+  --foreground: 270 20% 95%;
+  --card: 270 40% 13%;
+  --card-foreground: 270 20% 95%;
+  --popover: 270 40% 13%;
+  --popover-foreground: 270 20% 95%;
+  --primary: 270 80% 60%;
+  --primary-foreground: 270 20% 95%;
+  --secondary: 270 30% 20%;
+  --secondary-foreground: 270 20% 95%;
+  --muted: 270 30% 20%;
+  --muted-foreground: 270 20% 60%;
+  --accent: 270 30% 20%;
+  --accent-foreground: 270 20% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 270 20% 95%;
+  --border: 270 30% 25%;
+  --input: 270 30% 25%;
+  --ring: 270 80% 60%;
+  --sidebar: 270 40% 10%;
+  --sidebar-foreground: 270 20% 95%;
+  --sidebar-primary: 270 80% 60%;
+  --sidebar-primary-foreground: 270 20% 95%;
+  --sidebar-accent: 270 30% 20%;
+  --sidebar-accent-foreground: 270 20% 95%;
+  --sidebar-border: 270 30% 25%;
+  --sidebar-ring: 270 80% 60%;
+}
+
+.royal-amethyst button,
+.royal-amethyst .card {
+  animation: royalPulse 3s ease-in-out infinite;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.royal-amethyst button:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 40px hsl(270 80% 60% / 0.6), 0 0 80px hsl(270 80% 60% / 0.3);
+}
+
+.royal-amethyst .card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 48px hsl(270 80% 60% / 0.4);
+  border-color: hsl(270 80% 60%);
+}
+
+/* Steampunk Theme */
+.steampunk {
+  --background: 30 20% 10%;
+  --foreground: 30 30% 90%;
+  --card: 30 20% 13%;
+  --card-foreground: 30 30% 90%;
+  --popover: 30 20% 13%;
+  --popover-foreground: 30 30% 90%;
+  --primary: 30 60% 50%;
+  --primary-foreground: 30 20% 10%;
+  --secondary: 30 20% 20%;
+  --secondary-foreground: 30 30% 90%;
+  --muted: 30 20% 20%;
+  --muted-foreground: 30 10% 60%;
+  --accent: 30 20% 20%;
+  --accent-foreground: 30 30% 90%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 30 30% 90%;
+  --border: 30 20% 25%;
+  --input: 30 20% 25%;
+  --ring: 30 60% 50%;
+  --sidebar: 30 20% 10%;
+  --sidebar-foreground: 30 30% 90%;
+  --sidebar-primary: 30 60% 50%;
+  --sidebar-primary-foreground: 30 20% 10%;
+  --sidebar-accent: 30 20% 20%;
+  --sidebar-accent-foreground: 30 30% 90%;
+  --sidebar-border: 30 20% 25%;
+  --sidebar-ring: 30 60% 50%;
+}
+
+.steampunk button::before {
+  content: '⚙';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: gearRotate 4s linear infinite;
+  opacity: 0.3;
+  font-size: 1.2em;
+}
+
+.steampunk button {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.steampunk button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px hsl(30 60% 50% / 0.4);
+  filter: sepia(0.3);
+}
+
+.steampunk .card:hover {
+  transform: translateY(-4px) rotate(1deg);
+  box-shadow: 0 8px 32px hsl(30 60% 50% / 0.3);
+  filter: sepia(0.2);
+}
+
+/* Matrix Theme */
+.matrix {
+  --background: 120 10% 5%;
+  --foreground: 120 100% 50%;
+  --card: 120 10% 8%;
+  --card-foreground: 120 100% 50%;
+  --popover: 120 10% 8%;
+  --popover-foreground: 120 100% 50%;
+  --primary: 120 100% 50%;
+  --primary-foreground: 120 10% 5%;
+  --secondary: 120 30% 15%;
+  --secondary-foreground: 120 100% 50%;
+  --muted: 120 30% 15%;
+  --muted-foreground: 120 50% 30%;
+  --accent: 120 30% 15%;
+  --accent-foreground: 120 100% 50%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 120 100% 50%;
+  --border: 120 50% 20%;
+  --input: 120 50% 20%;
+  --ring: 120 100% 50%;
+  --sidebar: 120 10% 5%;
+  --sidebar-foreground: 120 100% 50%;
+  --sidebar-primary: 120 100% 50%;
+  --sidebar-primary-foreground: 120 10% 5%;
+  --sidebar-accent: 120 30% 15%;
+  --sidebar-accent-foreground: 120 100% 50%;
+  --sidebar-border: 120 50% 20%;
+  --sidebar-ring: 120 100% 50%;
+}
+
+.matrix::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      hsl(120 100% 50% / 0.03) 2px,
+      hsl(120 100% 50% / 0.03) 4px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.matrix button,
+.matrix .card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.matrix button::after,
+.matrix .card::after {
+  content: '01';
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: hsl(120 100% 50% / 0.3);
+  font-family: monospace;
+  animation: matrixRain 3s linear infinite;
+}
+
+.matrix button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px hsl(120 100% 50% / 0.6);
+  text-shadow: 0 0 10px hsl(120 100% 50%);
+}
+
+.matrix .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px hsl(120 100% 50% / 0.4);
+  border-color: hsl(120 100% 50%);
 }
 
 @layer base {
@@ -285,5 +953,78 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+}
+/* ============================================
+   RESPONSIVE DESIGN UTILITIES
+   ============================================ */
+
+/* Mobile-first base styles */
+@layer base {
+  /* Touch-friendly tap targets - iOS recommended minimum */
+  button, a[role=button], input[type=button], input[type=submit] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text size adjustment on mobile */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Smooth scrolling for better UX */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* Responsive typography using clamp for fluid scaling */
+@layer utilities {
+  .text-responsive-xs { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
+  .text-responsive-sm { font-size: clamp(0.875rem, 2vw, 1rem); }
+  .text-responsive-base { font-size: clamp(1rem, 2.5vw, 1.125rem); }
+  .text-responsive-lg { font-size: clamp(1.125rem, 3vw, 1.25rem); }
+  .text-responsive-xl { font-size: clamp(1.25rem, 4vw, 1.5rem); }
+  .text-responsive-2xl { font-size: clamp(1.5rem, 5vw, 2rem); }
+  .text-responsive-3xl { font-size: clamp(1.875rem, 6vw, 2.5rem); }
+  .text-responsive-4xl { font-size: clamp(2.25rem, 7vw, 3rem); }
+  
+  /* Responsive spacing */
+  .gap-responsive { gap: clamp(0.5rem, 2vw, 1.5rem); }
+  .p-responsive { padding: clamp(0.75rem, 3vw, 1.5rem); }
+  .px-responsive { padding-left: clamp(0.75rem, 3vw, 1.5rem); padding-right: clamp(0.75rem, 3vw, 1.5rem); }
+  .py-responsive { padding-top: clamp(0.75rem, 3vw, 1.5rem); padding-bottom: clamp(0.75rem, 3vw, 1.5rem); }
+}
+
+/* Mobile-specific utilities (< 768px) */
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+  .mobile-full-width { 
+    width: 100vw; 
+    margin-left: calc(-50vw + 50%); 
+  }
+  .mobile-stack > * {
+    width: 100% !important;
+  }
+}
+
+/* Tablet-specific (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hide-tablet { display: none !important; }
+}
+
+/* Desktop-specific (>= 1024px) */
+@media (min-width: 1024px) {
+  .hide-desktop { display: none !important; }
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
   }
 }

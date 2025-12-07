@@ -1,174 +1,117 @@
 import { useQuery } from "@tanstack/react-query";
-import { User, STAT_NAMES } from "@shared/schema";
+import { User as BackendUser } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RankBadge } from "@/components/rank-badge";
-import { StatBar } from "@/components/stat-bar";
-import { XPProgress } from "@/components/xp-progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/use-auth";
+import { motion } from "framer-motion";
+import {
+    Dumbbell,
+    Brain,
+    Users,
+    Heart,
+    Shield,
+    Zap,
+    Crown
+} from "lucide-react";
 
 export default function StatsPage() {
-  const { data: user, isLoading } = useQuery<User>({
-    queryKey: ["/api/user"],
-  });
+    const { user: firebaseUser } = useAuth();
+    const { data: user } = useQuery<BackendUser>({
+        queryKey: ["/api/user"],
+        enabled: !!firebaseUser,
+    });
 
-  if (isLoading || !user) {
+    if (!user) return null;
+
+    const stats = [
+        { name: "Strength", value: user.strength, icon: Dumbbell, color: "text-red-500", bg: "bg-red-500" },
+        { name: "Agility", value: user.agility, icon: Zap, color: "text-yellow-500", bg: "bg-yellow-500" },
+        { name: "Stamina", value: user.stamina, icon: Heart, color: "text-green-500", bg: "bg-green-500" },
+        { name: "Vitality", value: user.vitality, icon: Shield, color: "text-emerald-500", bg: "bg-emerald-500" },
+        { name: "Intelligence", value: user.intelligence, icon: Brain, color: "text-blue-500", bg: "bg-blue-500" },
+        { name: "Willpower", value: user.willpower, icon: Crown, color: "text-purple-500", bg: "bg-purple-500" },
+        { name: "Charisma", value: user.charisma, icon: Users, color: "text-pink-500", bg: "bg-pink-500" },
+    ];
+
+    const container = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const item = {
+        hidden: { x: -20, opacity: 0 },
+        show: { x: 0, opacity: 1 }
+    };
+
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Skeleton className="h-96" />
-          <Skeleton className="h-96" />
-        </div>
-      </div>
-    );
-  }
-
-  const totalStats = STAT_NAMES.reduce((sum, stat) => sum + user[stat], 0);
-  const averageStat = Math.round(totalStats / STAT_NAMES.length);
-
-  return (
-    <div className="space-y-6" data-testid="page-stats">
-      <div>
-        <h1 className="text-4xl font-display font-bold mb-2">Your Stats</h1>
-        <p className="text-muted-foreground">
-          Track your progress across all attributes
-        </p>
-      </div>
-
-      {/* Overview Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total XP
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-total-xp">
-              {user.xp.toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Level
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-user-level">
-              {user.level}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-total-stats">
-              {totalStats}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Stat
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold" data-testid="text-average-stat">
-              {averageStat}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Rank Display */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Current Rank</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <RankBadge tier={user.tier} level={user.level} size="lg" />
-            <div className="mt-8 w-full">
-              <XPProgress xp={user.xp} tier={user.tier} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Detailed Stats */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Attribute Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {STAT_NAMES.map((stat) => (
-              <div key={stat} className="space-y-2">
-                <StatBar name={stat} value={user[stat]} max={100} />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span className="capitalize">{stat}</span>
-                  <span>{((user[stat] / 100) * 100).toFixed(0)}% of maximum</span>
+        <div className="p-8 min-h-screen bg-background/50">
+            <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="max-w-4xl mx-auto space-y-8"
+            >
+                <div className="text-center mb-12">
+                    <motion.h1
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent"
+                    >
+                        Attribute Analysis
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-muted-foreground mt-2"
+                    >
+                        Detailed breakdown of your current capabilities and potential.
+                    </motion.p>
                 </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Stat Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-4 bg-card rounded-lg border border-card-border">
-              <p className="text-sm text-muted-foreground mb-1">Strongest Stat</p>
-              <p className="text-lg font-semibold capitalize">
-                {STAT_NAMES.reduce((max, stat) => 
-                  user[stat] > user[max] ? stat : max
-                , STAT_NAMES[0])}
-              </p>
-              <p className="text-2xl font-bold text-primary">
-                {Math.max(...STAT_NAMES.map(s => user[s]))}
-              </p>
-            </div>
-
-            <div className="p-4 bg-card rounded-lg border border-card-border">
-              <p className="text-sm text-muted-foreground mb-1">Weakest Stat</p>
-              <p className="text-lg font-semibold capitalize">
-                {STAT_NAMES.reduce((min, stat) => 
-                  user[stat] < user[min] ? stat : min
-                , STAT_NAMES[0])}
-              </p>
-              <p className="text-2xl font-bold text-destructive">
-                {Math.min(...STAT_NAMES.map(s => user[s]))}
-              </p>
-            </div>
-
-            <div className="p-4 bg-card rounded-lg border border-card-border">
-              <p className="text-sm text-muted-foreground mb-1">Balance</p>
-              <p className="text-lg font-semibold">Development Level</p>
-              <p className="text-2xl font-bold">
-                {averageStat >= 50 ? "Well Balanced" : "Room to Grow"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                <div className="grid gap-6">
+                    {stats.map((stat, i) => (
+                        <motion.div
+                            key={stat.name}
+                            variants={item}
+                            whileHover={{ scale: 1.02 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                        >
+                            <Card className="border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden hover:border-blue-500/30 transition-colors">
+                                <div className={`h-1 w-full ${stat.bg} opacity-50`} />
+                                <CardContent className="p-6">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className={`p-3 rounded-xl ${stat.bg}/10`}>
+                                            <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <h3 className="font-bold text-lg">{stat.name}</h3>
+                                                <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
+                                            </div>
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: "100%" }}
+                                                transition={{ duration: 1, delay: 0.5 + (i * 0.1) }}
+                                            >
+                                                <Progress value={stat.value} className="h-2" indicatorClassName={stat.bg} />
+                                            </motion.div>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground pl-[4.5rem]">
+                                        Level {Math.floor(stat.value / 10) + 1} • {10 - (stat.value % 10)} points to next level
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    ))}
+                </div>
+            </motion.div>
+        </div>
+    );
 }

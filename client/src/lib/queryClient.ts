@@ -10,15 +10,22 @@ async function throwIfResNotOk(res: Response) {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const user = auth.currentUser;
-  if (!user) {
-    return {};
+
+  if (user) {
+    return {
+      "x-firebase-uid": user.uid,
+    };
   }
-  
-  // Get Firebase ID token (in production, backend would verify this)
-  // For MVP, we'll just send the UID
-  return {
-    "x-firebase-uid": user.uid,
-  };
+
+  // Check for guest session
+  const guestUid = localStorage.getItem("guest_uid");
+  if (guestUid) {
+    return {
+      "x-firebase-uid": guestUid,
+    };
+  }
+
+  return {};
 }
 
 export async function apiRequest(
@@ -27,7 +34,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
-  
+
   const res = await fetch(url, {
     method,
     headers: {
@@ -47,21 +54,21 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const authHeaders = await getAuthHeaders();
-    
-    const res = await fetch(queryKey.join("/") as string, {
-      headers: authHeaders,
-      credentials: "include",
-    });
+    async ({ queryKey }) => {
+      const authHeaders = await getAuthHeaders();
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      const res = await fetch(queryKey.join("/") as string, {
+        headers: authHeaders,
+        credentials: "include",
+      });
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {

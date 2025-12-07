@@ -1,0 +1,841 @@
+{
+  "users": [
+    [
+      "6523c087-8271-4b8f-bf78-80020ad78ca1",
+      {
+        "id": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "firebaseUid": "local_febaca0d-1b0d-4a99-bc2b-fa3d9c911cc3",
+        "name": "Ascendant",
+        "email": "user@ascension.com",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:23.658Z",
+        "timezone": "UTC",
+        "level": 1,
+        "xp": 0,
+        "tier": "D",
+        "streak": 0,
+        "lastActive": "2025-12-06T12:26:23.658Z",
+        "strength": 10,
+        "agility": 10,
+        "stamina": 10,
+        "vitality": 10,
+        "intelligence": 10,
+        "willpower": 10,
+        "charisma": 10,
+        "onboardingCompleted": false,
+        "coins": 1000,
+        "guildId": null,
+        "theme": "default",
+        "activeBadgeId": null,
+        "activeTitle": null,
+        "assessmentData": null,
+        "currentGoal": null,
+        "studySubject": null,
+        "studyAvailability": null,
+        "notificationsEnabled": true,
+        "notificationTime": 9,
+        "lastNotificationSent": null
+      }
+    ],
+    [
+      "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+      {
+        "id": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "firebaseUid": "local_df53f1a4-1b16-4694-95a1-dc80cd082693",
+        "name": "UserAUserA",
+        "email": "UserAUserA@local.ascension",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:39:59.678Z",
+        "timezone": "UTC",
+        "level": 1,
+        "xp": 0,
+        "tier": "D",
+        "streak": 0,
+        "lastActive": "2025-12-06T12:39:59.678Z",
+        "strength": 50,
+        "agility": 40,
+        "stamina": 40,
+        "vitality": 15,
+        "intelligence": 20,
+        "willpower": 20,
+        "charisma": 20,
+        "onboardingCompleted": true,
+        "coins": 100,
+        "guildId": null,
+        "theme": "default",
+        "activeBadgeId": null,
+        "activeTitle": null,
+        "assessmentData": null,
+        "currentGoal": null,
+        "studySubject": null,
+        "studyAvailability": null,
+        "notificationsEnabled": true,
+        "notificationTime": 9,
+        "lastNotificationSent": null
+      }
+    ],
+    [
+      "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+      {
+        "id": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "firebaseUid": "local_c8f756fb-f480-45b4-b064-b79e9781126b",
+        "name": "UserB",
+        "email": "UserB@local.ascension",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:42:11.209Z",
+        "timezone": "UTC",
+        "level": 1,
+        "xp": 0,
+        "tier": "D",
+        "streak": 0,
+        "lastActive": "2025-12-06T12:42:11.209Z",
+        "strength": 20,
+        "agility": 30,
+        "stamina": 10,
+        "vitality": 35,
+        "intelligence": 20,
+        "willpower": 20,
+        "charisma": 20,
+        "onboardingCompleted": true,
+        "coins": 100,
+        "guildId": null,
+        "theme": "default",
+        "activeBadgeId": null,
+        "activeTitle": null,
+        "assessmentData": null,
+        "currentGoal": null,
+        "studySubject": null,
+        "studyAvailability": null,
+        "notificationsEnabled": true,
+        "notificationTime": 9,
+        "lastNotificationSent": null
+      }
+    ]
+  ],
+  "quests": [
+    [
+      "35c6ba42-d411-4213-b0fe-818d86dbad30",
+      {
+        "id": "35c6ba42-d411-4213-b0fe-818d86dbad30",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "💪 Strength: 11 Pushups",
+        "description": "Complete 11 pushups in a single set. Baseline: 10.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 100,
+        "rewardCoins": 20,
+        "rewardStats": {
+          "strength": 2
+        },
+        "createdAt": "2025-12-06T12:34:53.788Z",
+        "dueAt": "2025-12-07T12:34:53.787Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "70af746e-82c7-48be-ade3-5e774a81f7a0",
+      {
+        "id": "70af746e-82c7-48be-ade3-5e774a81f7a0",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "🏃 Cardio: 20 Min Run",
+        "description": "Go for a 20-minute run or brisk walk. Maintain a steady pace.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 120,
+        "rewardCoins": 25,
+        "rewardStats": {
+          "stamina": 2,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:34:53.824Z",
+        "dueAt": "2025-12-07T12:34:53.787Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "4135fcd8-0640-4eed-a1e6-8fc70808449c",
+      {
+        "id": "4135fcd8-0640-4eed-a1e6-8fc70808449c",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "🥗 Nutrition: Clean Eating",
+        "description": "Eat 3 balanced meals today with no processed sugars.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 80,
+        "rewardCoins": 15,
+        "rewardStats": {
+          "vitality": 2
+        },
+        "createdAt": "2025-12-06T12:34:53.882Z",
+        "dueAt": "2025-12-07T12:34:53.787Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "a6ca3e2c-6245-417b-a572-1e88b8c39661",
+      {
+        "id": "a6ca3e2c-6245-417b-a572-1e88b8c39661",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "Hydration Master (0 day streak)",
+        "description": "Continue your Hydration Master habit. Current streak: 0 days. Longest: 0 days.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 30,
+        "rewardCoins": 10,
+        "rewardStats": {
+          "willpower": 1,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:34:53.890Z",
+        "dueAt": "2025-12-07T12:34:53.788Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "b47e6911-e6e0-4bee-b263-04ebf9a17e1e",
+      {
+        "id": "b47e6911-e6e0-4bee-b263-04ebf9a17e1e",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "⚡ Daily Challenge: The Extra Mile",
+        "description": "Do something today that pushes you outside your comfort zone.",
+        "type": "daily",
+        "difficulty": "hard",
+        "rewardXP": 150,
+        "rewardCoins": 50,
+        "rewardStats": {
+          "willpower": 3
+        },
+        "createdAt": "2025-12-06T12:34:53.905Z",
+        "dueAt": "2025-12-07T12:34:53.788Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "3e792190-4f69-4fa7-b94c-3dc89115492f",
+      {
+        "id": "3e792190-4f69-4fa7-b94c-3dc89115492f",
+        "userId": "6523c087-8271-4b8f-bf78-80020ad78ca1",
+        "title": "Weekly Endurance Challenge",
+        "description": "Complete 3 workout sessions of at least 45 minutes this week.",
+        "type": "weekly",
+        "difficulty": "hard",
+        "rewardXP": 500,
+        "rewardCoins": 100,
+        "rewardStats": {
+          "stamina": 5,
+          "strength": 3
+        },
+        "createdAt": "2025-12-06T12:34:53.965Z",
+        "dueAt": "2025-12-13T12:34:53.965Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "9c4605ab-f5d7-4c9b-a1d9-a4b15695dca1",
+      {
+        "id": "9c4605ab-f5d7-4c9b-a1d9-a4b15695dca1",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "💪 Strength: 11 Pushups",
+        "description": "Complete 11 pushups in a single set. Baseline: 10.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 100,
+        "rewardCoins": 20,
+        "rewardStats": {
+          "strength": 2
+        },
+        "createdAt": "2025-12-06T12:40:01.744Z",
+        "dueAt": "2025-12-07T12:40:01.743Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "a64fec4f-5482-4360-a71d-edade17ebd68",
+      {
+        "id": "a64fec4f-5482-4360-a71d-edade17ebd68",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "🏃 Cardio: 20 Min Run",
+        "description": "Go for a 20-minute run or brisk walk. Maintain a steady pace.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 120,
+        "rewardCoins": 25,
+        "rewardStats": {
+          "stamina": 2,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:40:01.745Z",
+        "dueAt": "2025-12-07T12:40:01.743Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "480af5ed-c27a-47ad-b23d-6f2ac2175f83",
+      {
+        "id": "480af5ed-c27a-47ad-b23d-6f2ac2175f83",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "🥗 Nutrition: Clean Eating",
+        "description": "Eat 3 balanced meals today with no processed sugars.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 80,
+        "rewardCoins": 15,
+        "rewardStats": {
+          "vitality": 2
+        },
+        "createdAt": "2025-12-06T12:40:01.747Z",
+        "dueAt": "2025-12-07T12:40:01.743Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "d632774a-5536-46d5-a217-73032fcb8a6c",
+      {
+        "id": "d632774a-5536-46d5-a217-73032fcb8a6c",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "Hydration Master (0 day streak)",
+        "description": "Continue your Hydration Master habit. Current streak: 0 days. Longest: 0 days.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 30,
+        "rewardCoins": 10,
+        "rewardStats": {
+          "willpower": 1,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:40:02.345Z",
+        "dueAt": "2025-12-07T12:40:01.743Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "19afa33a-c853-445c-8c18-63f65ac0b0f7",
+      {
+        "id": "19afa33a-c853-445c-8c18-63f65ac0b0f7",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "⚡ Daily Challenge: The Extra Mile",
+        "description": "Do something today that pushes you outside your comfort zone.",
+        "type": "daily",
+        "difficulty": "hard",
+        "rewardXP": 150,
+        "rewardCoins": 50,
+        "rewardStats": {
+          "willpower": 3
+        },
+        "createdAt": "2025-12-06T12:40:02.346Z",
+        "dueAt": "2025-12-07T12:40:01.744Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "24dfb36e-c7e0-4159-9b9f-7e8c9d2d91d2",
+      {
+        "id": "24dfb36e-c7e0-4159-9b9f-7e8c9d2d91d2",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9",
+        "title": "Weekly Endurance Challenge",
+        "description": "Complete 3 workout sessions of at least 45 minutes this week.",
+        "type": "weekly",
+        "difficulty": "hard",
+        "rewardXP": 500,
+        "rewardCoins": 100,
+        "rewardStats": {
+          "stamina": 5,
+          "strength": 3
+        },
+        "createdAt": "2025-12-06T12:40:02.367Z",
+        "dueAt": "2025-12-13T12:40:02.367Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "aec9eb43-d1ed-4c46-9f41-b0c5898f2ffb",
+      {
+        "id": "aec9eb43-d1ed-4c46-9f41-b0c5898f2ffb",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "💪 Strength: 11 Pushups",
+        "description": "Complete 11 pushups in a single set. Baseline: 10.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 100,
+        "rewardCoins": 20,
+        "rewardStats": {
+          "strength": 2
+        },
+        "createdAt": "2025-12-06T12:42:11.784Z",
+        "dueAt": "2025-12-07T12:42:11.783Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "715ed35d-8ee3-44f3-8c49-4932c57ecd70",
+      {
+        "id": "715ed35d-8ee3-44f3-8c49-4932c57ecd70",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "🏃 Cardio: 20 Min Run",
+        "description": "Go for a 20-minute run or brisk walk. Maintain a steady pace.",
+        "type": "daily",
+        "difficulty": "normal",
+        "rewardXP": 120,
+        "rewardCoins": 25,
+        "rewardStats": {
+          "stamina": 2,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:42:11.785Z",
+        "dueAt": "2025-12-07T12:42:11.783Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "663aaddb-b69c-4466-9be3-b5f153c2ffc1",
+      {
+        "id": "663aaddb-b69c-4466-9be3-b5f153c2ffc1",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "🥗 Nutrition: Clean Eating",
+        "description": "Eat 3 balanced meals today with no processed sugars.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 80,
+        "rewardCoins": 15,
+        "rewardStats": {
+          "vitality": 2
+        },
+        "createdAt": "2025-12-06T12:42:11.785Z",
+        "dueAt": "2025-12-07T12:42:11.783Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "d49b37cc-5a9c-4bef-b013-fe2598f07edf",
+      {
+        "id": "d49b37cc-5a9c-4bef-b013-fe2598f07edf",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "Hydration Master (0 day streak)",
+        "description": "Continue your Hydration Master habit. Current streak: 0 days. Longest: 0 days.",
+        "type": "daily",
+        "difficulty": "easy",
+        "rewardXP": 30,
+        "rewardCoins": 10,
+        "rewardStats": {
+          "willpower": 1,
+          "vitality": 1
+        },
+        "createdAt": "2025-12-06T12:42:11.786Z",
+        "dueAt": "2025-12-07T12:42:11.784Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "6f0ad0b9-0002-4bba-8e5c-7b4467107814",
+      {
+        "id": "6f0ad0b9-0002-4bba-8e5c-7b4467107814",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "⚡ Daily Challenge: The Extra Mile",
+        "description": "Do something today that pushes you outside your comfort zone.",
+        "type": "daily",
+        "difficulty": "hard",
+        "rewardXP": 150,
+        "rewardCoins": 50,
+        "rewardStats": {
+          "willpower": 3
+        },
+        "createdAt": "2025-12-06T12:42:11.786Z",
+        "dueAt": "2025-12-07T12:42:11.784Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ],
+    [
+      "342302e6-da9f-4d7d-b3b5-846a61bc0fb8",
+      {
+        "id": "342302e6-da9f-4d7d-b3b5-846a61bc0fb8",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7",
+        "title": "Weekly Endurance Challenge",
+        "description": "Complete 3 workout sessions of at least 45 minutes this week.",
+        "type": "weekly",
+        "difficulty": "hard",
+        "rewardXP": 500,
+        "rewardCoins": 100,
+        "rewardStats": {
+          "stamina": 5,
+          "strength": 3
+        },
+        "createdAt": "2025-12-06T12:42:11.799Z",
+        "dueAt": "2025-12-13T12:42:11.799Z",
+        "completed": false,
+        "completedAt": null,
+        "campaignId": null,
+        "parentQuestId": null,
+        "isBoss": false,
+        "bossHealth": null,
+        "bossMaxHealth": null
+      }
+    ]
+  ],
+  "activities": [],
+  "rankTrials": [],
+  "shopItems": [
+    [
+      "a0ae61d0-7f25-4f8b-a7cf-a7c52d20fec9",
+      {
+        "name": "Novice",
+        "description": "Title for beginners",
+        "type": "title",
+        "rarity": "common",
+        "value": "Novice",
+        "cost": 100,
+        "isPremium": false,
+        "id": "a0ae61d0-7f25-4f8b-a7cf-a7c52d20fec9",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "1a9d2796-cfe4-4ecc-8ef7-6bcdde9704e2",
+      {
+        "name": "Apprentice",
+        "description": "Title for learners",
+        "type": "title",
+        "rarity": "common",
+        "value": "Apprentice",
+        "cost": 500,
+        "isPremium": false,
+        "id": "1a9d2796-cfe4-4ecc-8ef7-6bcdde9704e2",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "307b2600-8d9b-4940-bc05-a61a32bf5a43",
+      {
+        "name": "Scholar",
+        "description": "Title for dedicated students",
+        "type": "title",
+        "rarity": "rare",
+        "value": "Scholar",
+        "cost": 1000,
+        "isPremium": false,
+        "id": "307b2600-8d9b-4940-bc05-a61a32bf5a43",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "32803eec-056c-49fb-af27-cd509e7fff6b",
+      {
+        "name": "Focus Master",
+        "description": "Title for focus experts",
+        "type": "title",
+        "rarity": "epic",
+        "value": "Focus Master",
+        "cost": 5000,
+        "isPremium": false,
+        "id": "32803eec-056c-49fb-af27-cd509e7fff6b",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "7a775c48-cf23-4d56-89bf-52bf845a63d4",
+      {
+        "name": "Bronze Medal",
+        "description": "A bronze medal for effort",
+        "type": "badge",
+        "rarity": "common",
+        "value": "medal_bronze",
+        "cost": 200,
+        "isPremium": false,
+        "id": "7a775c48-cf23-4d56-89bf-52bf845a63d4",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "98b3ed4a-ed58-4bbc-97bb-25980a4f6010",
+      {
+        "name": "Silver Medal",
+        "description": "A silver medal for achievement",
+        "type": "badge",
+        "rarity": "rare",
+        "value": "medal_silver",
+        "cost": 1000,
+        "isPremium": false,
+        "id": "98b3ed4a-ed58-4bbc-97bb-25980a4f6010",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ],
+    [
+      "aeda4e3f-7c53-4368-aa21-7d2a96293dfd",
+      {
+        "name": "Gold Medal",
+        "description": "A gold medal for excellence",
+        "type": "badge",
+        "rarity": "epic",
+        "value": "medal_gold",
+        "cost": 5000,
+        "isPremium": false,
+        "id": "aeda4e3f-7c53-4368-aa21-7d2a96293dfd",
+        "createdAt": "2025-12-06T12:26:07.623Z"
+      }
+    ]
+  ],
+  "userItems": [],
+  "guilds": [
+    [
+      "guild-1",
+      {
+        "id": "guild-1",
+        "name": "Alpha",
+        "description": "Alpha guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-2",
+      {
+        "id": "guild-2",
+        "name": "Beta",
+        "description": "Beta guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-3",
+      {
+        "id": "guild-3",
+        "name": "Gamma",
+        "description": "Gamma guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-4",
+      {
+        "id": "guild-4",
+        "name": "Delta",
+        "description": "Delta guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-5",
+      {
+        "id": "guild-5",
+        "name": "Epsilon",
+        "description": "Epsilon guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-6",
+      {
+        "id": "guild-6",
+        "name": "Zeta",
+        "description": "Zeta guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-7",
+      {
+        "id": "guild-7",
+        "name": "Eta",
+        "description": "Eta guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ],
+    [
+      "guild-8",
+      {
+        "id": "guild-8",
+        "name": "Theta",
+        "description": "Theta guild",
+        "leaderId": "",
+        "avatarUrl": null,
+        "createdAt": "2025-12-06T12:26:07.622Z",
+        "level": 1,
+        "xp": 0,
+        "memberCount": 0,
+        "maxMembers": 50,
+        "isPublic": true,
+        "vicePresidentIds": []
+      }
+    ]
+  ],
+  "deletedUids": [],
+  "userCredentials": [
+    [
+      "userausera",
+      {
+        "username": "UserAUserA",
+        "passwordHash": "$2b$10$5iEDWJZDELwtulrY8IgxvOILhxupouCrUYfionCeXg3HRRdSPizLS",
+        "userId": "b3fbfe90-5c7f-48b2-911a-05a746ac1fd9"
+      }
+    ],
+    [
+      "userb",
+      {
+        "username": "UserB",
+        "passwordHash": "$2b$10$FSA3R1p5aDmW/xoch/RRQu7CQyvnp1hNMYNgzhZ93WPKXYCVLRYmq",
+        "userId": "a4f583f3-6fec-49af-b9c5-6cf85f9bf4b7"
+      }
+    ]
+  ],
+  "guildMessages": [],
+  "focusSessions": [],
+  "notifications": [],
+  "messages": [],
+  "partnerships": []
+}
