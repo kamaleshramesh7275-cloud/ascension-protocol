@@ -14,6 +14,11 @@ export const config = {
 export default async function handler(req: any, res: any) {
     if (!initialized) {
         const server = await registerRoutes(app);
+
+        // Import and use global error handler
+        const { globalErrorHandler } = await import("../server/middleware/error-handler");
+        app.use(globalErrorHandler);
+
         initialized = true;
     }
 
