@@ -4,12 +4,16 @@
     "framework": null,
     "rewrites": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api/$1"
-        },
-        {
             "source": "/((?!api/.*|assets/.*|favicon.ico|.*\\..*).*)",
             "destination": "/index.html"
         }
-    ]
+    ],
+    "functions": {
+        "api/**/*.js": {
+            "maxDuration": 10
+        },
+        "api/**/*.ts": {
+            "maxDuration": 10
+        }
+    }
 }
