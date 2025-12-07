@@ -99,6 +99,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // Safety timeout: If loading takes longer than 5 seconds, force sign out to prevent getting stuck
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth loading timed out. Resetting session.");
+        // We can't call signOut here because it's defined below. 
+        // We must manually clear storage and state.
+        localStorage.removeItem("guest_uid");
+        localStorage.removeItem("username");
+        localStorage.removeItem("userId");
+        queryClient.clear();
+        setUser(null);
+        setLoading(false);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const loginAsGuest = async (name?: string) => {
     try {
       setLoading(true);
