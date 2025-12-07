@@ -107,7 +107,9 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     enabled: !!user
   });
 
-  if (authLoading || (user && userLoading)) {
+  // We rely on authLoading for the initial session check.
+  // userLoading (background fetch) should NOT block the UI, as we have the user from useAuth.
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -150,7 +152,8 @@ function Router() {
     enabled: !!user
   });
 
-  if (user && userLoading) {
+  // Remove blocking check for userLoading
+  if (false && user && userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
