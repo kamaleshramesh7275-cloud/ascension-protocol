@@ -22,7 +22,7 @@ export default async function handler(req, res) {
             `;
 
             if (users.length === 0) {
-                return res.status(404).json({ error: "User not found" });
+                return res.status(401).json({ error: "User not found" });
             }
 
             return res.status(200).json(users[0]);

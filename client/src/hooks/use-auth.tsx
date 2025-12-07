@@ -73,8 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Update localStorage with the correct ID
               localStorage.setItem("userId", userData.id);
             }
-          } catch (fetchErr) {
+          } catch (fetchErr: any) {
             console.error("Failed to fetch user details:", fetchErr);
+            // If the user doesn't exist (404) or is unauthorized (401), clear the session
+            if (fetchErr.message && (fetchErr.message.includes("404") || fetchErr.message.includes("401"))) {
+              console.log("User not found or unauthorized - clearing invalid session");
+              localStorage.removeItem("guest_uid");
+              localStorage.removeItem("username");
+              localStorage.removeItem("userId");
+              queryClient.clear();
+              setUser(null);
+            }
           }
         } else {
           setUser(null);
