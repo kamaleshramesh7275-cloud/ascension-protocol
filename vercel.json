@@ -1,13 +1,30 @@
 {
-    "functions": {
-        "api/**/*.ts": {
-            "runtime": "@vercel/node@3.0.7"
-        }
-    },
-    "rewrites": [
+    "version": 2,
+    "builds": [
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+            "src": "package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/user",
+            "dest": "/api/user.js"
+        },
+        {
+            "src": "/api/login",
+            "dest": "/api/login.js"
+        },
+        {
+            "src": "/api/register",
+            "dest": "/api/register.ts"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/index.html"
         }
     ]
 }
