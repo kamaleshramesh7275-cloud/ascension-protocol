@@ -41,18 +41,22 @@ async function requireAuth(req: Request, res: Response, next: Function) {
   // Handle guest users OR users lost due to server restart (MemStorage)
   if (!user) {
     const isGuest = firebaseUid.startsWith("guest_");
-    user = await storage.createUser({
-      firebaseUid,
-      name: isGuest ? "Guest Ascendant" : "Ascendant",
-      email: isGuest ? `${firebaseUid}@guest.com` : "user@ascension.com",
-      avatarUrl: null,
-      timezone: "UTC",
-      onboardingCompleted: !isGuest, // Assume real users have onboarded
-    });
+    const isLocal = firebaseUid.startsWith("local_");
 
-    // Give them coins to test shop if they were lost
-    if (!isGuest) {
-      await storage.updateUser(user.id, { coins: 1000 });
+    if (isGuest || isLocal) {
+      user = await storage.createUser({
+        firebaseUid,
+        name: isGuest ? "Guest Ascendant" : "Ascendant",
+        email: isGuest ? `${firebaseUid}@guest.com` : "user@ascension.com",
+        avatarUrl: null,
+        timezone: "UTC",
+        onboardingCompleted: !isGuest, // Assume real users have onboarded
+      });
+
+      // Give them coins to test shop if they were lost
+      if (!isGuest) {
+        await storage.updateUser(user.id, { coins: 1000 });
+      }
     }
   }
 
