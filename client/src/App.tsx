@@ -163,7 +163,7 @@ function Router() {
   }
 
   // Authenticated Routes
-  if (!authLoading && !userLoading && user) {
+  if (!authLoading && user) {
     const onboardingCompleted = backendUser?.onboardingCompleted;
 
     return (
