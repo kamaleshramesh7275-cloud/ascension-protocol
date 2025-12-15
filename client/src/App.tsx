@@ -163,6 +163,8 @@ function Router() {
   }
 
   // Authenticated Routes
+  console.log("[Debug] Router state:", { authLoading, userLoading, user: !!user, pathname: window.location.pathname });
+
   if (!authLoading && user) {
     const onboardingCompleted = backendUser?.onboardingCompleted;
 

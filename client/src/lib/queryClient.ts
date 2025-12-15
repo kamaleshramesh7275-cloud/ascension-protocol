@@ -10,6 +10,7 @@ async function throwIfResNotOk(res: Response) {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const user = auth.currentUser;
+  console.log("[Debug] getAuthHeaders: Current Firebase user:", user?.uid);
 
   if (user) {
     return {
@@ -19,6 +20,8 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 
   // Check for guest session
   const guestUid = localStorage.getItem("guest_uid");
+  console.log("[Debug] getAuthHeaders: LocalStorage guest_uid:", guestUid);
+
   if (guestUid) {
     return {
       "x-firebase-uid": guestUid,
@@ -34,6 +37,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
+  console.log(`[Debug] apiRequest ${method} ${url} Headers:`, authHeaders);
 
   const res = await fetch(url, {
     method,
