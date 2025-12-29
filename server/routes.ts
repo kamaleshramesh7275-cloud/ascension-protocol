@@ -181,6 +181,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
   });
 
+  // DEBUG: Ping route
+  app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now(), location: "routes.ts" }));
+
   // Store Routes
   app.get("/api/store/items", async (req, res) => {
     const items = await storage.getShopItems();

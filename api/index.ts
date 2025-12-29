@@ -3,8 +3,6 @@ import { registerRoutes } from "../server/routes";
 
 // Initialize routes (this promise will resolve once locally, 
 // ensuring routes are registered before handling requests)
-// Initialize routes
-app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now() }));
 const initialized = registerRoutes(app);
 
 export default async function handler(req: any, res: any) {
