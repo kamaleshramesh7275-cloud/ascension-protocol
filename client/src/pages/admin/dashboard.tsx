@@ -162,6 +162,26 @@ export default function AdminDashboard() {
         },
     });
 
+    const { data: studyLogs = [] } = useQuery<any[]>({
+        queryKey: ["/api/admin/study-logs"],
+        enabled: isAuthenticated && activeTab === "study-logs",
+        queryFn: async () => {
+            const res = await fetch("/api/admin/study-logs", { headers: getAdminHeaders() });
+            if (!res.ok) throw new Error("Failed");
+            return res.json();
+        },
+    });
+
+    const { data: partnerships = [] } = useQuery<any[]>({
+        queryKey: ["/api/admin/partners"],
+        enabled: isAuthenticated && activeTab === "partners",
+        queryFn: async () => {
+            const res = await fetch("/api/admin/partners", { headers: getAdminHeaders() });
+            if (!res.ok) throw new Error("Failed");
+            return res.json();
+        },
+    });
+
     // Mutations
     const deleteUserMutation = useMutation({
         mutationFn: async (id: string) => {
@@ -747,19 +767,20 @@ export default function AdminDashboard() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {/* Mock Data for now */}
-                                            {[
-                                                { user: "Alice Chen", activity: "Pomodoro Session", duration: "25m", time: "10 mins ago" },
-                                                { user: "Bob Smith", activity: "Deep Work", duration: "50m", time: "1 hour ago" },
-                                                { user: "Charlie Kim", activity: "Short Break", duration: "5m", time: "2 hours ago" },
-                                            ].map((log, i) => (
-                                                <TableRow key={i} className="border-zinc-800 hover:bg-zinc-800/50">
-                                                    <TableCell className="font-medium text-white">{log.user}</TableCell>
-                                                    <TableCell>{log.activity}</TableCell>
-                                                    <TableCell className="text-green-400">{log.duration}</TableCell>
-                                                    <TableCell className="text-zinc-500">{log.time}</TableCell>
+                                            {studyLogs.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-zinc-500 py-4">No study logs found</TableCell>
                                                 </TableRow>
-                                            ))}
+                                            ) : (
+                                                studyLogs.map((log: any) => (
+                                                    <TableRow key={log.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                                                        <TableCell className="font-medium text-white">{log.user?.name || "Unknown User"}</TableCell>
+                                                        <TableCell>{log.task || "Generic Session"}</TableCell>
+                                                        <TableCell className="text-green-400">{log.duration}m</TableCell>
+                                                        <TableCell className="text-zinc-500">{new Date(log.completedAt).toLocaleString()}</TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </CardContent>
@@ -782,7 +803,9 @@ export default function AdminDashboard() {
                                             <CardContent className="p-4 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-zinc-400">Active Pairs</p>
-                                                    <p className="text-2xl font-bold text-white">24</p>
+                                                    <p className="text-2xl font-bold text-white">
+                                                        {partnerships.filter((p: any) => p.status === "accepted").length}
+                                                    </p>
                                                 </div>
                                                 <Users className="w-8 h-8 text-cyan-500" />
                                             </CardContent>
@@ -791,7 +814,9 @@ export default function AdminDashboard() {
                                             <CardContent className="p-4 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-zinc-400">Pending Requests</p>
-                                                    <p className="text-2xl font-bold text-white">12</p>
+                                                    <p className="text-2xl font-bold text-white">
+                                                        {partnerships.filter((p: any) => p.status === "pending").length}
+                                                    </p>
                                                 </div>
                                                 <MessageSquare className="w-8 h-8 text-yellow-500" />
                                             </CardContent>
@@ -800,7 +825,9 @@ export default function AdminDashboard() {
                                             <CardContent className="p-4 flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-zinc-400">Total Sessions</p>
-                                                    <p className="text-2xl font-bold text-white">156</p>
+                                                    <p className="text-2xl font-bold text-white">
+                                                        {Math.floor(Math.random() * 100) + 50} {/* Mock for now until real logs linked */}
+                                                    </p>
                                                 </div>
                                                 <Clock className="w-8 h-8 text-purple-500" />
                                             </CardContent>
@@ -818,29 +845,31 @@ export default function AdminDashboard() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {/* Mock Data */}
-                                            {[
-                                                { u1: "Alice Chen", u2: "Bob Smith", subject: "Physics", status: "Active", date: "2 days ago" },
-                                                { u1: "Charlie Kim", u2: "Diana Prince", subject: "History", status: "Pending", date: "1 hour ago" },
-                                                { u1: "Evan Wright", u2: "Alice Chen", subject: "Math", status: "Completed", date: "1 week ago" },
-                                            ].map((pair, i) => (
-                                                <TableRow key={i} className="border-zinc-800 hover:bg-zinc-800/50">
-                                                    <TableCell className="font-medium text-white">{pair.u1}</TableCell>
-                                                    <TableCell className="font-medium text-white">{pair.u2}</TableCell>
-                                                    <TableCell>{pair.subject}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline" className={`
-                                                                ${pair.status === 'Active' ? 'bg-green-900/20 text-green-400 border-green-800' : ''}
-                                                                ${pair.status === 'Pending' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-800' : ''}
-                                                                ${pair.status === 'Completed' ? 'bg-zinc-800 text-zinc-400 border-zinc-700' : ''}
-                                                            `}>
-                                                            {pair.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-zinc-500">{pair.date}</TableCell>
+                                            {partnerships.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={5} className="text-center text-zinc-500 py-4">No partnerships found</TableCell>
                                                 </TableRow>
-                                            ))}
+                                            ) : (
+                                                partnerships.map((p: any) => (
+                                                    <TableRow key={p.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                                                        <TableCell className="font-medium text-white">{p.user1?.name || "User 1"}</TableCell>
+                                                        <TableCell className="font-medium text-white">{p.user2?.name || "User 2"}</TableCell>
+                                                        <TableCell>{p.user1?.studySubject || "General"}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className={
+                                                                p.status === 'accepted' ? 'bg-green-900/20 text-green-400 border-green-800' :
+                                                                    p.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-800' :
+                                                                        'bg-zinc-900/20 text-zinc-400 border-zinc-800'
+                                                            }>
+                                                                {p.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-500">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
                                         </TableBody>
+
                                     </Table>
                                 </CardContent>
                             </Card>

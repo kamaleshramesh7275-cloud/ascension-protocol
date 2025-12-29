@@ -153,14 +153,7 @@ function Router() {
   });
 
   // Remove blocking check for userLoading
-  if (false && user && userLoading) {
-    return (
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Syncing ascension data...</p>
-        </div >
-      </div >
-    );
-  }
+
 
   // Authenticated Routes
   console.log("[Debug] Router state:", { authLoading, userLoading, user: !!user, pathname: window.location.pathname });

@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         level: user.level,
         tier: user.tier,
         xp: user.xp,
-        bio: user.bio,
+        bio: (user as any).bio,
         avatarUrl: user.avatarUrl,
         streak: user.streak,
         stats: {
@@ -544,13 +544,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       endDate.setHours(endDate.getHours() + durationHours);
 
       const rivalry = await storage.createRivalry({
-        challengerId: req.user!.id,
+        challengerId: (req as any).user!.id,
         defenderId,
         startDate: new Date(),
         endDate,
-        status: "pending",
-        challengerScore: 0,
-        defenderScore: 0,
+        // status, challengerScore, defenderScore are set by storage defaults
         reward: 500, // Default reward
       });
 
@@ -563,11 +561,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/rivalry", requireAuth, async (req, res) => {
     try {
-      const rivalries = await storage.getRivalries(req.user!.id);
+      const rivalries = await storage.getRivalries((req as any).user!.id);
 
       // Enhance with user details
       const enhancedRivalries = await Promise.all(rivalries.map(async (r) => {
-        const opponentId = r.challengerId === req.user!.id ? r.defenderId : r.challengerId;
+        const opponentId = r.challengerId === (req as any).user!.id ? r.defenderId : r.challengerId;
         const opponent = await storage.getUser(opponentId);
         return { ...r, opponent };
       }));
@@ -869,6 +867,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Restore error:", error);
       res.status(500).json({ error: "Failed to restore data" });
+    }
+  });
+
+  // Get all study logs (admin only)
+  app.get("/api/admin/study-logs", async (req, res) => {
+    try {
+      const adminPassword = req.headers["x-admin-password"] as string;
+      if (adminPassword !== ADMIN_PASSWORD) return res.status(403).json({ error: "Unauthorized" });
+
+      const logs = await storage.getAllFocusSessions();
+      res.json(logs);
+    } catch (error) {
+      console.error("Get admin study logs error:", error);
+      res.status(500).json({ error: "Failed to get study logs" });
+    }
+  });
+
+  // Get all partnerships (admin only)
+  app.get("/api/admin/partners", async (req, res) => {
+    try {
+      const adminPassword = req.headers["x-admin-password"] as string;
+      if (adminPassword !== ADMIN_PASSWORD) return res.status(403).json({ error: "Unauthorized" });
+
+      const partners = await storage.getAllPartnerships();
+      res.json(partners);
+    } catch (error) {
+      console.error("Get admin partners error:", error);
+      res.status(500).json({ error: "Failed to get partnerships" });
     }
   });
 

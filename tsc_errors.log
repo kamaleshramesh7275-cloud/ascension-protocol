@@ -1,0 +1,4 @@
+﻿client/src/App.tsx(158,11): error TS2657: JSX expressions must have one parent element.
+client/src/App.tsx(160,9): error TS1005: ')' expected.
+client/src/App.tsx(161,7): error TS1109: Expression expected.
+client/src/App.tsx(162,5): error TS1109: Expression expected.

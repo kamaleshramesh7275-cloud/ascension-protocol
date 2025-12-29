@@ -65,6 +65,7 @@ import {
   guildPerks,
   guildDonations,
 } from "@shared/schema";
+import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, desc, and, ne, or } from "drizzle-orm";
@@ -129,6 +130,7 @@ export interface IStorage {
   // Focus Session operations
   createFocusSession(session: InsertFocusSession): Promise<FocusSession>;
   getUserFocusSessions(userId: string): Promise<FocusSession[]>;
+  getAllFocusSessions(): Promise<(FocusSession & { user: User })[]>;
   getFocusSessionStats(userId: string): Promise<{ totalMinutes: number; totalXP: number; sessionCount: number }>;
 
   // Notification operations
@@ -148,6 +150,7 @@ export interface IStorage {
 
   // Partnership operations
   createPartnership(user1Id: string, user2Id: string): Promise<Partnership>;
+  getAllPartnerships(): Promise<(Partnership & { user1: User; user2: User })[]>;
   getPartnerships(userId: string): Promise<Partnership[]>;
   updatePartnership(id: string, updates: Partial<Partnership>): Promise<Partnership>;
   updatePartnershipStatus(id: string, status: string): Promise<Partnership>;
@@ -246,6 +249,8 @@ export class MemStorage implements IStorage {
         maxMembers: 50,
         isPublic: true,
         vicePresidentIds: [],
+        treasury: 0,
+        activePerks: [],
       });
     });
     this.users = new Map();
@@ -292,7 +297,7 @@ export class MemStorage implements IStorage {
 
     defaultPerks.forEach(perk => {
       const id = randomUUID();
-      this.guildPerks.set(id, { ...perk, id });
+      this.guildPerks.set(id, { ...perk, id, tier: perk.tier || 1, iconName: perk.iconName || null });
     });
 
     // Pre-populate default quests for each guild
@@ -305,7 +310,6 @@ export class MemStorage implements IStorage {
           description: "Guild members collectively earn 5,000 XP",
           type: "collective_xp",
           targetValue: 5000,
-          currentValue: 0,
           rewardCoins: 100,
           rewardXP: 200,
           status: "active",
@@ -317,7 +321,6 @@ export class MemStorage implements IStorage {
           description: "Guild members collectively focus for 300 minutes",
           type: "collective_focus",
           targetValue: 300,
-          currentValue: 0,
           rewardCoins: 150,
           rewardXP: 300,
           status: "active",
@@ -329,7 +332,6 @@ export class MemStorage implements IStorage {
           description: "Have 5 different members complete any quest",
           type: "member_participation",
           targetValue: 5,
-          currentValue: 0,
           rewardCoins: 200,
           rewardXP: 400,
           status: "active",
@@ -344,9 +346,75 @@ export class MemStorage implements IStorage {
           id,
           createdAt: new Date(),
           completedAt: null,
-        });
+          currentValue: 0,
+        } as GuildQuest);
       });
     });
+
+    // --- Inject Demo User for Vercel Persistence ---
+    this.createDemoUser();
+  }
+
+  private createDemoUser() {
+    try {
+      const demoUsername = "demo"; // Fixed username
+      const demoPassword = "password123";
+      const demoFirebaseUid = "local_demo_uid";
+
+      // 1. Create User
+      const demoUser: User = {
+        id: "100", // Fixed numeric/string ID often used in seeding
+        firebaseUid: demoFirebaseUid,
+        name: demoUsername,
+        email: "demo@ascension.local",
+        avatarUrl: null,
+        timezone: "UTC",
+        onboardingCompleted: true,
+        level: 5,
+        xp: 2500,
+        tier: "Iron",
+        streak: 3,
+        createdAt: new Date(),
+        coins: 500,
+        strength: 20,
+        agility: 15,
+        stamina: 18,
+        vitality: 25,
+        intelligence: 30,
+        willpower: 28,
+        charisma: 22,
+        currentGoal: "Master the demo",
+        bio: "I am the persistent demo user.",
+        stats: {
+          strength: 20, agility: 15, stamina: 18, vitality: 25, intelligence: 30, willpower: 28, charisma: 22
+        },
+        studySubject: "Demoology",
+        studyAvailability: "Always",
+        lastNotificationSent: null,
+      } as any;
+
+      this.users.set(demoUser.id.toString(), demoUser);
+      console.log("✅ Demo user created in MemStorage");
+
+      // 2. Create Credentials
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(demoPassword, salt);
+
+      const creds: Credential = {
+        id: randomUUID(),
+        userId: demoUser.id.toString(),
+        username: demoUsername,
+        passwordHash: hash,
+        password: "",
+        createdAt: new Date()
+      };
+
+      this.userCredentials.set(creds.id, creds);
+      console.log("✅ Demo credentials created");
+
+    } catch (err) {
+      console.error("Failed to create demo user:", err);
+    }
   }
 
   // Rivalry operations
@@ -396,7 +464,7 @@ export class MemStorage implements IStorage {
       id,
       createdAt: new Date(),
       completedAt: null,
-      currentValue: quest.currentValue ?? 0,
+      currentValue: 0,
       status: quest.status ?? "active",
       contributors: [], // Initialize contributors array
     } as any; // Cast mainly because of contributors not being in InsertGuildQuest but needed for logic
@@ -802,7 +870,8 @@ export class MemStorage implements IStorage {
       description: insertGuild.description ?? null,
       avatarUrl: null,
       createdAt: new Date(),
-      level: 1, xp: 0, memberCount: 0, maxMembers: 50, isPublic: true, vicePresidentIds: []
+      level: 1, xp: 0, memberCount: 0, maxMembers: 50, isPublic: true, vicePresidentIds: [],
+      treasury: 0, activePerks: []
     };
     this.guilds.set(id, guild);
     this.autoSave();
@@ -877,6 +946,15 @@ export class MemStorage implements IStorage {
     return Array.from(this.focusSessions.values())
       .filter(s => s.userId === userId)
       .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }
+
+  async getAllFocusSessions(): Promise<(FocusSession & { user: User })[]> {
+    const sessions = Array.from(this.focusSessions.values())
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+    return await Promise.all(sessions.map(async s => {
+      const user = await this.getUser(s.userId);
+      return { ...s, user: user! };
+    }));
   }
 
   async getFocusSessionStats(userId: string): Promise<{ totalMinutes: number; totalXP: number; sessionCount: number }> {
@@ -1001,6 +1079,15 @@ export class MemStorage implements IStorage {
 
   async getPartnerships(userId: string): Promise<Partnership[]> {
     return Array.from(this.partnerships.values()).filter(p => p.user1Id === userId || p.user2Id === userId);
+  }
+
+  async getAllPartnerships(): Promise<(Partnership & { user1: User; user2: User })[]> {
+    const all = Array.from(this.partnerships.values());
+    return await Promise.all(all.map(async p => {
+      const u1 = await this.getUser(p.user1Id);
+      const u2 = await this.getUser(p.user2Id);
+      return { ...p, user1: u1!, user2: u2! };
+    }));
   }
 
   async updatePartnership(id: string, updates: Partial<Partnership>): Promise<Partnership> {
@@ -1361,8 +1448,10 @@ export class DatabaseStorage implements IStorage {
     return !!cred;
   }
 
-  async getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]> {
-    return await db!.select().from(credentials);
+  async getAllCredentials(): Promise<{ username: string; passwordHash: string; password: string; userId: string }[]> {
+    const creds = await db!.select().from(credentials);
+    // Map to match IStorage interface (Database doesn't store raw passwords)
+    return creds.map(c => ({ ...c, password: "" }));
   }
 
   async createFocusSession(session: InsertFocusSession): Promise<FocusSession> {
@@ -1372,6 +1461,14 @@ export class DatabaseStorage implements IStorage {
 
   async getUserFocusSessions(userId: string): Promise<FocusSession[]> {
     return await db!.select().from(focusSessions).where(eq(focusSessions.userId, userId));
+  }
+
+  async getAllFocusSessions(): Promise<(FocusSession & { user: User })[]> {
+    const sessions = await db!.select().from(focusSessions).orderBy(desc(focusSessions.completedAt));
+    return await Promise.all(sessions.map(async s => {
+      const user = await this.getUser(s.userId);
+      return { ...s, user: user! };
+    }));
   }
 
   async getFocusSessionStats(userId: string): Promise<{ totalMinutes: number; totalXP: number; sessionCount: number }> {
@@ -1537,6 +1634,15 @@ export class DatabaseStorage implements IStorage {
     return [...p1, ...p2];
   }
 
+  async getAllPartnerships(): Promise<(Partnership & { user1: User; user2: User })[]> {
+    const all = await db!.select().from(partnerships);
+    return await Promise.all(all.map(async p => {
+      const u1 = await this.getUser(p.user1Id);
+      const u2 = await this.getUser(p.user2Id);
+      return { ...p, user1: u1!, user2: u2! };
+    }));
+  }
+
   async updatePartnership(id: string, updates: Partial<Partnership>): Promise<Partnership> {
     const [p] = await db!.update(partnerships).set(updates).where(eq(partnerships.id, id)).returning();
     return p;
@@ -1561,6 +1667,43 @@ export class DatabaseStorage implements IStorage {
   async getDirectMessages(u1: string, u2: string): Promise<DirectMessage[]> {
     // Basic fetch
     return await db!.select().from(directMessages);
+  }
+
+
+  async updateGuildQuest(id: string, updates: Partial<GuildQuest>): Promise<GuildQuest> {
+    throw new Error("Method not implemented.");
+  }
+
+  async contributeToGuildQuest(questId: string, userId: string, amount: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  async getGuildQuestProgress(questId: string): Promise<GuildQuestProgress[]> {
+    return [];
+  }
+
+  async getAllGuildPerks(): Promise<GuildPerk[]> {
+    return [];
+  }
+
+  async purchaseGuildPerk(guildId: string, perkId: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  async getGuildActivePerks(guildId: string): Promise<GuildPerk[]> {
+    return [];
+  }
+
+  async donateToGuild(guildId: string, userId: string, amount: number): Promise<GuildDonation> {
+    throw new Error("Method not implemented.");
+  }
+
+  async getGuildDonations(guildId: string, limit?: number): Promise<GuildDonation[]> {
+    return [];
+  }
+
+  async getGuildTreasury(guildId: string): Promise<number> {
+    return 0;
   }
 
   async persist(): Promise<void> {
