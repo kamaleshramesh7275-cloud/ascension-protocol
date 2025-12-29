@@ -76,6 +76,18 @@ export default async function runApp(
 ) {
   const server = await registerRoutes(app);
 
+  // DEBUG: Catch-all 404 for API to show what path Express is seeing
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({
+      error: "Debugging 404",
+      path: req.path,
+      originalUrl: req.originalUrl,
+      reqUrl: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+  });
+
   app.use(globalErrorHandler);
 
   // importantly run the final setup after setting up all the other routes so
