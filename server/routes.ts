@@ -2,7 +2,6 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 // import { DrizzleStorage } from "./drizzle-storage";
 import { getStorage } from "./storage";
-const storage = getStorage();
 import {
   TIER_THRESHOLDS,
   Tier,
@@ -30,6 +29,7 @@ import { WebSocket, WebSocketServer } from "ws";
 // Middleware to check Firebase auth (simplified for MVP)
 // In production, you'd verify Firebase tokens here
 async function requireAuth(req: Request, res: Response, next: Function) {
+  const storage = getStorage(); // Lazy load
   const firebaseUid = req.headers["x-firebase-uid"] as string;
 
   if (!firebaseUid) {
@@ -91,6 +91,7 @@ function calculateLevel(xp: number): number {
 
 // Helper to assign daily quests to a user
 async function assignDailyQuests(userId: string) {
+  const storage = getStorage(); // Lazy load
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -124,6 +125,7 @@ async function assignDailyQuests(userId: string) {
 
 // Helper to assign weekly quests
 async function assignWeeklyQuest(userId: string) {
+  const storage = getStorage(); // Lazy load
   const now = new Date();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
@@ -166,6 +168,7 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  const storage = getStorage(); // Lazy load storage here
   // Initialize Cron Jobs
   initCronJobs(storage);
 
