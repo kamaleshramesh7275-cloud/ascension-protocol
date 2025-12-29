@@ -1,6 +1,8 @@
 import { app } from "../server/app";
 import { registerRoutes } from "../server/routes";
 
+// Catch-all API route handler for Vercel
+
 // Initialize routes
 const initialized = registerRoutes(app);
 
