@@ -5,9 +5,9 @@ const storage = getStorage();
 import { randomUUID } from "crypto";
 
 export function registerLocalAuthRoutes(app: Express) {
-    // Register with username/password
     app.post("/api/auth/register-local", async (req, res) => {
         try {
+            console.log("[REGISTER] Starting registration process");
             const { username, password, age, weight, height, pushups, pullups, intelligence, willpower, charisma, vitality } = req.body;
 
             if (!username || !password) {
@@ -23,15 +23,20 @@ export function registerLocalAuthRoutes(app: Express) {
             }
 
             // Check if username already exists
-            if (await storage.usernameExists(username)) {
+            console.log("[REGISTER] Checking if username exists:", username);
+            const exists = await storage.usernameExists(username);
+            if (exists) {
                 return res.status(400).json({ error: "Username already taken" });
             }
 
             // Hash password
+            console.log("[REGISTER] Hashing password");
             const passwordHash = await bcrypt.hash(password, 10);
 
             // Create user with local_ prefix for firebaseUid
             const firebaseUid = `local_${randomUUID()}`;
+            console.log("[REGISTER] Creating user with firebaseUid:", firebaseUid);
+
             const user = await storage.createUser({
                 firebaseUid,
                 name: username,
@@ -45,7 +50,10 @@ export function registerLocalAuthRoutes(app: Express) {
                 }
             });
 
+            console.log("[REGISTER] User created with ID:", user.id);
+
             // Save credentials
+            console.log("[REGISTER] Saving credentials");
             await storage.saveCredentials(username, passwordHash, password, user.id);
 
             // Calculate stats from assessment
@@ -80,6 +88,7 @@ export function registerLocalAuthRoutes(app: Express) {
             const cap = (val: number) => Math.min(100, Math.max(1, val));
 
             // Update user with stats
+            console.log("[REGISTER] Updating user with stats");
             await storage.updateUser(user.id, {
                 strength: cap(strength),
                 agility: cap(agility),
@@ -92,10 +101,12 @@ export function registerLocalAuthRoutes(app: Express) {
                 coins: 100, // Starting coins
             });
 
+            console.log("[REGISTER] Registration successful");
             res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
         } catch (error) {
-            console.error("Register local error:", error);
-            res.status(500).json({ error: "Failed to register" });
+            console.error("[REGISTER] Registration error:", error);
+            console.error("[REGISTER] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+            res.status(500).json({ error: "Failed to register", details: error instanceof Error ? error.message : String(error) });
         }
     });
 
