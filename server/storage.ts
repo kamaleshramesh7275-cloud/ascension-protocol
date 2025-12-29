@@ -1765,8 +1765,7 @@ export const getStorage = (): IStorage => {
       console.log("🗄️ Initialized Database Storage");
     } else {
       _storage = new MemStorage();
-      (_storage as MemStorage).hydrate();
-      console.log("🗄️ Initialized Memory Storage (with file persistence)");
+      console.log("🗄️ Initialized Memory Storage");
     }
   }
   return _storage!;
