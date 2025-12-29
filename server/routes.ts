@@ -15,11 +15,22 @@ import guildEnhancementsRouter from "./routes/guild-enhancements";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
-import {
-  insertMessageSchema,
+
+// DEBUG: Endpoint to list users
+import { getStorage } from "./storage";
+const storage = getStorage();
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize Cron Jobs
+  initCronJobs(storage);
+
+  app.get("/api/debug/users", async (req, res) => {
+    const users = await storage.getAllUsers();
+    res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
+  });
   insertGuildSchema,
-  insertGuildMessageSchema,
-  insertGuildQuestSchema,
+    insertGuildMessageSchema,
+    insertGuildQuestSchema,
 } from "@shared/schema";
 
 // Middleware to check Firebase auth (simplified for MVP)
