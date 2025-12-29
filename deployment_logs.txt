@@ -1,0 +1,7 @@
+Vercel CLI 50.1.3
+Fetching deployment "ascension-protocol-3sztv0o08-kamaleshs-projects-7792a889.vercel.app" in kamaleshs-projects-7792a889
+Displaying runtime logs for deployment ascension-protocol-3sztv0o08-kamaleshs-projects-7792a889.vercel.app (dpl_BNRgPNuWbLqXjc18Bz7af4Ew1whp) starting from Dec Mo 22:06:11.70
+
+waiting for new logs...
+WARN! Exceeded query duration limit of 5 minutes
+

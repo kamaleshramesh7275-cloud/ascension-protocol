@@ -1,0 +1,48 @@
+Vercel CLI 50.1.3
+Retrieving project…
+Fetching deployments in kamaleshs-projects-7792a889
+> Production deployments for kamaleshs-projects-7792a889/ascension-protocol [310ms]
+
+  Age     Deployment                                                                      Status      Environment     Duration     Username                     
+  6m      https://ascension-protocol-3sztv0o08-kamaleshs-projects-7792a889.vercel.app     ● Ready     Production      59s          kamaleshramesh7275-cloud     
+  44m     https://ascension-protocol-loaeuxjw9-kamaleshs-projects-7792a889.vercel.app     ● Ready     Production      3m           kamaleshramesh7275-cloud     
+  56m     https://ascension-protocol-7ohp1b732-kamaleshs-projects-7792a889.vercel.app     ● Ready     Production      3m           kamaleshramesh7275-cloud     
+  1h      https://ascension-protocol-jrsur8rtc-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-g9otm2j47-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-8e9z4jkcc-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-hodd6t6vm-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-ogwboet49-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-6u0u9hbaw-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      4s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-nl7krqi24-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-1igb60r4l-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      4s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-mmpcezozz-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      3s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-qpur6d1o3-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      4s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-c2mezu50w-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      3s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-jv2a7twge-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      4s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-h6h51oj0h-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      4s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-4sagbn4u1-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      5s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-bz32mmy33-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-gbj3vuwma-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      3s           kamaleshramesh7275-cloud     
+  2h      https://ascension-protocol-i1xlra3zq-kamaleshs-projects-7792a889.vercel.app     ● Error     Production      2s           kamaleshramesh7275-cloud     
+
+https://ascension-protocol-3sztv0o08-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-loaeuxjw9-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-7ohp1b732-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-jrsur8rtc-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-g9otm2j47-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-8e9z4jkcc-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-hodd6t6vm-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-ogwboet49-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-6u0u9hbaw-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-nl7krqi24-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-1igb60r4l-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-mmpcezozz-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-qpur6d1o3-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-c2mezu50w-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-jv2a7twge-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-h6h51oj0h-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-4sagbn4u1-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-bz32mmy33-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-gbj3vuwma-kamaleshs-projects-7792a889.vercel.app
+https://ascension-protocol-i1xlra3zq-kamaleshs-projects-7792a889.vercel.app
+> To display the next page, run `vercel ls --prod --next 1767016337841`
