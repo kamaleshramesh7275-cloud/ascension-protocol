@@ -1,13 +1,13 @@
 import type { Express } from "express";
 import bcrypt from "bcryptjs";
 import { getStorage } from "../storage";
-const storage = getStorage();
 import { randomUUID } from "crypto";
 
 export function registerLocalAuthRoutes(app: Express) {
     app.post("/api/auth/register-local", async (req, res) => {
         try {
             console.log("[REGISTER] Starting registration process");
+            const storage = getStorage(); // Lazy load storage
             const { username, password, age, weight, height, pushups, pullups, intelligence, willpower, charisma, vitality } = req.body;
 
             if (!username || !password) {
@@ -113,6 +113,7 @@ export function registerLocalAuthRoutes(app: Express) {
     // Login with username/password
     app.post("/api/auth/login-local", async (req, res) => {
         try {
+            const storage = getStorage();
             const { username, password } = req.body;
 
             if (!username || !password) {
@@ -174,6 +175,7 @@ export function registerLocalAuthRoutes(app: Express) {
     // Update credentials
     app.put("/api/auth/update-credentials", async (req, res) => {
         try {
+            const storage = getStorage();
             const { userId, newUsername, newPassword, currentPassword } = req.body;
 
             if (!userId || !newUsername) {
@@ -231,6 +233,7 @@ export function registerLocalAuthRoutes(app: Express) {
     // Check username availability
     app.get("/api/auth/check-username/:username", async (req, res) => {
         try {
+            const storage = getStorage();
             const { username } = req.params;
             const exists = await storage.usernameExists(username);
             res.json({ exists });
