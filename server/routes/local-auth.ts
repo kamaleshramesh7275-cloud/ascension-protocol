@@ -110,18 +110,29 @@ export function registerLocalAuthRoutes(app: Express) {
 
             // Hardcode demo user for Vercel stability
             if (username === "demo" && password === "password123") {
-                let demoUser = await storage.getUser("100");
-                // Ensure demo user exists if missing from MemStorage (e.g. slight race)
+                console.log("[LOGIN] Demo user bypass triggered");
+
+                // Try to get existing demo user
+                let demoUser = await storage.getUserByFirebaseUid("local_demo");
+
+                // Create demo user if it doesn't exist (MemStorage resets on cold starts)
                 if (!demoUser) {
-                    console.log("Re-creating missing demo user on login");
-                    // storage.createDemoUser is private, but we can try to fetch by ID "100"
-                    // If missing, we can fail or try to proceed.
-                    // Actually, if missing, we can't return a user object.
-                    // Let's rely on storage having it.
+                    console.log("[LOGIN] Creating demo user on-demand");
+                    demoUser = await storage.createUser({
+                        firebaseUid: "local_demo",
+                        name: "Demo User",
+                        email: "demo@ascension.com",
+                        avatarUrl: null,
+                        timezone: "UTC",
+                        onboardingCompleted: true
+                    });
+
+                    // Give demo user some coins
+                    await storage.updateUser(demoUser.id, { coins: 1000 });
                 }
-                if (demoUser) {
-                    return res.json({ success: true, userId: demoUser.id, firebaseUid: demoUser.firebaseUid });
-                }
+
+                console.log("[LOGIN] Demo user authenticated:", demoUser.id);
+                return res.json({ success: true, userId: demoUser.id, firebaseUid: demoUser.firebaseUid });
             }
 
             // Get credentials
