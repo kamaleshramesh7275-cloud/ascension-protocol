@@ -9,6 +9,13 @@ export default async function handler(req: any, res: any) {
     // Verify request path
     console.log(`[API Handler] Received request: ${req.method} ${req.url}`);
 
+    // Vercel's rewrite might strip '/api' or pass the sub-path.
+    // Our Express app expects routes to start with '/api'.
+    if (req.url && !req.url.startsWith('/api')) {
+        req.url = `/api${req.url}`;
+        console.log(`[API Handler] Rewrote URL to: ${req.url}`);
+    }
+
     // Ensure routes are registered
     await initialized;
     console.log(`[API Handler] Routes initialized. Forwarding to Express.`);
