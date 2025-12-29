@@ -3,7 +3,15 @@ import { createServer, type Server } from "http";
 // import { DrizzleStorage } from "./drizzle-storage";
 import { getStorage } from "./storage";
 const storage = getStorage();
-import { TIER_THRESHOLDS, Tier, STAT_NAMES } from "@shared/schema";
+import {
+  TIER_THRESHOLDS,
+  Tier,
+  STAT_NAMES,
+  insertGuildSchema,
+  insertGuildMessageSchema,
+  insertGuildQuestSchema,
+  insertMessageSchema
+} from "@shared/schema";
 
 // Enable CORS for all routes (allow admin frontend to make DELETE with custom header)
 const corsOptions = { origin: true, credentials: true };
@@ -16,22 +24,8 @@ import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
 
-// DEBUG: Endpoint to list users
-import { getStorage } from "./storage";
-const storage = getStorage();
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize Cron Jobs
-  initCronJobs(storage);
 
-  app.get("/api/debug/users", async (req, res) => {
-    const users = await storage.getAllUsers();
-    res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
-  });
-  insertGuildSchema,
-    insertGuildMessageSchema,
-    insertGuildQuestSchema,
-} from "@shared/schema";
 
 // Middleware to check Firebase auth (simplified for MVP)
 // In production, you'd verify Firebase tokens here
