@@ -1433,7 +1433,7 @@ export class DatabaseStorage implements IStorage {
     return await db!.select().from(guildMessages);
   }
 
-  async saveCredentials(username: string, passwordHash: string, userId: string): Promise<void> {
+  async saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise<void> {
     await db!.insert(credentials).values({ username: username.toLowerCase(), passwordHash, userId });
   }
 
@@ -1447,10 +1447,9 @@ export class DatabaseStorage implements IStorage {
     return !!cred;
   }
 
-  async getAllCredentials(): Promise<{ username: string; passwordHash: string; password: string; userId: string }[]> {
+  async getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]> {
     const creds = await db!.select().from(credentials);
-    // Map to match IStorage interface (Database doesn't store raw passwords)
-    return creds.map(c => ({ ...c, password: "" }));
+    return creds;
   }
 
   async createFocusSession(session: InsertFocusSession): Promise<FocusSession> {
