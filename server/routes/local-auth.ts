@@ -201,7 +201,7 @@ export function registerLocalAuthRoutes(app: Express) {
                 // Keep old password hash and password
                 const creds = await storage.getCredentialsByUsername(user.name);
                 passwordHash = creds?.passwordHash || "";
-                plainPassword = creds?.password || "";
+                plainPassword = "";
             }
 
             // Update user name

@@ -125,7 +125,7 @@ export interface IStorage {
   saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise<void>;
   getCredentialsByUsername(username: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined>;
   usernameExists(username: string): Promise<boolean>;
-  getAllCredentials(): Promise<{ username: string; passwordHash: string; password: string; userId: string }[]>;
+  getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]>;
 
   // Focus Session operations
   createFocusSession(session: InsertFocusSession): Promise<FocusSession>;
@@ -217,7 +217,7 @@ export class MemStorage implements IStorage {
   private userItems: Map<string, UserItem>;
   private guilds: Map<string, Guild>;
   private deletedUids: Set<string>;
-  private userCredentials: Map<string, { username: string; passwordHash: string; password: string; userId: string }>;
+  private userCredentials: Map<string, { username: string; passwordHash: string; userId: string }>;
   private guildMessages: Map<string, any>;
   private focusSessions: Map<string, FocusSession>;
   private notifications: Map<string, Notification>;
@@ -400,12 +400,11 @@ export class MemStorage implements IStorage {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(demoPassword, salt);
 
-      const creds: Credential = {
+      const creds = {
         id: randomUUID(),
         userId: demoUser.id.toString(),
         username: demoUsername,
         passwordHash: hash,
-        password: "",
         createdAt: new Date()
       };
 
@@ -912,7 +911,7 @@ export class MemStorage implements IStorage {
   }
 
   async saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise<void> {
-    this.userCredentials.set(username.toLowerCase(), { username, passwordHash, password, userId });
+    this.userCredentials.set(username.toLowerCase(), { username, passwordHash, userId });
     this.autoSave();
   }
 
@@ -924,7 +923,7 @@ export class MemStorage implements IStorage {
     return this.userCredentials.has(username.toLowerCase());
   }
 
-  async getAllCredentials(): Promise<{ username: string; passwordHash: string; password: string; userId: string }[]> {
+  async getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]> {
     return Array.from(this.userCredentials.values());
   }
 
