@@ -175,6 +175,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Cron Jobs
   initCronJobs(storage);
 
+  // DEBUG: Endpoint to list users
+  app.get("/api/debug/users", async (req, res) => {
+    const users = await storage.getAllUsers();
+    res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
+  });
+
   // Store Routes
   app.get("/api/store/items", async (req, res) => {
     const items = await storage.getShopItems();
