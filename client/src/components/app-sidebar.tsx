@@ -1,5 +1,6 @@
 import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag } from "lucide-react";
-import { useLocation, Link } from "wouter";
+import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag } from "lucide-react";
+import { useLocation } from "wouter";
 import {
     Sidebar,
     SidebarContent,
@@ -19,7 +20,7 @@ import { User as BackendUser } from "@shared/schema";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 
 export function AppSidebar() {
-    const [location] = useLocation();
+    const [location, setLocation] = useLocation();
     const { user: firebaseUser, signOut } = useAuth();
 
     const { data: user } = useQuery<BackendUser>({
@@ -192,8 +193,8 @@ export function AppSidebar() {
                                             transition={{ delay: 0.1 * index }}
                                         >
                                             <SidebarMenuButton
-                                                asChild
                                                 isActive={isActive}
+                                                onClick={() => setLocation(item.url)}
                                                 className={`
                           w-full justify-start gap-3 px-4 py-6 rounded-xl transition-all duration-200 group relative overflow-hidden
                           ${isActive
@@ -202,28 +203,26 @@ export function AppSidebar() {
                                                     }
                         `}
                                             >
-                                                <Link href={item.url}>
-                                                    {isActive && (
-                                                        <motion.div
-                                                            layoutId="activeTab"
-                                                            className={`absolute inset-0 ${item.activeBg} border-l-4 ${item.activeBorder}`}
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            exit={{ opacity: 0 }}
-                                                        >
-                                                            <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-50`} />
-                                                        </motion.div>
-                                                    )}
+                                                {isActive && (
                                                     <motion.div
-                                                        className="relative z-10 flex items-center gap-3"
-                                                        whileHover={{ x: 5 }}
+                                                        layoutId="activeTab"
+                                                        className={`absolute inset-0 ${item.activeBg} border-l-4 ${item.activeBorder}`}
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
                                                     >
-                                                        <item.icon
-                                                            className={`w-5 h-5 transition-transform duration-300 ${isActive ? item.color : `group-hover:${item.color} group-hover:scale-110 group-hover:rotate-3`}`}
-                                                        />
-                                                        <span>{item.title}</span>
+                                                        <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-50`} />
                                                     </motion.div>
-                                                </Link>
+                                                )}
+                                                <motion.div
+                                                    className="relative z-10 flex items-center gap-3"
+                                                    whileHover={{ x: 5 }}
+                                                >
+                                                    <item.icon
+                                                        className={`w-5 h-5 transition-transform duration-300 ${isActive ? item.color : `group-hover:${item.color} group-hover:scale-110 group-hover:rotate-3`}`}
+                                                    />
+                                                    <span>{item.title}</span>
+                                                </motion.div>
                                             </SidebarMenuButton>
                                         </motion.div>
                                     </SidebarMenuItem>
