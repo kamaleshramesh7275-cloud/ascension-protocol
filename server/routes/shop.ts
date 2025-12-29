@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
-const storage = getStorage();
+// const storage = getStorage();
 import { insertUserItemSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -8,6 +8,7 @@ const router = Router();
 
 // Seed Shop Items if empty
 async function seedShop() {
+    const storage = getStorage();
     const items = await storage.getShopItems();
     if (items.length > 0) return;
 
@@ -208,6 +209,7 @@ async function seedShop() {
 
 // Get all shop items
 router.get("/", async (req, res) => {
+    const storage = getStorage();
     await seedShop(); // Ensure items exist
     const items = await storage.getShopItems();
     res.json(items);
@@ -215,6 +217,7 @@ router.get("/", async (req, res) => {
 
 // Get user inventory
 router.get("/inventory", async (req, res) => {
+    const storage = getStorage();
     const user = (req as any).user;
     if (!user) return res.status(401).send("Unauthorized");
     const items = await storage.getUserItems(user.id);
@@ -230,6 +233,7 @@ router.get("/inventory", async (req, res) => {
 
 // Buy item
 router.post("/buy", async (req, res) => {
+    const storage = getStorage();
     const user = (req as any).user;
     console.log("Buy request initiated");
 
@@ -283,6 +287,7 @@ router.post("/buy", async (req, res) => {
 
 // Equip item
 router.post("/equip", async (req, res) => {
+    const storage = getStorage();
     const user = (req as any).user;
     if (!user) return res.status(401).send("Unauthorized");
     const { itemId, type } = req.body; // type: 'avatar' | 'badge' | 'theme' | 'title'

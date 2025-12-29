@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
-const storage = getStorage();
+// const storage = getStorage();
 
 const router = Router();
 
 // Get all guilds (pre‑populated)
 router.get("/", async (req, res) => {
     try {
+        const storage = getStorage();
         const guilds = await storage.getAllGuilds();
         const enriched = await Promise.all(
             guilds.map(async (g) => {
@@ -25,6 +26,7 @@ router.get("/", async (req, res) => {
 // Get guild by ID (with members)
 router.get("/:id", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const guild = await storage.getGuild(id);
         if (!guild) return res.status(404).json({ error: "Guild not found" });
@@ -40,6 +42,7 @@ router.get("/:id", async (req, res) => {
 // Get guild members
 router.get("/:id/members", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const members = await storage.getGuildMembers(id);
         res.json(members);
@@ -52,6 +55,7 @@ router.get("/:id/members", async (req, res) => {
 // Join a guild – assign roles based on join order
 router.post("/:id/join", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         console.log("Join request - User:", user ? user.id : "NO USER");
 
@@ -118,6 +122,7 @@ router.post("/:id/join", async (req, res) => {
 // Leave guild – handle leader transfer or disband
 router.post("/leave", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).send("Unauthorized");
         if (!user.guildId) return res.status(400).json({ error: "Not in a guild" });
@@ -156,6 +161,7 @@ router.post("/leave", async (req, res) => {
 // Kick member – only leader can kick
 router.post("/:id/kick/:userId", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).send("Unauthorized");
         const { id, userId } = req.params;
@@ -192,6 +198,7 @@ router.post("/:id/kick/:userId", async (req, res) => {
 // Get all quests for a guild
 router.get("/:id/quests", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const quests = await storage.getGuildQuests(id);
         res.json(quests);
@@ -204,6 +211,7 @@ router.get("/:id/quests", async (req, res) => {
 // Create a new guild quest (President only)
 router.post("/:id/quests", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -231,6 +239,7 @@ router.post("/:id/quests", async (req, res) => {
 // Get progress for a specific quest
 router.get("/quests/:questId/progress", async (req, res) => {
     try {
+        const storage = getStorage();
         const { questId } = req.params;
         const progress = await storage.getGuildQuestProgress(questId);
         res.json(progress);
@@ -245,6 +254,7 @@ router.get("/quests/:questId/progress", async (req, res) => {
 // Get all available perks
 router.get("/perks/catalog", async (req, res) => {
     try {
+        const storage = getStorage();
         const perks = await storage.getAllGuildPerks();
         res.json(perks);
     } catch (e) {
@@ -256,6 +266,7 @@ router.get("/perks/catalog", async (req, res) => {
 // Get active perks for a guild
 router.get("/:id/perks", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const perks = await storage.getGuildActivePerks(id);
         res.json(perks);
@@ -268,6 +279,7 @@ router.get("/:id/perks", async (req, res) => {
 // Purchase a perk (President only)
 router.post("/:id/perks/purchase", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -295,6 +307,7 @@ router.post("/:id/perks/purchase", async (req, res) => {
 // Donate to guild
 router.post("/:id/donate", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -316,6 +329,7 @@ router.post("/:id/donate", async (req, res) => {
 // Get donation history
 router.get("/:id/donations", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
         const donations = await storage.getGuildDonations(id, limit);
@@ -338,6 +352,7 @@ router.get("/:id/donations", async (req, res) => {
 // Get treasury balance
 router.get("/:id/treasury", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const treasury = await storage.getGuildTreasury(id);
         res.json({ treasury });
@@ -350,6 +365,7 @@ router.get("/:id/treasury", async (req, res) => {
 // Get guild messages
 router.get("/:id/messages", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const messages = await storage.getGuildMessages(id);
         res.json(messages);
@@ -362,6 +378,7 @@ router.get("/:id/messages", async (req, res) => {
 // Send guild message
 router.post("/:id/messages", async (req, res) => {
     try {
+        const storage = getStorage();
         const { id } = req.params;
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });

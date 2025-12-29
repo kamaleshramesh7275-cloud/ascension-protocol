@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import { getStorage } from "../storage";
-const storage = getStorage();
+// const storage = getStorage();
 
 const router = Router();
 
@@ -39,6 +39,7 @@ function calculateGuildLevel(xp: number): number {
 // Get guild messages (activity feed)
 router.get("/:guildId/messages", async (req, res) => {
     try {
+        const storage = getStorage();
         const { guildId } = req.params;
         console.log("GET messages for guild:", guildId);
 
@@ -53,6 +54,7 @@ router.get("/:guildId/messages", async (req, res) => {
 // Post guild message
 router.post("/:guildId/messages", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -88,6 +90,7 @@ router.post("/:guildId/messages", async (req, res) => {
 // Contribute to guild quest
 router.post("/:guildId/quests/:questId/contribute", async (req, res) => {
     try {
+        const storage = getStorage();
         const user = (req as any).user;
         if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -145,7 +148,7 @@ router.post("/:guildId/quests/:questId/contribute", async (req, res) => {
 // Get guild perks (based on level)
 router.get("/:guildId/perks", async (req, res) => {
     try {
-        const { storage } = require("../storage");
+        const storage = getStorage();
         const { guildId } = req.params;
 
         const guild = await storage.getGuild(guildId);
