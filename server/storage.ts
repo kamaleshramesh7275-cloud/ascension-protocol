@@ -71,15 +71,13 @@ import {
   InsertCampaign, Campaign, UserCampaign,
   insertCampaignSchema,
   insertShopItemSchema,
-  type GuildWar,
-  type InsertGuildWar,
-  type GuildWarParticipant,
-  type InsertGuildWarParticipant,
-  type GuildWarEvent,
-  type InsertGuildWarEvent,
-  guildWars,
   guildWarParticipants,
-  guildWarEvents
+  guildWarEvents,
+  premiumRequests,
+  type PremiumRequest,
+  type InsertPremiumRequest,
+  type GuildWarEvent,
+  type InsertGuildWarEvent
 } from "@shared/schema";
 import { eq, and, desc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -228,6 +226,13 @@ export interface IStorage {
   logWarContribution(contribution: { warId: string, userId: string, guildId: string, eventType: string, points: number, description: string }): Promise<void>;
   findOrCreateGuildWarMatch(guildId: string): Promise<GuildWar>;
   updateGuildWar(warId: string, updates: Partial<GuildWar>): Promise<GuildWar>;
+
+  // Premium Request operations
+  createPremiumRequest(request: InsertPremiumRequest): Promise<PremiumRequest>;
+  getPendingPremiumRequests(): Promise<(PremiumRequest & { user: User })[]>;
+  getAllPremiumRequests(): Promise<(PremiumRequest & { user: User })[]>;
+  updatePremiumRequestStatus(id: string, status: "approved" | "rejected", adminNotes?: string): Promise<PremiumRequest>;
+  getUserPremiumRequests(userId: string): Promise<PremiumRequest[]>;
 }
 
 // Shop Items
@@ -275,6 +280,7 @@ export class MemStorage implements IStorage {
   private guildWars: Map<string, GuildWar>;
   private guildWarParticipants: Map<string, GuildWarParticipant>;
   private guildWarEvents: Map<string, GuildWarEvent>;
+  private premiumRequests: Map<string, PremiumRequest>;
 
   constructor() {
     this.guilds = new Map();
@@ -356,6 +362,7 @@ export class MemStorage implements IStorage {
     this.guildWars = new Map();
     this.guildWarParticipants = new Map();
     this.guildWarEvents = new Map();
+    this.premiumRequests = new Map();
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -965,11 +972,62 @@ export class MemStorage implements IStorage {
 
   async updateGuildWar(warId: string, updates: Partial<GuildWar>): Promise<GuildWar> {
     const war = this.guildWars.get(warId);
-    if (!war) throw new Error("War not found");
+    if (!war) throw new Error("Guild war not found");
     const updated = { ...war, ...updates };
     this.guildWars.set(warId, updated);
     this.autoSave();
     return updated;
+  }
+
+  // Premium Request operations
+  async createPremiumRequest(request: InsertPremiumRequest): Promise<PremiumRequest> {
+    const id = randomUUID();
+    const newRequest: PremiumRequest = {
+      ...request,
+      id,
+      status: "pending",
+      adminNotes: request.adminNotes || null,
+      createdAt: new Date(),
+      resolvedAt: null,
+    };
+    this.premiumRequests.set(id, newRequest);
+    this.autoSave();
+    return newRequest;
+  }
+
+  async getPendingPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    return Array.from(this.premiumRequests.values())
+      .filter(r => r.status === "pending")
+      .map(r => ({
+        ...r,
+        user: this.users.get(r.userId)!
+      }));
+  }
+
+  async getAllPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    return Array.from(this.premiumRequests.values())
+      .map(r => ({
+        ...r,
+        user: this.users.get(r.userId)!
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updatePremiumRequestStatus(id: string, status: "approved" | "rejected", adminNotes?: string): Promise<PremiumRequest> {
+    const request = this.premiumRequests.get(id);
+    if (!request) throw new Error("Premium request not found");
+
+    request.status = status;
+    request.adminNotes = adminNotes || null;
+    request.resolvedAt = new Date();
+
+    this.premiumRequests.set(id, request);
+    this.autoSave();
+    return request;
+  }
+
+  async getUserPremiumRequests(userId: string): Promise<PremiumRequest[]> {
+    return Array.from(this.premiumRequests.values()).filter(r => r.userId === userId);
   }
 
 
@@ -2599,8 +2657,69 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(guildWars.id, warId))
       .returning();
-    if (!updated) throw new Error("War not found");
+    if (!updated) throw new Error("Guild war not found");
     return updated;
+  }
+
+  // Premium Request operations
+  async createPremiumRequest(request: InsertPremiumRequest): Promise<PremiumRequest> {
+    const [req] = await db!.insert(premiumRequests).values({
+      ...request,
+      status: "pending",
+      createdAt: new Date(),
+    }).returning();
+    return req;
+  }
+
+  async getPendingPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    const results = await db!
+      .select({
+        request: premiumRequests,
+        user: users,
+      })
+      .from(premiumRequests)
+      .innerJoin(users, eq(premiumRequests.userId, users.id))
+      .where(eq(premiumRequests.status, "pending"));
+
+    return results.map(r => ({
+      ...r.request,
+      user: r.user
+    }));
+  }
+
+  async getAllPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    const results = await db!
+      .select({
+        request: premiumRequests,
+        user: users,
+      })
+      .from(premiumRequests)
+      .innerJoin(users, eq(premiumRequests.userId, users.id))
+      .orderBy(desc(premiumRequests.createdAt));
+
+    return results.map(r => ({
+      ...r.request,
+      user: r.user
+    }));
+  }
+
+  async updatePremiumRequestStatus(id: string, status: "approved" | "rejected", adminNotes?: string): Promise<PremiumRequest> {
+    const [updated] = await db!
+      .update(premiumRequests)
+      .set({
+        status,
+        adminNotes: adminNotes || null,
+        resolvedAt: new Date(),
+      })
+      .where(eq(premiumRequests.id, id))
+      .returning();
+
+    if (!updated) throw new Error("Premium request not found");
+    return updated;
+  }
+
+  async getUserPremiumRequests(userId: string): Promise<PremiumRequest[]> {
+    return await db!.select().from(premiumRequests).where(eq(premiumRequests.userId, userId));
   }
 
   // Weekly Stats (DB)

@@ -13,12 +13,14 @@ import { formatDistanceToNow } from "date-fns";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { motion } from "framer-motion";
-import { useParams } from "wouter"; // Import useParams
+import { useParams } from "wouter";
+import { PremiumBenefitsDialog } from "@/components/premium-benefits-dialog";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
     const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
     const params = useParams<{ id?: string }>(); // Get ID from params
     const viewUserId = params.id;
 
@@ -301,11 +303,7 @@ export default function ProfilePage() {
                                         </div>
                                         <Button
                                             className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-black font-bold whitespace-nowrap"
-                                            onClick={async () => {
-                                                const res = await fetch("/api/subscription/checkout", { method: "POST" });
-                                                const data = await res.json();
-                                                if (data.url) window.location.href = data.url;
-                                            }}
+                                            onClick={() => setPremiumDialogOpen(true)}
                                         >
                                             Activate Premium
                                         </Button>
@@ -475,6 +473,10 @@ export default function ProfilePage() {
             <SettingsDialog
                 open={settingsOpen}
                 onOpenChange={setSettingsOpen}
+            />
+            <PremiumBenefitsDialog
+                open={premiumDialogOpen}
+                onOpenChange={setPremiumDialogOpen}
             />
         </div>
     );

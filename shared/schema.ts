@@ -799,6 +799,25 @@ export type GuildWarParticipant = typeof guildWarParticipants.$inferSelect;
 export type InsertGuildWarEvent = z.infer<typeof insertGuildWarEventSchema>;
 export type GuildWarEvent = typeof guildWarEvents.$inferSelect;
 
+// Premium Activation Requests
+export const premiumRequests = pgTable("premium_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertPremiumRequestSchema = createInsertSchema(premiumRequests).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
+export type InsertPremiumRequest = z.infer<typeof insertPremiumRequestSchema>;
+export type PremiumRequest = typeof premiumRequests.$inferSelect;
+
 export type WarStatus = "matchmaking" | "active" | "completed";
 
 

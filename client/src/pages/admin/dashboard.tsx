@@ -40,6 +40,16 @@ interface User {
     charisma?: number;
 }
 
+interface PremiumRequest {
+    id: string;
+    userId: string;
+    status: string;
+    adminNotes: string | null;
+    createdAt: string;
+    resolvedAt: string | null;
+    user: User;
+}
+
 interface Guild {
     id: string;
     name: string;
@@ -184,6 +194,16 @@ export default function AdminDashboard() {
         },
     });
 
+    const { data: premiumRequests = [] } = useQuery<PremiumRequest[]>({
+        queryKey: ["/api/subscription/admin/requests"],
+        enabled: isAuthenticated && activeTab === "requests",
+        queryFn: async () => {
+            const res = await fetch("/api/subscription/admin/requests", { headers: getAdminHeaders() });
+            if (!res.ok) throw new Error("Failed");
+            return res.json();
+        },
+    });
+
     // Mutations
     const deleteUserMutation = useMutation({
         mutationFn: async (id: string) => {
@@ -288,7 +308,16 @@ export default function AdminDashboard() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/quests"] });
             showNotification("success", "Quest created successfully");
-            setNewQuest({ userId: "", title: "", description: "", type: "custom", rewardXP: 50, rewardCoins: 10, dueAt: "" });
+            setNewQuest({
+                guildId: "",
+                title: "",
+                description: "",
+                type: "collective_xp",
+                targetValue: 1000,
+                rewardXP: 50,
+                rewardCoins: 10,
+                dueAt: ""
+            });
         },
         onError: () => showNotification("error", "Failed to create quest"),
     });
@@ -337,6 +366,24 @@ export default function AdminDashboard() {
         },
         onSuccess: () => showNotification("success", "Backup created successfully"),
         onError: () => showNotification("error", "Failed to create backup"),
+    });
+
+    const resolveRequestMutation = useMutation({
+        mutationFn: async ({ requestId, status, adminNotes }: { requestId: string; status: "approved" | "rejected"; adminNotes?: string }) => {
+            const res = await fetch(`/api/subscription/admin/requests/${requestId}/resolve`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
+                body: JSON.stringify({ status, adminNotes }),
+            });
+            if (!res.ok) throw new Error("Failed to resolve request");
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/subscription/admin/requests"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            showNotification("success", "Request resolved successfully");
+        },
+        onError: () => showNotification("error", "Failed to resolve request"),
     });
 
     // Helpers
@@ -440,6 +487,7 @@ export default function AdminDashboard() {
                         { id: "shop", icon: ShoppingBag, label: "Shop Items" },
                         { id: "study-logs", icon: Clock, label: "Study Logs" },
                         { id: "partners", icon: Users, label: "Partner Matching" },
+                        { id: "requests", icon: Clock, label: "Activation Requests" },
                         { id: "notifications", icon: Bell, label: "Notifications" },
                         { id: "data", icon: Database, label: "Data Management" },
                         { id: "system", icon: Settings, label: "System" },
@@ -605,7 +653,7 @@ export default function AdminDashboard() {
                                                                 PREMIUM
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="ghost" className="text-zinc-500 border-zinc-800">
+                                                            <Badge variant="outline" className="text-zinc-500 border-zinc-800">
                                                                 Standard
                                                             </Badge>
                                                         )}
@@ -785,6 +833,93 @@ export default function AdminDashboard() {
                                     )}
                                 </DialogContent>
                             </Dialog>
+                        </div>
+                    )}
+
+                    {activeTab === "requests" && (
+                        <div className="space-y-6">
+                            <Card className="bg-zinc-900/50 border-zinc-800">
+                                <CardHeader>
+                                    <CardTitle>Activation Requests</CardTitle>
+                                    <CardDescription>Review and manage all premium activation requests from users.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-zinc-800">
+                                                <TableHead>User</TableHead>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {premiumRequests.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center py-8 text-zinc-500">
+                                                        No activation requests found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                premiumRequests.map((req) => (
+                                                    <TableRow key={req.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                                                        <TableCell>
+                                                            <div>
+                                                                <div className="font-medium text-white">{req.user.name}</div>
+                                                                <div className="text-xs text-zinc-500">{req.user.email}</div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-400">
+                                                            {new Date(req.createdAt).toLocaleDateString()}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={
+                                                                    req.status === 'approved' ? 'bg-green-900/20 text-green-400 border-green-800' :
+                                                                        req.status === 'rejected' ? 'bg-red-900/20 text-red-400 border-red-800' :
+                                                                            'bg-yellow-900/20 text-yellow-500 border-yellow-800'
+                                                                }
+                                                            >
+                                                                {req.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {req.status === 'pending' ? (
+                                                                <div className="flex gap-2 justify-end">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() => resolveRequestMutation.mutate({ requestId: req.id, status: "approved" })}
+                                                                        disabled={resolveRequestMutation.isPending}
+                                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                                    >
+                                                                        Approve
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="destructive"
+                                                                        onClick={() => {
+                                                                            const notes = prompt("Enter rejection reason (optional):");
+                                                                            resolveRequestMutation.mutate({ requestId: req.id, status: "rejected", adminNotes: notes || undefined });
+                                                                        }}
+                                                                        disabled={resolveRequestMutation.isPending}
+                                                                    >
+                                                                        Reject
+                                                                    </Button>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-zinc-500 text-xs italic">
+                                                                    Resolved {req.resolvedAt ? new Date(req.resolvedAt).toLocaleDateString() : ''}
+                                                                </span>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
                         </div>
                     )}
 
