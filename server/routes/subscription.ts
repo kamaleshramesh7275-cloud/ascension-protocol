@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
-import { requireAuth, requireAdmin } from "../middleware/auth";
+import { requireAuth, requireAdmin, requireAdminPassword } from "../middleware/auth";
 import Stripe from "stripe";
 import { z } from "zod";
 
@@ -60,7 +60,7 @@ router.post("/checkout", requireAuth, async (req, res) => {
 });
 
 // Admin: Activate Premium for any user
-router.post("/admin/activate", requireAuth, requireAdmin, async (req, res) => {
+router.post("/admin/activate", requireAdminPassword, async (req, res) => {
     const storage = getStorage();
     const { userId, days = 30 } = req.body;
 
@@ -105,12 +105,14 @@ router.post("/webhook", async (req, res) => {
 router.post("/request", requireAuth, async (req, res) => {
     const user = (req as any).user;
     const storage = getStorage();
+    console.log(`[Debug] User ${user.id} requesting premium activation...`);
 
     try {
         // Check if there's already a pending request
         const existingRequests = await storage.getUserPremiumRequests(user.id);
         const hasPending = existingRequests.some(r => r.status === "pending");
         if (hasPending) {
+            console.log(`[Debug] User ${user.id} already has a pending request.`);
             return res.status(400).json({ error: "You already have a pending activation request." });
         }
 
@@ -119,25 +121,30 @@ router.post("/request", requireAuth, async (req, res) => {
             status: "pending"
         });
 
+        console.log(`[Debug] Created premium request ${request.id} for user ${user.id}`);
         res.json({ success: true, request });
     } catch (error: any) {
+        console.error("[Debug] Error creating premium request:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Admin: Get all pending premium requests
-router.get("/admin/requests", requireAuth, requireAdmin, async (req, res) => {
+router.get("/admin/requests", requireAdminPassword, async (req, res) => {
     const storage = getStorage();
+    console.log("[Debug] Admin fetching premium requests...");
     try {
         const requests = await storage.getAllPremiumRequests();
+        console.log(`[Debug] Found ${requests.length} premium requests.`);
         res.json(requests);
     } catch (error: any) {
+        console.error("[Debug] Error fetching admin requests:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // Admin: Resolve premium request (Approve/Reject)
-router.post("/admin/requests/:requestId/resolve", requireAuth, requireAdmin, async (req, res) => {
+router.post("/admin/requests/:requestId/resolve", requireAdminPassword, async (req, res) => {
     const { requestId } = req.params;
     const { status, adminNotes } = req.body; // status: "approved" or "rejected"
     const storage = getStorage();

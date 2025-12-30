@@ -57,3 +57,13 @@ export async function requireAdmin(req: Request, res: Response, next: Function) 
     }
     next();
 }
+
+export async function requireAdminPassword(req: Request, res: Response, next: Function) {
+    const adminPassword = req.headers["x-admin-password"] as string;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
+    if (adminPassword !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+    next();
+}
