@@ -22,6 +22,7 @@ import guildRouter from "./routes/guilds";
 import guildEnhancementsRouter from "./routes/guild-enhancements";
 import guildWarsRouter from "./routes/guild-wars";
 import shopRouter from "./routes/shop";
+import subscriptionRouter from "./routes/subscription";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
@@ -1036,13 +1037,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Update user stats and XP
-      const newXP = user.xp + quest.rewardXP;
-      const newTier = calculateTier(newXP);
+      const multiplier = user.isPremium ? 3 : 1;
+      const xpToAward = quest.rewardXP * multiplier;
+      const newXP = user.xp + xpToAward;
       const oldLevel = calculateLevel(user.xp);
       const newLevel = calculateLevel(newXP);
+      const newTier = calculateTier(newXP);
 
       // Calculate Coin Rewards
-      let coinsAwarded = quest.rewardCoins || 0;
+      let coinsAwarded = (quest.rewardCoins || 0) * multiplier;
       if (newLevel > oldLevel) {
         const levelDiff = newLevel - oldLevel;
         coinsAwarded += levelDiff * 100; // 100 coins per level up
@@ -1078,7 +1081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         action: "completeQuest",
         questId: quest.id,
-        xpDelta: quest.rewardXP,
+        xpDelta: xpToAward,
         coinsDelta: coinsAwarded,
         statDeltas: quest.rewardStats || {},
       });
@@ -1284,8 +1287,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid duration" });
       }
 
-      // Calculate XP: 1 XP per minute
-      const xpEarned = duration;
+      // Calculate XP: 1 XP per minute (3 XP for premium)
+      const multiplier = user.isPremium ? 3 : 1;
+      const xpEarned = duration * multiplier;
 
       // Create focus session
       const session = await storage.createFocusSession({
@@ -1559,6 +1563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/guilds", requireAuth, guildRouter);
   app.use("/api/guild-enhancements", requireAuth, guildEnhancementsRouter);
   app.use("/api/guild-wars", guildWarsRouter);
+  app.use("/api/shop", requireAuth, shopRouter);
+  app.use("/api/subscription", subscriptionRouter);
 
   return httpServer;
 }

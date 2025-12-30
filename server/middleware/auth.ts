@@ -49,3 +49,11 @@ export async function requireAuth(req: Request, res: Response, next: Function) {
     (req as any).user = user;
     next();
 }
+
+export async function requireAdmin(req: Request, res: Response, next: Function) {
+    const user = (req as any).user;
+    if (!user || user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied. Admin role required." });
+    }
+    next();
+}

@@ -29,6 +29,8 @@ interface User {
     createdAt: string;
     onboardingCompleted: boolean;
     coins: number;
+    isPremium: boolean;
+    role: string;
     strength?: number;
     agility?: number;
     stamina?: number;
@@ -254,6 +256,23 @@ export default function AdminDashboard() {
             setEditUserDialogOpen(false);
         },
         onError: () => showNotification("error", "Failed to update user"),
+    });
+
+    const activatePremiumMutation = useMutation({
+        mutationFn: async (userId: string) => {
+            const res = await fetch("/api/subscription/admin/activate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId }),
+            });
+            if (!res.ok) throw new Error("Failed to activate premium");
+            return res.json();
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            showNotification("success", data.message || "Premium activated for 30 days");
+        },
+        onError: () => showNotification("error", "Failed to activate premium"),
     });
 
     const createQuestMutation = useMutation({
@@ -553,6 +572,7 @@ export default function AdminDashboard() {
                                             <TableHead>Level</TableHead>
                                             <TableHead>Tier</TableHead>
                                             <TableHead>Coins</TableHead>
+                                            <TableHead>Premium</TableHead>
                                             <TableHead>Password</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
@@ -580,6 +600,17 @@ export default function AdminDashboard() {
                                                     </TableCell>
                                                     <TableCell className="text-yellow-500 font-mono">{user.coins}</TableCell>
                                                     <TableCell>
+                                                        {user.isPremium ? (
+                                                            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold">
+                                                                PREMIUM
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="ghost" className="text-zinc-500 border-zinc-800">
+                                                                Standard
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
                                                         {cred ? (
                                                             <div className="font-mono text-sm bg-zinc-900 p-2 rounded border border-zinc-800">
                                                                 <div className="text-purple-400 text-xs mb-1">Username: {cred.username}</div>
@@ -602,6 +633,17 @@ export default function AdminDashboard() {
                                                             >
                                                                 <Edit className="w-4 h-4" />
                                                             </Button>
+                                                            {!user.isPremium && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => activatePremiumMutation.mutate(user.id)}
+                                                                    className="text-yellow-500 hover:text-yellow-400 hover:bg-yellow-900/20"
+                                                                    title="Activate 30d Premium"
+                                                                >
+                                                                    <Award className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"

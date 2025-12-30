@@ -29,6 +29,13 @@ export const users = pgTable("users", {
   activeBadgeId: varchar("active_badge_id"), // Currently displayed badge
   activeTitle: text("active_title"), // Currently displayed title
 
+  // Monetization
+  isPremium: boolean("is_premium").default(false).notNull(),
+  premiumExpiry: timestamp("premium_expiry"),
+  lastPremiumBonusAt: timestamp("last_premium_bonus_at"),
+  stripeCustomerId: text("stripe_customer_id"),
+  role: text("role").default("user").notNull(), // user, admin
+
   // Stats - 7 core attributes (1-100)
   strength: integer("strength").default(10).notNull(),
   agility: integer("agility").default(10).notNull(),
@@ -329,6 +336,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   currentGoal: true,
   studySubject: true,
   studyAvailability: true,
+  isPremium: true,
+  premiumExpiry: true,
+  role: true,
 }).partial({
   avatarUrl: true,
   timezone: true,
@@ -337,6 +347,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   currentGoal: true,
   studySubject: true,
   studyAvailability: true,
+  isPremium: true,
+  premiumExpiry: true,
+  role: true,
 });
 
 export const insertGuildSchema = createInsertSchema(guilds);

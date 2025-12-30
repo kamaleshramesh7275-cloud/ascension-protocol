@@ -152,14 +152,26 @@ export default function ProfilePage() {
                                 </motion.div>
 
                                 <div className="flex-1">
-                                    <motion.h2
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="text-2xl font-bold mb-1"
-                                        data-testid="text-username"
-                                    >
-                                        {user.name}
-                                    </motion.h2>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <motion.h2
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="text-2xl font-bold"
+                                            data-testid="text-username"
+                                        >
+                                            {user.name}
+                                        </motion.h2>
+                                        {user.isPremium && (
+                                            <Badge className="bg-gradient-to-r from-yellow-400 to-amber-600 text-black font-bold animate-pulse">
+                                                PREMIUM
+                                            </Badge>
+                                        )}
+                                        {user.role === "admin" && (
+                                            <Badge variant="secondary" className="bg-red-500/20 text-red-500 border-red-500/30">
+                                                ADMIN
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <motion.p
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -249,6 +261,104 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                 </motion.div>
+
+                {/* Premium Membership Card (Visible to self or if admin is viewing another) */}
+                {(isOwnProfile || (firebaseUser && (user as any).role === "admin")) && (
+                    <motion.div variants={item}>
+                        <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-transparent backdrop-blur-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Trophy className="h-24 w-24 text-yellow-500" />
+                            </div>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-yellow-500">
+                                    <Award className="h-5 w-5" />
+                                    Premium Membership
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {user.isPremium ? (
+                                    <div>
+                                        <p className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                                            Status: Active (₹99 Pass)
+                                        </p>
+                                        {user.premiumExpiry && (
+                                            <p className="text-sm text-muted-foreground">
+                                                Expires: {new Date(user.premiumExpiry).toLocaleDateString()}
+                                            </p>
+                                        )}
+                                        <div className="mt-4 grid md:grid-cols-2 gap-2 text-sm">
+                                            <div className="flex items-center gap-2">✓ 3x XP & Coin Rewards</div>
+                                            <div className="flex items-center gap-2">✓ Legendary Shop Access</div>
+                                            <div className="flex items-center gap-2">✓ Exclusive Focus Worlds</div>
+                                            <div className="flex items-center gap-2">✓ Priority Guild Features</div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                        <div>
+                                            <p className="text-lg font-medium">Ascend to Premium for only ₹99/month</p>
+                                            <p className="text-sm text-muted-foreground">Unlock triple progression and exclusive content.</p>
+                                        </div>
+                                        <Button
+                                            className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-black font-bold whitespace-nowrap"
+                                            onClick={async () => {
+                                                const res = await fetch("/api/subscription/checkout", { method: "POST" });
+                                                const data = await res.json();
+                                                if (data.url) window.location.href = data.url;
+                                            }}
+                                        >
+                                            Activate Premium
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* Admin Section */}
+                                {isOwnProfile && user.role === "admin" && (
+                                    <div className="mt-6 pt-6 border-t border-white/10">
+                                        <p className="text-sm font-bold text-red-500 mb-4 flex items-center gap-2">
+                                            <Shield className="h-4 w-4" /> Admin Controls
+                                        </p>
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            <input
+                                                id="targetUserId"
+                                                placeholder="Enter User UUID to Activate"
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            />
+                                            <Button
+                                                variant="destructive"
+                                                onClick={async () => {
+                                                    const userId = (document.getElementById("targetUserId") as HTMLInputElement).value;
+                                                    if (!userId) {
+                                                        alert("Please enter a User ID");
+                                                        return;
+                                                    }
+                                                    try {
+                                                        const res = await fetch("/api/subscription/admin/activate", {
+                                                            method: "POST",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ userId })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (res.ok) {
+                                                            alert(data.message);
+                                                            window.location.reload();
+                                                        } else {
+                                                            alert(data.error);
+                                                        }
+                                                    } catch (err) {
+                                                        alert("Error activating premium");
+                                                    }
+                                                }}
+                                            >
+                                                Force Activate (30 days)
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
 
                 {/* Stats Overview */}
                 <motion.div variants={item} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -9,12 +9,48 @@ export function initCronJobs(storage: IStorage) {
     // Run immediately on startup to catch up
     runDailyGuildQuests(storage);
     processGuildWars(storage);
+    processPremiumBonuses(storage);
 
     // Schedule periodic run
     setInterval(() => {
         runDailyGuildQuests(storage);
         processGuildWars(storage);
+        processPremiumBonuses(storage);
     }, CRON_INTERVAL);
+}
+
+async function processPremiumBonuses(storage: IStorage) {
+    console.log("[Cron] Processing Premium Daily Bonuses...");
+    try {
+        const users = await storage.getAllUsers();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const user of users) {
+            if (user.isPremium) {
+                const lastBonus = user.lastPremiumBonusAt ? new Date(user.lastPremiumBonusAt) : null;
+                if (lastBonus) lastBonus.setHours(0, 0, 0, 0);
+
+                if (!lastBonus || lastBonus.getTime() < today.getTime()) {
+                    console.log(`[Cron] Awarding daily bonus to premium user ${user.name} (${user.id})`);
+
+                    await storage.updateUser(user.id, {
+                        coins: user.coins + 100,
+                        lastPremiumBonusAt: new Date()
+                    });
+
+                    await storage.createNotification({
+                        userId: user.id,
+                        type: "system",
+                        title: "Daily Premium Bonus",
+                        message: "You've received your daily 100 Coin Premium bonus! Keep ascending.",
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.error("[Cron] Error processing premium bonuses:", error);
+    }
 }
 
 async function processGuildWars(storage: IStorage) {

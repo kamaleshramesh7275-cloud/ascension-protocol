@@ -213,7 +213,22 @@ router.get("/", async (req, res) => {
     const storage = getStorage();
     await seedShop(); // Ensure items exist
     const items = await storage.getShopItems();
-    res.json(items);
+
+    // Check if user is premium to show discounted prices
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    let user = null;
+    if (firebaseUid) {
+        user = await storage.getUserByFirebaseUid(firebaseUid);
+    }
+
+    const processedItems = items.map(item => {
+        if (user?.isPremium && !item.isPremium) {
+            return { ...item, cost: Math.floor(item.cost * 0.75) };
+        }
+        return item;
+    });
+
+    res.json(processedItems);
 });
 
 // Get user inventory
@@ -254,10 +269,21 @@ router.post("/buy", requireAuth, async (req, res) => {
         return res.status(404).send("Item not found");
     }
 
+    // Direct check for premium exclusive items
+    if (item.isPremium && !user.isPremium) {
+        return res.status(403).send("Premium membership required for this item");
+    }
+
     const dbUser = await storage.getUser(user.id);
     if (!dbUser) return res.status(404).send("User not found");
 
-    console.log(`User coins: ${dbUser.coins}, Item cost: ${item.cost}`);
+    // Calculate actual cost with premium discount
+    let effectiveCost = item.cost;
+    if (dbUser.isPremium && !item.isPremium) {
+        effectiveCost = Math.floor(item.cost * 0.75);
+    }
+
+    console.log(`User coins: ${dbUser.coins}, Item effective cost: ${effectiveCost}`);
 
     // Check if already owned
     const inventory = await storage.getUserItems(dbUser.id);
@@ -267,13 +293,13 @@ router.post("/buy", requireAuth, async (req, res) => {
     }
 
     // Check funds
-    if (dbUser.coins < item.cost) {
+    if (dbUser.coins < effectiveCost) {
         console.log("Insufficient funds");
         return res.status(400).send("Insufficient funds");
     }
 
     // Deduct coins
-    await storage.updateUser(dbUser.id, { coins: dbUser.coins - item.cost });
+    await storage.updateUser(dbUser.id, { coins: dbUser.coins - effectiveCost });
 
     // Add to inventory
     const userItem = await storage.createUserItem({
@@ -283,7 +309,7 @@ router.post("/buy", requireAuth, async (req, res) => {
     });
 
     console.log("Purchase successful");
-    res.json({ success: true, item: userItem, newBalance: dbUser.coins - item.cost });
+    res.json({ success: true, item: userItem, newBalance: dbUser.coins - effectiveCost });
 });
 
 // Equip item
