@@ -355,13 +355,13 @@ export default function GuildsPage() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-6">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="members">Members</TabsTrigger>
-                        <TabsTrigger value="quests">Quests</TabsTrigger>
-                        <TabsTrigger value="perks">Perks</TabsTrigger>
-                        <TabsTrigger value="treasury">Treasury</TabsTrigger>
-                        <TabsTrigger value="chat">Chat</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
+                        <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
+                        <TabsTrigger value="members" className="text-xs md:text-sm">Members</TabsTrigger>
+                        <TabsTrigger value="quests" className="text-xs md:text-sm">Quests</TabsTrigger>
+                        <TabsTrigger value="perks" className="text-xs md:text-sm">Perks</TabsTrigger>
+                        <TabsTrigger value="treasury" className="text-xs md:text-sm">Treasury</TabsTrigger>
+                        <TabsTrigger value="chat" className="text-xs md:text-sm">Chat</TabsTrigger>
                     </TabsList>
 
                     {/* Overview Tab */}
