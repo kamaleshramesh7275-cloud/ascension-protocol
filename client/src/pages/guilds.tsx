@@ -332,24 +332,26 @@ export default function GuildsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-6 rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/10 via-background to-background"
                 >
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 className="text-3xl font-bold flex items-center gap-3">
-                                <Shield className="h-8 w-8 text-primary" />
-                                {userGuild?.name}
-                                <Badge variant="outline" className="text-lg">Level {userGuild?.level}</Badge>
+                    <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-4">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl md:text-3xl font-bold flex flex-wrap items-center gap-2 md:gap-3">
+                                <Shield className="h-6 w-6 md:h-8 md:w-8 text-primary shrink-0" />
+                                <span className="truncate">{userGuild?.name}</span>
+                                <Badge variant="outline" className="text-sm md:text-lg whitespace-nowrap">Level {userGuild?.level}</Badge>
                             </h2>
-                            <p className="text-muted-foreground mt-1">{userGuild?.description}</p>
+                            <p className="text-muted-foreground mt-1 text-sm md:text-base line-clamp-2">{userGuild?.description}</p>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => leaveGuildMutation.mutate()}
-                            disabled={leaveGuildMutation.isPending}
-                            className="gap-2"
-                        >
-                            <LogOut className="h-4 w-4" /> Leave
-                        </Button>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => leaveGuildMutation.mutate()}
+                                disabled={leaveGuildMutation.isPending}
+                                className="gap-2 flex-1 md:flex-none"
+                            >
+                                <LogOut className="h-4 w-4" /> Leave
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Guild Level Progress */}
@@ -387,16 +389,16 @@ export default function GuildsPage() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
-                        <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
-                        <TabsTrigger value="members" className="text-xs md:text-sm">Members</TabsTrigger>
-                        <TabsTrigger value="quests" className="text-xs md:text-sm">Quests</TabsTrigger>
-                        <TabsTrigger value="wars" className="text-xs md:text-sm flex items-center gap-1">
+                    <TabsList className="flex flex-wrap w-full h-auto p-1 bg-muted/50 gap-1">
+                        <TabsTrigger value="overview" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Overview</TabsTrigger>
+                        <TabsTrigger value="members" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Members</TabsTrigger>
+                        <TabsTrigger value="quests" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Quests</TabsTrigger>
+                        <TabsTrigger value="wars" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5 flex items-center justify-center gap-1">
                             <Swords className="h-3 w-3" /> Wars
                         </TabsTrigger>
-                        <TabsTrigger value="perks" className="text-xs md:text-sm">Perks</TabsTrigger>
-                        <TabsTrigger value="treasury" className="text-xs md:text-sm">Treasury</TabsTrigger>
-                        <TabsTrigger value="chat" className="text-xs md:text-sm">Chat</TabsTrigger>
+                        <TabsTrigger value="perks" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Perks</TabsTrigger>
+                        <TabsTrigger value="treasury" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Treasury</TabsTrigger>
+                        <TabsTrigger value="chat" className="flex-1 min-w-[80px] text-xs md:text-sm px-2 py-1.5">Chat</TabsTrigger>
                     </TabsList>
 
                     {/* Overview Tab */}
