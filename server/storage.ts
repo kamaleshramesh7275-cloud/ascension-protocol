@@ -1716,6 +1716,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async donateToGuild(guildId: string, userId: string, amount: number): Promise<GuildDonation> {
+    console.log(`[DB] Donate: guild=${guildId} user=${userId} amount=${amount}`);
     return await db!.transaction(async (tx) => {
       // 1. Check user balance
       const userRes = await tx.select().from(users).where(eq(users.id, userId));
@@ -1761,8 +1762,10 @@ export class DatabaseStorage implements IStorage {
       const finalAmount = Math.floor(amount * multiplier);
 
       // 5. Add to guild treasury
+      const currentTreasury = Number(guild.treasury || 0);
+      console.log(`[DB] Updating treasury. Old: ${currentTreasury}, Add: ${finalAmount}`);
       await tx.update(guilds)
-        .set({ treasury: (guild.treasury || 0) + finalAmount })
+        .set({ treasury: currentTreasury + finalAmount })
         .where(eq(guilds.id, guildId));
 
       // 6. Create donation record
