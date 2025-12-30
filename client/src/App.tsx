@@ -63,10 +63,11 @@ function NotificationWatcher() {
   const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
   const { toast } = useToast(); // Changed this line
 
-  const { data: notifications = [] } = useQuery<any[]>({ // Changed this line
+  const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     enabled: !!user,
-    refetchInterval: 15000, // Poll every 15 seconds
+    refetchInterval: 30000, // Reduced from 15s to 30s for better performance
+    staleTime: 20000,
   });
 
   useEffect(() => {

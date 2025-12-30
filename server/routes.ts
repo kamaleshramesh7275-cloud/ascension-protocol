@@ -1438,13 +1438,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
-      const parseResult = insertTaskSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        return res.status(400).json({ error: parseResult.error });
+      const { text } = req.body;
+      if (!text || typeof text !== 'string' || !text.trim()) {
+        return res.status(400).json({ error: "Text is required" });
       }
+
       const task = await storage.createTask({
-        ...parseResult.data,
-        userId: (req as any).user!.id
+        text: text.trim(),
+        userId: (req as any).user!.id,
+        completed: false
       });
       res.json(task);
     } catch (error) {

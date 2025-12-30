@@ -94,7 +94,8 @@ export default function GuildsPage() {
     const { data: messages = [] } = useQuery<GuildMessage[]>({
         queryKey: [`/api/guilds/${userGuild?.id}/messages`],
         enabled: !!userGuild,
-        refetchInterval: 5000, // Poll every 5 seconds
+        refetchInterval: 15000, // Reduced from 5s to 15s for better performance
+        staleTime: 10000,
     });
 
     // Guild quests - updated to use new endpoint

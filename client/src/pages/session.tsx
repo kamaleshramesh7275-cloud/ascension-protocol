@@ -42,7 +42,8 @@ export default function SessionPage() {
             const res = await apiRequest("GET", `/api/partners/${id}/messages`);
             return res.json();
         },
-        refetchInterval: 3000,
+        refetchInterval: 10000, // Reduced from 3s to 10s for better performance
+        staleTime: 5000,
         enabled: !!id
     });
 
@@ -77,7 +78,7 @@ export default function SessionPage() {
         if (isActive) {
             const interval = setInterval(() => {
                 setParticles(prev => [
-                    ...prev.slice(-20),
+                    ...prev.slice(-15), // Reduced from 20 to 15 for better performance
                     { id: Date.now(), x: Math.random() * 100, y: Math.random() * 100 }
                 ]);
             }, 2000);
