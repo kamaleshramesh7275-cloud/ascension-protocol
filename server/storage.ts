@@ -70,7 +70,16 @@ import {
   guildDonations,
   InsertCampaign, Campaign, UserCampaign,
   insertCampaignSchema,
-  insertShopItemSchema
+  insertShopItemSchema,
+  type GuildWar,
+  type InsertGuildWar,
+  type GuildWarParticipant,
+  type InsertGuildWarParticipant,
+  type GuildWarEvent,
+  type InsertGuildWarEvent,
+  guildWars,
+  guildWarParticipants,
+  guildWarEvents
 } from "@shared/schema";
 import { eq, and, desc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -209,6 +218,16 @@ export interface IStorage {
 
   // Stats
   getUserWeeklyStats(userId: string): Promise<{ date: string; xp: number }[]>;
+
+  // Guild War operations
+  getActiveGuildWar(guildId: string): Promise<GuildWar | undefined>;
+  getGuildWar(warId: string): Promise<GuildWar | undefined>;
+  getWarParticipants(warId: string): Promise<(GuildWarParticipant & { user: User })[]>;
+  getWarEvents(warId: string): Promise<GuildWarEvent[]>;
+  getGuildWarHistory(guildId: string): Promise<GuildWar[]>;
+  logWarContribution(contribution: { warId: string, userId: string, guildId: string, eventType: string, points: number, description: string }): Promise<void>;
+  findOrCreateGuildWarMatch(guildId: string): Promise<GuildWar>;
+  updateGuildWar(warId: string, updates: Partial<GuildWar>): Promise<GuildWar>;
 }
 
 // Shop Items
@@ -253,6 +272,9 @@ export class MemStorage implements IStorage {
   private campaigns: Map<string, any>;
   private userCampaigns: Map<string, any>;
   private tasks: Map<string, Task>;
+  private guildWars: Map<string, GuildWar>;
+  private guildWarParticipants: Map<string, GuildWarParticipant>;
+  private guildWarEvents: Map<string, GuildWarEvent>;
 
   constructor() {
     this.guilds = new Map();
@@ -331,6 +353,9 @@ export class MemStorage implements IStorage {
     this.guildQuestProgress = new Map();
     this.guildPerks = new Map();
     this.guildDonations = new Map();
+    this.guildWars = new Map();
+    this.guildWarParticipants = new Map();
+    this.guildWarEvents = new Map();
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -799,6 +824,154 @@ export class MemStorage implements IStorage {
     this.autoSave();
     return updatedUser;
   }
+
+  // Guild War operations (MemStorage)
+  async getActiveGuildWar(guildId: string): Promise<GuildWar | undefined> {
+    return Array.from(this.guildWars.values()).find(
+      w => (w.guild1Id === guildId || w.guild2Id === guildId) && w.status === "active"
+    );
+  }
+
+  async getGuildWar(warId: string): Promise<GuildWar | undefined> {
+    return this.guildWars.get(warId);
+  }
+
+  async getWarParticipants(warId: string): Promise<(GuildWarParticipant & { user: User })[]> {
+    const participants = Array.from(this.guildWarParticipants.values()).filter(p => p.warId === warId);
+    return participants.map(p => {
+      const user = this.users.get(p.userId);
+      if (!user) throw new Error(`User ${p.userId} not found`);
+      return { ...p, user };
+    });
+  }
+
+  async getWarEvents(warId: string): Promise<GuildWarEvent[]> {
+    return Array.from(this.guildWarEvents.values())
+      .filter(e => e.warId === warId)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+
+  async getGuildWarHistory(guildId: string): Promise<GuildWar[]> {
+    return Array.from(this.guildWars.values())
+      .filter(w => (w.guild1Id === guildId || w.guild2Id === guildId) && w.status === "completed")
+      .sort((a, b) => b.endDate.getTime() - a.endDate.getTime());
+  }
+
+  async logWarContribution(contribution: { warId: string, userId: string, guildId: string, eventType: string, points: number, description: string }): Promise<void> {
+    const war = this.guildWars.get(contribution.warId);
+    if (!war || war.status !== "active") return;
+
+    // Create event
+    const eventId = randomUUID();
+    const event: GuildWarEvent = {
+      id: eventId,
+      warId: contribution.warId,
+      userId: contribution.userId,
+      guildId: contribution.guildId,
+      eventType: contribution.eventType,
+      points: contribution.points,
+      description: contribution.description,
+      timestamp: new Date()
+    };
+    this.guildWarEvents.set(eventId, event);
+
+    // Update war score
+    if (war.guild1Id === contribution.guildId) {
+      war.guild1Score += contribution.points;
+    } else if (war.guild2Id === contribution.guildId) {
+      war.guild2Score += contribution.points;
+    }
+    this.guildWars.set(war.id, war);
+
+    // Update participant stats
+    const participantKey = Array.from(this.guildWarParticipants.keys()).find(k => {
+      const p = this.guildWarParticipants.get(k);
+      return p?.warId === contribution.warId && p?.userId === contribution.userId;
+    });
+
+    if (participantKey) {
+      const p = this.guildWarParticipants.get(participantKey)!;
+      p.pointsContributed += contribution.points;
+      if (contribution.eventType === "quest_complete") p.questsCompleted += 1;
+      if (contribution.eventType === "focus_session") p.focusMinutes += Math.floor(contribution.points); // Assuming points = minutes for focus
+      p.updatedAt = new Date();
+      this.guildWarParticipants.set(participantKey, p);
+    } else {
+      const id = randomUUID();
+      this.guildWarParticipants.set(id, {
+        id,
+        warId: contribution.warId,
+        userId: contribution.userId,
+        guildId: contribution.guildId,
+        pointsContributed: contribution.points,
+        questsCompleted: contribution.eventType === "quest_complete" ? 1 : 0,
+        focusMinutes: contribution.eventType === "focus_session" ? contribution.points : 0,
+        updatedAt: new Date()
+      });
+    }
+
+    this.autoSave();
+  }
+
+  async findOrCreateGuildWarMatch(guildId: string): Promise<GuildWar> {
+    const guild = this.guilds.get(guildId);
+    if (!guild) throw new Error("Guild not found");
+
+    // Look for other guilds in matchmaking status (in a real app this would be more complex)
+    // For now, let's find a guild of similar level that isn't already in a war
+    const opponent = Array.from(this.guilds.values()).find(g =>
+      g.id !== guildId &&
+      Math.abs(g.level - guild.level) <= 2 &&
+      !Array.from(this.guildWars.values()).some(w => (w.guild1Id === g.id || w.guild2Id === g.id) && w.status === "active")
+    );
+
+    if (!opponent) {
+      throw new Error("No suitable opponent found in matchmaking. Please try again later.");
+    }
+
+    const id = randomUUID();
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + 7); // 7 day war
+
+    const war: GuildWar = {
+      id,
+      season: 1,
+      status: "active",
+      guild1Id: guildId,
+      guild2Id: opponent.id,
+      guild1Score: 0,
+      guild2Score: 0,
+      winnerId: null,
+      startDate,
+      endDate,
+      rewards: {
+        winnerGuildXP: 5000,
+        winnerGuildCoins: 2000,
+        winnerMemberXP: 500,
+        winnerMemberCoins: 200,
+        loserGuildXP: 2000,
+        loserGuildCoins: 500,
+        loserMemberXP: 200,
+        loserMemberCoins: 50
+      },
+      createdAt: new Date()
+    };
+
+    this.guildWars.set(id, war);
+    this.autoSave();
+    return war;
+  }
+
+  async updateGuildWar(warId: string, updates: Partial<GuildWar>): Promise<GuildWar> {
+    const war = this.guildWars.get(warId);
+    if (!war) throw new Error("War not found");
+    const updated = { ...war, ...updates };
+    this.guildWars.set(warId, updated);
+    this.autoSave();
+    return updated;
+  }
+
 
   async deleteUser(id: string): Promise<void> {
     const user = this.users.get(id);
@@ -2267,7 +2440,171 @@ export class DatabaseStorage implements IStorage {
     await db!.delete(tasks).where(eq(tasks.id, id));
   }
 
+  // Guild War operations (DB)
+  async getActiveGuildWar(guildId: string): Promise<GuildWar | undefined> {
+    return await db!.query.guildWars.findFirst({
+      where: and(
+        or(eq(guildWars.guild1Id, guildId), eq(guildWars.guild2Id, guildId)),
+        eq(guildWars.status, "active")
+      )
+    });
+  }
+
+  async getGuildWar(warId: string): Promise<GuildWar | undefined> {
+    return await db!.query.guildWars.findFirst({
+      where: eq(guildWars.id, warId)
+    });
+  }
+
+  async getWarParticipants(warId: string): Promise<(GuildWarParticipant & { user: User })[]> {
+    const participants = await db!
+      .select()
+      .from(guildWarParticipants)
+      .where(eq(guildWarParticipants.warId, warId));
+
+    return await Promise.all(participants.map(async p => {
+      const user = await this.getUser(p.userId);
+      return { ...p, user: user! };
+    }));
+  }
+
+  async getWarEvents(warId: string): Promise<GuildWarEvent[]> {
+    return await db!
+      .select()
+      .from(guildWarEvents)
+      .where(eq(guildWarEvents.warId, warId))
+      .orderBy(desc(guildWarEvents.timestamp));
+  }
+
+  async getGuildWarHistory(guildId: string): Promise<GuildWar[]> {
+    return await db!
+      .select()
+      .from(guildWars)
+      .where(and(
+        or(eq(guildWars.guild1Id, guildId), eq(guildWars.guild2Id, guildId)),
+        eq(guildWars.status, "completed")
+      ))
+      .orderBy(desc(guildWars.endDate));
+  }
+
+  async logWarContribution(contribution: { warId: string, userId: string, guildId: string, eventType: string, points: number, description: string }): Promise<void> {
+    const war = await this.getGuildWar(contribution.warId);
+    if (!war || war.status !== "active") return;
+
+    await db!.transaction(async (tx) => {
+      // 1. Create event
+      await tx.insert(guildWarEvents).values({
+        warId: contribution.warId,
+        userId: contribution.userId,
+        guildId: contribution.guildId,
+        eventType: contribution.eventType,
+        points: contribution.points,
+        description: contribution.description,
+      });
+
+      // 2. Update war score
+      const isGuild1 = war.guild1Id === contribution.guildId;
+      await tx
+        .update(guildWars)
+        .set({
+          [isGuild1 ? 'guild1Score' : 'guild2Score']: (isGuild1 ? war.guild1Score : war.guild2Score) + contribution.points
+        })
+        .where(eq(guildWars.id, war.id));
+
+      // 3. Update participant stats
+      const [participant] = await tx
+        .select()
+        .from(guildWarParticipants)
+        .where(and(
+          eq(guildWarParticipants.warId, contribution.warId),
+          eq(guildWarParticipants.userId, contribution.userId)
+        ));
+
+      if (participant) {
+        await tx
+          .update(guildWarParticipants)
+          .set({
+            pointsContributed: participant.pointsContributed + contribution.points,
+            questsCompleted: participant.questsCompleted + (contribution.eventType === "quest_complete" ? 1 : 0),
+            focusMinutes: participant.focusMinutes + (contribution.eventType === "focus_session" ? contribution.points : 0),
+            updatedAt: new Date()
+          })
+          .where(eq(guildWarParticipants.id, participant.id));
+      } else {
+        await tx.insert(guildWarParticipants).values({
+          warId: contribution.warId,
+          userId: contribution.userId,
+          guildId: contribution.guildId,
+          pointsContributed: contribution.points,
+          questsCompleted: contribution.eventType === "quest_complete" ? 1 : 0,
+          focusMinutes: contribution.eventType === "focus_session" ? contribution.points : 0,
+        });
+      }
+    });
+  }
+
+  async findOrCreateGuildWarMatch(guildId: string): Promise<GuildWar> {
+    // Basic matchmaking: find any other guild not in a war
+    const allGuildsList = await this.getAllGuilds();
+    const guild = allGuildsList.find(g => g.id === guildId);
+    if (!guild) throw new Error("Guild not found");
+
+    const wars = await db!.select().from(guildWars).where(eq(guildWars.status, "active"));
+    const busyGuildIds = new Set(wars.flatMap(w => [w.guild1Id, w.guild2Id]));
+
+    const opponent = allGuildsList.find(g =>
+      g.id !== guildId &&
+      !busyGuildIds.has(g.id) &&
+      Math.abs(g.level - guild.level) <= 3
+    );
+
+    if (!opponent) {
+      throw new Error("No suitable opponent found. Please try again later.");
+    }
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + 7);
+
+    const [newWar] = await db!
+      .insert(guildWars)
+      .values({
+        season: 1,
+        status: "active",
+        guild1Id: guildId,
+        guild2Id: opponent.id,
+        guild1Score: 0,
+        guild2Score: 0,
+        startDate,
+        endDate,
+        rewards: {
+          winnerGuildXP: 5000,
+          winnerGuildCoins: 2000,
+          winnerMemberXP: 500,
+          winnerMemberCoins: 200,
+          loserGuildXP: 2000,
+          loserGuildCoins: 500,
+          loserMemberXP: 200,
+          loserMemberCoins: 50
+        }
+      })
+      .returning();
+
+    return newWar;
+  }
+
+  async updateGuildWar(warId: string, updates: Partial<GuildWar>): Promise<GuildWar> {
+    const [updated] = await db!
+      .update(guildWars)
+      .set(updates)
+      .where(eq(guildWars.id, warId))
+      .returning();
+    if (!updated) throw new Error("War not found");
+    return updated;
+  }
+
   // Weekly Stats (DB)
+
   async getUserWeeklyStats(userId: string): Promise<{ date: string; xp: number }[]> {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

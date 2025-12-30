@@ -707,4 +707,85 @@ export const insertGuildDonationSchema = createInsertSchema(guildDonations).omit
 export type InsertGuildDonation = z.infer<typeof insertGuildDonationSchema>;
 export type GuildDonation = typeof guildDonations.$inferSelect;
 
+// Guild Wars - competitive guild vs guild battles
+export const guildWars = pgTable("guild_wars", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  season: integer("season").notNull(), // Season number for tracking
+  status: text("status").notNull().default("matchmaking"), // matchmaking, active, completed
+  guild1Id: varchar("guild1_id").notNull().references(() => guilds.id),
+  guild2Id: varchar("guild2_id").notNull().references(() => guilds.id),
+  guild1Score: integer("guild1_score").default(0).notNull(),
+  guild2Score: integer("guild2_score").default(0).notNull(),
+  winnerId: varchar("winner_id"), // Guild ID of winner
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  rewards: jsonb("rewards").$type<{
+    winnerGuildXP: number;
+    winnerGuildCoins: number;
+    winnerMemberXP: number;
+    winnerMemberCoins: number;
+    loserGuildXP: number;
+    loserGuildCoins: number;
+    loserMemberXP: number;
+    loserMemberCoins: number;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Track individual member contributions to guild wars
+export const guildWarParticipants = pgTable("guild_war_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  warId: varchar("war_id").notNull().references(() => guildWars.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  guildId: varchar("guild_id").notNull().references(() => guilds.id),
+  pointsContributed: integer("points_contributed").default(0).notNull(),
+  questsCompleted: integer("quests_completed").default(0).notNull(),
+  focusMinutes: integer("focus_minutes").default(0).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Guild War Events - activity log for wars
+export const guildWarEvents = pgTable("guild_war_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  warId: varchar("war_id").notNull().references(() => guildWars.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  guildId: varchar("guild_id").notNull().references(() => guilds.id),
+  eventType: text("event_type").notNull(), // quest_complete, focus_session, level_up, daily_login
+  points: integer("points").notNull(),
+  description: text("description").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const insertGuildWarSchema = createInsertSchema(guildWars).omit({
+  id: true,
+  createdAt: true,
+  guild1Score: true,
+  guild2Score: true,
+  winnerId: true,
+});
+
+export const insertGuildWarParticipantSchema = createInsertSchema(guildWarParticipants).omit({
+  id: true,
+  updatedAt: true,
+  pointsContributed: true,
+  questsCompleted: true,
+  focusMinutes: true,
+});
+
+export const insertGuildWarEventSchema = createInsertSchema(guildWarEvents).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type InsertGuildWar = z.infer<typeof insertGuildWarSchema>;
+export type GuildWar = typeof guildWars.$inferSelect;
+
+export type InsertGuildWarParticipant = z.infer<typeof insertGuildWarParticipantSchema>;
+export type GuildWarParticipant = typeof guildWarParticipants.$inferSelect;
+
+export type InsertGuildWarEvent = z.infer<typeof insertGuildWarEventSchema>;
+export type GuildWarEvent = typeof guildWarEvents.$inferSelect;
+
+export type WarStatus = "matchmaking" | "active" | "completed";
+
 

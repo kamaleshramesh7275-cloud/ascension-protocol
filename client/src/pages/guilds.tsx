@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Users, Crown, TrendingUp, LogOut, Shield, MessageSquare, Send,
-    Trophy, Zap, Coins, Star, Lock, CheckCircle2, Clock
+    Trophy, Zap, Coins, Star, Lock, CheckCircle2, Clock, Swords, Ghost, Activity, Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,10 +121,41 @@ export default function GuildsPage() {
         enabled: !!userGuild,
     });
 
-    // Guild donations
     const { data: donations = [] } = useQuery<any[]>({
         queryKey: [`/api/guilds/${userGuild?.id}/donations`],
         enabled: !!userGuild,
+    });
+
+    // Guild War queries
+    const { data: activeWar } = useQuery<any>({
+        queryKey: ["/api/guild-wars/active"],
+        enabled: !!user?.guildId,
+        refetchInterval: 30000,
+    });
+
+    const { data: warParticipants = [] } = useQuery<any[]>({
+        queryKey: [`/api/guild-wars/${activeWar?.id}/participants`],
+        enabled: !!activeWar?.id,
+    });
+
+    const { data: warEvents = [] } = useQuery<any[]>({
+        queryKey: [`/api/guild-wars/${activeWar?.id}/events`],
+        enabled: !!activeWar?.id,
+        refetchInterval: 20000,
+    });
+
+    const startMatchmakingMutation = useMutation({
+        mutationFn: async () => {
+            const res = await apiRequest("POST", "/api/guild-wars/matchmaking", {});
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/guild-wars/active"] });
+            toast({ title: "Joined matchmaking queue!", description: "Searching for a suitable opponent..." });
+        },
+        onError: (error: Error) => {
+            toast({ title: "Matchmaking failed", description: error.message, variant: "destructive" });
+        },
     });
 
     const joinGuildMutation = useMutation({
@@ -360,6 +391,9 @@ export default function GuildsPage() {
                         <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
                         <TabsTrigger value="members" className="text-xs md:text-sm">Members</TabsTrigger>
                         <TabsTrigger value="quests" className="text-xs md:text-sm">Quests</TabsTrigger>
+                        <TabsTrigger value="wars" className="text-xs md:text-sm flex items-center gap-1">
+                            <Swords className="h-3 w-3" /> Wars
+                        </TabsTrigger>
                         <TabsTrigger value="perks" className="text-xs md:text-sm">Perks</TabsTrigger>
                         <TabsTrigger value="treasury" className="text-xs md:text-sm">Treasury</TabsTrigger>
                         <TabsTrigger value="chat" className="text-xs md:text-sm">Chat</TabsTrigger>
@@ -764,6 +798,169 @@ export default function GuildsPage() {
                                 </div>
                             </CardContent>
                         </Card>
+                    </TabsContent>
+                    {/* Guild Wars Tab */}
+                    <TabsContent value="wars" className="space-y-6">
+                        {!activeWar ? (
+                            <Card className="border-dashed">
+                                <CardHeader className="text-center">
+                                    <Swords className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                                    <CardTitle>No Active War</CardTitle>
+                                    <CardDescription>
+                                        Your guild is not currently in a war. Join matchmaking to find an opponent!
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex justify-center pb-8">
+                                    <Button
+                                        size="lg"
+                                        className="gap-2"
+                                        onClick={() => startMatchmakingMutation.mutate()}
+                                        disabled={startMatchmakingMutation.isPending || userGuild?.leaderId !== user?.id}
+                                    >
+                                        <Swords className="h-5 w-5" />
+                                        {userGuild?.leaderId === user?.id ? "Start Matchmaking" : "Waiting for President"}
+                                    </Button>
+                                </CardContent>
+                                {userGuild?.leaderId !== user?.id && (
+                                    <p className="text-center text-xs text-muted-foreground pb-4">
+                                        Only the Guild President can start a war.
+                                    </p>
+                                )}
+                            </Card>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* War Score Card */}
+                                <Card className="border-2 border-primary overflow-hidden">
+                                    <div className="bg-primary/10 p-4 border-b border-primary/20 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 font-bold text-primary">
+                                            <Timer className="h-4 w-4" />
+                                            War Ends: {new Date(activeWar.endDate).toLocaleDateString()}
+                                        </div>
+                                        <Badge variant="default" className="animate-pulse">Active Battle</Badge>
+                                    </div>
+                                    <CardContent className="p-8">
+                                        <div className="grid grid-cols-3 items-center gap-8">
+                                            {/* Your Guild */}
+                                            <div className="text-center space-y-2">
+                                                <div className="h-16 w-16 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center border-2 border-blue-500">
+                                                    <Shield className="h-8 w-8 text-blue-500" />
+                                                </div>
+                                                <h3 className="font-bold text-lg truncate">{userGuild?.name}</h3>
+                                                <div className="text-3xl font-black text-blue-500">{activeWar.guild1Id === userGuild?.id ? activeWar.guild1Score : activeWar.guild2Score}</div>
+                                            </div>
+
+                                            {/* VS */}
+                                            <div className="text-center">
+                                                <div className="text-2xl font-black text-muted-foreground italic mb-2">VS</div>
+                                                <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-primary to-red-500 rounded-full" />
+                                            </div>
+
+                                            {/* Opponent Guild */}
+                                            <div className="text-center space-y-2">
+                                                <div className="h-16 w-16 mx-auto rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500">
+                                                    <Shield className="h-8 w-8 text-red-500" />
+                                                </div>
+                                                <h3 className="font-bold text-lg truncate">
+                                                    {activeWar.guild1Id === userGuild?.id ? guilds?.find(g => g.id === activeWar.guild2Id)?.name : guilds?.find(g => g.id === activeWar.guild1Id)?.name}
+                                                </h3>
+                                                <div className="text-3xl font-black text-red-500">{activeWar.guild1Id === userGuild?.id ? activeWar.guild2Score : activeWar.guild1Score}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 space-y-2">
+                                            <div className="flex justify-between text-sm font-bold">
+                                                <span>Battle Progress</span>
+                                                <span>
+                                                    {Math.round(((activeWar.guild1Score + activeWar.guild2Score) / 10000) * 100)}% to milestone
+                                                </span>
+                                            </div>
+                                            <Progress
+                                                value={((activeWar.guild1Id === userGuild?.id ? activeWar.guild1Score : activeWar.guild2Score) / Math.max(activeWar.guild1Score + activeWar.guild2Score, 1)) * 100}
+                                                className="h-4 bg-red-500/20"
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {/* Contributors List */}
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <Trophy className="h-5 w-5 text-yellow-500" />
+                                                Top Contributors
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-4">
+                                                {warParticipants.length === 0 ? (
+                                                    <div className="text-center py-4 text-muted-foreground text-sm italic">
+                                                        No contributions yet. Start training!
+                                                    </div>
+                                                ) : (
+                                                    warParticipants
+                                                        .sort((a, b) => b.pointsContributed - a.pointsContributed)
+                                                        .map((p, i) => (
+                                                            <div key={p.id} className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="text-xs font-bold text-muted-foreground w-4">#{i + 1}</div>
+                                                                    <div>
+                                                                        <div className="font-bold text-sm">{p.user?.name}</div>
+                                                                        <div className="text-[10px] text-muted-foreground uppercase flex gap-2">
+                                                                            <span>{p.questsCompleted} Quests</span>
+                                                                            <span>{p.focusMinutes}m Focus</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="font-bold text-primary">+{p.pointsContributed}</div>
+                                                            </div>
+                                                        ))
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Recent Events */}
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <Activity className="h-5 w-5 text-blue-500" />
+                                                War Activity
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-4">
+                                                {warEvents.length === 0 ? (
+                                                    <div className="text-center py-4 text-muted-foreground text-sm italic">
+                                                        Battle log is empty...
+                                                    </div>
+                                                ) : (
+                                                    warEvents.slice(0, 10).map((e) => {
+                                                        const isYourGuild = e.guildId === userGuild?.id;
+                                                        return (
+                                                            <div key={e.id} className="flex items-start gap-3">
+                                                                <div className={`mt-1 h-2 w-2 rounded-full ${isYourGuild ? "bg-blue-500" : "bg-red-500"}`} />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-xs leading-none">
+                                                                        <span className="font-bold text-foreground">{e.description}</span>
+                                                                    </p>
+                                                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                                                        {new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </p>
+                                                                </div>
+                                                                <div className={`text-[10px] font-bold ${isYourGuild ? "text-blue-500" : "text-red-500"}`}>
+                                                                    +{e.points}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>

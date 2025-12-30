@@ -20,6 +20,7 @@ import { getRandomDailyQuests, getRandomWeeklyQuest, getRankTrialQuest } from ".
 import { mockContent } from "./data/mock-content";
 import guildRouter from "./routes/guilds";
 import guildEnhancementsRouter from "./routes/guild-enhancements";
+import guildWarsRouter from "./routes/guild-wars";
 import shopRouter from "./routes/shop";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
@@ -1082,6 +1083,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statDeltas: quest.rewardStats || {},
       });
 
+      // Guild War Contribution
+      if (user.guildId) {
+        const activeWar = await storage.getActiveGuildWar(user.guildId);
+        if (activeWar) {
+          await storage.logWarContribution({
+            warId: activeWar.id,
+            userId: user.id,
+            guildId: user.guildId,
+            eventType: "quest_complete",
+            points: 100, // 100 points per quest
+            description: `Completed quest: ${quest.title}`,
+          });
+        }
+      }
+
       // Check if user crossed a tier threshold - trigger rank trial
       const oldTier = calculateTier(user.xp);
       if (oldTier !== newTier && newTier !== "D") {
@@ -1300,6 +1316,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coinsDelta: 0,
         statDeltas: {},
       });
+
+      // Guild War Contribution
+      if (user.guildId) {
+        const activeWar = await storage.getActiveGuildWar(user.guildId);
+        if (activeWar) {
+          await storage.logWarContribution({
+            warId: activeWar.id,
+            userId: user.id,
+            guildId: user.guildId,
+            eventType: "focus_session",
+            points: Math.floor(duration / 10), // 1 point per 10 minutes focus
+            description: `Focus session: ${duration} minutes`,
+          });
+        }
+      }
 
       res.json({ session, user: updatedUser });
     } catch (error) {
@@ -1527,6 +1558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Guild Routes
   app.use("/api/guilds", requireAuth, guildRouter);
   app.use("/api/guild-enhancements", requireAuth, guildEnhancementsRouter);
+  app.use("/api/guild-wars", guildWarsRouter);
 
   return httpServer;
 }
