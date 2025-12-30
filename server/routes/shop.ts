@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
-import { requireAuth } from "../routes";
+import { requireAuth } from "../middleware/auth";
 // const storage = getStorage();
 import { insertUserItemSchema } from "@shared/schema";
 import { z } from "zod";
