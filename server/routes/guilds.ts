@@ -10,60 +10,78 @@ async function seedGuilds() {
     const guilds = await storage.getAllGuilds();
     if (guilds.length > 0) return;
 
+    // Find or create a system user for guild leadership
+    let systemUser = await storage.getUserByFirebaseUid("system_guild_leader");
+    if (!systemUser) {
+        console.log("Creating system user for guild leadership...");
+        systemUser = await storage.createUser({
+            firebaseUid: "system_guild_leader",
+            name: "System Admin",
+            email: "admin@ascension.protocol",
+            avatarUrl: null,
+            timezone: "UTC",
+            onboardingCompleted: true,
+            assessmentData: null,
+            currentGoal: null,
+            studySubject: null,
+            studyAvailability: null,
+        });
+    }
+
     const seedGuilds = [
         {
             name: "Iron Warriors",
             description: "Forge your body and mind through discipline and strength",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Mindful Ascendants",
             description: "Elevate consciousness through meditation and self-reflection",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Code Crusaders",
             description: "Master the art of programming and technology",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Fitness Fanatics",
             description: "Push your physical limits and achieve peak performance",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Knowledge Seekers",
             description: "Pursue wisdom and continuous learning",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Creative Collective",
             description: "Express yourself through art, music, and creativity",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Business Builders",
             description: "Develop entrepreneurial skills and build successful ventures",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
         {
             name: "Social Champions",
             description: "Improve charisma and build meaningful connections",
-            leaderId: "",
+            leaderId: systemUser.id,
             isPublic: true,
             maxMembers: 50,
         },
