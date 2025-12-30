@@ -5,7 +5,7 @@ import { RankBadge } from "@/components/rank-badge";
 import { XPProgress } from "@/components/xp-progress";
 import { StatBar } from "@/components/stat-bar";
 import { QuestCard } from "@/components/quest-card";
-import { User, Quest, STAT_NAMES } from "@shared/schema";
+import { User, Quest, Task, STAT_NAMES } from "@shared/schema";
 import { Flame, Target, CheckSquare, Plus, Trash2, TrendingUp, Zap, Award, BookOpen, Calendar, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
@@ -56,26 +56,53 @@ export default function Dashboard() {
   const activeQuests = quests?.filter(q => !q.completed) || [];
   const completedToday = quests?.filter(q => q.completed) || [];
 
-  // To-Do List State
-  const [todos, setTodos] = useState([
-    { id: 1, text: "Review Calculus notes", completed: false },
-    { id: 2, text: "Complete Physics assignment", completed: true },
-    { id: 3, text: "Read Chapter 4 of History", completed: false },
-  ]);
+  // To-Do List State & Mutations
+  const { data: todos = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
+  });
   const [newTodo, setNewTodo] = useState("");
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const res = await apiRequest("POST", "/api/tasks", { text, completed: false });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      setNewTodo("");
+      toast({ title: "Task added" });
+    }
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/tasks/${id}`, { completed });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] })
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/tasks/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({ title: "Task deleted" });
+    }
+  });
 
   const addTodo = () => {
     if (!newTodo.trim()) return;
-    setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
-    setNewTodo("");
+    createTaskMutation.mutate(newTodo);
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const toggleTodo = (id: string, currentStatus: boolean) => {
+    updateTaskMutation.mutate({ id, completed: !currentStatus });
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter(t => t.id !== id));
+  const deleteTodo = (id: string) => {
+    deleteTaskMutation.mutate(id);
   };
 
   // Motivational quotes
@@ -106,20 +133,30 @@ export default function Dashboard() {
     );
   }
 
-  // Weekly Progress Data (mock data - in real app, fetch from backend)
-  const weeklyData = [
-    { day: 'Mon', xp: 120 },
-    { day: 'Tue', xp: 180 },
-    { day: 'Wed', xp: 150 },
-    { day: 'Thu', xp: 220 },
-    { day: 'Fri', xp: 190 },
-    { day: 'Sat', xp: 250 },
-    { day: 'Sun', xp: user.xp % 100 }, // Current day
+  // Weekly Progress Data
+  const { data: weeklyData = [] } = useQuery<{ date: string; xp: number }[]>({
+    queryKey: ["/api/user/stats/weekly"],
+  });
+
+  const chartData = weeklyData.length > 0 ? weeklyData.map(d => ({
+    day: d.date,
+    xp: d.xp
+  })) : [
+    { day: 'Mon', xp: 0 },
+    { day: 'Tue', xp: 0 },
+    { day: 'Wed', xp: 0 },
+    { day: 'Thu', xp: 0 },
+    { day: 'Fri', xp: 0 },
+    { day: 'Sat', xp: 0 },
+    { day: 'Sun', xp: 0 },
   ];
 
   // Daily Goal
   const dailyGoal = 200;
-  const todayXP = weeklyData[6].xp;
+  // Get today's XP from the last entry of the chart data (assuming it's today)
+  // or calculate from recent activities if needed. 
+  // For now, let's use the last entry of chartData which corresponds to today/active day.
+  const todayXP = chartData[chartData.length - 1]?.xp || 0;
   const goalProgress = Math.min((todayXP / dailyGoal) * 100, 100);
 
   // Recent Activity (mock data)
@@ -238,7 +275,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={weeklyData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="day" stroke="#888" />
                 <YAxis stroke="#888" />
@@ -424,7 +461,7 @@ export default function Dashboard() {
                       <div key={todo.id} className="flex items-center gap-2 p-2 rounded hover:bg-accent group">
                         <Checkbox
                           checked={todo.completed}
-                          onCheckedChange={() => toggleTodo(todo.id)}
+                          onCheckedChange={() => toggleTodo(todo.id, todo.completed || false)}
                         />
                         <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-muted-foreground' : ''}`}>
                           {todo.text}

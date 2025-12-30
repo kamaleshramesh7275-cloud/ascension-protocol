@@ -298,6 +298,15 @@ export const directMessages = pgTable("direct_messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// To-Do List Tasks
+export const tasks = pgTable("tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Partnerships table
 export const partnerships = pgTable("partnerships", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -479,6 +488,14 @@ export const insertPartnershipSchema = createInsertSchema(partnerships).omit({
   createdAt: true,
   acceptedAt: true,
 });
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type Task = typeof tasks.$inferSelect;
 
 export type InsertPartnership = z.infer<typeof insertPartnershipSchema>;
 export type Partnership = typeof partnerships.$inferSelect;

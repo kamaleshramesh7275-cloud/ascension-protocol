@@ -39,8 +39,12 @@ import {
   type InsertGuildPerk,
   type GuildDonation,
   type InsertGuildDonation,
+  type Task,
+  type InsertTask,
   users,
   quests,
+  tasks,
+  activityHistory,
   activityHistory as activities,
   rankTrials,
   shopItems,
@@ -195,6 +199,16 @@ export interface IStorage {
   getGuildDonations(guildId: string, limit?: number): Promise<GuildDonation[]>;
   getGuildTreasury(guildId: string): Promise<number>;
   hydrate(): Promise<void>;
+  hydrate(): Promise<void>;
+
+  // Tasks
+  getTasks(userId: string): Promise<Task[]>;
+  createTask(task: InsertTask): Promise<Task>;
+  updateTask(id: string, task: Partial<Task>): Promise<Task>;
+  deleteTask(id: string): Promise<void>;
+
+  // Stats
+  getUserWeeklyStats(userId: string): Promise<{ date: string; xp: number }[]>;
 }
 
 // Shop Items
@@ -238,6 +252,7 @@ export class MemStorage implements IStorage {
   private guildDonations: Map<string, GuildDonation>;
   private campaigns: Map<string, any>;
   private userCampaigns: Map<string, any>;
+  private tasks: Map<string, Task>;
 
   constructor() {
     this.guilds = new Map();
@@ -268,7 +283,9 @@ export class MemStorage implements IStorage {
     this.rankTrials = new Map();
     this.shopItems = new Map();
     this.campaigns = new Map();
+    this.campaigns = new Map();
     this.userCampaigns = new Map();
+    this.tasks = new Map();
 
     // SEED CAMPAIGNS FROM DATA
     this.campaigns = new Map();
@@ -800,6 +817,69 @@ export class MemStorage implements IStorage {
 
   async getUserQuests(userId: string): Promise<Quest[]> {
     return Array.from(this.quests.values()).filter(q => q.userId === userId);
+  }
+
+  // Task Methods
+  async getTasks(userId: string): Promise<Task[]> {
+    return Array.from(this.tasks.values()).filter(t => t.userId === userId);
+  }
+
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const id = randomUUID();
+    const task: Task = {
+      id,
+      ...insertTask,
+      createdAt: new Date(),
+      completed: insertTask.completed || false
+    };
+    this.tasks.set(id, task);
+    return task;
+  }
+
+  async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
+    const task = this.tasks.get(id);
+    if (!task) throw new Error("Task not found");
+    const updated = { ...task, ...updates };
+    this.tasks.set(id, updated);
+    return updated;
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    this.tasks.delete(id);
+  }
+
+  // Weekly Stats
+  async getUserWeeklyStats(userId: string): Promise<{ date: string; xp: number }[]> {
+    const now = new Date();
+    const stats: { date: string; xp: number }[] = [];
+
+    // Initialize last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+      stats.push({ date: dateStr, xp: 0 });
+    }
+
+    // Since activityHistory is not tracked in MemStorage fully in this snippets context (using separate map?), 
+    // we will mock return simpler based on quests if available, or just empty for MemStorage as it's dev only usually.
+    // However, existing MemStorage has activities map? Let's check.
+    // MemStorage has `activities` map.
+    const userActivities = Array.from(this.activities.values())
+      .filter(a => a.userId === userId);
+
+    userActivities.forEach(activity => {
+      // Logic to bucket by day would go here, 
+      // but simplistic approach for MemStorage: return random/mock or calculate
+      // Let's implement basic calculation
+      const dayName = new Date(activity.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+      const dayStat = stats.find(s => s.date === dayName);
+      if (dayStat) {
+        dayStat.xp += activity.xpDelta;
+      }
+    });
+
+    return stats;
   }
 
   async createQuest(insertQuest: InsertQuest): Promise<Quest> {
@@ -1373,6 +1453,7 @@ export class MemStorage implements IStorage {
       this.messages = new Map(data.messages);
       this.partnerships = new Map(data.partnerships || []);
       this.directMessages = new Map(data.directMessages || []);
+      this.tasks = new Map(data.tasks || []);
 
       console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
     } catch (e) {
@@ -2153,6 +2234,73 @@ export class DatabaseStorage implements IStorage {
         });
       }
     }
+  }
+
+  // Task Methods (DB)
+  async getTasks(userId: string): Promise<Task[]> {
+    return await db!.select().from(tasks).where(eq(tasks.userId, userId));
+  }
+
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const id = randomUUID();
+    const newTask: Task = {
+      id,
+      ...insertTask,
+      createdAt: new Date(),
+      completed: insertTask.completed || false
+    };
+    await db!.insert(tasks).values(newTask);
+    return newTask;
+  }
+
+  async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
+    const [updated] = await db!
+      .update(tasks)
+      .set(updates)
+      .where(eq(tasks.id, id))
+      .returning();
+    if (!updated) throw new Error("Task not found");
+    return updated;
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    await db!.delete(tasks).where(eq(tasks.id, id));
+  }
+
+  // Weekly Stats (DB)
+  async getUserWeeklyStats(userId: string): Promise<{ date: string; xp: number }[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const logs = await db!
+      .select()
+      .from(activityHistory)
+      .where(and(
+        eq(activityHistory.userId, userId),
+        gt(activityHistory.timestamp, sevenDaysAgo)
+      ));
+
+    const stats: { date: string; xp: number }[] = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+
+      const dailyXP = logs
+        .filter(log => {
+          const logDate = new Date(log.timestamp);
+          return logDate.getDate() === d.getDate() &&
+            logDate.getMonth() === d.getMonth() &&
+            logDate.getFullYear() === d.getFullYear();
+        })
+        .reduce((sum, log) => sum + (log.xpDelta || 0), 0);
+
+      stats.push({ date: dayStr, xp: dailyXP });
+    }
+
+    return stats;
   }
 }
 

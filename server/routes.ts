@@ -9,7 +9,8 @@ import {
   insertGuildSchema,
   insertGuildMessageSchema,
   insertGuildQuestSchema,
-  insertMessageSchema
+  insertMessageSchema,
+  insertTaskSchema
 } from "@shared/schema";
 
 // Enable CORS for all routes (allow admin frontend to make DELETE with custom header)
@@ -1410,6 +1411,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Send notification error:", error);
       res.status(500).json({ error: "Failed to send notification" });
+    }
+  });
+
+  // --- Weekly Stats Route ---
+  app.get("/api/user/stats/weekly", requireAuth, async (req, res) => {
+    try {
+      const stats = await storage.getUserWeeklyStats((req as any).user!.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Fetch weekly stats error:", error);
+      res.status(500).json({ error: "Failed to fetch weekly stats" });
+    }
+  });
+
+  // --- Task Routes ---
+  app.get("/api/tasks", requireAuth, async (req, res) => {
+    try {
+      const tasks = await storage.getTasks((req as any).user!.id);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Fetch tasks error:", error);
+      res.status(500).json({ error: "Failed to fetch tasks" });
+    }
+  });
+
+  app.post("/api/tasks", requireAuth, async (req, res) => {
+    try {
+      const parseResult = insertTaskSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: parseResult.error });
+      }
+      const task = await storage.createTask({
+        ...parseResult.data,
+        userId: (req as any).user!.id
+      });
+      res.json(task);
+    } catch (error) {
+      console.error("Create task error:", error);
+      res.status(500).json({ error: "Failed to create task" });
+    }
+  });
+
+  app.patch("/api/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const task = await storage.updateTask(req.params.id, req.body);
+      res.json(task);
+    } catch (error) {
+      console.error("Update task error:", error);
+      res.status(500).json({ error: "Failed to update task" });
+    }
+  });
+
+  app.delete("/api/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      await storage.deleteTask(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete task error:", error);
+      res.status(500).json({ error: "Failed to delete task" });
     }
   });
 
