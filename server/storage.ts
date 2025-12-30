@@ -1388,6 +1388,30 @@ export class MemStorage implements IStorage {
 export class DatabaseStorage implements IStorage {
   constructor() {
     console.log("🗄️ DatabaseStorage initialized");
+    this.seedShopItems();
+  }
+
+  private async seedShopItems() {
+    console.log("🌱 Seeding shop items...");
+    for (const item of DEFAULT_SHOP_ITEMS) {
+      // Check if item exists by value (unique key for themes/badges) or name
+      const existing = await db!.query.shopItems.findFirst({
+        where: eq(shopItems.value, item.value)
+      });
+
+      if (!existing) {
+        console.log(`Creating missing shop item: ${item.name}`);
+        await this.createShopItem({
+          name: item.name,
+          description: item.description,
+          type: item.type,
+          rarity: item.rarity,
+          value: item.value,
+          cost: item.cost,
+          isPremium: item.isPremium || false
+        });
+      }
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -1403,7 +1427,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db!.insert(users).values(insertUser as any).returning();
+    const [user] = await db!.insert(users).values({ ...insertUser, coins: 5000 } as any).returning();
     return user;
   }
 
