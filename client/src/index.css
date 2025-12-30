@@ -1028,3 +1028,171 @@
     overflow-x: hidden;
   }
 }
+
+/* NEW THEMES REQUESTED */
+
+/* Midnight Mirage (based on Midnight Eclipse) */
+.midnight-mirage {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 260 100% 65%; /* Slightly more purple/mysterious */
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 32% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 32% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 32% 17%;
+  --input: 217 32% 17%;
+  --ring: 260 100% 65%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 260 100% 65%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-accent: 217 32% 17%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 32% 17%;
+  --sidebar-ring: 260 100% 65%;
+}
+
+.midnight-mirage button:hover {
+  box-shadow: 0 0 20px hsl(260 100% 65% / 0.5);
+  animation: moonGlow 2s ease-in-out infinite;
+}
+
+/* Cyberpunk Neon (based on Neon Cyberpunk) */
+.cyberpunk-neon {
+  --background: 280 50% 5%;
+  --foreground: 180 100% 90%;
+  --card: 280 50% 8%;
+  --card-foreground: 180 100% 90%;
+  --popover: 280 50% 8%;
+  --popover-foreground: 180 100% 90%;
+  --primary: 300 100% 60%; /* Magenta */
+  --primary-foreground: 180 100% 90%;
+  --secondary: 260 50% 20%;
+  --secondary-foreground: 180 100% 90%;
+  --muted: 260 50% 20%;
+  --muted-foreground: 260 30% 70%;
+  --accent: 260 50% 20%;
+  --accent-foreground: 180 100% 90%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 180 100% 90%;
+  --border: 260 50% 20%;
+  --input: 260 50% 20%;
+  --ring: 300 100% 60%;
+  --sidebar: 280 50% 5%;
+  --sidebar-foreground: 180 100% 90%;
+  --sidebar-primary: 300 100% 60%;
+  --sidebar-primary-foreground: 180 100% 90%;
+  --sidebar-accent: 260 50% 20%;
+  --sidebar-accent-foreground: 180 100% 90%;
+  --sidebar-border: 260 50% 20%;
+  --sidebar-ring: 300 100% 60%;
+}
+
+.cyberpunk-neon h1 { animation: neonFlicker 3s ease-in-out infinite; }
+
+/* Golden Age (based on Golden Luxury) */
+.golden-age {
+  --background: 45 20% 5%;
+  --foreground: 45 30% 95%;
+  --card: 45 20% 8%;
+  --card-foreground: 45 30% 95%;
+  --popover: 45 20% 8%;
+  --popover-foreground: 45 30% 95%;
+  --primary: 50 100% 50%;
+  --primary-foreground: 45 20% 5%;
+  --secondary: 45 20% 15%;
+  --secondary-foreground: 45 30% 95%;
+  --muted: 45 20% 15%;
+  --muted-foreground: 45 10% 60%;
+  --accent: 45 20% 15%;
+  --accent-foreground: 45 30% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 45 30% 95%;
+  --border: 45 30% 20%;
+  --input: 45 30% 20%;
+  --ring: 50 100% 50%;
+  --sidebar: 45 20% 5%;
+  --sidebar-foreground: 45 30% 95%;
+  --sidebar-primary: 50 100% 50%;
+  --sidebar-primary-foreground: 45 20% 5%;
+  --sidebar-accent: 45 20% 15%;
+  --sidebar-accent-foreground: 45 30% 95%;
+  --sidebar-border: 45 30% 20%;
+  --sidebar-ring: 50 100% 50%;
+}
+
+/* Nature's Wrath (based on Forest Guardian) */
+.natures-wrath {
+  --background: 120 30% 5%;
+  --foreground: 120 20% 95%;
+  --card: 120 30% 8%;
+  --card-foreground: 120 20% 95%;
+  --popover: 120 30% 8%;
+  --popover-foreground: 120 20% 95%;
+  --primary: 100 70% 40%;
+  --primary-foreground: 120 20% 95%;
+  --secondary: 120 20% 15%;
+  --secondary-foreground: 120 20% 95%;
+  --muted: 120 20% 15%;
+  --muted-foreground: 120 10% 60%;
+  --accent: 120 20% 15%;
+  --accent-foreground: 120 20% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 120 20% 95%;
+  --border: 120 20% 20%;
+  --input: 120 20% 20%;
+  --ring: 100 70% 40%;
+  --sidebar: 120 30% 5%;
+  --sidebar-foreground: 120 20% 95%;
+  --sidebar-primary: 100 70% 40%;
+  --sidebar-primary-foreground: 120 20% 95%;
+  --sidebar-accent: 120 20% 15%;
+  --sidebar-accent-foreground: 120 20% 95%;
+  --sidebar-border: 120 20% 20%;
+  --sidebar-ring: 100 70% 40%;
+}
+
+/* Arctic Frost (Exists but ensuring definition) */
+
+/* Vampire's Kiss (based on Crimson Warlord) */
+.vampires-kiss {
+  --background: 0 0% 5%;
+  --foreground: 0 0% 95%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 95%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 350 80% 50%; /* Deep red/purple */
+  --primary-foreground: 0 0% 95%;
+  --secondary: 0 30% 15%;
+  --secondary-foreground: 0 0% 95%;
+  --muted: 0 30% 15%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 30% 15%;
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 95%;
+  --border: 0 30% 15%;
+  --input: 0 30% 15%;
+  --ring: 350 80% 50%;
+  --sidebar: 0 0% 5%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 350 80% 50%;
+  --sidebar-primary-foreground: 0 0% 95%;
+  --sidebar-accent: 0 30% 15%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 0 30% 15%;
+  --sidebar-ring: 350 80% 50%;
+}
+
+.vampires-kiss button { animation: bloodPulse 3s ease-in-out infinite; }

@@ -141,6 +141,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);
 
+  // --- Campaign Routes ---
+  app.get("/api/campaigns", async (req, res) => {
+    try {
+      const campaigns = await storage.getCampaigns();
+      res.json(campaigns);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  app.post("/api/campaigns/:id/join", requireAuth, async (req, res) => {
+    try {
+      await storage.joinCampaign((req as any).user!.id, req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to join campaign" });
+    }
+  });
+
+  app.get("/api/user/active-campaign", requireAuth, async (req, res) => {
+    try {
+      const campaign = await storage.getActiveCampaign((req as any).user!.id);
+      // Ensure daily quests are generated when checking status
+      if (campaign) {
+        await storage.checkDailyQuests((req as any).user!.id);
+      }
+      res.json(campaign || null);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch active campaign" });
+    }
+  });
+
 
   // --- Partner Matching ---
 

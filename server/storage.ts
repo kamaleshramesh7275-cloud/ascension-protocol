@@ -64,11 +64,15 @@ import {
   guildQuestProgress,
   guildPerks,
   guildDonations,
+  InsertCampaign, Campaign, UserCampaign,
+  insertCampaignSchema,
+  insertShopItemSchema
 } from "@shared/schema";
+import { eq, and, desc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
+import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, desc, and, ne, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -85,7 +89,14 @@ export interface IStorage {
   getUserQuests(userId: string): Promise<Quest[]>;
   createQuest(quest: InsertQuest): Promise<Quest>;
   updateQuest(id: string, updates: Partial<Quest>): Promise<Quest>;
+
   deleteQuest(id: string): Promise<void>;
+  checkDailyQuests(userId: string): Promise<void>;
+
+  // Campaign operations
+  getCampaigns(): Promise<any[]>;
+  joinCampaign(userId: string, campaignId: string): Promise<void>;
+  getActiveCampaign(userId: string): Promise<any | undefined>;
 
   // Activity operations
   getActivity(id: string): Promise<Activity | undefined>;
@@ -195,17 +206,13 @@ const DEFAULT_SHOP_ITEMS: InsertShopItem[] = [
   { name: "Bronze Medal", description: "A bronze medal for effort", type: "badge", rarity: "common", value: "medal_bronze", cost: 200, isPremium: false },
   { name: "Silver Medal", description: "A silver medal for achievement", type: "badge", rarity: "rare", value: "medal_silver", cost: 1000, isPremium: false },
   { name: "Gold Medal", description: "A gold medal for excellence", type: "badge", rarity: "epic", value: "medal_gold", cost: 5000, isPremium: false },
-  // Global Themes
-  { name: "Midnight Eclipse", description: "A deep blue and black theme for night owls.", type: "theme", rarity: "rare", value: "midnight-eclipse", cost: 500, isPremium: true },
-  { name: "Crimson Warlord", description: "Aggressive red and black aesthetic.", type: "theme", rarity: "epic", value: "crimson-warlord", cost: 1000, isPremium: true },
-  { name: "Neon Cyberpunk", description: "Vibrant pinks, cyans, and dark backgrounds.", type: "theme", rarity: "epic", value: "neon-cyberpunk", cost: 1200, isPremium: true },
-  { name: "Golden Luxury", description: "Opulent gold and black for the elite.", type: "theme", rarity: "legendary", value: "golden-luxury", cost: 5000, isPremium: true },
-  { name: "Forest Guardian", description: "Soothing greens and earthy browns.", type: "theme", rarity: "rare", value: "forest-guardian", cost: 600, isPremium: true },
+  // Global Themes (User Requested)
+  { name: "Midnight Mirage", description: "Deep blue and mysterious night aesthetic.", type: "theme", rarity: "rare", value: "midnight-mirage", cost: 500, isPremium: true },
+  { name: "Cyberpunk Neon", description: "Vibrant neon pinks and cyans.", type: "theme", rarity: "epic", value: "cyberpunk-neon", cost: 1200, isPremium: true },
+  { name: "Golden Age", description: "Opulent gold and black luxury.", type: "theme", rarity: "legendary", value: "golden-age", cost: 5000, isPremium: true },
+  { name: "Nature's Wrath", description: "Deep greens and earthy tones.", type: "theme", rarity: "rare", value: "natures-wrath", cost: 600, isPremium: true },
   { name: "Arctic Frost", description: "Cool whites and icy blues.", type: "theme", rarity: "rare", value: "arctic-frost", cost: 700, isPremium: true },
-  { name: "Solar Flare", description: "Energetic oranges and yellows.", type: "theme", rarity: "rare", value: "solar-flare", cost: 800, isPremium: true },
-  { name: "Royal Amethyst", description: "Regal purple and gold accents.", type: "theme", rarity: "epic", value: "royal-amethyst", cost: 1500, isPremium: true },
-  { name: "Steampunk", description: "Bronze, copper, and industrial gears.", type: "theme", rarity: "epic", value: "steampunk", cost: 2000, isPremium: true },
-  { name: "Matrix", description: "Falling green code on black.", type: "theme", rarity: "legendary", value: "matrix", cost: 3000, isPremium: true },
+  { name: "Vampire's Kiss", description: "Deep red and black gothic vibes.", type: "theme", rarity: "epic", value: "vampires-kiss", cost: 1000, isPremium: true },
 ];
 
 export class MemStorage implements IStorage {
@@ -229,6 +236,8 @@ export class MemStorage implements IStorage {
   private guildQuestProgress: Map<string, GuildQuestProgress>;
   private guildPerks: Map<string, GuildPerk>;
   private guildDonations: Map<string, GuildDonation>;
+  private campaigns: Map<string, any>;
+  private userCampaigns: Map<string, any>;
 
   constructor() {
     this.guilds = new Map();
@@ -258,6 +267,27 @@ export class MemStorage implements IStorage {
     this.activities = new Map();
     this.rankTrials = new Map();
     this.shopItems = new Map();
+    this.campaigns = new Map();
+    this.userCampaigns = new Map();
+
+    // SEED CAMPAIGNS FROM DATA
+    this.campaigns = new Map();
+    CAMPAIGNS_DATA.forEach(c => {
+      const id = randomUUID();
+      this.campaigns.set(id, {
+        id,
+        title: c.title,
+        description: c.description,
+        category: c.category,
+        difficulty: c.difficulty,
+        durationDays: c.durationDays,
+        totalQuests: c.totalQuests,
+        rewardXP: c.rewardXP,
+        rewardCoins: c.rewardCoins,
+        imageUrl: c.imageUrl || null,
+        createdAt: new Date()
+      });
+    });
 
     DEFAULT_SHOP_ITEMS.forEach(item => {
       const id = randomUUID();
@@ -618,6 +648,85 @@ export class MemStorage implements IStorage {
     return guild?.treasury || 0;
   }
 
+  async getCampaigns(): Promise<any[]> {
+    return Array.from(this.campaigns.values());
+  }
+
+  async getActiveCampaign(userId: string): Promise<any | undefined> {
+    const uc = Array.from(this.userCampaigns.values()).find(uc => uc.userId === userId && !uc.completed);
+    if (!uc) return undefined;
+    return this.campaigns.get(uc.campaignId);
+  }
+
+  async joinCampaign(userId: string, campaignId: string): Promise<void> {
+    // Check if duplicate
+    const existing = Array.from(this.userCampaigns.values()).find(uc => uc.userId === userId && uc.campaignId === campaignId);
+    if (existing) return;
+
+    // End other active campaigns? Optional, but let's allow only 1 active for simplicity or many?
+    // Let's allow one active per category maybe? For now just add it.
+
+    // Seed Start Date
+    const id = randomUUID();
+    this.userCampaigns.set(id, {
+      id, userId, campaignId, questsCompleted: 0, completed: false, startedAt: new Date(), completedAt: null
+    });
+
+    // Trigger daily quest check immediately
+    await this.checkDailyQuests(userId);
+  }
+
+  async checkDailyQuests(userId: string): Promise<void> {
+    // 1. Get user active campaigns
+    const activeUCs = Array.from(this.userCampaigns.values()).filter(uc => uc.userId === userId && !uc.completed);
+    const now = new Date();
+
+    for (const uc of activeUCs) {
+      const campaign = this.campaigns.get(uc.campaignId);
+      if (!campaign) continue;
+
+      // Calculate Day Number
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const daysSinceStart = Math.floor((now.getTime() - uc.startedAt.getTime()) / msPerDay) + 1;
+
+      if (daysSinceStart > campaign.durationDays) continue;
+
+      // Check if quests exist for this campaign + dayNumber
+      const existingQuests = Array.from(this.quests.values()).filter(q =>
+        q.userId === userId &&
+        q.campaignId === campaign.id &&
+        (q as any).dayNumber === daysSinceStart
+      );
+
+      if (existingQuests.length === 0) {
+        const dailyTemplates = getCampaignDailyQuests(campaign.title, daysSinceStart);
+        const expiresAt = new Date(now.getTime() + msPerDay);
+
+        for (const template of dailyTemplates) {
+          await this.createQuest({
+            userId,
+            title: template.title || "Daily Quest",
+            description: template.description || "Quest",
+            difficulty: template.difficulty || campaign.difficulty,
+            rewardXP: template.rewardXP || 50,
+            rewardCoins: 20,
+            type: "daily",
+            campaignId: campaign.id,
+            dayNumber: daysSinceStart,
+            content: template.content || null,
+            expiresAt: expiresAt,
+            dueAt: expiresAt,
+            rewardStats: template.rewardStats || null,
+            parentQuestId: null,
+            isBoss: false,
+            bossHealth: null,
+            bossMaxHealth: null
+          });
+        }
+      }
+    }
+  }
+
   // --- Implementation of IStorage Methods (In-Memory) ---
 
   async getUser(id: string): Promise<User | undefined> {
@@ -708,7 +817,10 @@ export class MemStorage implements IStorage {
       bossMaxHealth: null,
       difficulty: insertQuest.difficulty || "normal",
       rewardCoins: insertQuest.rewardCoins || 0,
-      rewardStats: insertQuest.rewardStats || null
+      rewardStats: insertQuest.rewardStats || null,
+      content: insertQuest.content || null,
+      dayNumber: insertQuest.dayNumber || null,
+      expiresAt: insertQuest.expiresAt || null,
     };
     this.quests.set(id, quest);
     this.autoSave();
@@ -893,17 +1005,49 @@ export class MemStorage implements IStorage {
 
   async addGuildMessage(message: any): Promise<any> {
     const id = `msg_${Date.now()}`;
-    const msg = { ...message, id, createdAt: new Date() };
+    // Ensure content is stored as 'content' to match schema/DB
+    const content = message.content || message.message;
+
+    // Fetch user for enrichment
+    const user = this.users.get(message.userId);
+
+    const msg = {
+      id,
+      guildId: message.guildId,
+      userId: message.userId,
+      content: content,
+      type: message.type || "chat",
+      createdAt: new Date()
+    };
+
     this.guildMessages.set(id, msg);
     this.autoSave();
-    return msg;
+
+    // Return with adaptable fields for frontend and enriched user info
+    return {
+      ...msg,
+      message: content, // Frontend expects 'message'
+      userName: user?.name || "Unknown",
+      userAvatar: user?.avatarUrl
+    };
   }
 
   async getGuildMessages(guildId: string): Promise<any[]> {
-    return Array.from(this.guildMessages.values())
+    const msgs = Array.from(this.guildMessages.values())
       .filter(m => m.guildId === guildId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 50);
+
+    // Enrich with user info and frontend mapping
+    return msgs.map(msg => {
+      const user = this.users.get(msg.userId);
+      return {
+        ...msg,
+        message: msg.content, // Frontend expects 'message'
+        userName: user?.name || "Unknown",
+        userAvatar: user?.avatarUrl
+      };
+    });
   }
 
   async getAllGuildMessages(): Promise<any[]> {
@@ -1452,6 +1596,8 @@ export class DatabaseStorage implements IStorage {
     return enriched.reverse(); // Return in chronological order
   }
 
+
+
   async getAllGuildMessages(): Promise<any[]> {
     return await db!.select().from(guildMessages);
   }
@@ -1843,6 +1989,120 @@ export class DatabaseStorage implements IStorage {
 
   async hydrate(): Promise<void> {
     console.warn("Hydration from file to DB not fully supported yet. Use DB tools.");
+  }
+
+  // --- Campaign Methods (DB) ---
+  async getCampaigns(): Promise<Campaign[]> {
+    return await db!.select().from(campaigns);
+  }
+
+  async getActiveCampaign(userId: string): Promise<UserCampaign | undefined> {
+    // Join with campaign table if needed, but return the UserCampaign details with campaign info implicitly if queried
+    // The current usage expects the campaign definition to display title/desc.
+    // But strictly returning UserCampaign doesn't include title.
+    // The route handler logic might need adjustment if we only return UserCampaign.
+    // However, let's stick to returning UserCampaign but maybe we should join or separate.
+    // MemStorage returns `this.userCampaigns...` which is UserCampaign.
+    // MemStorage `getActiveCampaign` actually returns `campaign | undefined` in the interface?
+    // Let's check Interface: `getActiveCampaign(userId: string): Promise<any | undefined>`
+    // So we can return a mixed object.
+
+    const result = await db!
+      .select({
+        id: campaigns.id,
+        title: campaigns.title,
+        description: campaigns.description,
+        category: campaigns.category,
+        difficulty: campaigns.difficulty,
+        durationDays: campaigns.durationDays,
+        rewardXP: campaigns.rewardXP,
+        // User Campaign fields
+        startedAt: userCampaigns.startedAt,
+        questsCompleted: userCampaigns.questsCompleted,
+        userId: userCampaigns.userId,
+        campaignId: userCampaigns.campaignId,
+        completed: userCampaigns.completed
+      })
+      .from(userCampaigns)
+      .innerJoin(campaigns, eq(userCampaigns.campaignId, campaigns.id))
+      .where(
+        and(
+          eq(userCampaigns.userId, userId),
+          eq(userCampaigns.completed, false)
+        )
+      )
+      .limit(1);
+
+    return result[0] as any;
+  }
+
+  async joinCampaign(userId: string, campaignId: string): Promise<void> {
+    const existing = await this.getActiveCampaign(userId);
+    if (existing) {
+      throw new Error("Already have an active campaign");
+    }
+
+    await db!.insert(userCampaigns).values({
+      userId,
+      campaignId
+    });
+
+    await this.checkDailyQuests(userId);
+  }
+
+  async checkDailyQuests(userId: string): Promise<void> {
+    const activeUC = await db!.query.userCampaigns.findFirst({
+      where: and(eq(userCampaigns.userId, userId), eq(userCampaigns.completed, false))
+    });
+
+    if (!activeUC) return;
+
+    const campaign = await db!.query.campaigns.findFirst({
+      where: eq(campaigns.id, activeUC.campaignId)
+    });
+    if (!campaign) return;
+
+    const now = new Date();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysSinceStart = Math.floor((now.getTime() - activeUC.startedAt.getTime()) / msPerDay) + 1;
+
+    if (daysSinceStart > campaign.durationDays) return;
+
+    const existing = await db!.query.quests.findMany({
+      where: and(
+        eq(quests.userId, userId),
+        eq(quests.campaignId, campaign.id),
+        eq(quests.dayNumber, daysSinceStart)
+      )
+    });
+
+    if (existing.length === 0) {
+      const dailyTemplates = getCampaignDailyQuests(campaign.title, daysSinceStart);
+      const expiresAt = new Date(now);
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      for (const template of dailyTemplates) {
+        await this.createQuest({
+          userId,
+          title: template.title || "Daily Quest",
+          description: template.description || "Quest",
+          type: "daily",
+          difficulty: template.difficulty || campaign.difficulty,
+          rewardXP: template.rewardXP || 50,
+          rewardCoins: 20, // Default coins if not specified
+          rewardStats: template.rewardStats || null,
+          campaignId: campaign.id,
+          dayNumber: daysSinceStart,
+          content: template.content || null,
+          expiresAt: expiresAt,
+          dueAt: expiresAt,
+          parentQuestId: null,
+          isBoss: false,
+          bossHealth: null,
+          bossMaxHealth: null
+        });
+      }
+    }
   }
 }
 

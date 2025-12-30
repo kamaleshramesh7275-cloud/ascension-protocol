@@ -1,28 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Quest, QuestType } from "@shared/schema";
 import { QuestCard } from "@/components/quest-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Target, Trophy, Calendar, Sparkles, CheckCircle2 } from "lucide-react";
+import { Target, Trophy, Calendar, Sparkles, CheckCircle2, Crown, BookOpen, Dumbbell, Leaf, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { HabitTracker } from "@/components/habit-tracker";
-
 import { useAnimations } from "@/context/animation-context";
+import { Progress } from "@/components/ui/progress";
 
 export default function QuestsPage() {
-    const [activeTab, setActiveTab] = useState<"all" | QuestType | "habits">("all");
+    const [activeTab, setActiveTab] = useState<"active" | "browse" | "habits">("active");
     const { toast } = useToast();
     const { showQuestCompleted } = useAnimations();
 
-    const { data: quests, isLoading } = useQuery<Quest[]>({
+    // Queries
+    const { data: quests, isLoading: isLoadingQuests } = useQuery<Quest[]>({
         queryKey: ["/api/quests"],
     });
 
+    const { data: activeCampaign, isLoading: isLoadingCampaign } = useQuery<any>({
+        queryKey: ["/api/user/active-campaign"],
+    });
+
+    const { data: allCampaigns } = useQuery<any[]>({
+        queryKey: ["/api/campaigns"],
+        enabled: activeTab === "browse", // Only fetch when browsing
+    });
+
+    // Mutations
     const completeMutation = useMutation({
         mutationFn: async (questId: string) => {
             return apiRequest("POST", `/api/quests/${questId}/complete`, {});
@@ -32,56 +43,86 @@ export default function QuestsPage() {
             if (quest) {
                 showQuestCompleted(quest.title, quest.rewardXP, quest.rewardCoins);
             }
-
             queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            toast({
-                title: "Quest Completed!",
-                description: "You've earned XP and stat bonuses!",
-            });
+            toast({ title: "Quest Completed!", description: "You've earned XP and rewards!" });
         },
         onError: () => {
-            toast({
-                title: "Error",
-                description: "Failed to complete quest. Please try again.",
-                variant: "destructive",
-            });
+            toast({ title: "Error", description: "Failed to complete quest.", variant: "destructive" });
         },
     });
 
-    const filteredQuests = quests?.filter((quest) => {
-        if (activeTab === "all") return true;
-        return quest.type === activeTab;
-    }) || [];
+    const joinCampaignMutation = useMutation({
+        mutationFn: async (campaignId: string) => {
+            return apiRequest("POST", `/api/campaigns/${campaignId}/join`, {});
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/user/active-campaign"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
+            setActiveTab("active");
+            toast({ title: "Journey Started", description: "Your daily quests have been updated." });
+        },
+    });
 
-    const activeQuests = filteredQuests.filter(q => !q.completed);
-    const completedQuests = filteredQuests.filter(q => q.completed);
+    // Data Processing
+    // Filter quests to show only ACTIVE DAILY quests (or relevant ones)
+    // Note: The backend logic should already handle "24h expiry" via checking created/expiresAt dates
+    // But we might want to filter out 'completed' from the 'Active' list visually if desired, or show them checked.
+    const activeDailyQuests = quests?.filter(q => q.type === "daily" && !q.completed) || [];
+    const completedDailyQuests = quests?.filter(q => q.type === "daily" && q.completed) || [];
 
-    // Calculate stats
-    const totalQuests = quests?.length || 0;
-    const completedCount = quests?.filter(q => q.completed).length || 0;
-    const completionRate = totalQuests > 0 ? Math.round((completedCount / totalQuests) * 100) : 0;
-    const totalXPEarned = quests?.filter(q => q.completed).reduce((acc, q) => acc + q.rewardXP, 0) || 0;
+    // Countdown Timer Logic
+    const [timeLeft, setTimeLeft] = useState("");
 
-    if (isLoading) {
-        return (
-            <div className="space-y-6 p-6">
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-12 w-64" />
-                    <Skeleton className="h-10 w-32" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-24" />
-                    ))}
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <Skeleton key={i} className="h-64" />
-                    ))}
-                </div>
-            </div>
-        );
+    useEffect(() => {
+        const updateTimer = () => {
+            // Find shared expiration time from any daily quest
+            const activeQuests = quests?.filter(q => q.type === "daily") || [];
+            if (activeQuests.length === 0) {
+                setTimeLeft("--:--:--");
+                return;
+            }
+
+            // Assume all daily quests expire at the same time (created together)
+            const expiresAt = activeQuests[0].expiresAt;
+            if (!expiresAt) {
+                setTimeLeft("--:--:--");
+                return;
+            }
+
+            const now = new Date();
+            const end = new Date(expiresAt);
+            const diff = end.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                setTimeLeft("00:00:00");
+                return; // Optionally invalidate queries here to refresh
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        };
+
+        const timerId = setInterval(updateTimer, 1000);
+        updateTimer(); // Initial call
+
+        return () => clearInterval(timerId);
+    }, [quests]);
+
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty) {
+            case "beginner": return "text-green-400";
+            case "intermediate": return "text-yellow-400";
+            case "advanced": return "text-red-500";
+            default: return "text-zinc-400";
+        }
+    };
+
+    if (isLoadingQuests || isLoadingCampaign) {
+        return <div className="p-10 text-white">Loading your journey...</div>;
     }
 
     return (
@@ -90,107 +131,31 @@ export default function QuestsPage() {
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
                 <motion.div
-                    animate={{
-                        opacity: [0.1, 0.2, 0.1],
-                        scale: [1, 1.1, 1],
-                    }}
+                    animate={{ opacity: [0.1, 0.2, 0.1], scale: [1, 1.1, 1] }}
                     transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                     className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]"
                 />
-                <motion.div
-                    animate={{
-                        opacity: [0.1, 0.2, 0.1],
-                        scale: [1, 1.2, 1],
-                    }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]"
-                />
             </div>
 
-            <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8" data-testid="page-quests">
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h1 className="text-5xl font-display font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-purple-200 bg-clip-text text-transparent drop-shadow-sm">
-                            Quest Board
-                        </h1>
-                        <p className="text-zinc-400 text-lg max-w-xl">
-                            Embark on challenges to prove your worth, earn experience, and ascend to new heights.
-                        </p>
-                    </motion.div>
-                </div>
+            <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <h1 className="text-5xl font-display font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-purple-200 bg-clip-text text-transparent drop-shadow-sm">
+                    Quest Board
+                </h1>
 
-                {/* Stats Overview */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                >
-                    <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-xl hover:bg-zinc-900/70 transition-all duration-300 group overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative z-10 p-6 flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors shadow-inner border border-purple-500/10">
-                                <Target className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-zinc-400">Available Quests</p>
-                                <p className="text-3xl font-bold text-white tracking-tight">{activeQuests.length}</p>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-xl hover:bg-zinc-900/70 transition-all duration-300 group overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative z-10 p-6 flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-green-500/10 text-green-400 group-hover:bg-green-500/20 transition-colors shadow-inner border border-green-500/10">
-                                <CheckCircle2 className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-zinc-400">Completion Rate</p>
-                                <p className="text-3xl font-bold text-white tracking-tight">{completionRate}%</p>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-xl hover:bg-zinc-900/70 transition-all duration-300 group overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative z-10 p-6 flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20 transition-colors shadow-inner border border-amber-500/10">
-                                <Sparkles className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-zinc-400">Total XP Earned</p>
-                                <p className="text-3xl font-bold text-white tracking-tight">{totalXPEarned}</p>
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
-
-                {/* Tabs and Content */}
+                {/* Navigation Tabs */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-8">
-                    <div className="flex items-center justify-between">
-                        <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 h-12 rounded-full backdrop-blur-xl">
-                            {[
-                                { id: "all", label: "All Quests" },
-                                { id: "daily", label: "Daily" },
-                                { id: "weekly", label: "Weekly" },
-                                { id: "habits", label: "Habits" }
-                            ].map((tab) => (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-900/20 transition-all duration-300"
-                                >
-                                    {tab.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </div>
+                    <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 h-12 rounded-full backdrop-blur-xl">
+                        <TabsTrigger value="active" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                            Active Journey
+                        </TabsTrigger>
+                        <TabsTrigger value="browse" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                            Browse Quest Packs
+                        </TabsTrigger>
+                        <TabsTrigger value="habits" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                            Habit Tracker
+                        </TabsTrigger>
+                    </TabsList>
 
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -200,79 +165,147 @@ export default function QuestsPage() {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <TabsContent value={activeTab} className="mt-0 space-y-8">
-                                {/* Active Quests Section */}
-                                {activeQuests.length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 text-zinc-400 mb-4">
-                                            <div className="h-px bg-zinc-800 flex-1" />
-                                            <span className="text-sm font-medium uppercase tracking-wider">Active Challenges</span>
-                                            <div className="h-px bg-zinc-800 flex-1" />
+                            <TabsContent value="active" className="space-y-8">
+                                {activeCampaign ? (
+                                    <>
+                                        {/* Active Campaign Header */}
+                                        <div className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-2xl relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-transparent" />
+                                            <div className="relative z-10 flex justify-between items-center">
+                                                <div>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-bold uppercase tracking-wider border border-purple-500/20">
+                                                            {activeCampaign.category}
+                                                        </span>
+                                                        <span className={`text-sm font-bold uppercase tracking-wider ${getDifficultyColor(activeCampaign.difficulty)}`}>
+                                                            {activeCampaign.difficulty}
+                                                        </span>
+                                                    </div>
+                                                    <h2 className="text-3xl font-bold text-white mb-2">{activeCampaign.title}</h2>
+                                                    <p className="text-zinc-400">{activeCampaign.description}</p>
+                                                </div>
+                                                <div className="text-right hidden md:block">
+                                                    <div className="text-sm text-zinc-500 uppercase tracking-widest mb-1">Time Remaining</div>
+                                                    {/* Mock timer for now */}
+                                                    <div className="text-2xl font-mono text-white tracking-widest">{timeLeft || "--:--:--"}</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {activeQuests.map((quest, index) => (
-                                                <motion.div
-                                                    key={quest.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                >
+
+                                        {/* Today's Quests */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 text-zinc-400">
+                                                <Zap className="w-4 h-4" />
+                                                <span className="text-sm font-bold uppercase tracking-wider">Today's Objectives</span>
+                                            </div>
+
+                                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {activeDailyQuests.map((quest) => (
                                                     <QuestCard
+                                                        key={quest.id}
                                                         quest={quest}
                                                         onComplete={(id) => completeMutation.mutate(id)}
                                                         isCompletingQuest={completeMutation.isPending}
                                                     />
-                                                </motion.div>
-                                            ))}
+                                                ))}
+                                                {activeDailyQuests.length === 0 && completedDailyQuests.length === 0 && (
+                                                    <div className="col-span-3 text-center py-10 text-zinc-500">
+                                                        No quests for today. Check back tomorrow!
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
 
-                                {/* Completed Quests Section */}
-                                {completedQuests.length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 text-zinc-400 mb-4 pt-8">
-                                            <div className="h-px bg-zinc-800 flex-1" />
-                                            <span className="text-sm font-medium uppercase tracking-wider">Completed</span>
-                                            <div className="h-px bg-zinc-800 flex-1" />
-                                        </div>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {completedQuests.map((quest, index) => (
-                                                <motion.div
-                                                    key={quest.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                >
-                                                    <QuestCard quest={quest} />
-                                                </motion.div>
-                                            ))}
-                                        </div>
+                                        {/* Completed Section */}
+                                        {completedDailyQuests.length > 0 && (
+                                            <div className="space-y-4 pt-8">
+                                                <div className="flex items-center gap-2 text-zinc-500">
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    <span className="text-sm font-bold uppercase tracking-wider">Completed Today</span>
+                                                </div>
+                                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
+                                                    {completedDailyQuests.map((quest) => (
+                                                        <QuestCard key={quest.id} quest={quest} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-zinc-800">
+                                        <Crown className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+                                        <h3 className="text-2xl font-bold text-white mb-2">No Active Journey</h3>
+                                        <p className="text-zinc-400 max-w-md mx-auto mb-6">
+                                            You haven't started a quest pack yet. Browse the available packs to begin your ascension.
+                                        </p>
+                                        <Button
+                                            onClick={() => setActiveTab("browse")}
+                                            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-xl"
+                                        >
+                                            Find Your Path
+                                        </Button>
                                     </div>
-                                )}
-
-                                {/* Empty State */}
-                                {filteredQuests.length === 0 && (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl backdrop-blur-sm"
-                                    >
-                                        <div className="p-4 bg-zinc-900/50 rounded-full ring-1 ring-zinc-800">
-                                            <Target className="h-12 w-12 text-zinc-600" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-semibold text-white">No quests available</h3>
-                                            <p className="text-zinc-500 max-w-sm mx-auto">
-                                                You've cleared the board for this category. Check back later for new challenges!
-                                            </p>
-                                        </div>
-                                    </motion.div>
                                 )}
                             </TabsContent>
 
-                            {/* Habits Tab */}
-                            <TabsContent value="habits" className="mt-0">
+                            <TabsContent value="browse">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {allCampaigns?.map((campaign) => (
+                                        <Card key={campaign.id} className="group overflow-hidden border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-300">
+                                            <div className="relative h-48 overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent z-10" />
+                                                <img
+                                                    src={campaign.imageUrl || "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"}
+                                                    alt={campaign.title}
+                                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                                />
+                                                <div className="absolute top-4 left-4 z-20 flex gap-2">
+                                                    <span className="px-3 py-1 bg-black/60 backdrop-blur-md text-white rounded-full text-xs font-bold uppercase border border-white/10">
+                                                        {campaign.category}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="p-6">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <h3 className="text-2xl font-bold text-white group-hover:text-purple-400 transition-colors">
+                                                            {campaign.title}
+                                                        </h3>
+                                                        <div className={`text-xs font-bold uppercase tracking-wider mt-1 ${getDifficultyColor(campaign.difficulty)}`}>
+                                                            {campaign.difficulty} Difficulty
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <p className="text-zinc-400 mb-6 line-clamp-2">
+                                                    {campaign.description}
+                                                </p>
+
+                                                <div className="flex items-center justify-between text-sm text-zinc-500 mb-6 p-4 bg-black/20 rounded-xl">
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4" />
+                                                        <span>{campaign.durationDays} Days</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Trophy className="w-4 h-4 text-amber-500" />
+                                                        <span className="text-amber-500">{campaign.rewardXP} XP</span>
+                                                    </div>
+                                                </div>
+
+                                                <Button
+                                                    onClick={() => joinCampaignMutation.mutate(campaign.id)}
+                                                    className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-6 rounded-xl"
+                                                    disabled={joinCampaignMutation.isPending || (activeCampaign && activeCampaign.id === campaign.id)}
+                                                >
+                                                    {activeCampaign && activeCampaign.id === campaign.id ? "Currently Active" : "Start Journey"}
+                                                </Button>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="habits">
                                 <HabitTracker />
                             </TabsContent>
                         </motion.div>

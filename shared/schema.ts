@@ -100,6 +100,9 @@ export const quests = pgTable("quests", {
   bossHealth: integer("boss_health"), // For boss battles
   bossMaxHealth: integer("boss_max_health"),
 
+  content: text("content"), // Rich text tips/guide
+  dayNumber: integer("day_number"), // Order within campaign
+  expiresAt: timestamp("expires_at"), // For 24h rotation
   createdAt: timestamp("created_at").defaultNow().notNull(),
   dueAt: timestamp("due_at").notNull(),
   completed: boolean("completed").default(false).notNull(),
@@ -114,7 +117,8 @@ export const campaigns = pgTable("campaigns", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(), // fitness, productivity, mindfulness, etc.
-  difficulty: text("difficulty").notNull(),
+  difficulty: text("difficulty").notNull(), // beginner, intermediate, advanced
+  durationDays: integer("duration_days").default(7).notNull(),
   totalQuests: integer("total_quests").notNull(),
   rewardXP: integer("reward_xp").notNull(),
   rewardCoins: integer("reward_coins").notNull(),
@@ -398,6 +402,17 @@ export type Quest = typeof quests.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Campaign = typeof campaigns.$inferSelect;
 
+export const insertUserCampaignSchema = createInsertSchema(userCampaigns).omit({
+  id: true,
+  startedAt: true,
+  completed: true,
+  questsCompleted: true,
+  completedAt: true
+});
+
+export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
+export type UserCampaign = typeof userCampaigns.$inferSelect;
+
 export type InsertContent = z.infer<typeof insertContentSchema>;
 export type Content = typeof contentLibrary.$inferSelect;
 
@@ -674,3 +689,5 @@ export const insertGuildDonationSchema = createInsertSchema(guildDonations).omit
 
 export type InsertGuildDonation = z.infer<typeof insertGuildDonationSchema>;
 export type GuildDonation = typeof guildDonations.$inferSelect;
+
+

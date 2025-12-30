@@ -66,6 +66,12 @@ export function QuestCard({ quest, onComplete, isCompletingQuest }: QuestCardPro
           {quest.description}
         </CardDescription>
 
+        {quest.content && (
+          <div className="text-sm text-zinc-300 mt-2 bg-zinc-900/50 p-3 rounded-md border border-zinc-800/50">
+            {quest.content}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="bg-zinc-800/50 text-zinc-300 border-zinc-700/50 hover:bg-zinc-800">
             <Sparkles className="h-3 w-3 text-yellow-500 mr-1.5" />

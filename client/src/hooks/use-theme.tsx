@@ -43,7 +43,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       "light", "dark",
       "midnight-eclipse", "crimson-warlord", "neon-cyberpunk",
       "golden-luxury", "forest-guardian", "arctic-frost",
-      "solar-flare", "royal-amethyst", "steampunk", "matrix"
+      "solar-flare", "royal-amethyst", "steampunk", "matrix",
+      "midnight-mirage", "cyberpunk-neon", "golden-age",
+      "natures-wrath", "vampires-kiss"
     );
 
     // Add the current theme class
