@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Trophy, ShoppingBag, Shield, Zap, CheckCircle2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PremiumBenefitsDialogProps {
     open: boolean;
@@ -57,14 +58,7 @@ export function PremiumBenefitsDialog({ open, onOpenChange }: PremiumBenefitsDia
 
     const requestMutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/subscription/request", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || "Failed to submit request");
-            }
+            const res = await apiRequest("POST", "/api/subscription/request");
             return res.json();
         },
         onSuccess: () => {

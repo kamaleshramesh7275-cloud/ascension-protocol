@@ -35,15 +35,17 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  headers?: HeadersInit,
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
-  console.log(`[Debug] apiRequest ${method} ${url} Headers:`, authHeaders);
+  console.log(`[Debug] apiRequest ${method} ${url} Headers:`, { ...authHeaders, ...headers });
 
   const res = await fetch(url, {
     method,
     headers: {
       ...(data ? { "Content-Type": "application/json" } : {}),
       ...authHeaders,
+      ...headers,
     },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",

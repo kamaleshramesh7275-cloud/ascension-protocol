@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User, Activity } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RankBadge } from "@/components/rank-badge";
@@ -40,15 +41,10 @@ export default function ProfilePage() {
         enabled: isOwnProfile || !!viewUserId
     });
 
-    const { data: activities, isLoading: activitiesLoading } = useQuery<Activity[]>({
-        queryKey: ["/api/activities", viewUserId], // Include ID in key
+    const { data: activities = [], isLoading: activitiesLoading } = useQuery<Activity[]>({
+        queryKey: ["/api/activities"],
         queryFn: async () => {
-            // If viewing public profile, we might not have a public activities endpoint yet. 
-            // For now, let's just return empty array or only fetch for own profile.
-            // TODO: Create /api/users/:id/activities endpoint for public view
-            if (!isOwnProfile) return [];
-            const res = await fetch("/api/activities");
-            if (!res.ok) throw new Error("Failed to fetch activities");
+            const res = await apiRequest("GET", "/api/activities");
             return res.json();
         },
         enabled: isOwnProfile // Only fetch activities for own profile for now
@@ -331,20 +327,12 @@ export default function ProfilePage() {
                                                         return;
                                                     }
                                                     try {
-                                                        const res = await fetch("/api/subscription/admin/activate", {
-                                                            method: "POST",
-                                                            headers: { "Content-Type": "application/json" },
-                                                            body: JSON.stringify({ userId })
-                                                        });
+                                                        const res = await apiRequest("POST", "/api/subscription/admin/activate", { userId });
                                                         const data = await res.json();
-                                                        if (res.ok) {
-                                                            alert(data.message);
-                                                            window.location.reload();
-                                                        } else {
-                                                            alert(data.error);
-                                                        }
-                                                    } catch (err) {
-                                                        alert("Error activating premium");
+                                                        alert(data.message);
+                                                        window.location.reload();
+                                                    } catch (err: any) {
+                                                        alert(err.message || "Error activating premium");
                                                     }
                                                 }}
                                             >

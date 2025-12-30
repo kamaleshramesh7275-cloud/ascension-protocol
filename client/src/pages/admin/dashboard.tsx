@@ -16,6 +16,7 @@ import {
 import { useLocation } from "wouter";
 import { AdminNotificationComposer } from "@/components/admin-notification-composer";
 import { AdminNotificationHistory } from "@/components/admin-notification-history";
+import { apiRequest } from "@/lib/queryClient";
 
 // Types
 interface User {
@@ -118,8 +119,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/users"],
         enabled: isAuthenticated,
         queryFn: async () => {
-            const res = await fetch("/api/admin/users", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/users", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -128,8 +128,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/guilds"],
         enabled: isAuthenticated && (activeTab === "guilds" || activeTab === "overview" || activeTab === "quests"),
         queryFn: async () => {
-            const res = await fetch("/api/admin/guilds", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/guilds", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -138,8 +137,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/items"],
         enabled: isAuthenticated && activeTab === "shop",
         queryFn: async () => {
-            const res = await fetch("/api/admin/items", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/items", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -148,8 +146,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/users-credentials"],
         enabled: isAuthenticated && activeTab === "users",
         queryFn: async () => {
-            const res = await fetch("/api/admin/users-credentials", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/users-credentials", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -158,8 +155,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/guild-messages"],
         enabled: isAuthenticated && activeTab === "chat",
         queryFn: async () => {
-            const res = await fetch("/api/admin/guild-messages", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/guild-messages", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -168,8 +164,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/quests"],
         enabled: isAuthenticated && activeTab === "quests",
         queryFn: async () => {
-            const res = await fetch("/api/admin/quests", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/quests", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -178,8 +173,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/study-logs"],
         enabled: isAuthenticated && activeTab === "study-logs",
         queryFn: async () => {
-            const res = await fetch("/api/admin/study-logs", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/study-logs", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -188,8 +182,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/admin/partners"],
         enabled: isAuthenticated && activeTab === "partners",
         queryFn: async () => {
-            const res = await fetch("/api/admin/partners", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/admin/partners", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -198,8 +191,7 @@ export default function AdminDashboard() {
         queryKey: ["/api/subscription/admin/requests"],
         enabled: isAuthenticated && activeTab === "requests",
         queryFn: async () => {
-            const res = await fetch("/api/subscription/admin/requests", { headers: getAdminHeaders() });
-            if (!res.ok) throw new Error("Failed");
+            const res = await apiRequest("GET", "/api/subscription/admin/requests", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -207,10 +199,7 @@ export default function AdminDashboard() {
     // Mutations
     const deleteUserMutation = useMutation({
         mutationFn: async (id: string) => {
-            await fetch(`/api/admin/users/${id}`, {
-                method: "DELETE",
-                headers: getAdminHeaders()
-            });
+            await apiRequest("DELETE", `/api/admin/users/${id}`, undefined, getAdminHeaders());
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -221,10 +210,7 @@ export default function AdminDashboard() {
 
     const deleteGuildMutation = useMutation({
         mutationFn: async (id: string) => {
-            await fetch(`/api/admin/guilds/${id}`, {
-                method: "DELETE",
-                headers: getAdminHeaders()
-            });
+            await apiRequest("DELETE", `/api/admin/guilds/${id}`, undefined, getAdminHeaders());
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/guilds"] });
@@ -234,11 +220,7 @@ export default function AdminDashboard() {
 
     const createItemMutation = useMutation({
         mutationFn: async (item: any) => {
-            await fetch("/api/admin/items", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                body: JSON.stringify(item),
-            });
+            await apiRequest("POST", "/api/admin/items", item, getAdminHeaders());
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/items"] });
@@ -249,10 +231,7 @@ export default function AdminDashboard() {
 
     const deleteItemMutation = useMutation({
         mutationFn: async (id: string) => {
-            await fetch(`/api/admin/items/${id}`, {
-                method: "DELETE",
-                headers: getAdminHeaders()
-            });
+            await apiRequest("DELETE", `/api/admin/items/${id}`, undefined, getAdminHeaders());
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/items"] });
@@ -262,12 +241,7 @@ export default function AdminDashboard() {
 
     const updateUserMutation = useMutation({
         mutationFn: async ({ userId, updates }: { userId: string; updates: any }) => {
-            const res = await fetch(`/api/admin/users/${userId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                body: JSON.stringify(updates),
-            });
-            if (!res.ok) throw new Error("Failed to update user");
+            const res = await apiRequest("PATCH", `/api/admin/users/${userId}`, updates, getAdminHeaders());
             return res.json();
         },
         onSuccess: () => {
@@ -280,12 +254,7 @@ export default function AdminDashboard() {
 
     const activatePremiumMutation = useMutation({
         mutationFn: async (userId: string) => {
-            const res = await fetch("/api/subscription/admin/activate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId }),
-            });
-            if (!res.ok) throw new Error("Failed to activate premium");
+            const res = await apiRequest("POST", "/api/subscription/admin/activate", { userId }, getAdminHeaders());
             return res.json();
         },
         onSuccess: (data) => {
@@ -297,12 +266,7 @@ export default function AdminDashboard() {
 
     const createQuestMutation = useMutation({
         mutationFn: async (quest: any) => {
-            const res = await fetch(`/api/admin/guilds/${quest.guildId}/quests`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                body: JSON.stringify(quest),
-            });
-            if (!res.ok) throw new Error("Failed to create quest");
+            const res = await apiRequest("POST", `/api/admin/guilds/${quest.guildId}/quests`, quest, getAdminHeaders());
             return res.json();
         },
         onSuccess: () => {
@@ -324,10 +288,7 @@ export default function AdminDashboard() {
 
     const deleteQuestMutation = useMutation({
         mutationFn: async (questId: string) => {
-            await fetch(`/api/admin/quests/${questId}`, {
-                method: "DELETE",
-                headers: getAdminHeaders()
-            });
+            await apiRequest("DELETE", `/api/admin/quests/${questId}`, undefined, getAdminHeaders());
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/quests"] });
@@ -340,12 +301,7 @@ export default function AdminDashboard() {
         mutationFn: async (file: File) => {
             const text = await file.text();
             const json = JSON.parse(text);
-            const res = await fetch("/api/admin/backup/restore", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                body: JSON.stringify(json),
-            });
-            if (!res.ok) throw new Error("Failed to restore backup");
+            const res = await apiRequest("POST", "/api/admin/backup/restore", json, getAdminHeaders());
             return res.json();
         },
         onSuccess: () => {
@@ -357,11 +313,7 @@ export default function AdminDashboard() {
 
     const createBackupMutation = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/admin/backup/create", {
-                method: "POST",
-                headers: getAdminHeaders()
-            });
-            if (!res.ok) throw new Error("Failed to create backup");
+            const res = await apiRequest("POST", "/api/admin/backup/create", undefined, getAdminHeaders());
             return res.json();
         },
         onSuccess: () => showNotification("success", "Backup created successfully"),
@@ -370,12 +322,7 @@ export default function AdminDashboard() {
 
     const resolveRequestMutation = useMutation({
         mutationFn: async ({ requestId, status, adminNotes }: { requestId: string; status: "approved" | "rejected"; adminNotes?: string }) => {
-            const res = await fetch(`/api/subscription/admin/requests/${requestId}/resolve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                body: JSON.stringify({ status, adminNotes }),
-            });
-            if (!res.ok) throw new Error("Failed to resolve request");
+            const res = await apiRequest("POST", `/api/subscription/admin/requests/${requestId}/resolve`, { status, adminNotes }, getAdminHeaders());
             return res.json();
         },
         onSuccess: () => {
@@ -395,11 +342,7 @@ export default function AdminDashboard() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch("/api/admin/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password }),
-            });
+            const res = await apiRequest("POST", "/api/admin/login", { password });
 
             if (res.ok) {
                 setIsAuthenticated(true);
@@ -1444,11 +1387,7 @@ export default function AdminDashboard() {
                                         <div className="flex gap-4">
                                             <Button
                                                 onClick={async () => {
-                                                    await fetch("/api/admin/broadcast/coins", {
-                                                        method: "POST",
-                                                        headers: { "Content-Type": "application/json", ...getAdminHeaders() },
-                                                        body: JSON.stringify({ amount: 100 }),
-                                                    });
+                                                    await apiRequest("POST", "/api/admin/broadcast/coins", { amount: 100 }, getAdminHeaders());
                                                     showNotification("success", "Sent 100 coins to all users");
                                                     queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
                                                 }}
