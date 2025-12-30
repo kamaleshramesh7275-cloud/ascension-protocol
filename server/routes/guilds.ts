@@ -4,10 +4,81 @@ import { getStorage } from "../storage";
 
 const router = Router();
 
+// Seed Guilds if empty
+async function seedGuilds() {
+    const storage = getStorage();
+    const guilds = await storage.getAllGuilds();
+    if (guilds.length > 0) return;
+
+    const seedGuilds = [
+        {
+            name: "Iron Warriors",
+            description: "Forge your body and mind through discipline and strength",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Mindful Ascendants",
+            description: "Elevate consciousness through meditation and self-reflection",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Code Crusaders",
+            description: "Master the art of programming and technology",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Fitness Fanatics",
+            description: "Push your physical limits and achieve peak performance",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Knowledge Seekers",
+            description: "Pursue wisdom and continuous learning",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Creative Collective",
+            description: "Express yourself through art, music, and creativity",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Business Builders",
+            description: "Develop entrepreneurial skills and build successful ventures",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+        {
+            name: "Social Champions",
+            description: "Improve charisma and build meaningful connections",
+            leaderId: "",
+            isPublic: true,
+            maxMembers: 50,
+        },
+    ];
+
+    for (const guild of seedGuilds) {
+        await storage.createGuild(guild);
+    }
+}
+
 // Get all guilds (pre‑populated)
 router.get("/", async (req, res) => {
     try {
         const storage = getStorage();
+        await seedGuilds(); // Ensure guilds exist
         const guilds = await storage.getAllGuilds();
         const enriched = await Promise.all(
             guilds.map(async (g) => {
