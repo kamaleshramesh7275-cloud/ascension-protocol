@@ -1580,6 +1580,57 @@ export class MemStorage implements IStorage {
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
+  // Premium Request operations
+  async createPremiumRequest(request: InsertPremiumRequest): Promise<PremiumRequest> {
+    const id = randomUUID();
+    const req: PremiumRequest = {
+      id,
+      ...request,
+      status: "pending",
+      adminNotes: null,
+      createdAt: new Date(),
+      resolvedAt: null,
+    };
+    this.premiumRequests.set(id, req);
+    this.autoSave();
+    return req;
+  }
+
+  async getPendingPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    const pending = Array.from(this.premiumRequests.values()).filter(r => r.status === "pending");
+    return await Promise.all(pending.map(async r => {
+      const user = await this.getUser(r.userId);
+      return { ...r, user: user! };
+    }));
+  }
+
+  async getAllPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
+    const all = Array.from(this.premiumRequests.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await Promise.all(all.map(async r => {
+      const user = await this.getUser(r.userId);
+      return { ...r, user: user! };
+    }));
+  }
+
+  async updatePremiumRequestStatus(id: string, status: "approved" | "rejected", adminNotes?: string): Promise<PremiumRequest> {
+    const req = this.premiumRequests.get(id);
+    if (!req) throw new Error("Request not found");
+    const updated = {
+      ...req,
+      status,
+      adminNotes: adminNotes || null,
+      resolvedAt: new Date(),
+    };
+    this.premiumRequests.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async getUserPremiumRequests(userId: string): Promise<PremiumRequest[]> {
+    return Array.from(this.premiumRequests.values()).filter(r => r.userId === userId);
+  }
+
   // --- Persistence Logic ---
 
   async persist(): Promise<void> {
@@ -1602,6 +1653,7 @@ export class MemStorage implements IStorage {
       messages: Array.from(this.messages.entries()),
       partnerships: Array.from(this.partnerships.entries()),
       directMessages: Array.from(this.directMessages.entries()),
+      premiumRequests: Array.from(this.premiumRequests.entries()),
     };
     try {
       const backupDir = path.resolve(process.cwd(), ".backup");
@@ -1637,6 +1689,7 @@ export class MemStorage implements IStorage {
       messages: Array.from(this.messages.entries()),
       partnerships: Array.from(this.partnerships.entries()),
       directMessages: Array.from(this.directMessages.entries()),
+      premiumRequests: Array.from(this.premiumRequests.entries()),
     };
 
     try {
@@ -1685,6 +1738,7 @@ export class MemStorage implements IStorage {
       this.partnerships = new Map(data.partnerships || []);
       this.directMessages = new Map(data.directMessages || []);
       this.tasks = new Map(data.tasks || []);
+      this.premiumRequests = new Map(data.premiumRequests || []);
 
       console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
     } catch (e) {
