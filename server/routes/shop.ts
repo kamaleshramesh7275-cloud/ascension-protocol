@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
+import { requireAuth } from "../routes";
 // const storage = getStorage();
 import { insertUserItemSchema } from "@shared/schema";
 import { z } from "zod";
@@ -216,7 +217,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get user inventory
-router.get("/inventory", async (req, res) => {
+router.get("/inventory", requireAuth, async (req, res) => {
     const storage = getStorage();
     const user = (req as any).user;
     if (!user) return res.status(401).send("Unauthorized");
@@ -232,7 +233,7 @@ router.get("/inventory", async (req, res) => {
 });
 
 // Buy item
-router.post("/buy", async (req, res) => {
+router.post("/buy", requireAuth, async (req, res) => {
     const storage = getStorage();
     const user = (req as any).user;
     console.log("Buy request initiated");
@@ -286,7 +287,7 @@ router.post("/buy", async (req, res) => {
 });
 
 // Equip item
-router.post("/equip", async (req, res) => {
+router.post("/equip", requireAuth, async (req, res) => {
     const storage = getStorage();
     const user = (req as any).user;
     if (!user) return res.status(401).send("Unauthorized");

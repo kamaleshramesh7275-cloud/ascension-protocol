@@ -27,9 +27,10 @@ import { WebSocket, WebSocketServer } from "ws";
 
 
 
+
 // Middleware to check Firebase auth (simplified for MVP)
 // In production, you'd verify Firebase tokens here
-async function requireAuth(req: Request, res: Response, next: Function) {
+export async function requireAuth(req: Request, res: Response, next: Function) {
   const storage = getStorage(); // Lazy load
   const firebaseUid = req.headers["x-firebase-uid"] as string;
 
