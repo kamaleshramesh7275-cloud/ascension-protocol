@@ -483,11 +483,7 @@ router.post("/:id/messages", async (req, res) => {
         const newMessage = await storage.addGuildMessage({
             guildId: id,
             userId: user.id,
-            userName: fullUser.name,
-            userAvatar: fullUser.avatarUrl,
-            message: message.trim(),
-            type: "chat",
-            createdAt: new Date(),
+            content: message.trim(), // API sends 'message', storage expects 'content'
         });
 
         res.json(newMessage);

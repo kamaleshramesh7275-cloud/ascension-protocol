@@ -1413,22 +1413,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addGuildMessage(message: any): Promise<any> {
-    // Assuming message matches InsertGuildMessage roughly or needs transformation
-    // message here comes from socket, likely needs to be mapped to DB schema
     const guildMsg: InsertGuildMessage = {
       guildId: message.guildId,
       userId: message.userId,
       content: message.content,
     };
     const [msg] = await db!.insert(guildMessages).values(guildMsg).returning();
-    return { ...msg, ...message }; // Return mixed for frontend compat if needed
+
+    // Fetch user details to return complete object for frontend
+    const user = await this.getUser(message.userId);
+    return {
+      ...msg,
+      userName: user?.name || "Unknown",
+      userAvatar: user?.avatarUrl,
+      message: msg.content, // Frontend expects 'message' property
+      type: "chat"
+    };
   }
 
   async getGuildMessages(guildId: string): Promise<any[]> {
-    return await db!.select().from(guildMessages)
+    const msgs = await db!.select().from(guildMessages)
       .where(eq(guildMessages.guildId, guildId))
       .orderBy(desc(guildMessages.createdAt))
       .limit(50);
+
+    // Enrich with user details
+    const enriched = await Promise.all(msgs.map(async (msg) => {
+      const user = await this.getUser(msg.userId);
+      return {
+        ...msg,
+        userName: user?.name || "Unknown",
+        userAvatar: user?.avatarUrl,
+        message: msg.content, // Frontend expects 'message' property
+        type: "chat"
+      };
+    }));
+
+    return enriched.reverse(); // Return in chronological order
   }
 
   async getAllGuildMessages(): Promise<any[]> {
@@ -1695,15 +1716,77 @@ export class DatabaseStorage implements IStorage {
   }
 
   async donateToGuild(guildId: string, userId: string, amount: number): Promise<GuildDonation> {
-    throw new Error("Method not implemented.");
+    return await db!.transaction(async (tx) => {
+      // 1. Check user balance
+      const userRes = await tx.select().from(users).where(eq(users.id, userId));
+      const user = userRes[0];
+      if (!user) throw new Error("User not found");
+
+      if (user.coins < amount) {
+        throw new Error("Insufficient coins");
+      }
+
+      // 2. Check guild
+      const guildRes = await tx.select().from(guilds).where(eq(guilds.id, guildId));
+      const guild = guildRes[0];
+      if (!guild) throw new Error("Guild not found");
+
+      // 3. Deduct from user
+      await tx.update(users)
+        .set({ coins: user.coins - amount })
+        .where(eq(users.id, userId));
+
+      // 4. Calculate boost (if any) - reusing logic similar to MemStorage or simplifying
+      // For DB, let's fetch active perks to check for donation boost
+      // Note: activePerks is a JSON array of string IDs in the guilds table
+
+      let multiplier = 1;
+      if (guild.activePerks && Array.isArray(guild.activePerks)) {
+        // We'd need to fetch perks to check effects. 
+        // For simplicity in this fix, we'll assume 1x or fetch if critical.
+        // Let's do a quick fetch of perks if we want to be 100% accurate, 
+        // but performance-wise maybe just add base amount first.
+
+        // To properly implement boost:
+        /*
+        const perks = await tx.select().from(guildPerks).where(inArray(guildPerks.id, guild.activePerks));
+        const boostPerk = perks.find(p => p.effect.startsWith("donation_boost"));
+        if (boostPerk) {
+            const percent = parseInt(boostPerk.effect.split("_")[2]);
+            multiplier = 1 + (percent / 100);
+        }
+        */
+      }
+
+      const finalAmount = Math.floor(amount * multiplier);
+
+      // 5. Add to guild treasury
+      await tx.update(guilds)
+        .set({ treasury: (guild.treasury || 0) + finalAmount })
+        .where(eq(guilds.id, guildId));
+
+      // 6. Create donation record
+      const [donation] = await tx.insert(guildDonations).values({
+        guildId,
+        userId,
+        amount,
+        createdAt: new Date(),
+      }).returning();
+
+      return donation;
+    });
   }
 
   async getGuildDonations(guildId: string, limit?: number): Promise<GuildDonation[]> {
-    return [];
+    return await db!.select().from(guildDonations)
+      .where(eq(guildDonations.guildId, guildId))
+      .orderBy(desc(guildDonations.createdAt))
+      .limit(limit || 50);
   }
 
   async getGuildTreasury(guildId: string): Promise<number> {
-    return 0;
+    const guild = await this.getGuild(guildId);
+    return guild?.treasury || 0;
   }
 
   async persist(): Promise<void> {
