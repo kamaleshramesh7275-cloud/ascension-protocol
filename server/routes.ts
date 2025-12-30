@@ -19,6 +19,7 @@ import { getRandomDailyQuests, getRandomWeeklyQuest, getRankTrialQuest } from ".
 import { mockContent } from "./data/mock-content";
 import guildRouter from "./routes/guilds";
 import guildEnhancementsRouter from "./routes/guild-enhancements";
+import shopRouter from "./routes/shop";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
@@ -183,40 +184,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DEBUG: Ping route
   app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now(), location: "routes.ts" }));
 
-  // Store Routes
-  app.get("/api/store/items", async (req, res) => {
-    const items = await storage.getShopItems();
-    res.json(items);
-  });
-
-  app.get("/api/store/inventory", requireAuth, async (req, res) => {
-    const items = await storage.getUserItems((req as any).user!.id);
-    res.json(items);
-  });
-
-  app.post("/api/store/purchase", requireAuth, async (req, res) => {
-    const { itemId } = req.body;
-    if (!itemId) return res.status(400).json({ message: "Item ID is required" });
-
-    try {
-      const item = await storage.purchaseItem((req as any).user!.id, itemId);
-      res.json(item);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.post("/api/store/equip", requireAuth, async (req, res) => {
-    const { itemId, type } = req.body;
-    if (!itemId || !type) return res.status(400).json({ message: "Item ID and type are required" });
-
-    try {
-      const user = await storage.equipItem((req as any).user!.id, itemId, type);
-      res.json(user);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
+  // Shop Routes - Using dedicated shop router with seeding functionality
+  app.use("/api/shop", shopRouter);
 
 
   // --- Partner Matching ---

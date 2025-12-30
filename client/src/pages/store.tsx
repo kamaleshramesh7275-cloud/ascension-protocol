@@ -15,20 +15,20 @@ export default function StorePage() {
     const queryClient = useQueryClient();
 
     const { data: items, isLoading: itemsLoading } = useQuery<ShopItem[]>({
-        queryKey: ["/api/store/items"],
+        queryKey: ["/api/shop"],
     });
 
     const { data: inventory, isLoading: inventoryLoading } = useQuery<UserItem[]>({
-        queryKey: ["/api/store/inventory"],
+        queryKey: ["/api/shop/inventory"],
     });
 
     const purchaseMutation = useMutation({
         mutationFn: async (itemId: string) => {
-            const res = await apiRequest("POST", "/api/store/purchase", { itemId });
+            const res = await apiRequest("POST", "/api/shop/buy", { itemId });
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/store/inventory"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/shop/inventory"] });
             queryClient.invalidateQueries({ queryKey: ["/api/user"] }); // Update coins
             toast({
                 title: "Purchase Successful!",
@@ -46,7 +46,7 @@ export default function StorePage() {
 
     const equipMutation = useMutation({
         mutationFn: async ({ itemId, type }: { itemId: string; type: 'title' | 'badge' | 'theme' }) => {
-            const res = await apiRequest("POST", "/api/store/equip", { itemId, type });
+            const res = await apiRequest("POST", "/api/shop/equip", { itemId, type });
             return res.json();
         },
         onSuccess: () => {
