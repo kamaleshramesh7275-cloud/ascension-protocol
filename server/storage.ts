@@ -1389,6 +1389,32 @@ export class DatabaseStorage implements IStorage {
   constructor() {
     console.log("🗄️ DatabaseStorage initialized");
     this.seedShopItems();
+    this.seedCampaigns();
+  }
+
+  private async seedCampaigns() {
+    console.log("🌱 Seeding campaigns...");
+    for (const campaign of CAMPAIGNS_DATA) {
+      const existing = await db!.query.campaigns.findFirst({
+        where: eq(campaigns.title, campaign.title)
+      });
+
+      if (!existing) {
+        console.log(`Creating missing campaign: ${campaign.title}`);
+        await db!.insert(campaigns).values({
+          title: campaign.title,
+          description: campaign.description,
+          category: campaign.category,
+          difficulty: campaign.difficulty,
+          durationDays: campaign.durationDays,
+          totalQuests: campaign.totalQuests,
+          rewardXP: campaign.rewardXP,
+          rewardCoins: campaign.rewardCoins,
+          imageUrl: campaign.imageUrl || null,
+          createdAt: new Date()
+        });
+      }
+    }
   }
 
   private async seedShopItems() {
