@@ -64,13 +64,20 @@ export default function Dashboard() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (text: string) => {
-      const res = await apiRequest("POST", "/api/tasks", { text, completed: false });
+      const res = await apiRequest("POST", "/api/tasks", { text });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setNewTodo("");
       toast({ title: "Task added" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to add task",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   });
 
@@ -159,13 +166,23 @@ export default function Dashboard() {
   const todayXP = chartData[chartData.length - 1]?.xp || 0;
   const goalProgress = Math.min((todayXP / dailyGoal) * 100, 100);
 
-  // Recent Activity (mock data)
-  const recentActivities = [
-    { id: 1, action: 'Completed quest: Study Session', xp: 50, time: '2 hours ago' },
-    { id: 2, action: 'Leveled up to Level ' + user.level, xp: 0, time: '5 hours ago' },
-    { id: 3, action: 'Completed quest: Read Chapter 3', xp: 30, time: '1 day ago' },
-    { id: 4, action: 'Earned achievement: Week Warrior', xp: 100, time: '2 days ago' },
-  ];
+  // Recent Activity - fetch from backend
+  const { data: activities = [] } = useQuery<any[]>({
+    queryKey: ["/api/activities"],
+  });
+
+  // Format activities for display (limit to 4 most recent)
+  const recentActivities = activities.slice(0, 4).map((activity: any) => ({
+    id: activity.id,
+    action: activity.description || 'Activity',
+    xp: activity.xpDelta || 0,
+    time: new Date(activity.timestamp).toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }));
 
   return (
     <div className="space-y-6" data-testid="page-dashboard">
