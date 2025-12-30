@@ -168,7 +168,7 @@ export function registerLocalAuthRoutes(app: Express) {
             res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
         } catch (error) {
             console.error("Login local error:", error);
-            res.status(500).json({ error: "Failed to login" });
+            res.status(500).json({ error: "Failed to login", details: error instanceof Error ? error.message : String(error) });
         }
     });
 
@@ -226,7 +226,7 @@ export function registerLocalAuthRoutes(app: Express) {
             res.json({ success: true });
         } catch (error) {
             console.error("Update credentials error:", error);
-            res.status(500).json({ error: "Failed to update credentials" });
+            res.status(500).json({ error: "Failed to update credentials", details: error instanceof Error ? error.message : String(error) });
         }
     });
 
@@ -239,7 +239,7 @@ export function registerLocalAuthRoutes(app: Express) {
             res.json({ exists });
         } catch (error) {
             console.error("Check username error:", error);
-            res.status(500).json({ error: "Failed to check username" });
+            res.status(500).json({ error: "Failed to check username", details: error instanceof Error ? error.message : String(error) });
         }
     });
 }

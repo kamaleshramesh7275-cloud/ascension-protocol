@@ -1128,6 +1128,7 @@ export class MemStorage implements IStorage {
   // --- Persistence Logic ---
 
   async persist(): Promise<void> {
+    if (process.env.VERCEL) return;
     const fs = await import("fs/promises");
     const path = await import("path");
     const data = {
@@ -1158,6 +1159,7 @@ export class MemStorage implements IStorage {
   }
 
   async createBackup(): Promise<string> {
+    if (process.env.VERCEL) return "vercel-unsupported";
     const fs = await import("fs/promises");
     const path = await import("path");
     const now = new Date();
@@ -1709,6 +1711,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBackup(): Promise<string> {
+    if (process.env.VERCEL) return "vercel-unsupported";
     const fs = await import("fs/promises");
     const path = await import("path");
     const now = new Date();

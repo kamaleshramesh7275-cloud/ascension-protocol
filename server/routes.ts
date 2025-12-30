@@ -169,8 +169,10 @@ declare global {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const storage = getStorage(); // Lazy load storage here
-  // Initialize Cron Jobs
-  initCronJobs(storage);
+  // Initialize Cron Jobs - Disable on Vercel as background tasks are handled differently
+  if (!process.env.VERCEL) {
+    initCronJobs(storage);
+  }
 
   // DEBUG: Endpoint to list users
   app.get("/api/debug/users", async (req, res) => {
@@ -384,46 +386,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // WebSocket Server
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat" });
+  // WebSocket Server - Disable on Vercel as it is not supported in serverless functions
+  let wss: WebSocketServer | null = null;
+  if (!process.env.VERCEL) {
+    wss = new WebSocketServer({ server: httpServer, path: "/ws/chat" });
 
-  wss.on("connection", (ws) => {
-    console.log("New WebSocket connection");
+    wss.on("connection", (ws) => {
+      console.log("New WebSocket connection");
 
-    ws.on("message", async (data) => {
-      try {
-        const messageData = JSON.parse(data.toString());
+      ws.on("message", async (data) => {
+        try {
+          const messageData = JSON.parse(data.toString());
 
-        // Validate message format
-        const parseResult = insertMessageSchema.safeParse(messageData);
-        if (!parseResult.success) {
-          console.error("Invalid message format:", parseResult.error);
-          return;
-        }
-
-        // Save to storage
-        const savedMessage = await storage.createMessage(parseResult.data);
-
-        // Get user details to send back
-        const user = await storage.getUser(savedMessage.userId);
-        const fullMessage = { ...savedMessage, user };
-
-        // Broadcast to all clients
-        const broadcastData = JSON.stringify({ type: "new_message", message: fullMessage });
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(broadcastData);
+          // Validate message format
+          const parseResult = insertMessageSchema.safeParse(messageData);
+          if (!parseResult.success) {
+            console.error("Invalid message format:", parseResult.error);
+            return;
           }
-        });
-      } catch (error) {
-        console.error("WebSocket message error:", error);
-      }
-    });
 
-    ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+          // Save to storage
+          const savedMessage = await storage.createMessage(parseResult.data);
+
+          // Get user details to send back
+          const user = await storage.getUser(savedMessage.userId);
+          const fullMessage = { ...savedMessage, user };
+
+          // Broadcast to all clients
+          const broadcastData = JSON.stringify({ type: "new_message", message: fullMessage });
+          wss!.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(broadcastData);
+            }
+          });
+        } catch (error) {
+          console.error("WebSocket message error:", error);
+        }
+      });
+
+      ws.on("error", (error) => {
+        console.error("WebSocket error:", error);
+      });
     });
-  });
+  }
 
   // Authentication & User Management
 
@@ -857,14 +862,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid backup data" });
       }
 
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const backupDir = path.resolve(process.cwd(), ".backup");
-      await fs.mkdir(backupDir, { recursive: true });
-      await fs.writeFile(
-        path.join(backupDir, "backup.json"),
-        JSON.stringify(data, null, 2)
-      );
+      if (!process.env.VERCEL) {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const backupDir = path.resolve(process.cwd(), ".backup");
+        await fs.mkdir(backupDir, { recursive: true });
+        await fs.writeFile(
+          path.join(backupDir, "backup.json"),
+          JSON.stringify(data, null, 2)
+        );
+      }
 
       await storage.hydrate();
 
@@ -874,11 +881,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "All data has been successfully restored from backup."
       });
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(broadcastData);
-        }
-      });
+      if (wss) {
+        (wss as any).clients.forEach((client: any) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(broadcastData);
+          }
+        });
+      }
 
       res.json({ success: true, message: "Data restored successfully" });
     } catch (error) {
