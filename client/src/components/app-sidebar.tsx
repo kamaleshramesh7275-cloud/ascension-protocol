@@ -1,5 +1,4 @@
 import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag } from "lucide-react";
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag } from "lucide-react";
 import { useLocation } from "wouter";
 import {
     Sidebar,

@@ -40,6 +40,9 @@ router.post("/matchmaking", requireAuth, async (req, res) => {
 
         // Check if user is guild leader
         const guild = await storage.getGuild(user.guildId);
+        if (!guild) {
+            return res.status(404).json({ error: "Guild not found" });
+        }
         if (guild.leaderId !== user.id) {
             return res.status(403).json({ error: "Only the guild leader can start wars" });
         }

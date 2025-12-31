@@ -43,4 +43,12 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  css: {
+    postcss: {
+      plugins: [
+        (await import("tailwindcss")).default(),
+        (await import("autoprefixer")).default(),
+      ],
+    },
+  },
 });

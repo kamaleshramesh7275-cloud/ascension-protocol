@@ -17,8 +17,6 @@ import {
   type InsertFocusSession,
   type Notification,
   type InsertNotification,
-  TIER_THRESHOLDS,
-  Tier,
   type Message,
   type InsertMessage,
   type Partnership,
@@ -41,11 +39,21 @@ import {
   type InsertGuildDonation,
   type Task,
   type InsertTask,
+  type GuildWar,
+  type GuildWarParticipant,
+  type GuildWarEvent,
+  type InsertGuildWarEvent,
+  type InsertPremiumRequest,
+  type PremiumRequest,
+  type InsertCampaign,
+  type Campaign,
+  type UserCampaign,
+  TIER_THRESHOLDS,
+  Tier,
   users,
   quests,
   tasks,
   activityHistory,
-  activityHistory as activities,
   rankTrials,
   shopItems,
   userItems,
@@ -68,22 +76,20 @@ import {
   guildQuestProgress,
   guildPerks,
   guildDonations,
-  InsertCampaign, Campaign, UserCampaign,
-  insertCampaignSchema,
-  insertShopItemSchema,
+  guildWars,
   guildWarParticipants,
   guildWarEvents,
   premiumRequests,
-  type PremiumRequest,
-  type InsertPremiumRequest,
-  type GuildWarEvent,
-  type InsertGuildWarEvent
+  insertCampaignSchema,
+  insertShopItemSchema
 } from "@shared/schema";
 import { eq, and, desc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "./db";
+
+const activities = activityHistory;
 
 export interface IStorage {
   // User operations
@@ -795,6 +801,9 @@ export class MemStorage implements IStorage {
     const user: User = {
       id,
       ...insertUser,
+      name: insertUser.name,
+      firebaseUid: insertUser.firebaseUid,
+      email: insertUser.email,
       avatarUrl: insertUser.avatarUrl || null,
       createdAt: new Date(),
       level: 1,
@@ -803,7 +812,6 @@ export class MemStorage implements IStorage {
       streak: 0,
       lastActive: new Date(),
       strength: 10, agility: 10, stamina: 10, vitality: 10, intelligence: 10, willpower: 10, charisma: 10,
-      onboardingCompleted: false,
       coins: 100,
       guildId: null,
       theme: "default",
@@ -815,8 +823,14 @@ export class MemStorage implements IStorage {
       studyAvailability: null,
       notificationsEnabled: true,
       notificationTime: 9,
+      onboardingCompleted: insertUser.onboardingCompleted ?? false,
+      isPremium: insertUser.isPremium ?? false,
+      premiumExpiry: insertUser.premiumExpiry ?? null,
       lastNotificationSent: null,
-      timezone: insertUser.timezone || "UTC"
+      timezone: insertUser.timezone || "UTC",
+      lastPremiumBonusAt: null,
+      stripeCustomerId: null,
+      role: "user"
     };
     this.users.set(id, user);
     this.autoSave();
@@ -1580,56 +1594,6 @@ export class MemStorage implements IStorage {
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
-  // Premium Request operations
-  async createPremiumRequest(request: InsertPremiumRequest): Promise<PremiumRequest> {
-    const id = randomUUID();
-    const req: PremiumRequest = {
-      id,
-      ...request,
-      status: "pending",
-      adminNotes: null,
-      createdAt: new Date(),
-      resolvedAt: null,
-    };
-    this.premiumRequests.set(id, req);
-    this.autoSave();
-    return req;
-  }
-
-  async getPendingPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
-    const pending = Array.from(this.premiumRequests.values()).filter(r => r.status === "pending");
-    return await Promise.all(pending.map(async r => {
-      const user = await this.getUser(r.userId);
-      return { ...r, user: user! };
-    }));
-  }
-
-  async getAllPremiumRequests(): Promise<(PremiumRequest & { user: User })[]> {
-    const all = Array.from(this.premiumRequests.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return await Promise.all(all.map(async r => {
-      const user = await this.getUser(r.userId);
-      return { ...r, user: user! };
-    }));
-  }
-
-  async updatePremiumRequestStatus(id: string, status: "approved" | "rejected", adminNotes?: string): Promise<PremiumRequest> {
-    const req = this.premiumRequests.get(id);
-    if (!req) throw new Error("Request not found");
-    const updated = {
-      ...req,
-      status,
-      adminNotes: adminNotes || null,
-      resolvedAt: new Date(),
-    };
-    this.premiumRequests.set(id, updated);
-    this.autoSave();
-    return updated;
-  }
-
-  async getUserPremiumRequests(userId: string): Promise<PremiumRequest[]> {
-    return Array.from(this.premiumRequests.values()).filter(r => r.userId === userId);
-  }
 
   // --- Persistence Logic ---
 

@@ -324,7 +324,7 @@ export default function SessionPage() {
                                     >
                                         <div className="relative">
                                             <Avatar className="border-2 border-green-500/50">
-                                                <AvatarFallback className="bg-purple-600">{user?.name?.[0] || 'U'}</AvatarFallback>
+                                                <AvatarFallback className="bg-purple-600">{user?.displayName?.[0] || 'U'}</AvatarFallback>
                                             </Avatar>
                                             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900" />
                                         </div>
