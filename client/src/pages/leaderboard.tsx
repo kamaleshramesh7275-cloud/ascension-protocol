@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
                                         {getRankIcon(index)}
                                     </div>
 
-                                    <Avatar className="h-10 w-10 mr-4 border border-white/10">
+                                    <Avatar className={`h-10 w-10 mr-4 border ${user.isPremium ? 'ring-4 ring-yellow-500/50 shadow-lg shadow-yellow-500/30 border-yellow-500/50' : 'border-white/10'}`}>
                                         <AvatarImage src={user.avatarUrl || undefined} />
                                         <AvatarFallback className="bg-yellow-500/20 text-yellow-500 font-bold">
                                             {user.name.charAt(0)}
@@ -89,6 +89,9 @@ export default function LeaderboardPage() {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-bold text-lg hover:underline">{user.name}</h3>
+                                            {user.isPremium && (
+                                                <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                            )}
                                             {currentUser?.uid === user.firebaseUid && (
                                                 <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30">You</Badge>
                                             )}

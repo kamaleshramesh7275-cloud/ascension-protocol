@@ -34,13 +34,7 @@ export default function LibraryPage() {
     const { toast } = useToast();
     const [selectedType, setSelectedType] = useState<ContentType>("all");
     const [selectedCategory, setSelectedCategory] = useState<ContentCategory>("all");
-    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-    const [uploadData, setUploadData] = useState({
-        title: "",
-        description: "",
-        type: "article",
-        category: "productivity",
-    });
+
 
     const { data: content, isLoading } = useQuery<Content[]>({
         queryKey: ["/api/content", selectedCategory, selectedType],
@@ -137,13 +131,6 @@ export default function LibraryPage() {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={() => setUploadDialogOpen(true)}
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90"
-                        >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Resource
-                        </Button>
                     </div>
                 </motion.div>
 
@@ -301,107 +288,6 @@ export default function LibraryPage() {
                     </motion.div>
                 )}
             </div>
-
-            {/* Upload Resource Dialog */}
-            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-                <DialogContent className="sm:max-w-[600px] bg-black/95 border-purple-500/20 backdrop-blur-xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-600 bg-clip-text text-transparent">
-                            Upload Resource
-                        </DialogTitle>
-                        <DialogDescription>
-                            Share your knowledge with the community by uploading a resource.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                            <Label>Title</Label>
-                            <Input
-                                value={uploadData.title}
-                                onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
-                                placeholder="e.g., Advanced Study Techniques"
-                                className="bg-black/50 border-white/10"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Description</Label>
-                            <Textarea
-                                value={uploadData.description}
-                                onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
-                                placeholder="Describe your resource..."
-                                className="bg-black/50 border-white/10 min-h-[100px]"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Type</Label>
-                                <Select value={uploadData.type} onValueChange={(v) => setUploadData({ ...uploadData, type: v })}>
-                                    <SelectTrigger className="bg-black/50 border-white/10">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                                        <SelectItem value="article">Article</SelectItem>
-                                        <SelectItem value="video">Video</SelectItem>
-                                        <SelectItem value="guide">Guide</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Category</Label>
-                                <Select value={uploadData.category} onValueChange={(v) => setUploadData({ ...uploadData, category: v })}>
-                                    <SelectTrigger className="bg-black/50 border-white/10">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                                        <SelectItem value="fitness">Fitness</SelectItem>
-                                        <SelectItem value="productivity">Productivity</SelectItem>
-                                        <SelectItem value="mindfulness">Mindfulness</SelectItem>
-                                        <SelectItem value="nutrition">Nutrition</SelectItem>
-                                        <SelectItem value="sleep">Sleep</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>File</Label>
-                            <div className="border-2 border-dashed border-white/10 rounded-lg p-8 text-center hover:border-purple-500/50 transition-colors cursor-pointer">
-                                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">
-                                    Click to upload or drag and drop
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    PDF, DOC, or VIDEO (max 50MB)
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2 pt-4">
-                            <Button
-                                onClick={() => {
-                                    if (!uploadData.title || !uploadData.description) {
-                                        toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
-                                        return;
-                                    }
-                                    toast({ title: "Success", description: "Resource uploaded successfully!" });
-                                    setUploadDialogOpen(false);
-                                    setUploadData({ title: "", description: "", type: "article", category: "productivity" });
-                                }}
-                                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90"
-                            >
-                                Upload
-                            </Button>
-                            <Button variant="outline" onClick={() => setUploadDialogOpen(false)} className="border-white/10">
-                                Cancel
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent >
-            </Dialog >
-        </div >
+        </div>
     );
 }

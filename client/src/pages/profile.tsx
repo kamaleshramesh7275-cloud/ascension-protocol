@@ -8,7 +8,7 @@ import { RankBadge } from "@/components/rank-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award } from "lucide-react";
+import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
@@ -244,7 +244,7 @@ export default function ProfilePage() {
                                 <div className="flex flex-col gap-2">
                                     <RankBadge tier={user.tier as any} level={user.level} size="lg" />
                                     <div className="flex gap-2">
-                                        {isOwnProfile && (
+                                        {isOwnProfile ? (
                                             <>
                                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                                     <Button
@@ -267,6 +267,17 @@ export default function ProfilePage() {
                                                     </Button>
                                                 </motion.div>
                                             </>
+                                        ) : (
+                                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => window.history.back()}
+                                                    className="border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                                                >
+                                                    <ChevronLeft className="h-4 w-4 mr-2" /> Back
+                                                </Button>
+                                            </motion.div>
                                         )}
                                     </div>
                                 </div>

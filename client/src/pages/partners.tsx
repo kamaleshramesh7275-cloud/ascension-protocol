@@ -17,11 +17,9 @@ export default function PartnersPage() {
     const { toast } = useToast();
     const { user } = useAuth();
     const [location, setLocation] = useLocation();
-    const [activeTab, setActiveTab] = useState<"manual" | "auto">("manual");
     const [subjectFilter, setSubjectFilter] = useState("All");
     const [availabilityFilter, setAvailabilityFilter] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
-    const [isMatching, setIsMatching] = useState(false);
 
     // Fetch potential partners
     const { data: partners = [], isLoading } = useQuery({
@@ -129,25 +127,7 @@ export default function PartnersPage() {
     const handleRespond = (partnershipId: string, status: 'accepted' | 'rejected') => respondMutation.mutate({ partnershipId, status });
     const handleChallenge = (defenderId: string) => challengeMutation.mutate(defenderId);
 
-    const handleAutoMatch = () => {
-        setIsMatching(true);
-        setTimeout(() => {
-            setIsMatching(false);
-            const bestMatch = partners.find((p: any) => p.studySubject === "Computer Science");
-            if (bestMatch) {
-                toast({
-                    title: "Match Found!",
-                    description: `Matched with ${bestMatch.name}.`,
-                });
-            } else {
-                toast({
-                    title: "No Match Found",
-                    description: "Try again later.",
-                    variant: "destructive",
-                });
-            }
-        }, 2000);
-    };
+
 
     const incomingRequests = connections.filter((c: any) =>
         c.status === 'pending' && c.user2Id === user?.id
@@ -348,210 +328,138 @@ export default function PartnersPage() {
             )}
 
             <div className="space-y-6">
-                <div className="flex space-x-1 rounded-lg bg-zinc-900/50 border border-zinc-800 p-1 w-fit">
-                    <button
-                        onClick={() => setActiveTab("manual")}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "manual"
-                            ? "bg-zinc-800 text-white shadow-sm"
-                            : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                            }`}
-                    >
-                        Directory
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("auto")}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === "auto"
-                            ? "bg-zinc-800 text-white shadow-sm"
-                            : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                            }`}
-                    >
-                        Auto Match
-                    </button>
-                </div>
-
-                {activeTab === "manual" && (
-                    <div className="space-y-6">
-                        {/* Filters */}
-                        <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-xl">
-                            <CardContent className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                                        <Input
-                                            placeholder="Search by name or profession..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="pl-10 bg-black border-zinc-700"
-                                        />
-                                    </div>
-                                    <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                                        <SelectTrigger className="bg-black border-zinc-700">
-                                            <SelectValue placeholder="Profession / Subject" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                            <SelectItem value="All">All Professions</SelectItem>
-                                            <SelectItem value="Mathematics">Mathematics</SelectItem>
-                                            <SelectItem value="Physics">Physics</SelectItem>
-                                            <SelectItem value="Computer Science">Computer Science</SelectItem>
-                                            <SelectItem value="History">History</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
-                                        <SelectTrigger className="bg-black border-zinc-700">
-                                            <SelectValue placeholder="Availability" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                            <SelectItem value="All">Any Availability</SelectItem>
-                                            <SelectItem value="Mornings">Mornings</SelectItem>
-                                            <SelectItem value="Evenings">Evenings</SelectItem>
-                                            <SelectItem value="Weekends">Weekends</SelectItem>
-                                            <SelectItem value="Anytime">Anytime</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                <div className="space-y-6">
+                    {/* Filters */}
+                    <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-xl">
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                    <Input
+                                        placeholder="Search by name or profession..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-10 bg-black border-zinc-700"
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Partners Grid */}
-                        {isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+                                <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                                    <SelectTrigger className="bg-black border-zinc-700">
+                                        <SelectValue placeholder="Profession / Subject" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                        <SelectItem value="All">All Professions</SelectItem>
+                                        <SelectItem value="Mathematics">Mathematics</SelectItem>
+                                        <SelectItem value="Physics">Physics</SelectItem>
+                                        <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                        <SelectItem value="History">History</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+                                    <SelectTrigger className="bg-black border-zinc-700">
+                                        <SelectValue placeholder="Availability" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                        <SelectItem value="All">Any Availability</SelectItem>
+                                        <SelectItem value="Mornings">Mornings</SelectItem>
+                                        <SelectItem value="Evenings">Evenings</SelectItem>
+                                        <SelectItem value="Weekends">Weekends</SelectItem>
+                                        <SelectItem value="Anytime">Anytime</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredPartners.map((partner: any, index: number) => {
-                                    const status = getConnectionStatus(partner.id);
-                                    return (
-                                        <motion.div
-                                            key={partner.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            <Card className="bg-zinc-900/50 border-zinc-800 hover:border-cyan-500/50 transition-all duration-300 group h-full flex flex-col">
-                                                <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                                                    <Avatar className="h-14 w-14 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
-                                                        <AvatarImage src={partner.avatarUrl || undefined} />
-                                                        <AvatarFallback className="bg-zinc-800 text-zinc-400 font-bold text-lg">
-                                                            {partner.name.charAt(0)}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <CardTitle className="text-lg text-white group-hover:text-cyan-400 transition-colors">
-                                                            {partner.name}
-                                                        </CardTitle>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-0">
-                                                                {partner.studySubject || "Member"}
-                                                            </Badge>
-                                                            <span className="text-xs text-zinc-500">Lvl {partner.level}</span>
-                                                        </div>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent className="space-y-4 flex-1 flex flex-col justify-end">
-                                                    <div className="space-y-2 text-sm text-zinc-300">
-                                                        <div className="flex items-center gap-2">
-                                                            <Briefcase className="w-4 h-4 text-zinc-500" />
-                                                            <span>Profession: <span className="text-white">{partner.studySubject || "General"}</span></span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="w-4 h-4 text-zinc-500" />
-                                                            <span>Available: <span className="text-white">{partner.studyAvailability || "Flexible"}</span></span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex gap-2 pt-4 mt-auto">
-                                                        {status === "pending" ? (
-                                                            <Button disabled className="flex-1 bg-zinc-800 text-zinc-400">
-                                                                <Clock className="w-4 h-4 mr-2" /> Pending
-                                                            </Button>
-                                                        ) : status === "accepted" ? (
-                                                            <Button
-                                                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                                                onClick={() => setLocation(`/session/${partner.id}`)}
-                                                            >
-                                                                <MessageSquare className="w-4 h-4 mr-2" /> Study Now
-                                                            </Button>
-                                                        ) : (
-                                                            <Button
-                                                                className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20"
-                                                                onClick={() => handleConnect(partner.id)}
-                                                                disabled={connectMutation.isPending}
-                                                            >
-                                                                {connectMutation.isPending ? (
-                                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                                ) : (
-                                                                    <UserPlus className="w-4 h-4 mr-2" />
-                                                                )}
-                                                                Connect
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {filteredPartners.length === 0 && !isLoading && (
-                            <div className="text-center py-12 text-zinc-500">
-                                <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                <p>No members found matching your criteria.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {activeTab === "auto" && (
-                    <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-xl max-w-2xl mx-auto mt-12">
-                        <CardHeader className="text-center">
-                            <div className="mx-auto p-4 rounded-full bg-cyan-500/10 w-fit mb-4">
-                                <Zap className="w-8 h-8 text-cyan-500" />
-                            </div>
-                            <CardTitle className="text-2xl">Smart Matchmaking</CardTitle>
-                            <CardDescription>
-                                Let our algorithm find the perfect study partner based on your subject, level, and learning style.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-lg bg-black/40 border border-zinc-800">
-                                    <p className="text-sm text-zinc-500 mb-1">Your Subject</p>
-                                    <p className="font-medium text-white">Computer Science</p>
-                                </div>
-                                <div className="p-4 rounded-lg bg-black/40 border border-zinc-800">
-                                    <p className="text-sm text-zinc-500 mb-1">Your Level</p>
-                                    <p className="font-medium text-white">Level 12</p>
-                                </div>
-                            </div>
-
-                            <Button
-                                size="lg"
-                                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-12 text-lg"
-                                onClick={handleAutoMatch}
-                                disabled={isMatching}
-                            >
-                                {isMatching ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        Finding Match...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap className="w-5 h-5 mr-2" />
-                                        Find Match Now
-                                    </>
-                                )}
-                            </Button>
-
-                            <p className="text-xs text-center text-zinc-500">
-                                Estimated wait time: ~30 seconds
-                            </p>
                         </CardContent>
                     </Card>
-                )}
+
+                    {/* Partners Grid */}
+                    {isLoading ? (
+                        <div className="flex justify-center py-12">
+                            <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredPartners.map((partner: any, index: number) => {
+                                const status = getConnectionStatus(partner.id);
+                                return (
+                                    <motion.div
+                                        key={partner.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                    >
+                                        <Card className="bg-zinc-900/50 border-zinc-800 hover:border-cyan-500/50 transition-all duration-300 group h-full flex flex-col">
+                                            <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                                                <Avatar className="h-14 w-14 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
+                                                    <AvatarImage src={partner.avatarUrl || undefined} />
+                                                    <AvatarFallback className="bg-zinc-800 text-zinc-400 font-bold text-lg">
+                                                        {partner.name.charAt(0)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <CardTitle className="text-lg text-white group-hover:text-cyan-400 transition-colors">
+                                                        {partner.name}
+                                                    </CardTitle>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border-0">
+                                                            {partner.studySubject || "Member"}
+                                                        </Badge>
+                                                        <span className="text-xs text-zinc-500">Lvl {partner.level}</span>
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="space-y-4 flex-1 flex flex-col justify-end">
+                                                <div className="space-y-2 text-sm text-zinc-300">
+                                                    <div className="flex items-center gap-2">
+                                                        <Briefcase className="w-4 h-4 text-zinc-500" />
+                                                        <span>Profession: <span className="text-white">{partner.studySubject || "General"}</span></span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-4 h-4 text-zinc-500" />
+                                                        <span>Available: <span className="text-white">{partner.studyAvailability || "Flexible"}</span></span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2 pt-4 mt-auto">
+                                                    {status === "pending" ? (
+                                                        <Button disabled className="flex-1 bg-zinc-800 text-zinc-400">
+                                                            <Clock className="w-4 h-4 mr-2" /> Pending
+                                                        </Button>
+                                                    ) : status === "accepted" ? (
+                                                        <Button
+                                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                                            onClick={() => setLocation(`/session/${partner.id}`)}
+                                                        >
+                                                            <MessageSquare className="w-4 h-4 mr-2" /> Study Now
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-900/20"
+                                                            onClick={() => handleConnect(partner.id)}
+                                                            disabled={connectMutation.isPending}
+                                                        >
+                                                            {connectMutation.isPending ? (
+                                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                            ) : (
+                                                                <UserPlus className="w-4 h-4 mr-2" />
+                                                            )}
+                                                            Connect
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {filteredPartners.length === 0 && !isLoading && (
+                        <div className="text-center py-12 text-zinc-500">
+                            <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                            <p>No members found matching your criteria.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
