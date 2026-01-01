@@ -10,13 +10,35 @@ export function initCronJobs(storage: IStorage) {
     runDailyGuildQuests(storage);
     processGuildWars(storage);
     processPremiumBonuses(storage);
+    // storage.deleteOldMessages(48) - Removed immediate run to strictly follow midnight schedule, 
+    // or we could keep it for safety. User said "set a time a 12 am", implying the schedule is key.
+    // I'll leave other checks passing hourly.
 
-    // Schedule periodic run
+    // Schedule periodic run for general tasks
     setInterval(() => {
         runDailyGuildQuests(storage);
         processGuildWars(storage);
         processPremiumBonuses(storage);
     }, CRON_INTERVAL);
+
+    // Schedule message cleanup at midnight (12 AM)
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0); // Set to 00:00:00 of the next day
+    const timeToMidnight = nextMidnight.getTime() - now.getTime();
+
+    console.log(`[Cron] Scheduled message cleanup in ${Math.round(timeToMidnight / 1000 / 60)} minutes (at midnight)`);
+
+    setTimeout(() => {
+        console.log("[Cron] Running scheduled midnight message cleanup...");
+        storage.deleteOldMessages(48);
+
+        // Repeat every 24 hours
+        setInterval(() => {
+            console.log("[Cron] Running scheduled midnight message cleanup...");
+            storage.deleteOldMessages(48);
+        }, 24 * 60 * 60 * 1000);
+    }, timeToMidnight);
 }
 
 async function processPremiumBonuses(storage: IStorage) {

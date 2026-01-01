@@ -821,3 +821,54 @@ export type PremiumRequest = typeof premiumRequests.$inferSelect;
 export type WarStatus = "matchmaking" | "active" | "completed";
 
 
+
+// 30-Day Premium Roadmap
+export const roadmaps = pgTable("roadmaps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("active"), // active, completed, archived
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  currentWeek: integer("current_week").default(1).notNull(),
+});
+
+export const roadmapWeeks = pgTable("roadmap_weeks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roadmapId: varchar("roadmap_id").notNull().references(() => roadmaps.id),
+  weekNumber: integer("week_number").notNull(), // 1-4
+  phaseName: text("phase_name").notNull(), // Stability, Pressure, Dominance, Ascension
+  goal: text("goal").notNull(),
+  description: text("description"),
+  isLocked: boolean("is_locked").default(true).notNull(),
+});
+
+export const roadmapTasks = pgTable("roadmap_tasks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  weekId: varchar("week_id").notNull().references(() => roadmapWeeks.id),
+  dayNumber: integer("day_number").notNull(), // 1-7
+  text: text("text").notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  isBoss: boolean("is_boss").default(false).notNull(), // Highlights "Boss Battle" tasks
+  order: integer("order").default(0).notNull(),
+});
+
+export const insertRoadmapSchema = createInsertSchema(roadmaps).omit({
+  id: true,
+  startDate: true,
+});
+
+export const insertRoadmapWeekSchema = createInsertSchema(roadmapWeeks).omit({
+  id: true,
+});
+
+export const insertRoadmapTaskSchema = createInsertSchema(roadmapTasks).omit({
+  id: true,
+});
+
+export type InsertRoadmap = z.infer<typeof insertRoadmapSchema>;
+export type Roadmap = typeof roadmaps.$inferSelect;
+
+export type InsertRoadmapWeek = z.infer<typeof insertRoadmapWeekSchema>;
+export type RoadmapWeek = typeof roadmapWeeks.$inferSelect;
+
+export type InsertRoadmapTask = z.infer<typeof insertRoadmapTaskSchema>;
+export type RoadmapTask = typeof roadmapTasks.$inferSelect;
