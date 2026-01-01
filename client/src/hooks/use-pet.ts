@@ -12,6 +12,7 @@ export interface Pet {
     happiness: number; // 0-100
     stage: PetStage;
     lastFed: Date;
+    hasChosenPath: boolean;
 }
 
 const DEFAULT_PET: Pet = {
@@ -22,22 +23,26 @@ const DEFAULT_PET: Pet = {
     happiness: 100,
     stage: 'egg',
     lastFed: new Date(),
+    hasChosenPath: false,
 };
 
 const STAGE_THRESHOLDS = {
     egg: 0,
-    baby: 30,
-    teen: 120,
-    adult: 360,
-    legendary: 1200,
+    baby: 30,     // Level 1
+    teen: 360,    // Level 7 (Evolution is at Level 5/240m, so 240-360m = Baby stage)
+    adult: 900,   // Level 16
+    legendary: 2400, // Level 41
 };
 
-function calculateStage(minutes: number): PetStage {
+function calculateStage(minutes: number, hasChosenPath: boolean): PetStage {
+    if (!hasChosenPath) return 'egg';
+
+    // Once path is chosen (Level 5+), normal progression applies
     if (minutes >= STAGE_THRESHOLDS.legendary) return 'legendary';
     if (minutes >= STAGE_THRESHOLDS.adult) return 'adult';
     if (minutes >= STAGE_THRESHOLDS.teen) return 'teen';
     if (minutes >= STAGE_THRESHOLDS.baby) return 'baby';
-    return 'egg';
+    return 'baby'; // Default to baby if evolved but low minutes (shouldn't happen if level 5)
 }
 
 function calculateLevel(minutes: number): number {
@@ -128,7 +133,7 @@ export function usePet() {
                 ...prev,
                 totalFocusMinutes: newTotal,
                 level: calculateLevel(newTotal),
-                stage: calculateStage(newTotal),
+                stage: calculateStage(newTotal, prev.hasChosenPath),
                 happiness: Math.min(100, prev.happiness + minutes * 2),
             };
             updatePetState(updated);
@@ -164,6 +169,19 @@ export function usePet() {
         });
     }, [updatePetState]);
 
+    const evolvePet = useCallback((type: PetType) => {
+        setPet(prev => {
+            const updated = {
+                ...prev,
+                type,
+                hasChosenPath: true,
+                stage: calculateStage(prev.totalFocusMinutes, true)
+            };
+            updatePetState(updated);
+            return updated;
+        });
+    }, [updatePetState]);
+
     const resetPet = useCallback(() => {
         updatePetState(DEFAULT_PET);
     }, [updatePetState]);
@@ -175,5 +193,6 @@ export function usePet() {
         changePetType,
         renamePet,
         resetPet,
+        evolvePet,
     };
 }

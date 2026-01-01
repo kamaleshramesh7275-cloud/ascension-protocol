@@ -37,9 +37,10 @@ const PET_NAMES: Record<PetType, string> = {
 };
 
 export function FocusPet() {
-    const { pet, feedPet } = usePet();
+    const { pet, feedPet, evolvePet } = usePet();
     const [showStats, setShowStats] = useState(false);
     const [isFeeding, setIsFeeding] = useState(false);
+    const [showEvolution, setShowEvolution] = useState(false);
     const { toast } = useToast();
 
     const handleFeed = async (e: React.MouseEvent) => {
@@ -69,9 +70,19 @@ export function FocusPet() {
         }
     };
 
+    const handleEvolve = (type: PetType) => {
+        evolvePet(type);
+        setShowEvolution(false);
+        toast({
+            title: "Evolution Complete! 🌟",
+            description: `Your pet has evolved into a ${PET_NAMES[type]}!`,
+        });
+    };
+
     const emoji = PET_EMOJIS[pet.type][pet.stage];
     const nextStageMinutes = getNextStageMinutes(pet.stage);
     const progress = nextStageMinutes ? (pet.totalFocusMinutes / nextStageMinutes) * 100 : 100;
+    const canEvolve = !pet.hasChosenPath && pet.level >= 5;
 
     return (
         <div className="fixed bottom-8 right-8 z-40">
@@ -109,6 +120,29 @@ export function FocusPet() {
 
                     {/* Sparkles Effect Removed */}
                 </motion.div>
+
+                {/* Evolution Indicator */}
+                <AnimatePresence>
+                    {canEvolve && (
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="absolute -top-4 -right-4 z-50"
+                        >
+                            <Button
+                                size="sm"
+                                className="h-8 w-8 rounded-full p-0 bg-yellow-400 hover:bg-yellow-500 text-black border-2 border-white shadow-lg animate-bounce"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowEvolution(true);
+                                }}
+                            >
+                                ✨
+                            </Button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Level Badge */}
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center text-black font-bold text-sm border-2 border-white/20">
@@ -198,6 +232,52 @@ export function FocusPet() {
                     )}
                 </AnimatePresence>
             </motion.div>
+
+            {/* Evolution Modal */}
+            <AnimatePresence>
+                {showEvolution && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-zinc-900 border border-white/10 p-6 rounded-2xl max-w-md w-full space-y-6 shadow-xl"
+                        >
+                            <div className="text-center space-y-2">
+                                <h2 className="text-2xl font-bold text-white">Evolution Time! 🥚✨</h2>
+                                <p className="text-gray-400">Your pet is ready to evolve. Choose its destiny!</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => handleEvolve('wolf')}
+                                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
+                                >
+                                    <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🐺</div>
+                                    <div className="font-bold text-white">Zen Wolf</div>
+                                    <div className="text-xs text-gray-400 mt-1">Loyal & Focused</div>
+                                </button>
+                                <button
+                                    onClick={() => handleEvolve('dragon')}
+                                    className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
+                                >
+                                    <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🐉</div>
+                                    <div className="font-bold text-white">Focus Dragon</div>
+                                    <div className="text-xs text-gray-400 mt-1">Powerful & Wise</div>
+                                </button>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                className="w-full text-gray-400 hover:text-white"
+                                onClick={() => setShowEvolution(false)}
+                            >
+                                Decide Later
+                            </Button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
