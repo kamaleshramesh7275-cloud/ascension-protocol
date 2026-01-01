@@ -12,12 +12,49 @@ const router = Router();
 router.get("/", requireAuth, async (req, res) => {
     const storage = getStorage();
     try {
-        const roadmap = await storage.getActiveRoadmap((req as any).user!.id);
+        const userId = (req as any).user!.id;
+        let roadmap = await storage.getActiveRoadmap(userId);
+
+        // Auto-provision roadmap if none exists
         if (!roadmap) {
-            return res.status(404).json({ message: "No active roadmap found" });
+            console.log(`[Roadmap] Auto-provisioning for user ${userId}`);
+
+            // 1. Create Roadmap
+            roadmap = await storage.createRoadmap({
+                userId,
+                status: "active",
+                currentWeek: 1
+            });
+
+            // 2. Create Weeks & Tasks (Default Skeleton)
+            const weeksData = getDefaultRoadmapSkeleton();
+
+            for (const weekData of weeksData) {
+                const week = await storage.createRoadmapWeek({
+                    roadmapId: roadmap.id,
+                    weekNumber: weekData.weekNumber,
+                    phaseName: weekData.phaseName,
+                    goal: weekData.goal,
+                    description: weekData.description,
+                    isLocked: weekData.weekNumber > 1
+                });
+
+                if (weekData.tasks) {
+                    for (const taskData of weekData.tasks) {
+                        await storage.createRoadmapTask({
+                            weekId: week.id,
+                            dayNumber: taskData.dayNumber,
+                            text: taskData.text,
+                            order: taskData.order || taskData.dayNumber,
+                            isBoss: taskData.isBoss || false,
+                            completed: false
+                        });
+                    }
+                }
+            }
         }
 
-        // Fetch weeks for this roadmap
+        // Fetch weeks for this roadmap (newly created or existing)
         const weeks = await storage.getRoadmapWeeks(roadmap.id);
 
         res.json({ ...roadmap, weeks });
