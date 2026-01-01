@@ -1,0 +1,9 @@
+﻿
+> rest-express@1.0.0 check
+> tsc
+
+server/storage.ts(801,11): error TS2322: Type '{ avatarUrl: string | null; createdAt: Date; level: number; xp: number; tier: string; streak: number; lastActive: Date; strength: number; agility: number; stamina: number; vitality: number; ... 25 more ...; id: `${string}-${string}-${string}-${string}-${string}`; }' is not assignable to type '{ id: string; name: string; firebaseUid: string; email: string; avatarUrl: string | null; createdAt: Date; timezone: string | null; onboardingCompleted: boolean; level: number; xp: number; ... 26 more ...; lastNotificationSent: Date | null; }'.
+  Types of property 'premiumExpiry' are incompatible.
+    Type 'Date | null | undefined' is not assignable to type 'Date | null'.
+      Type 'undefined' is not assignable to type 'Date | null'.
+server/storage.ts(824,7): error TS1117: An object literal cannot have multiple properties with the same name.

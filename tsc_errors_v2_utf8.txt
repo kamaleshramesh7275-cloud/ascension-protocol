@@ -1,0 +1,37 @@
+﻿
+> rest-express@1.0.0 check
+> tsc
+
+server/storage.ts(46,8): error TS2300: Duplicate identifier 'GuildWarEvent'.
+server/storage.ts(47,8): error TS2300: Duplicate identifier 'InsertPremiumRequest'.
+server/storage.ts(48,8): error TS2300: Duplicate identifier 'PremiumRequest'.
+server/storage.ts(56,3): error TS2300: Duplicate identifier 'userItems'.
+server/storage.ts(57,3): error TS2300: Duplicate identifier 'guilds'.
+server/storage.ts(58,3): error TS2724: '"@shared/schema"' has no exported member named 'userCredentials'. Did you mean 'credentials'?
+server/storage.ts(59,3): error TS2300: Duplicate identifier 'guildMessages'.
+server/storage.ts(60,3): error TS2305: Module '"@shared/schema"' has no exported member 'deletedUids'.
+server/storage.ts(61,3): error TS2300: Duplicate identifier 'campaigns'.
+server/storage.ts(62,3): error TS2300: Duplicate identifier 'userCampaigns'.
+server/storage.ts(63,3): error TS2300: Duplicate identifier 'guildQuests'.
+server/storage.ts(64,3): error TS2300: Duplicate identifier 'guildQuestProgress'.
+server/storage.ts(65,3): error TS2300: Duplicate identifier 'guildPerks'.
+server/storage.ts(66,3): error TS2300: Duplicate identifier 'guildDonations'.
+server/storage.ts(68,3): error TS2300: Duplicate identifier 'guildWarParticipants'.
+server/storage.ts(69,3): error TS2300: Duplicate identifier 'guildWarEvents'.
+server/storage.ts(70,3): error TS2300: Duplicate identifier 'premiumRequests'.
+server/storage.ts(71,3): error TS2300: Duplicate identifier 'userItems'.
+server/storage.ts(72,3): error TS2300: Duplicate identifier 'guilds'.
+server/storage.ts(79,3): error TS2300: Duplicate identifier 'guildMessages'.
+server/storage.ts(80,3): error TS2300: Duplicate identifier 'campaigns'.
+server/storage.ts(81,3): error TS2300: Duplicate identifier 'userCampaigns'.
+server/storage.ts(87,3): error TS2300: Duplicate identifier 'guildQuests'.
+server/storage.ts(88,3): error TS2300: Duplicate identifier 'guildQuestProgress'.
+server/storage.ts(89,3): error TS2300: Duplicate identifier 'guildPerks'.
+server/storage.ts(90,3): error TS2300: Duplicate identifier 'guildDonations'.
+server/storage.ts(94,3): error TS2300: Duplicate identifier 'guildWarParticipants'.
+server/storage.ts(95,3): error TS2300: Duplicate identifier 'guildWarEvents'.
+server/storage.ts(96,3): error TS2300: Duplicate identifier 'premiumRequests'.
+server/storage.ts(97,8): error TS2300: Duplicate identifier 'PremiumRequest'.
+server/storage.ts(98,8): error TS2300: Duplicate identifier 'InsertPremiumRequest'.
+server/storage.ts(99,8): error TS2300: Duplicate identifier 'GuildWarEvent'.
+server/storage.ts(815,11): error TS2741: Property 'lastNotificationSent' is missing in type '{ avatarUrl: string | null; createdAt: Date; level: number; xp: number; tier: string; streak: number; lastActive: Date; strength: number; agility: number; stamina: number; vitality: number; ... 24 more ...; id: `${string}-${string}-${string}-${string}-${string}`; }' but required in type '{ id: string; name: string; firebaseUid: string; email: string; avatarUrl: string | null; createdAt: Date; timezone: string | null; onboardingCompleted: boolean; level: number; xp: number; ... 26 more ...; lastNotificationSent: Date | null; }'.

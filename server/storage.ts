@@ -1358,8 +1358,9 @@ export class MemStorage implements IStorage {
   }
 
   async getGuildMessages(guildId: string): Promise<any[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const msgs = Array.from(this.guildMessages.values())
-      .filter(m => m.guildId === guildId)
+      .filter(m => m.guildId === guildId && m.createdAt > oneDayAgo)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 50);
 
@@ -1481,7 +1482,9 @@ export class MemStorage implements IStorage {
   }
 
   async getMessages(limit = 50): Promise<(Message & { user: User })[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const msgs = Array.from(this.messages.values())
+      .filter(m => m.createdAt > oneDayAgo)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
       .slice(-limit);
 
@@ -1956,8 +1959,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGuildMessages(guildId: string): Promise<any[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const msgs = await db!.select().from(guildMessages)
-      .where(eq(guildMessages.guildId, guildId))
+      .where(and(
+        eq(guildMessages.guildId, guildId),
+        gt(guildMessages.createdAt, oneDayAgo)
+      ))
       .orderBy(desc(guildMessages.createdAt))
       .limit(50);
 
@@ -2054,7 +2061,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessages(limit = 50): Promise<(Message & { user: User })[]> {
-    const results = await db!.select().from(messages).limit(limit).orderBy(desc(messages.createdAt));
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const results = await db!.select().from(messages)
+      .where(gt(messages.createdAt, oneDayAgo))
+      .limit(limit)
+      .orderBy(desc(messages.createdAt));
     const withUsers = await Promise.all(results.map(async m => {
       const user = await this.getUser(m.userId);
       return { ...m, user: user! };

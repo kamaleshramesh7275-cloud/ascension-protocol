@@ -1,0 +1,81 @@
+﻿
+> rest-express@1.0.0 check
+> tsc
+
+client/src/components/app-sidebar.tsx(1,10): error TS2300: Duplicate identifier 'LayoutDashboard'.
+client/src/components/app-sidebar.tsx(1,27): error TS2300: Duplicate identifier 'Trophy'.
+client/src/components/app-sidebar.tsx(1,35): error TS2300: Duplicate identifier 'User'.
+client/src/components/app-sidebar.tsx(1,41): error TS2300: Duplicate identifier 'Swords'.
+client/src/components/app-sidebar.tsx(1,49): error TS2300: Duplicate identifier 'Activity'.
+client/src/components/app-sidebar.tsx(1,59): error TS2300: Duplicate identifier 'LogOut'.
+client/src/components/app-sidebar.tsx(1,67): error TS2300: Duplicate identifier 'BookOpen'.
+client/src/components/app-sidebar.tsx(1,77): error TS2300: Duplicate identifier 'Shield'.
+client/src/components/app-sidebar.tsx(1,85): error TS2300: Duplicate identifier 'Brain'.
+client/src/components/app-sidebar.tsx(1,92): error TS2300: Duplicate identifier 'Users'.
+client/src/components/app-sidebar.tsx(1,99): error TS2300: Duplicate identifier 'MessageSquare'.
+client/src/components/app-sidebar.tsx(1,114): error TS2300: Duplicate identifier 'ShoppingBag'.
+client/src/components/app-sidebar.tsx(2,10): error TS2300: Duplicate identifier 'LayoutDashboard'.
+client/src/components/app-sidebar.tsx(2,27): error TS2300: Duplicate identifier 'Trophy'.
+client/src/components/app-sidebar.tsx(2,35): error TS2300: Duplicate identifier 'User'.
+client/src/components/app-sidebar.tsx(2,41): error TS2300: Duplicate identifier 'Swords'.
+client/src/components/app-sidebar.tsx(2,49): error TS2300: Duplicate identifier 'Activity'.
+client/src/components/app-sidebar.tsx(2,59): error TS2300: Duplicate identifier 'LogOut'.
+client/src/components/app-sidebar.tsx(2,67): error TS2300: Duplicate identifier 'BookOpen'.
+client/src/components/app-sidebar.tsx(2,77): error TS2300: Duplicate identifier 'Shield'.
+client/src/components/app-sidebar.tsx(2,85): error TS2300: Duplicate identifier 'Brain'.
+client/src/components/app-sidebar.tsx(2,92): error TS2300: Duplicate identifier 'Users'.
+client/src/components/app-sidebar.tsx(2,99): error TS2300: Duplicate identifier 'MessageSquare'.
+client/src/components/app-sidebar.tsx(2,114): error TS2300: Duplicate identifier 'ShoppingBag'.
+client/src/pages/session.tsx(327,98): error TS2339: Property 'name' does not exist on type 'User'.
+server/routes/guild-wars.ts(43,13): error TS18048: 'guild' is possibly 'undefined'.
+server/storage.ts(221,47): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(222,39): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(223,47): error TS2304: Cannot find name 'GuildWarParticipant'.
+server/storage.ts(225,48): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(227,55): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(228,50): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(228,70): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(280,34): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(281,45): error TS2304: Cannot find name 'GuildWarParticipant'.
+server/storage.ts(795,11): error TS2739: Type '{ avatarUrl: string | null; createdAt: Date; level: number; xp: number; tier: string; streak: number; lastActive: Date; strength: number; agility: number; stamina: number; vitality: number; ... 23 more ...; id: `${string}-${string}-${string}-${string}-${string}`; }' is missing the following properties from type '{ id: string; role: string; name: string; firebaseUid: string; email: string; avatarUrl: string | null; createdAt: Date; timezone: string | null; onboardingCompleted: boolean; level: number; ... 26 more ...; lastNotificationSent: Date | null; }': lastPremiumBonusAt, stripeCustomerId
+server/storage.ts(836,53): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(842,45): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(846,53): error TS2304: Cannot find name 'GuildWarParticipant'.
+server/storage.ts(861,54): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(923,61): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(944,16): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(973,56): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(973,76): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(983,9): error TS2393: Duplicate function implementation.
+server/storage.ts(998,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1007,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1016,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1029,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1584,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1599,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1607,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1616,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1630,9): error TS2393: Duplicate function implementation.
+server/storage.ts(2556,53): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2559,15): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2559,48): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2560,12): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2565,45): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2567,17): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2571,53): error TS2304: Cannot find name 'GuildWarParticipant'.
+server/storage.ts(2591,54): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2594,13): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2596,15): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2596,48): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2597,12): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2599,21): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2620,17): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2624,19): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2658,61): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2664,42): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2664,62): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2682,15): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2708,56): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2708,76): error TS2304: Cannot find name 'GuildWar'.
+server/storage.ts(2710,15): error TS2304: Cannot find name 'guildWars'.
+server/storage.ts(2712,17): error TS2304: Cannot find name 'guildWars'.
