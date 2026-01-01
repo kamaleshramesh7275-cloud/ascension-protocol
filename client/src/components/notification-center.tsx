@@ -10,6 +10,7 @@ import { Bell, Shield, Megaphone, Info, Calendar, Target, CheckCircle, Flame, Aw
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Notification } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
+import { useLocation } from "wouter";
 
 // Notification type to icon mapping
 const notificationIcons: Record<string, LucideIcon> = {
@@ -44,6 +45,7 @@ export function NotificationCenter() {
         queryKey: ["/api/notifications"],
         refetchInterval: 60000, // Refresh every minute
     });
+    const [, setLocation] = useLocation();
 
     const markAsRead = useMutation({
         mutationFn: (id: string) =>
@@ -117,10 +119,15 @@ export function NotificationCenter() {
                                 <div key={notification.id}>
                                     <div
                                         className={`p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.02] ${notification.read
-                                                ? "bg-muted/30 hover:bg-muted/50"
-                                                : "bg-primary/10 hover:bg-primary/15 border border-primary/20 shadow-sm"
+                                            ? "bg-muted/30 hover:bg-muted/50"
+                                            : "bg-primary/10 hover:bg-primary/15 border border-primary/20 shadow-sm"
                                             }`}
-                                        onClick={() => !notification.read && markAsRead.mutate(notification.id)}
+                                        onClick={() => {
+                                            if (!notification.read) markAsRead.mutate(notification.id);
+                                            if (notification.title === "Premium Activated" || notification.title === "Premium Activation Approved!") {
+                                                setLocation("/profile?premium_activated=true");
+                                            }
+                                        }}
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="flex-shrink-0 mt-0.5">

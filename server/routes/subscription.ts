@@ -86,7 +86,7 @@ router.post("/admin/activate", requireAdminPassword, async (req, res) => {
             userId: userId,
             type: "admin",
             title: "Premium Activated",
-            message: `An admin has activated your Premium Membership for ${days} days! Enjoy triple rewards.`
+            message: `An admin has activated your Premium Membership for ${days} days! Enjoy Custom Roadmap Access and Daily 100 Coins.`
         });
 
         res.json({ success: true, message: `Activated Premium for ${targetUser.name}` });
@@ -169,7 +169,7 @@ router.post("/admin/requests/:requestId/resolve", requireAdminPassword, async (r
                 userId: resolvedRequest.userId,
                 type: "admin",
                 title: "Premium Activation Approved!",
-                message: "Your premium membership request has been approved! Enjoy triple rewards and legendary access."
+                message: "Your premium membership request has been approved! Enjoy Custom Roadmap Access and Daily 100 Coins."
             });
         } else {
             await storage.createNotification({

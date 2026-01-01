@@ -300,17 +300,17 @@ export default function ProfilePage() {
                                             </p>
                                         )}
                                         <div className="mt-4 grid md:grid-cols-2 gap-2 text-sm">
-                                            <div className="flex items-center gap-2">✓ 3x XP & Coin Rewards</div>
-                                            <div className="flex items-center gap-2">✓ Legendary Shop Access</div>
-                                            <div className="flex items-center gap-2">✓ Exclusive Focus Worlds</div>
-                                            <div className="flex items-center gap-2">✓ Priority Guild Features</div>
+                                            <div className="flex items-center gap-2">✓ Custom Roadmap Access</div>
+                                            <div className="flex items-center gap-2">✓ Daily 100 Coins Reward</div>
+                                            <div className="flex items-center gap-2">✓ Elite Profile Badge</div>
+                                            <div className="flex items-center gap-2">✓ Support the Protocol</div>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                                         <div>
                                             <p className="text-lg font-medium">Ascend to Premium for only ₹99/month</p>
-                                            <p className="text-sm text-muted-foreground">Unlock triple progression and exclusive content.</p>
+                                            <p className="text-sm text-muted-foreground">Unlock custom roadmaps and daily coin rewards.</p>
                                         </div>
                                         <Button
                                             className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-black font-bold whitespace-nowrap"
