@@ -284,10 +284,10 @@ export function FocusPet() {
 
 function getNextStageMinutes(stage: PetStage): number | null {
     switch (stage) {
-        case 'egg': return 30;
-        case 'baby': return 120;
-        case 'teen': return 360;
-        case 'adult': return 1200;
+        case 'egg': return 240; // Evolution at Level 5 (4 hours)
+        case 'baby': return 360; // Growth to Teen at 6 hours
+        case 'teen': return 900; // Growth to Adult at 15 hours
+        case 'adult': return 2400; // Legendary at 40 hours
         case 'legendary': return null;
     }
 }
