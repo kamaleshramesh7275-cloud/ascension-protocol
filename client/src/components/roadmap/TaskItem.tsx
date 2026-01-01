@@ -14,13 +14,42 @@ interface TaskItemProps {
 export function TaskItem({ task, isWeekLocked }: TaskItemProps) {
     const queryClient = useQueryClient();
 
-    // Optimized mutation without full invalidate to prevent jitter
+    // Optimized mutation with Optimistic Updates
     const toggleMutation = useMutation({
         mutationFn: async () => {
             const res = await apiRequest("POST", `/api/roadmap/tasks/${task.id}/toggle`);
             return res.json();
         },
-        onSuccess: () => {
+        onMutate: async () => {
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: ["/api/roadmap"] });
+
+            // Snapshot the previous value
+            const previousRoadmap = queryClient.getQueryData(["/api/roadmap"]);
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(["/api/roadmap"], (old: any) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    weeks: old.weeks.map((week: any) => ({
+                        ...week,
+                        tasks: week.tasks.map((t: any) =>
+                            t.id === task.id ? { ...t, completed: !t.completed } : t
+                        )
+                    }))
+                };
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousRoadmap };
+        },
+        onError: (err, newTodo, context: any) => {
+            // If the mutation fails, use the context returned from onMutate to roll back
+            queryClient.setQueryData(["/api/roadmap"], context.previousRoadmap);
+        },
+        onSettled: () => {
+            // Always refetch after error or success to guarantee sync
             queryClient.invalidateQueries({ queryKey: ["/api/roadmap"] });
         },
     });

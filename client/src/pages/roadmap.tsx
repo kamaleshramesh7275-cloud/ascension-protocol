@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { RoadmapVisual } from "@/components/roadmap/RoadmapVisual";
 import { WeekCard } from "@/components/roadmap/WeekCard";
+import { FullProtocolView } from "@/components/roadmap/FullProtocolView";
 import { Roadmap, RoadmapWeek, RoadmapTask, User } from "@shared/schema";
 import { Loader2, Lock, Shield, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 type RoadmapData = Roadmap & {
     weeks: (RoadmapWeek & { tasks: RoadmapTask[] })[];
@@ -14,6 +16,7 @@ type RoadmapData = Roadmap & {
 
 export default function RoadmapPage() {
     const { user: authUser } = useAuth();
+    const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
 
     const { data: user, isLoading: isUserLoading } = useQuery<User>({
         queryKey: ["/api/user"],
@@ -26,6 +29,8 @@ export default function RoadmapPage() {
     });
 
     const isLoading = isUserLoading || isRoadmapLoading;
+
+    const selectedWeek = roadmap?.weeks.find(w => w.id === selectedWeekId);
 
     if (isLoading) {
         return (
@@ -94,6 +99,15 @@ export default function RoadmapPage() {
 
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-10 pb-40 relative overflow-hidden">
+            <AnimatePresence>
+                {selectedWeek && (
+                    <FullProtocolView
+                        week={selectedWeek}
+                        onClose={() => setSelectedWeekId(null)}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Ambient Background Elements */}
             <div className="fixed top-0 left-0 w-full h-[1000px] bg-[radial-gradient(circle_at_20%_0%,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black pointer-events-none -z-10" />
             <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_80%_80%,_var(--tw-gradient-stops))] from-purple-900/10 via-black to-black pointer-events-none -z-10 opacity-50" />
@@ -146,7 +160,7 @@ export default function RoadmapPage() {
                         <div className="h-px w-full bg-zinc-900" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
                         {roadmap.weeks
                             .sort((a, b) => a.weekNumber - b.weekNumber)
                             .map((week, index) => (
@@ -154,6 +168,7 @@ export default function RoadmapPage() {
                                     key={week.id}
                                     week={week}
                                     index={index}
+                                    onSelect={() => setSelectedWeekId(week.id)}
                                 />
                             ))}
                     </div>
