@@ -1039,7 +1039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Update user stats and XP
-      const multiplier = user.isPremium ? 3 : 1;
+      // Update user stats and XP
+      const multiplier = 1; // Standardized rewards
       const xpToAward = quest.rewardXP * multiplier;
       const newXP = user.xp + xpToAward;
       const oldLevel = calculateLevel(user.xp);
@@ -1291,7 +1292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate XP: 100 XP per 20 minutes block (incentivize deep work)
       // Coins: 1 Coin per minute
-      const multiplier = user.isPremium ? 3 : 1;
+      const multiplier = 1;
 
       const xpBase = Math.floor(duration / 20) * 100;
       const xpEarned = xpBase * multiplier;

@@ -13,9 +13,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams } from "wouter";
 import { PremiumBenefitsDialog } from "@/components/premium-benefits-dialog";
+import { PremiumSuccessAnim } from "@/components/premium-success-anim";
+import { useLocation } from "wouter";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
@@ -24,6 +26,8 @@ export default function ProfilePage() {
     const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
     const params = useParams<{ id?: string }>(); // Get ID from params
     const viewUserId = params.id;
+    const [location, setLocation] = useLocation();
+    const [showPremiumAnim, setShowPremiumAnim] = useState(false);
 
     // Determine if we are viewing our own profile
     // Note: firebaseUser.uid is the firebase auth ID, but our user object uses a different ID. 
@@ -40,6 +44,17 @@ export default function ProfilePage() {
         queryKey: isOwnProfile ? ["/api/user"] : [`/api/users/${viewUserId}/public`],
         enabled: isOwnProfile || !!viewUserId
     });
+
+    // Watch for premium activation
+    if (user?.isPremium && !showPremiumAnim) {
+        // Check if we just redirected here with a success flag
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('premium_activated') === 'true') {
+            setShowPremiumAnim(true);
+            // Clean URL
+            window.history.replaceState({}, '', '/profile');
+        }
+    }
 
     const { data: activities = [], isLoading: activitiesLoading } = useQuery<Activity[]>({
         queryKey: ["/api/activities"],
@@ -466,6 +481,11 @@ export default function ProfilePage() {
                 open={premiumDialogOpen}
                 onOpenChange={setPremiumDialogOpen}
             />
+            <AnimatePresence>
+                {showPremiumAnim && (
+                    <PremiumSuccessAnim onComplete={() => setShowPremiumAnim(false)} />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -221,12 +221,7 @@ router.get("/", async (req, res) => {
         user = await storage.getUserByFirebaseUid(firebaseUid);
     }
 
-    const processedItems = items.map(item => {
-        if (user?.isPremium && !item.isPremium) {
-            return { ...item, cost: Math.floor(item.cost * 0.75) };
-        }
-        return item;
-    });
+    const processedItems = items; // No discounts
 
     res.json(processedItems);
 });
@@ -277,11 +272,8 @@ router.post("/buy", requireAuth, async (req, res) => {
     const dbUser = await storage.getUser(user.id);
     if (!dbUser) return res.status(404).send("User not found");
 
-    // Calculate actual cost with premium discount
+    // Calculate actual cost
     let effectiveCost = item.cost;
-    if (dbUser.isPremium && !item.isPremium) {
-        effectiveCost = Math.floor(item.cost * 0.75);
-    }
 
     console.log(`User coins: ${dbUser.coins}, Item effective cost: ${effectiveCost}`);
 

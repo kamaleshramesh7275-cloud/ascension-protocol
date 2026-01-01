@@ -76,7 +76,7 @@ export default function RoadmapPage() {
                         </div>
                     </div>
                     <Button asChild size="lg" className="w-full bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-900/20 py-6 text-lg font-bold">
-                        <Link href="/store">Unlock Protocol</Link>
+                        <Link href="/profile">Unlock Protocol</Link>
                     </Button>
                 </motion.div>
             </div>
