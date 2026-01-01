@@ -1289,9 +1289,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid duration" });
       }
 
-      // Calculate XP: 1 XP per minute (3 XP for premium)
+      // Calculate XP: 100 XP per 20 minutes block (incentivize deep work)
+      // Coins: 1 Coin per minute
       const multiplier = user.isPremium ? 3 : 1;
-      const xpEarned = duration * multiplier;
+
+      const xpBase = Math.floor(duration / 20) * 100;
+      const xpEarned = xpBase * multiplier;
+
+      const coinsBase = Math.floor(duration * 1);
+      const coinsEarned = coinsBase * multiplier;
 
       // Create focus session
       const session = await storage.createFocusSession({
@@ -1311,6 +1317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         xp: newXP,
         level: newLevel,
         tier: newTier,
+        coins: user.coins + coinsEarned,
         lastActive: new Date(),
       });
 
@@ -1319,7 +1326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         action: "focusSession",
         xpDelta: xpEarned,
-        coinsDelta: 0,
+        coinsDelta: coinsEarned,
         statDeltas: {},
       });
 

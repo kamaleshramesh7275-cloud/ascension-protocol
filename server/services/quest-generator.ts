@@ -69,8 +69,8 @@ export function generateHabitQuests(user: User): InsertQuest[] {
         description: `Continue your ${habit.name} habit. Current streak: ${habit.currentStreak} days. Longest: ${habit.longestStreak} days.`,
         type: "daily",
         difficulty: "easy",
-        rewardXP: 30 + (habit.currentStreak * 5), // Bonus XP for streaks
-        rewardCoins: 10 + (habit.currentStreak * 2),
+        rewardXP: 3 + Math.floor(habit.currentStreak * 0.5), // Bonus XP for streaks
+        rewardCoins: 1 + Math.floor(habit.currentStreak * 0.2),
         rewardStats: { willpower: 1, vitality: 1 },
         dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     }));
@@ -105,8 +105,8 @@ export function generateMilestoneQuests(user: User): InsertQuest[] {
             target: nextMilestone,
             current: currentPushups,
             reward: {
-                xp: 500,
-                coins: 100,
+                xp: 50,
+                coins: 10,
                 stats: { strength: 5, stamina: 3 },
                 title: `Pushup Champion ${nextMilestone}`
             }
@@ -123,7 +123,7 @@ export function generateMilestoneQuests(user: User): InsertQuest[] {
             current: user.xp,
             reward: {
                 xp: 0, // Already at milestone
-                coins: 200,
+                coins: 20,
                 stats: {},
                 title: `${nextXPMilestone} XP Achieved`
             }
@@ -138,8 +138,8 @@ export function generateMilestoneQuests(user: User): InsertQuest[] {
             target: user.level + 1,
             current: user.level,
             reward: {
-                xp: 1000,
-                coins: 500,
+                xp: 100,
+                coins: 50,
                 stats: { strength: 2, agility: 2, intelligence: 2 },
                 title: `Level ${user.level + 1} Master`
             }
@@ -201,19 +201,19 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
         quests.push(createQuest(
             `💪 Strength: ${targetPushups} Pushups`,
             `Complete ${targetPushups} pushups in a single set. Baseline: ${pushups}.`,
-            100, 20, { strength: Math.floor(2 * difficultyMult) }, 'normal'
+            10, 2, { strength: Math.floor(2 * difficultyMult) }, 'normal'
         ));
 
         quests.push(createQuest(
             `🏃 Cardio: 20 Min Run`,
             `Go for a 20-minute run or brisk walk. Maintain a steady pace.`,
-            120, 25, { stamina: Math.floor(2 * difficultyMult), vitality: 1 }, 'normal'
+            12, 2, { stamina: Math.floor(2 * difficultyMult), vitality: 1 }, 'normal'
         ));
 
         quests.push(createQuest(
             `🥗 Nutrition: Clean Eating`,
             `Eat 3 balanced meals today with no processed sugars.`,
-            80, 15, { vitality: Math.floor(2 * difficultyMult) }, 'easy'
+            8, 1, { vitality: Math.floor(2 * difficultyMult) }, 'easy'
         ));
 
     } else if (category === "intellect") {
@@ -222,57 +222,57 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
         quests.push(createQuest(
             `🧠 Deep Work: ${target}`,
             `Dedicate ${minutes} minutes of uninterrupted focus to ${target}.`,
-            150, 30, { intelligence: Math.floor(3 * difficultyMult) }, 'hard'
+            15, 3, { intelligence: Math.floor(3 * difficultyMult) }, 'hard'
         ));
 
         quests.push(createQuest(
             `📚 Research: New Concept`,
             `Learn one new concept related to ${target} and write a summary.`,
-            100, 20, { intelligence: Math.floor(2 * difficultyMult) }, 'normal'
+            10, 2, { intelligence: Math.floor(2 * difficultyMult) }, 'normal'
         ));
 
         quests.push(createQuest(
             `🧩 Problem Solving`,
             `Solve a complex problem or puzzle related to your field.`,
-            120, 25, { intelligence: 2, willpower: 1 }, 'normal'
+            12, 2, { intelligence: 2, willpower: 1 }, 'normal'
         ));
 
     } else if (category === "wealth") {
         quests.push(createQuest(
             `💼 Strategic Planning`,
             `Plan your top 3 priorities for tomorrow to advance ${target}.`,
-            80, 15, { intelligence: 1, willpower: 1 }, 'easy'
+            8, 1, { intelligence: 1, willpower: 1 }, 'easy'
         ));
 
         quests.push(createQuest(
             `💰 Financial Review`,
             `Review your expenses for the week and identify one saving opportunity.`,
-            100, 20, { intelligence: 2 }, 'normal'
+            10, 2, { intelligence: 2 }, 'normal'
         ));
 
         quests.push(createQuest(
             `🚀 Skill Acquisition`,
             `Spend 30 minutes learning a skill that increases your market value.`,
-            120, 25, { intelligence: 2, charisma: 1 }, 'normal'
+            12, 2, { intelligence: 2, charisma: 1 }, 'normal'
         ));
 
     } else if (category === "social") {
         quests.push(createQuest(
             `👥 Meaningful Connection`,
             `Have a 15-minute genuine conversation with someone about ${target}.`,
-            100, 20, { charisma: Math.floor(3 * difficultyMult) }, 'normal'
+            10, 2, { charisma: Math.floor(3 * difficultyMult) }, 'normal'
         ));
 
         quests.push(createQuest(
             `🤝 Networking`,
             `Reach out to one person who can help you with ${target}.`,
-            120, 25, { charisma: 2, willpower: 1 }, 'hard'
+            12, 2, { charisma: 2, willpower: 1 }, 'hard'
         ));
 
         quests.push(createQuest(
             `👂 Active Listening`,
             `Practice active listening in your next conversation. Ask 3 follow-up questions.`,
-            80, 15, { charisma: 2 }, 'easy'
+            8, 1, { charisma: 2 }, 'easy'
         ));
 
     } else if (category === "mindfulness") {
@@ -281,19 +281,19 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
         quests.push(createQuest(
             `🧘 Meditation: ${target}`,
             `Meditate for ${minutes} minutes. Focus on your breath.`,
-            100, 20, { willpower: Math.floor(2 * difficultyMult) }, 'normal'
+            10, 2, { willpower: Math.floor(2 * difficultyMult) }, 'normal'
         ));
 
         quests.push(createQuest(
             `📝 Journaling`,
             `Write down 3 things you are grateful for and 1 thing you learned today.`,
-            80, 15, { intelligence: 1, willpower: 1 }, 'easy'
+            8, 1, { intelligence: 1, willpower: 1 }, 'easy'
         ));
 
         quests.push(createQuest(
             `🌲 Nature Walk`,
             `Take a 15-minute walk outside without your phone.`,
-            100, 20, { vitality: 2 }, 'easy'
+            10, 2, { vitality: 2 }, 'easy'
         ));
     }
 
@@ -304,12 +304,12 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
     }
 
     // 3. Challenge Quest (scales with difficulty)
-    const challengeXP = Math.floor(150 * difficultyMult);
+    const challengeXP = Math.floor(15 * difficultyMult);
     quests.push(createQuest(
         `⚡ Daily Challenge: The Extra Mile`,
         `Do something today that pushes you outside your comfort zone.`,
         challengeXP,
-        Math.floor(50 * difficultyMult),
+        Math.floor(5 * difficultyMult),
         { willpower: Math.floor(3 * difficultyMult) },
         'hard'
     ));
@@ -342,8 +342,8 @@ export function generateWeeklyQuests(user: User): InsertQuest[] {
             description: "Complete 3 workout sessions of at least 45 minutes this week.",
             type: "weekly",
             difficulty: "hard",
-            rewardXP: 500,
-            rewardCoins: 100,
+            rewardXP: 50,
+            rewardCoins: 10,
             rewardStats: { stamina: 5, strength: 3 },
             dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
@@ -354,8 +354,8 @@ export function generateWeeklyQuests(user: User): InsertQuest[] {
             description: "Read a book or complete a course module and write a comprehensive summary.",
             type: "weekly",
             difficulty: "hard",
-            rewardXP: 500,
-            rewardCoins: 100,
+            rewardXP: 50,
+            rewardCoins: 10,
             rewardStats: { intelligence: 5, willpower: 3 },
             dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
@@ -372,16 +372,16 @@ export function generateDailyGuildQuest(guildId: string, level: number): InsertG
             title: "Daily Grind: Collective Power",
             description: "Gain combined XP as a guild.",
             targetBase: 1000,
-            rewardXPBase: 100,
-            rewardCoinsBase: 50
+            rewardXPBase: 10,
+            rewardCoinsBase: 5
         },
         {
             type: "member_participation",
             title: "Guild Assembly",
             description: "Members must complete at least one personal quest today.",
             targetBase: 5, // 5 members
-            rewardXPBase: 150,
-            rewardCoinsBase: 75
+            rewardXPBase: 15,
+            rewardCoinsBase: 7
         }
     ];
 
