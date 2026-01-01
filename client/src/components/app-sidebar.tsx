@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock } from "lucide-react";
 import { useLocation } from "wouter";
 import {
     Sidebar,
@@ -221,6 +221,9 @@ export function AppSidebar() {
                                                         className={`w-5 h-5 transition-transform duration-300 ${isActive ? item.color : `group-hover:${item.color} group-hover:scale-110 group-hover:rotate-3`}`}
                                                     />
                                                     <span>{item.title}</span>
+                                                    {(item as any).premiumOnly && !user?.isPremium && (
+                                                        <Lock className="w-3 h-3 ml-auto text-zinc-500" />
+                                                    )}
                                                 </motion.div>
                                             </SidebarMenuButton>
                                         </motion.div>

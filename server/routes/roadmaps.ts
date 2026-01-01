@@ -168,26 +168,14 @@ function getDefaultRoadmapSkeleton() {
 }
 
 function generateDefaultTasksForWeek(weekNum: number) {
-    // Simple generator for 7 days
+    // Generate 7 daily tasks (one per day)
     const tasks = [];
     for (let day = 1; day <= 7; day++) {
         tasks.push({
             dayNumber: day,
-            text: "Core Study/Work Session (30m)",
+            text: `Day ${day}: Core Study/Work Session`,
             isBoss: false,
-            order: 1
-        });
-        tasks.push({
-            dayNumber: day,
-            text: "Boss Battle (Focus Session)",
-            isBoss: true,
-            order: 2
-        });
-        tasks.push({
-            dayNumber: day,
-            text: "Physical Movement",
-            isBoss: false,
-            order: 3
+            order: day
         });
     }
     return tasks;

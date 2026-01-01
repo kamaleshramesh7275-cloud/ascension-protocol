@@ -23,6 +23,7 @@ import guildEnhancementsRouter from "./routes/guild-enhancements";
 import guildWarsRouter from "./routes/guild-wars";
 import shopRouter from "./routes/shop";
 import subscriptionRouter from "./routes/subscription";
+import roadmapRouter from "./routes/roadmaps";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
@@ -143,6 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);
+  app.use("/api/roadmap", roadmapRouter);
 
   // --- Campaign Routes ---
   app.get("/api/campaigns", async (req, res) => {
