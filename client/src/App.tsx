@@ -26,7 +26,7 @@ import LeaderboardPage from "@/pages/leaderboard";
 import ProfilePage from "@/pages/profile";
 import LibraryPage from "@/pages/library";
 import ContentDetailPage from "@/pages/content-detail";
-import GuildsPage from "@/pages/guilds";
+// import GuildsPage from "@/pages/guilds";
 import PartnersPage from "@/pages/partners";
 import GlobalChatPage from "@/pages/global-chat";
 import SessionPage from "@/pages/session";
@@ -193,7 +193,7 @@ function Router() {
         <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
         <Route path="/library" component={() => <ProtectedRoute component={LibraryPage} />} />
         <Route path="/library/:id" component={() => <ProtectedRoute component={ContentDetailPage} />} />
-        <Route path="/guilds" component={() => <ProtectedRoute component={GuildsPage} />} />
+        {/* <Route path="/guilds" component={() => <ProtectedRoute component={GuildsPage} />} /> */}
         <Route path="/partners" component={() => <ProtectedRoute component={PartnersPage} />} />
         <Route path="/global-chat" component={() => <ProtectedRoute component={GlobalChatPage} />} />
         <Route path="/store" component={() => <ProtectedRoute component={StorePage} />} />

@@ -13,7 +13,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         { icon: Home, label: "Home", path: "/dashboard" },
         { icon: Target, label: "Quests", path: "/quests" },
         { icon: Map, label: "Roadmap", path: "/roadmap" },
-        { icon: Users, label: "Guilds", path: "/guilds" },
+        // { icon: Users, label: "Guilds", path: "/guilds" },
         { icon: Store, label: "Store", path: "/store" },
         { icon: User, label: "Profile", path: "/profile" },
     ];

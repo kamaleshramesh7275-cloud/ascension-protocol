@@ -110,15 +110,15 @@ export function AppSidebar() {
             activeBorder: "border-purple-500",
             gradient: "from-purple-500/20 to-transparent"
         },
-        {
-            title: "Guilds",
-            url: "/guilds",
-            icon: Shield,
-            color: "text-cyan-500",
-            activeBg: "bg-cyan-500/10",
-            activeBorder: "border-cyan-500",
-            gradient: "from-cyan-500/20 to-transparent"
-        },
+        // {
+        //     title: "Guilds",
+        //     url: "/guilds",
+        //     icon: Shield,
+        //     color: "text-cyan-500",
+        //     activeBg: "bg-cyan-500/10",
+        //     activeBorder: "border-cyan-500",
+        //     gradient: "from-cyan-500/20 to-transparent"
+        // },
         {
             title: "Partners",
             url: "/partners",

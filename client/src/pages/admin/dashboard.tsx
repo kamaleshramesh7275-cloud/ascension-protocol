@@ -525,8 +525,8 @@ export default function AdminDashboard() {
                         { id: "overview", icon: LayoutDashboard, label: "Overview" },
                         { id: "users", icon: Users, label: "User Management" },
                         { id: "quests", icon: Award, label: "Quest Management" },
-                        { id: "guilds", icon: Activity, label: "Guilds" },
-                        { id: "chat", icon: MessageSquare, label: "Guild Chat" },
+                        // { id: "guilds", icon: Activity, label: "Guilds" },
+                        // { id: "chat", icon: MessageSquare, label: "Guild Chat" },
                         { id: "shop", icon: ShoppingBag, label: "Shop Items" },
                         { id: "study-logs", icon: Clock, label: "Study Logs" },
                         { id: "partners", icon: Users, label: "Partner Matching" },
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
                             {[
                                 { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-500" },
                                 { label: "Total XP Generated", value: stats.totalXP.toLocaleString(), icon: Award, color: "text-yellow-500" },
-                                { label: "Active Guilds", value: stats.totalGuilds, icon: Activity, color: "text-green-500" },
+                                // { label: "Active Guilds", value: stats.totalGuilds, icon: Activity, color: "text-green-500" },
                                 { label: "System Load", value: "Low", icon: TrendingUp, color: "text-purple-500" },
                             ].map((stat, idx) => (
                                 <Card key={idx} className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm hover:bg-zinc-900 transition-colors">

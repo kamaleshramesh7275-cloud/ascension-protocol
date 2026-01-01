@@ -47,7 +47,6 @@ const THEME_CONFIG: Record<string, {
   accent: string;
   text: string;
   gradient: string;
-  glow: string;
 }> = {
   'black-yellow': {
     bg: 'bg-black',
@@ -56,7 +55,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-yellow-400',
     text: 'text-yellow-100',
     gradient: 'from-yellow-500 via-amber-500 to-yellow-600',
-    glow: 'rgba(234, 179, 8, 0.5)'
   },
   'purple-dream': {
     bg: 'bg-[#1a0933]',
@@ -65,7 +63,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-purple-400',
     text: 'text-purple-100',
     gradient: 'from-purple-500 via-fuchsia-500 to-purple-600',
-    glow: 'rgba(168, 85, 247, 0.5)'
   },
   'ocean-blue': {
     bg: 'bg-[#001a33]',
@@ -74,7 +71,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-blue-400',
     text: 'text-blue-100',
     gradient: 'from-blue-500 via-cyan-500 to-blue-600',
-    glow: 'rgba(59, 130, 246, 0.5)'
   },
   'forest-green': {
     bg: 'bg-[#0a1f0a]',
@@ -83,7 +79,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-green-400',
     text: 'text-green-100',
     gradient: 'from-green-500 via-emerald-500 to-green-600',
-    glow: 'rgba(34, 197, 94, 0.5)'
   },
   'sunset-orange': {
     bg: 'bg-[#1a0f00]',
@@ -92,7 +87,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-orange-400',
     text: 'text-orange-100',
     gradient: 'from-orange-500 via-red-500 to-orange-600',
-    glow: 'rgba(249, 115, 22, 0.5)'
   },
   'monochrome': {
     bg: 'bg-black',
@@ -101,7 +95,6 @@ const THEME_CONFIG: Record<string, {
     accent: 'text-white',
     text: 'text-gray-100',
     gradient: 'from-white via-gray-400 to-gray-600',
-    glow: 'rgba(255, 255, 255, 0.5)'
   }
 };
 
@@ -325,46 +318,9 @@ export default function FocusSanctum() {
 
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
-      {/* Animated Gradient Background - Dynamic Theme */}
+      {/* Animated Gradient Background - CLEANED UP */}
       <div className={`fixed inset-0 ${theme.bg} transition-colors duration-700`}>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05),rgba(0,0,0,0))]" />
-        <motion.div
-          className="absolute inset-0 opacity-20"
-          style={{ filter: `blur(${settings.backgroundBlur}px)` }}
-          animate={{
-            background: [
-              `radial-gradient(circle at 20% 50%, ${theme.glow} 0%, transparent 50%)`,
-              `radial-gradient(circle at 80% 50%, ${theme.glow} 0%, transparent 50%)`,
-              `radial-gradient(circle at 50% 80%, ${theme.glow} 0%, transparent 50%)`,
-              `radial-gradient(circle at 20% 50%, ${theme.glow} 0%, transparent 50%)`,
-            ],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        />
-      </div>
-
-      {/* Floating Particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(settings.particleDensity)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              opacity: Math.random() * 0.5,
-            }}
-            animate={{
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [null, 0, Math.random() * 0.5],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        ))}
+        {/* Removed gradient glow blobs and particles */}
       </div>
 
       {/* Music Player (Hidden iframe) */}
@@ -547,103 +503,26 @@ export default function FocusSanctum() {
               className="w-full max-w-4xl space-y-16"
             >
               {/* Timer Display based on Style */}
+              {/* Simplified Digital Timer */}
               <div className="text-center space-y-12">
-                {settings.timerStyle === 'circular' && (
-                  <div className="relative inline-block">
-                    {/* Circular Style Implementation - Refined */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        className={`w-[450px] h-[450px] rounded-full bg-gradient-to-r ${theme.gradient} blur-3xl`}
-                        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    </div>
-                    <svg className="w-96 h-96 transform -rotate-90 relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                      <circle cx="192" cy="192" r="140" stroke="rgba(255,255,255,0.05)" strokeWidth="4" fill="none" />
-                      <motion.circle
-                        cx="192" cy="192" r="140" stroke={`url(#gradient-${settings.theme})`} strokeWidth="4" fill="none"
-                        strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
-                        initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset }}
-                        transition={{ duration: 0.5 }} filter="url(#glow)"
-                      />
-                      <defs>
-                        <linearGradient id={`gradient-${settings.theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="currentColor" className={theme.primary} />
-                          <stop offset="100%" stopColor="currentColor" className={theme.secondary} />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                      <div className={`text-7xl font-light tracking-wide ${theme.text} tabular-nums`}>
-                        {formatTime(timeLeft)}
-                      </div>
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.7 }}
-                        className={`text-sm uppercase tracking-[0.2em] ${theme.accent} max-w-[200px] leading-relaxed`}
-                      >
-                        {quote}
-                      </motion.div>
-                    </div>
-                  </div>
-                )}
-
-                {settings.timerStyle === 'minimal' && (
-                  <div className="relative py-20">
-                    <motion.div
-                      className={`text-[12rem] font-thin tracking-tighter bg-gradient-to-r ${theme.gradient} bg-clip-text text-transparent tabular-nums leading-none`}
-                      animate={{
-                        opacity: isPaused ? 0.5 : 1,
-                        scale: [1, 1.02, 1],
-                      }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      {formatTime(timeLeft)}
-                    </motion.div>
-                    <motion.div
-                      key={quote}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 0.6, y: 0 }}
-                      className={`text-lg font-light uppercase tracking-[0.3em] ${theme.accent} mt-8 max-w-2xl mx-auto`}
-                    >
-                      {quote}
-                    </motion.div>
-                  </div>
-                )}
-
-                {settings.timerStyle === 'segmented' && (
-                  <div className="relative inline-block">
-                    {/* Existing Segmented Implementation with Theme Colors */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        className={`w-[450px] h-[450px] rounded-full bg-gradient-to-r ${theme.gradient} blur-3xl`}
-                        animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    </div>
-
-                    <div className="relative flex items-center gap-4 z-10">
-                      {/* Digits mapped to theme */}
-                      {[0, 1, 3, 4].map((idx) => (
-                        <motion.div
-                          key={idx}
-                          animate={{ opacity: isPaused ? [1, 0.5, 1] : 1 }}
-                          className="relative"
-                        >
-                          <div className="absolute inset-0 -m-2 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10" />
-                          <div className={`relative z-10 text-8xl font-bold tabular-nums w-20 h-28 flex items-center justify-center bg-gradient-to-br ${theme.gradient} bg-clip-text text-transparent`}>
-                            {formatTime(timeLeft)[idx]}
-                          </div>
-                        </motion.div>
-                      ))}
-                      {/* Colon */}
-                      <div className={`text-6xl font-bold ${theme.accent} flex flex-col gap-3`}>
-                        <div className="w-3 h-3 rounded-full bg-current" />
-                        <div className="w-3 h-3 rounded-full bg-current" />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="relative py-10">
+                  <motion.div
+                    className={`text-[15rem] font-bold tracking-tighter ${theme.primary} tabular-nums leading-none`}
+                    animate={{
+                      opacity: isPaused ? 0.5 : 1,
+                    }}
+                  >
+                    {formatTime(timeLeft)}
+                  </motion.div>
+                  <motion.div
+                    key={quote}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 0.8, y: 0 }}
+                    className={`text-xl font-medium ${theme.text} mt-8 max-w-2xl mx-auto`}
+                  >
+                    "{quote}"
+                  </motion.div>
+                </div>
 
                 {/* XP Counter */}
                 {!zenMode && (

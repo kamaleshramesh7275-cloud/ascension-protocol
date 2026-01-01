@@ -95,7 +95,7 @@ export default function AccountSelection() {
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                        <span>Check your guild progress</span>
+                                        <span>Check your progress</span>
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />

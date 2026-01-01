@@ -516,6 +516,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feed Pet Endpoint
+  app.post("/api/user/feed-pet", requireAuth, async (req, res) => {
+    try {
+      const FEED_COST = 50;
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (user.coins < FEED_COST) {
+        return res.status(400).json({ error: "Insufficient coins" });
+      }
+
+      // Deduct coins
+      const updatedUser = await storage.updateUser(user.id, {
+        coins: user.coins - FEED_COST
+      });
+
+      res.json({ success: true, newBalance: updatedUser.coins });
+    } catch (error) {
+      console.error("Feed pet error:", error);
+      res.status(500).json({ error: "Failed to feed pet" });
+    }
+  });
+
   // Rivalry Routes
   app.post("/api/rivalry/challenge", requireAuth, async (req, res) => {
     try {

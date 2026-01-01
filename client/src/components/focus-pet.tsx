@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Sparkles, TrendingUp } from "lucide-react";
+import { Heart, TrendingUp } from "lucide-react";
 import { usePet, type PetType, type PetStage } from "@/hooks/use-pet";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const PET_EMOJIS: Record<PetType, Record<PetStage, string>> = {
     cat: {
@@ -38,11 +40,33 @@ export function FocusPet() {
     const { pet, feedPet } = usePet();
     const [showStats, setShowStats] = useState(false);
     const [isFeeding, setIsFeeding] = useState(false);
+    const { toast } = useToast();
 
-    const handleFeed = () => {
-        setIsFeeding(true);
-        feedPet();
-        setTimeout(() => setIsFeeding(false), 1000);
+    const handleFeed = async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent container click
+        if (isFeeding) return;
+
+        try {
+            setIsFeeding(true);
+            await apiRequest("POST", "/api/user/feed-pet", {});
+
+            feedPet(); // Update local state
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] }); // Update coins
+
+            toast({
+                title: "Yummy! 🍎",
+                description: "Pet fed! (+10 Happiness, -50 Coins)",
+            });
+
+            setTimeout(() => setIsFeeding(false), 1000);
+        } catch (error) {
+            setIsFeeding(false);
+            toast({
+                title: "Cannot feed pet",
+                description: "You need 50 coins to feed your pet!",
+                variant: "destructive",
+            });
+        }
     };
 
     const emoji = PET_EMOJIS[pet.type][pet.stage];
@@ -83,41 +107,7 @@ export function FocusPet() {
                         {emoji}
                     </motion.div>
 
-                    {/* Sparkles Effect */}
-                    {pet.stage === 'legendary' && (
-                        <motion.div
-                            className="absolute inset-0 pointer-events-none"
-                            animate={{
-                                opacity: [0.3, 0.7, 0.3],
-                            }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                            }}
-                        >
-                            {[...Array(6)].map((_, i) => (
-                                <motion.div
-                                    key={i}
-                                    className="absolute text-yellow-400"
-                                    style={{
-                                        left: `${20 + i * 15}%`,
-                                        top: `${10 + (i % 2) * 40}%`,
-                                    }}
-                                    animate={{
-                                        y: [-5, 5, -5],
-                                        opacity: [0, 1, 0],
-                                    }}
-                                    transition={{
-                                        duration: 1.5,
-                                        repeat: Infinity,
-                                        delay: i * 0.2,
-                                    }}
-                                >
-                                    ✨
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
+                    {/* Sparkles Effect Removed */}
                 </motion.div>
 
                 {/* Level Badge */}
@@ -172,7 +162,6 @@ export function FocusPet() {
 
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-white/70 flex items-center gap-1">
-                                            <Sparkles className="w-4 h-4 text-amber-400" />
                                             Focus Time
                                         </span>
                                         <span className="text-white font-semibold">{pet.totalFocusMinutes}m</span>
@@ -202,7 +191,7 @@ export function FocusPet() {
                                     size="sm"
                                     className="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black font-semibold"
                                 >
-                                    Feed Pet (+10 ❤️)
+                                    Feed Pet (50 Coins)
                                 </Button>
                             </div>
                         </motion.div>
