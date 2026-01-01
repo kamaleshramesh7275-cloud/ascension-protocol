@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { RoadmapVisual } from "@/components/roadmap/RoadmapVisual";
 import { WeekCard } from "@/components/roadmap/WeekCard";
 import { FullProtocolView } from "@/components/roadmap/FullProtocolView";
+import { CyberGridBackground } from "@/components/roadmap/CyberGridBackground";
+import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
 import { Roadmap, RoadmapWeek, RoadmapTask, User } from "@shared/schema";
 import { Loader2, Lock, Shield, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -108,45 +110,15 @@ export default function RoadmapPage() {
                 )}
             </AnimatePresence>
 
-            {/* Ambient Background Elements */}
-            <div className="fixed top-0 left-0 w-full h-[1000px] bg-[radial-gradient(circle_at_20%_0%,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none -z-10" />
-            <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_80%_80%,_var(--tw-gradient-stops))] from-secondary/10 via-background to-background pointer-events-none -z-10 opacity-50" />
+            {/* Cyber Grid Background */}
+            <CyberGridBackground />
 
-            <div className="max-w-7xl mx-auto space-y-12">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex flex-col md:flex-row md:items-end justify-between gap-6"
-                >
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <div className="h-1 w-12 bg-primary rounded-full" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Biological Optimization</span>
-                        </div>
-                        <h1 className="text-5xl md:text-7xl font-bold font-heading tracking-tighter leading-none">
-                            Ascension <br /> <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary">Protocol</span>
-                        </h1>
-                        <p className="text-muted-foreground max-w-xl text-lg leading-relaxed">
-                            Systematic reconstruction of daily performance via consistent execution of identified critical actions.
-                        </p>
-                    </div>
+            <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+                {/* Command Center Header */}
+                <RoadmapHeader currentWeek={roadmap.currentWeek} />
 
-                    <div className="flex bg-card/30 backdrop-blur-xl rounded-2xl border border-border/50 p-4 gap-6 items-center">
-                        <div className="text-center md:text-left">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Tier</p>
-                            <p className="text-xl font-bold text-foreground capitalize">Phase 0{roadmap.currentWeek}</p>
-                        </div>
-                        <div className="h-8 w-px bg-border" />
-                        <div className="text-center md:text-left">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">System Rank</p>
-                            <p className="text-xl font-bold text-primary">Initiate</p>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Visual Roadmap (Path) */}
-                <div className="relative py-10 px-4">
+                {/* Visual Roadmap (Circuit Path) */}
+                <div className="relative py-6">
                     <RoadmapVisual
                         currentWeek={roadmap.currentWeek}
                         weeks={roadmap.weeks}
@@ -156,8 +128,8 @@ export default function RoadmapPage() {
                 {/* Phase Selection / Grid */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap">Operational Phases</h2>
-                        <div className="h-px w-full bg-border" />
+                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap font-mono">OPERATIONAL_PHASES</h2>
+                        <div className="h-px w-full bg-gradient-to-r from-border via-primary/20 to-transparent" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">

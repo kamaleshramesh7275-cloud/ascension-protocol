@@ -955,25 +955,30 @@
     inset: -1px;
   }
 }
+
 /* ============================================
    RESPONSIVE DESIGN UTILITIES
    ============================================ */
 
 /* Mobile-first base styles */
 @layer base {
+
   /* Touch-friendly tap targets - iOS recommended minimum */
-  button, a[role=button], input[type=button], input[type=submit] {
+  button,
+  a[role=button],
+  input[type=button],
+  input[type=submit] {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* Prevent text size adjustment on mobile */
   html {
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
-  
+
   /* Smooth scrolling for better UX */
   @media (prefers-reduced-motion: no-preference) {
     html {
@@ -984,42 +989,86 @@
 
 /* Responsive typography using clamp for fluid scaling */
 @layer utilities {
-  .text-responsive-xs { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
-  .text-responsive-sm { font-size: clamp(0.875rem, 2vw, 1rem); }
-  .text-responsive-base { font-size: clamp(1rem, 2.5vw, 1.125rem); }
-  .text-responsive-lg { font-size: clamp(1.125rem, 3vw, 1.25rem); }
-  .text-responsive-xl { font-size: clamp(1.25rem, 4vw, 1.5rem); }
-  .text-responsive-2xl { font-size: clamp(1.5rem, 5vw, 2rem); }
-  .text-responsive-3xl { font-size: clamp(1.875rem, 6vw, 2.5rem); }
-  .text-responsive-4xl { font-size: clamp(2.25rem, 7vw, 3rem); }
-  
+  .text-responsive-xs {
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  }
+
+  .text-responsive-sm {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  }
+
+  .text-responsive-base {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 3vw, 1.25rem);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  }
+
+  .text-responsive-2xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .text-responsive-3xl {
+    font-size: clamp(1.875rem, 6vw, 2.5rem);
+  }
+
+  .text-responsive-4xl {
+    font-size: clamp(2.25rem, 7vw, 3rem);
+  }
+
   /* Responsive spacing */
-  .gap-responsive { gap: clamp(0.5rem, 2vw, 1.5rem); }
-  .p-responsive { padding: clamp(0.75rem, 3vw, 1.5rem); }
-  .px-responsive { padding-left: clamp(0.75rem, 3vw, 1.5rem); padding-right: clamp(0.75rem, 3vw, 1.5rem); }
-  .py-responsive { padding-top: clamp(0.75rem, 3vw, 1.5rem); padding-bottom: clamp(0.75rem, 3vw, 1.5rem); }
+  .gap-responsive {
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  .p-responsive {
+    padding: clamp(0.75rem, 3vw, 1.5rem);
+  }
+
+  .px-responsive {
+    padding-left: clamp(0.75rem, 3vw, 1.5rem);
+    padding-right: clamp(0.75rem, 3vw, 1.5rem);
+  }
+
+  .py-responsive {
+    padding-top: clamp(0.75rem, 3vw, 1.5rem);
+    padding-bottom: clamp(0.75rem, 3vw, 1.5rem);
+  }
 }
 
 /* Mobile-specific utilities (< 768px) */
 @media (max-width: 767px) {
-  .hide-mobile { display: none !important; }
-  .mobile-full-width { 
-    width: 100vw; 
-    margin-left: calc(-50vw + 50%); 
+  .hide-mobile {
+    display: none !important;
   }
-  .mobile-stack > * {
+
+  .mobile-full-width {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+
+  .mobile-stack>* {
     width: 100% !important;
   }
 }
 
 /* Tablet-specific (768px - 1023px) */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .hide-tablet { display: none !important; }
+  .hide-tablet {
+    display: none !important;
+  }
 }
 
 /* Desktop-specific (>= 1024px) */
 @media (min-width: 1024px) {
-  .hide-desktop { display: none !important; }
+  .hide-desktop {
+    display: none !important;
+  }
 }
 
 /* Prevent horizontal scroll on mobile */
@@ -1039,7 +1088,8 @@
   --card-foreground: 210 40% 98%;
   --popover: 222 47% 13%;
   --popover-foreground: 210 40% 98%;
-  --primary: 260 100% 65%; /* Slightly more purple/mysterious */
+  --primary: 260 100% 65%;
+  /* Slightly more purple/mysterious */
   --primary-foreground: 222 47% 11%;
   --secondary: 217 32% 17%;
   --secondary-foreground: 210 40% 98%;
@@ -1075,7 +1125,8 @@
   --card-foreground: 180 100% 90%;
   --popover: 280 50% 8%;
   --popover-foreground: 180 100% 90%;
-  --primary: 300 100% 60%; /* Magenta */
+  --primary: 300 100% 60%;
+  /* Magenta */
   --primary-foreground: 180 100% 90%;
   --secondary: 260 50% 20%;
   --secondary-foreground: 180 100% 90%;
@@ -1098,7 +1149,9 @@
   --sidebar-ring: 300 100% 60%;
 }
 
-.cyberpunk-neon h1 { animation: neonFlicker 3s ease-in-out infinite; }
+.cyberpunk-neon h1 {
+  animation: neonFlicker 3s ease-in-out infinite;
+}
 
 /* Golden Age (based on Golden Luxury) */
 .golden-age {
@@ -1172,7 +1225,8 @@
   --card-foreground: 0 0% 95%;
   --popover: 0 0% 8%;
   --popover-foreground: 0 0% 95%;
-  --primary: 350 80% 50%; /* Deep red/purple */
+  --primary: 350 80% 50%;
+  /* Deep red/purple */
   --primary-foreground: 0 0% 95%;
   --secondary: 0 30% 15%;
   --secondary-foreground: 0 0% 95%;
@@ -1195,4 +1249,17 @@
   --sidebar-ring: 350 80% 50%;
 }
 
-.vampires-kiss button { animation: bloodPulse 3s ease-in-out infinite; }
+.vampires-kiss button {
+  animation: bloodPulse 3s ease-in-out infinite;
+}
+
+/* Scanline Animation for Cyber Grid */
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(100%);
+  }
+}
