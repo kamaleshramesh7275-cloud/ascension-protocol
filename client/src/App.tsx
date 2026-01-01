@@ -36,6 +36,7 @@ import Register from "@/pages/register";
 import Login from "@/pages/login";
 import FocusSanctum from "@/pages/focus";
 import StorePage from "@/pages/store";
+import RoadmapPage from "@/pages/roadmap";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -184,6 +185,7 @@ function Router() {
         <Route path="/onboarding" component={() => <ProtectedRoute component={OnboardingPage} />} />
         <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
         <Route path="/quests" component={() => <ProtectedRoute component={QuestsPage} />} />
+        <Route path="/roadmap" component={() => <ProtectedRoute component={RoadmapPage} />} />
         <Route path="/focus" component={() => <ProtectedRoute component={FocusSanctum} />} />
         <Route path="/stats" component={() => <ProtectedRoute component={StatsPage} />} />
         <Route path="/leaderboard" component={() => <ProtectedRoute component={LeaderboardPage} />} />
