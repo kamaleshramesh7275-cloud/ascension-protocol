@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Trash2, Users, TrendingUp, Award, RefreshCw, Shield, ShoppingBag,
-    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2
+    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { AdminNotificationComposer } from "@/components/admin-notification-composer";
@@ -101,6 +101,11 @@ export default function AdminDashboard() {
         rewardCoins: 10,
         dueAt: ""
     });
+
+    // Roadmap Editor State
+    const [editingRoadmap, setEditingRoadmap] = useState<any>(null);
+    const [roadmapDialogOpen, setRoadmapDialogOpen] = useState(false);
+    const [roadmapDetails, setRoadmapDetails] = useState<{ weeks: any[] } | null>(null);
 
     // Persist login
     // Persist login - Removed useEffect as we use lazy init
@@ -195,6 +200,56 @@ export default function AdminDashboard() {
             return res.json();
         },
     });
+
+    const { data: allRoadmaps = [], isLoading: isLoadingRoadmaps } = useQuery<any[]>({
+        queryKey: ["/api/roadmap/admin/roadmaps"],
+        enabled: isAuthenticated && activeTab === "roadmaps",
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/roadmap/admin/roadmaps", undefined, getAdminHeaders());
+            return res.json();
+        },
+    });
+
+    const updateRoadmapWeekMutation = useMutation({
+        mutationFn: async ({ weekId, updates }: { weekId: string; updates: any }) => {
+            const res = await apiRequest("PATCH", `/api/roadmap/admin/roadmap-weeks/${weekId}`, updates, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: () => {
+            if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
+            showNotification("success", "Week updated successfully");
+        },
+    });
+
+    const updateRoadmapTaskMutation = useMutation({
+        mutationFn: async ({ taskId, updates }: { taskId: string; updates: any }) => {
+            const res = await apiRequest("PATCH", `/api/roadmap/admin/roadmap-tasks/${taskId}`, updates, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: () => {
+            if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
+            showNotification("success", "Task updated successfully");
+        },
+    });
+
+    const fetchRoadmapDetails = async (roadmapId: string) => {
+        try {
+            const res = await apiRequest("GET", `/api/roadmap/admin/roadmaps/${roadmapId}`, undefined, getAdminHeaders());
+            const data = await res.json();
+            setRoadmapDetails(data);
+        } catch (err) {
+            console.error("Failed to fetch roadmap details:", err);
+            showNotification("error", "Failed to load roadmap details");
+        }
+    };
+
+    useEffect(() => {
+        if (editingRoadmap) {
+            fetchRoadmapDetails(editingRoadmap.id);
+        } else {
+            setRoadmapDetails(null);
+        }
+    }, [editingRoadmap]);
 
     // Mutations
     const deleteUserMutation = useMutation({
@@ -431,6 +486,7 @@ export default function AdminDashboard() {
                         { id: "study-logs", icon: Clock, label: "Study Logs" },
                         { id: "partners", icon: Users, label: "Partner Matching" },
                         { id: "requests", icon: Clock, label: "Activation Requests" },
+                        { id: "roadmaps", icon: Map, label: "Roadmaps" },
                         { id: "notifications", icon: Bell, label: "Notifications" },
                         { id: "data", icon: Database, label: "Data Management" },
                         { id: "system", icon: Settings, label: "System" },
@@ -863,6 +919,193 @@ export default function AdminDashboard() {
                                     </Table>
                                 </CardContent>
                             </Card>
+                        </div>
+                    )}
+
+                    {activeTab === "roadmaps" && (
+                        <div className="space-y-6">
+                            <Card className="bg-zinc-900/50 border-zinc-800">
+                                <CardHeader>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <CardTitle>User Roadmaps</CardTitle>
+                                            <CardDescription>Manage daily protocol roadmaps for all premium users.</CardDescription>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="border-zinc-800 hover:bg-zinc-800"
+                                            onClick={() => {
+                                                showNotification("success", "Template editor coming soon! For now, edit user roadmaps individually.");
+                                            }}
+                                        >
+                                            <Settings className="w-4 h-4 mr-2" /> Global Template
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-zinc-800 hover:bg-zinc-900">
+                                                <TableHead>User</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Start Date</TableHead>
+                                                <TableHead>Current Week</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {isLoadingRoadmaps ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={5} className="text-center py-8">
+                                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-500" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : allRoadmaps.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={5} className="text-center text-zinc-500 py-8">No roadmaps found</TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                allRoadmaps.map((roadmap: any) => (
+                                                    <TableRow key={roadmap.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                                                        <TableCell>
+                                                            <div className="font-medium text-white">{roadmap.user?.name}</div>
+                                                            <div className="text-xs text-zinc-500">{roadmap.user?.email}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className={roadmap.status === 'active' ? 'bg-green-900/20 text-green-400 border-green-800' : 'bg-zinc-900/20 text-zinc-500 border-zinc-800'}>
+                                                                {roadmap.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-500">{new Date(roadmap.startDate).toLocaleDateString()}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline">Week {roadmap.currentWeek}</Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="border-zinc-700 hover:bg-zinc-800"
+                                                                onClick={() => {
+                                                                    setEditingRoadmap(roadmap);
+                                                                    setRoadmapDialogOpen(true);
+                                                                }}
+                                                            >
+                                                                <Edit className="w-4 h-4 mr-2" /> Edit Content
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+
+                            <Dialog open={roadmapDialogOpen} onOpenChange={setRoadmapDialogOpen}>
+                                <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                            <Map className="text-purple-500" />
+                                            Roadmap Editor: {editingRoadmap?.user?.name}
+                                        </DialogTitle>
+                                        <CardDescription>Customize the 30-day protocol for this specific user.</CardDescription>
+                                    </DialogHeader>
+
+                                    {!roadmapDetails ? (
+                                        <div className="py-20 flex justify-center">
+                                            <Loader2 className="w-10 h-10 animate-spin text-purple-500" />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-8 mt-6">
+                                            {roadmapDetails.weeks.map((week: any) => (
+                                                <Card key={week.id} className="bg-black/30 border-zinc-800 overflow-hidden">
+                                                    <CardHeader className="bg-zinc-800/20 border-b border-zinc-800">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="space-y-3 flex-1 mr-4">
+                                                                <div className="flex items-center gap-4">
+                                                                    <Badge className="bg-purple-600">Week {week.weekNumber}</Badge>
+                                                                    <Input
+                                                                        value={week.phaseName}
+                                                                        onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { phaseName: e.target.value } })}
+                                                                        className="bg-transparent border-zinc-700 text-lg font-bold h-8 px-2 w-auto min-w-[200px]"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <Label className="text-xs text-zinc-500">Weekly Goal</Label>
+                                                                    <Input
+                                                                        value={week.goal}
+                                                                        onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { goal: e.target.value } })}
+                                                                        className="bg-transparent border-zinc-700 mt-1"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs text-zinc-500">Locked:</span>
+                                                                <Select
+                                                                    value={week.isLocked ? "true" : "false"}
+                                                                    onValueChange={(v) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { isLocked: v === "true" } })}
+                                                                >
+                                                                    <SelectTrigger className="w-24 h-8 bg-zinc-900 border-zinc-700">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                                                        <SelectItem value="true">Locked</SelectItem>
+                                                                        <SelectItem value="false">Unlocked</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                    </CardHeader>
+                                                    <CardContent className="p-4 bg-zinc-900/20">
+                                                        <div className="space-y-4">
+                                                            <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                                                                Daily Tasks <div className="h-px flex-1 bg-zinc-800" />
+                                                            </h4>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                {week.tasks?.map((task: any) => (
+                                                                    <div key={task.id} className="flex gap-2 items-center bg-black/40 p-3 rounded-lg border border-zinc-800 group transition-all hover:border-zinc-700">
+                                                                        <div className="flex flex-col items-center justify-center min-w-[3rem] border-r border-zinc-800 pr-2">
+                                                                            <span className="text-[10px] text-zinc-500 font-bold uppercase">Day</span>
+                                                                            <span className="text-lg font-bold text-white">{task.dayNumber}</span>
+                                                                        </div>
+                                                                        <div className="flex-1 space-y-1">
+                                                                            <Input
+                                                                                value={task.text}
+                                                                                onChange={(e) => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { text: e.target.value } })}
+                                                                                className="bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+                                                                            />
+                                                                            <div className="flex items-center gap-2">
+                                                                                <button
+                                                                                    onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { isBoss: !task.isBoss } })}
+                                                                                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${task.isBoss
+                                                                                        ? "bg-red-500/20 text-red-400 border-red-500/50"
+                                                                                        : "bg-zinc-800 text-zinc-500 border-zinc-700"
+                                                                                        }`}
+                                                                                >
+                                                                                    Boss Battle
+                                                                                </button>
+                                                                                {task.completed && (
+                                                                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[9px] h-4">Completed</Badge>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-8 flex justify-end">
+                                        <Button onClick={() => setRoadmapDialogOpen(false)} className="bg-purple-600 hover:bg-purple-700 px-8">
+                                            Close Editor
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     )}
 

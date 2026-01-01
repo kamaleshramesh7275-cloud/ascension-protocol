@@ -256,11 +256,14 @@ export interface IStorage {
   createRoadmap(roadmap: InsertRoadmap): Promise<Roadmap>;
   getActiveRoadmap(userId: string): Promise<Roadmap | undefined>;
   getRoadmap(id: string): Promise<Roadmap | undefined>;
+  getAllRoadmaps(): Promise<(Roadmap & { user: User })[]>;
   getRoadmapWeeks(roadmapId: string): Promise<RoadmapWeek[]>;
   getRoadmapWeek(id: string): Promise<RoadmapWeek | undefined>;
   createRoadmapWeek(week: InsertRoadmapWeek): Promise<RoadmapWeek>;
+  updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek>;
   getRoadmapTasks(weekId: string): Promise<RoadmapTask[]>;
   createRoadmapTask(task: InsertRoadmapTask): Promise<RoadmapTask>;
+  updateRoadmapTask(id: string, updates: Partial<RoadmapTask>): Promise<RoadmapTask>;
   toggleRoadmapTask(taskId: string): Promise<RoadmapTask>;
 }
 
@@ -1161,7 +1164,7 @@ export class MemStorage implements IStorage {
 
     // Cleanup global messages
     let deletedGlobal = 0;
-    for (const [id, msg] of this.messages.entries()) {
+    for (const [id, msg] of Array.from(this.messages.entries())) {
       if (msg.createdAt < cutoff) {
         this.messages.delete(id);
         deletedGlobal++;
@@ -1170,7 +1173,7 @@ export class MemStorage implements IStorage {
 
     // Cleanup guild messages
     let deletedGuild = 0;
-    for (const [id, msg] of this.guildMessages.entries()) {
+    for (const [id, msg] of Array.from(this.guildMessages.entries())) {
       const createdAt = new Date(msg.createdAt);
       if (createdAt < cutoff) {
         this.guildMessages.delete(id);
@@ -1842,6 +1845,30 @@ export class MemStorage implements IStorage {
     if (!task) throw new Error("Task not found");
     const updatedTask = { ...task, completed: !task.completed };
     this.roadmapTasks.set(taskId, updatedTask);
+    return updatedTask;
+  }
+
+  async getAllRoadmaps(): Promise<(Roadmap & { user: User })[]> {
+    return Array.from(this.roadmaps.values()).map(r => {
+      const user = this.users.get(r.userId);
+      if (!user) throw new Error(`User ${r.userId} not found for roadmap ${r.id}`);
+      return { ...r, user };
+    });
+  }
+
+  async updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek> {
+    const week = this.roadmapWeeks.get(id);
+    if (!week) throw new Error("Week not found");
+    const updatedWeek = { ...week, ...updates };
+    this.roadmapWeeks.set(id, updatedWeek);
+    return updatedWeek;
+  }
+
+  async updateRoadmapTask(id: string, updates: Partial<RoadmapTask>): Promise<RoadmapTask> {
+    const task = this.roadmapTasks.get(id);
+    if (!task) throw new Error("Task not found");
+    const updatedTask = { ...task, ...updates };
+    this.roadmapTasks.set(id, updatedTask);
     return updatedTask;
   }
 }
@@ -2996,6 +3023,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(roadmapTasks.id, taskId))
       .returning();
 
+    return updated;
+  }
+
+  async getAllRoadmaps(): Promise<(Roadmap & { user: User })[]> {
+    const results = await db!
+      .select({
+        roadmap: roadmaps,
+        user: users,
+      })
+      .from(roadmaps)
+      .innerJoin(users, eq(roadmaps.userId, users.id));
+
+    return results.map(r => ({ ...r.roadmap, user: r.user }));
+  }
+
+  async updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek> {
+    const [updated] = await db!
+      .update(roadmapWeeks)
+      .set(updates)
+      .where(eq(roadmapWeeks.id, id))
+      .returning();
+    if (!updated) throw new Error("Week not found");
+    return updated;
+  }
+
+  async updateRoadmapTask(id: string, updates: Partial<RoadmapTask>): Promise<RoadmapTask> {
+    const [updated] = await db!
+      .update(roadmapTasks)
+      .set(updates)
+      .where(eq(roadmapTasks.id, id))
+      .returning();
+    if (!updated) throw new Error("Task not found");
     return updated;
   }
 }

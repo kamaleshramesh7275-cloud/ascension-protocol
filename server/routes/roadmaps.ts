@@ -112,17 +112,78 @@ router.post("/tasks/:taskId/toggle", requireAuth, async (req, res) => {
 
 // --- Admin Routes ---
 
-// Assign a roadmap to a user (Create from Skeleton)
-router.post("/assign", async (req, res) => {
+const requireAdminPassword = (req: any, res: any, next: any) => {
+    const adminPassword = req.headers["x-admin-password"] as string;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+    if (adminPassword !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+    next();
+};
+
+// Get all roadmaps (Admin only)
+router.get("/admin/roadmaps", requireAdminPassword, async (_req, res) => {
     const storage = getStorage();
     try {
-        const adminPassword = req.headers["x-admin-password"] as string;
-        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+        const roadmaps = await storage.getAllRoadmaps();
+        res.json(roadmaps);
+    } catch (error) {
+        console.error("Get all roadmaps error:", error);
+        res.status(500).json({ error: "Failed to fetch roadmaps" });
+    }
+});
 
-        if (adminPassword !== ADMIN_PASSWORD) {
-            return res.status(403).json({ error: "Unauthorized" });
-        }
+// Get specific roadmap detail (Admin only)
+router.get("/admin/roadmaps/:id", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        const roadmap = await storage.getRoadmap(id);
+        if (!roadmap) return res.status(404).json({ error: "Roadmap not found" });
 
+        const weeks = await storage.getRoadmapWeeks(id);
+        const weeksWithTasks = await Promise.all(weeks.map(async (week) => {
+            const tasks = await storage.getRoadmapTasks(week.id);
+            return { ...week, tasks };
+        }));
+
+        res.json({ ...roadmap, weeks: weeksWithTasks });
+    } catch (error) {
+        console.error("Get roadmap detail error:", error);
+        res.status(500).json({ error: "Failed to fetch roadmap details" });
+    }
+});
+
+// Update a roadmap week (Admin only)
+router.patch("/admin/roadmap-weeks/:id", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        const updatedWeek = await storage.updateRoadmapWeek(id, req.body);
+        res.json(updatedWeek);
+    } catch (error) {
+        console.error("Update roadmap week error:", error);
+        res.status(500).json({ error: "Failed to update week" });
+    }
+});
+
+// Update a roadmap task (Admin only)
+router.patch("/admin/roadmap-tasks/:id", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        const updatedTask = await storage.updateRoadmapTask(id, req.body);
+        res.json(updatedTask);
+    } catch (error) {
+        console.error("Update roadmap task error:", error);
+        res.status(500).json({ error: "Failed to update task" });
+    }
+});
+
+// Assign a roadmap to a user (Create from Skeleton)
+router.post("/assign", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
         const { userId, templateData } = req.body;
 
         if (!userId) {
