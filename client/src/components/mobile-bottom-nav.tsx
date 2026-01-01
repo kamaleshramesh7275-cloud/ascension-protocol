@@ -1,4 +1,4 @@
-import { Home, Target, Users, Store, User } from "lucide-react";
+import { Home, Target, Users, Store, User, Map } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
     const navItems = [
         { icon: Home, label: "Home", path: "/dashboard" },
         { icon: Target, label: "Quests", path: "/quests" },
+        { icon: Map, label: "Roadmap", path: "/roadmap" },
         { icon: Users, label: "Guilds", path: "/guilds" },
         { icon: Store, label: "Store", path: "/store" },
         { icon: User, label: "Profile", path: "/profile" },

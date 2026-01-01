@@ -47,6 +47,16 @@ export function AppSidebar() {
             gradient: "from-orange-500/20 to-transparent"
         },
         {
+            title: "Roadmap",
+            url: "/roadmap",
+            icon: Map,
+            color: "text-red-500",
+            activeBg: "bg-red-500/10",
+            activeBorder: "border-red-500",
+            gradient: "from-red-500/20 to-transparent",
+            premiumOnly: true
+        },
+        {
             title: "Focus Sanctum",
             url: "/focus",
             icon: Brain,
