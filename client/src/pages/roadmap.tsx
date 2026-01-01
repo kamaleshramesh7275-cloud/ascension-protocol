@@ -65,7 +65,21 @@ export default function RoadmapPage() {
     }
 
     // Fallback if roadmap is missing but no error (rare race condition or initial state)
-    if (!roadmap) return null;
+    if (!roadmap) {
+        if (user?.isPremium) {
+            return (
+                <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+                    <p className="text-zinc-400">Setting up your roadmap...</p>
+                </div>
+            );
+        }
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <div className="text-red-400">Error: Unable to load user profile or roadmap.</div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-8 pb-32">
