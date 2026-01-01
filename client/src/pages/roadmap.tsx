@@ -34,48 +34,48 @@ export default function RoadmapPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center">
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center">
                 <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/20 blur-3xl animate-pulse" />
-                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin relative" />
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-primary animate-spin relative" />
                 </div>
-                <p className="mt-4 text-zinc-500 font-mono text-sm tracking-widest uppercase animate-pulse">Initializing Protocol...</p>
+                <p className="mt-4 text-muted-foreground font-mono text-sm tracking-widest uppercase animate-pulse">Initializing Protocol...</p>
             </div>
         );
     }
 
     if (user && !user.isPremium) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-[500px] bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
+            <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-[500px] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-md text-center space-y-8 relative z-10"
                 >
                     <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
-                        <div className="w-24 h-24 bg-zinc-900/50 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto border border-zinc-800 shadow-2xl relative">
-                            <Lock className="w-10 h-10 text-blue-400" />
+                        <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                        <div className="w-24 h-24 bg-card/50 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto border border-border shadow-2xl relative">
+                            <Lock className="w-10 h-10 text-primary" />
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-bold font-heading text-white tracking-tight">Access Restricted</h1>
-                        <p className="text-zinc-400 leading-relaxed">
-                            The <span className="text-blue-400 font-bold">30-Day Ascension Protocol</span> is an elite training program reserved for premium initiates.
+                        <h1 className="text-4xl font-bold font-heading text-foreground tracking-tight">Access Restricted</h1>
+                        <p className="text-muted-foreground leading-relaxed">
+                            The <span className="text-primary font-bold">30-Day Ascension Protocol</span> is an elite training program reserved for premium initiates.
                         </p>
                     </div>
-                    <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-900/30 text-left space-y-3">
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-left space-y-3">
                         <div className="flex items-start gap-3">
-                            <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
-                            <p className="text-xs text-zinc-300">Unlock detailed daily protocols designed for peak performance.</p>
+                            <Shield className="w-5 h-5 text-primary mt-0.5" />
+                            <p className="text-xs text-muted-foreground">Unlock detailed daily protocols designed for peak performance.</p>
                         </div>
                         <div className="flex items-start gap-3">
-                            <Sparkles className="w-5 h-5 text-blue-400 mt-0.5" />
-                            <p className="text-xs text-zinc-300">Track your progress across 4 modular phases of evolution.</p>
+                            <Sparkles className="w-5 h-5 text-primary mt-0.5" />
+                            <p className="text-xs text-muted-foreground">Track your progress across 4 modular phases of evolution.</p>
                         </div>
                     </div>
-                    <Button asChild size="lg" className="w-full bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-900/20 py-6 text-lg font-bold">
+                    <Button asChild size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 py-6 text-lg font-bold">
                         <Link href="/profile">Unlock Protocol</Link>
                     </Button>
                 </motion.div>
@@ -85,11 +85,11 @@ export default function RoadmapPage() {
 
     if (error || (!roadmap && user?.isPremium)) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4 text-center">
+            <div className="min-h-screen bg-background flex items-center justify-center p-4 text-center">
                 <div className="space-y-4">
-                    <p className="text-red-400 font-mono tracking-tighter text-xl">QUANTUM_LINK_FAILURE</p>
-                    <p className="text-zinc-500 max-w-xs mx-auto">Failed to retrieve protocol data from the neural network.</p>
-                    <Button variant="outline" onClick={() => window.location.reload()} className="border-zinc-800">Retry Link</Button>
+                    <p className="text-destructive font-mono tracking-tighter text-xl">QUANTUM_LINK_FAILURE</p>
+                    <p className="text-muted-foreground max-w-xs mx-auto">Failed to retrieve protocol data from the neural network.</p>
+                    <Button variant="outline" onClick={() => window.location.reload()} className="border-border">Retry Link</Button>
                 </div>
             </div>
         );
@@ -98,7 +98,7 @@ export default function RoadmapPage() {
     if (!roadmap) return null;
 
     return (
-        <div className="min-h-screen bg-black text-white p-4 md:p-10 pb-40 relative overflow-hidden">
+        <div className="min-h-screen bg-background text-foreground p-4 md:p-10 pb-40 relative overflow-hidden">
             <AnimatePresence>
                 {selectedWeek && (
                     <FullProtocolView
@@ -109,8 +109,8 @@ export default function RoadmapPage() {
             </AnimatePresence>
 
             {/* Ambient Background Elements */}
-            <div className="fixed top-0 left-0 w-full h-[1000px] bg-[radial-gradient(circle_at_20%_0%,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black pointer-events-none -z-10" />
-            <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_80%_80%,_var(--tw-gradient-stops))] from-purple-900/10 via-black to-black pointer-events-none -z-10 opacity-50" />
+            <div className="fixed top-0 left-0 w-full h-[1000px] bg-[radial-gradient(circle_at_20%_0%,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none -z-10" />
+            <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_80%_80%,_var(--tw-gradient-stops))] from-secondary/10 via-background to-background pointer-events-none -z-10 opacity-50" />
 
             <div className="max-w-7xl mx-auto space-y-12">
                 {/* Header */}
@@ -121,26 +121,26 @@ export default function RoadmapPage() {
                 >
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                            <div className="h-1 w-12 bg-blue-600 rounded-full" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-400">Biological Optimization</span>
+                            <div className="h-1 w-12 bg-primary rounded-full" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Biological Optimization</span>
                         </div>
                         <h1 className="text-5xl md:text-7xl font-bold font-heading tracking-tighter leading-none">
-                            Ascension <br /> <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-600">Protocol</span>
+                            Ascension <br /> <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary">Protocol</span>
                         </h1>
-                        <p className="text-zinc-500 max-w-xl text-lg leading-relaxed">
+                        <p className="text-muted-foreground max-w-xl text-lg leading-relaxed">
                             Systematic reconstruction of daily performance via consistent execution of identified critical actions.
                         </p>
                     </div>
 
-                    <div className="flex bg-zinc-900/30 backdrop-blur-xl rounded-2xl border border-zinc-800/50 p-4 gap-6 items-center">
+                    <div className="flex bg-card/30 backdrop-blur-xl rounded-2xl border border-border/50 p-4 gap-6 items-center">
                         <div className="text-center md:text-left">
-                            <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Current Tier</p>
-                            <p className="text-xl font-bold text-white capitalize">Phase 0{roadmap.currentWeek}</p>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Tier</p>
+                            <p className="text-xl font-bold text-foreground capitalize">Phase 0{roadmap.currentWeek}</p>
                         </div>
-                        <div className="h-8 w-px bg-zinc-800" />
+                        <div className="h-8 w-px bg-border" />
                         <div className="text-center md:text-left">
-                            <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">System Rank</p>
-                            <p className="text-xl font-bold text-blue-400">Initiate</p>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">System Rank</p>
+                            <p className="text-xl font-bold text-primary">Initiate</p>
                         </div>
                     </div>
                 </motion.div>
@@ -156,8 +156,8 @@ export default function RoadmapPage() {
                 {/* Phase Selection / Grid */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">Operational Phases</h2>
-                        <div className="h-px w-full bg-zinc-900" />
+                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap">Operational Phases</h2>
+                        <div className="h-px w-full bg-border" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">

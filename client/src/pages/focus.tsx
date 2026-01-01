@@ -234,6 +234,20 @@ export default function FocusSanctum() {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
+          // Notifications
+          const elapsed = totalTime - prev;
+
+          // Notifications Logic
+          if (prev === totalTime - 1) { // Started
+            toast({ title: "Session Started 🚀", description: "Let's focus!" });
+          }
+          if (prev === Math.floor(totalTime / 2)) {
+            toast({ title: "Halfway There! ⚡", description: "Stay focused, you're doing great." });
+          }
+          if (prev === 60 && totalTime > 120) { // 1 min left (only if total > 2 min)
+            toast({ title: "Final Minute! 🔥", description: "Finish strong!" });
+          }
+
           if (prev <= 1) {
             handleComplete();
             return 0;
@@ -252,7 +266,7 @@ export default function FocusSanctum() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isPaused]);
+  }, [isRunning, isPaused, totalTime]);
 
   useEffect(() => {
     const elapsed = totalTime - timeLeft;
@@ -592,8 +606,14 @@ export default function FocusSanctum() {
         </AnimatePresence>
       </div>
 
-      {/* Virtual Pet */}
-      <FocusPet />
+      {/* Virtual Pet - Repositioned based on state */}
+      <FocusPet
+        className={
+          isRunning
+            ? "fixed top-1/2 right-12 -translate-y-1/2 z-40 transition-all duration-700"
+            : "fixed bottom-8 right-8 z-40 transition-all duration-700"
+        }
+      />
 
       {/* Settings Panel */}
       <FocusSettings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />

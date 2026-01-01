@@ -126,33 +126,33 @@ export default function QuestsPage() {
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-black/95">
+        <div className="relative min-h-screen overflow-hidden bg-background">
             {/* Ambient Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
                 <motion.div
                     animate={{ opacity: [0.1, 0.2, 0.1], scale: [1, 1.1, 1] }}
                     transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]"
+                    className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]"
                 />
             </div>
 
             <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8">
                 {/* Header */}
-                <h1 className="text-5xl font-display font-bold mb-2 bg-gradient-to-r from-white via-purple-100 to-purple-200 bg-clip-text text-transparent drop-shadow-sm">
+                <h1 className="text-5xl font-display font-bold mb-2 text-foreground drop-shadow-sm">
                     Quest Board
                 </h1>
 
                 {/* Navigation Tabs */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-8">
-                    <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 h-12 rounded-full backdrop-blur-xl">
-                        <TabsTrigger value="active" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                    <TabsList className="bg-muted/50 border border-border p-1 h-12 rounded-full backdrop-blur-xl">
+                        <TabsTrigger value="active" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                             Active Journey
                         </TabsTrigger>
-                        <TabsTrigger value="browse" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                        <TabsTrigger value="browse" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                             Browse Quest Packs
                         </TabsTrigger>
-                        <TabsTrigger value="habits" className="rounded-full px-6 h-full data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all">
+                        <TabsTrigger value="habits" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
                             Habit Tracker
                         </TabsTrigger>
                     </TabsList>
@@ -169,32 +169,32 @@ export default function QuestsPage() {
                                 {activeCampaign ? (
                                     <>
                                         {/* Active Campaign Header */}
-                                        <div className="bg-zinc-900/40 border border-zinc-800/50 p-6 rounded-2xl relative overflow-hidden">
-                                            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-transparent" />
+                                        <div className="bg-card/40 border border-border p-6 rounded-2xl relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent" />
                                             <div className="relative z-10 flex justify-between items-center">
                                                 <div>
                                                     <div className="flex items-center gap-3 mb-2">
-                                                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-bold uppercase tracking-wider border border-purple-500/20">
+                                                        <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20">
                                                             {activeCampaign.category}
                                                         </span>
                                                         <span className={`text-sm font-bold uppercase tracking-wider ${getDifficultyColor(activeCampaign.difficulty)}`}>
                                                             {activeCampaign.difficulty}
                                                         </span>
                                                     </div>
-                                                    <h2 className="text-3xl font-bold text-white mb-2">{activeCampaign.title}</h2>
-                                                    <p className="text-zinc-400">{activeCampaign.description}</p>
+                                                    <h2 className="text-3xl font-bold text-foreground mb-2">{activeCampaign.title}</h2>
+                                                    <p className="text-muted-foreground">{activeCampaign.description}</p>
                                                 </div>
                                                 <div className="text-right hidden md:block">
-                                                    <div className="text-sm text-zinc-500 uppercase tracking-widest mb-1">Time Remaining</div>
+                                                    <div className="text-sm text-muted-foreground uppercase tracking-widest mb-1">Time Remaining</div>
                                                     {/* Mock timer for now */}
-                                                    <div className="text-2xl font-mono text-white tracking-widest">{timeLeft || "--:--:--"}</div>
+                                                    <div className="text-2xl font-mono text-foreground tracking-widest">{timeLeft || "--:--:--"}</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Today's Quests */}
                                         <div className="space-y-4">
-                                            <div className="flex items-center gap-2 text-zinc-400">
+                                            <div className="flex items-center gap-2 text-muted-foreground">
                                                 <Zap className="w-4 h-4" />
                                                 <span className="text-sm font-bold uppercase tracking-wider">Today's Objectives</span>
                                             </div>
@@ -219,7 +219,7 @@ export default function QuestsPage() {
                                         {/* Completed Section */}
                                         {completedDailyQuests.length > 0 && (
                                             <div className="space-y-4 pt-8">
-                                                <div className="flex items-center gap-2 text-zinc-500">
+                                                <div className="flex items-center gap-2 text-muted-foreground">
                                                     <CheckCircle2 className="w-4 h-4" />
                                                     <span className="text-sm font-bold uppercase tracking-wider">Completed Today</span>
                                                 </div>
@@ -232,15 +232,15 @@ export default function QuestsPage() {
                                         )}
                                     </>
                                 ) : (
-                                    <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-zinc-800">
-                                        <Crown className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
-                                        <h3 className="text-2xl font-bold text-white mb-2">No Active Journey</h3>
-                                        <p className="text-zinc-400 max-w-md mx-auto mb-6">
+                                    <div className="text-center py-20 bg-card/30 rounded-2xl border border-border">
+                                        <Crown className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                                        <h3 className="text-2xl font-bold text-foreground mb-2">No Active Journey</h3>
+                                        <p className="text-muted-foreground max-w-md mx-auto mb-6">
                                             You haven't started a quest pack yet. Browse the available packs to begin your ascension.
                                         </p>
                                         <Button
                                             onClick={() => setActiveTab("browse")}
-                                            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-xl"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg rounded-xl"
                                         >
                                             Find Your Path
                                         </Button>
@@ -251,9 +251,9 @@ export default function QuestsPage() {
                             <TabsContent value="browse">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {allCampaigns?.map((campaign) => (
-                                        <Card key={campaign.id} className="group overflow-hidden border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-300">
+                                        <Card key={campaign.id} className="group overflow-hidden border-border bg-card/40 hover:bg-card/60 transition-all duration-300">
                                             <div className="relative h-48 overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent z-10" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10" />
                                                 <img
                                                     src={campaign.imageUrl || "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"}
                                                     alt={campaign.title}
@@ -268,7 +268,7 @@ export default function QuestsPage() {
                                             <div className="p-6">
                                                 <div className="flex justify-between items-start mb-4">
                                                     <div>
-                                                        <h3 className="text-2xl font-bold text-white group-hover:text-purple-400 transition-colors">
+                                                        <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                                                             {campaign.title}
                                                         </h3>
                                                         <div className={`text-xs font-bold uppercase tracking-wider mt-1 ${getDifficultyColor(campaign.difficulty)}`}>
@@ -277,11 +277,11 @@ export default function QuestsPage() {
                                                     </div>
                                                 </div>
 
-                                                <p className="text-zinc-400 mb-6 line-clamp-2">
+                                                <p className="text-muted-foreground mb-6 line-clamp-2">
                                                     {campaign.description}
                                                 </p>
 
-                                                <div className="flex items-center justify-between text-sm text-zinc-500 mb-6 p-4 bg-black/20 rounded-xl">
+                                                <div className="flex items-center justify-between text-sm text-muted-foreground mb-6 p-4 bg-background/50 rounded-xl">
                                                     <div className="flex items-center gap-2">
                                                         <Calendar className="w-4 h-4" />
                                                         <span>{campaign.durationDays} Days</span>
@@ -294,7 +294,7 @@ export default function QuestsPage() {
 
                                                 <Button
                                                     onClick={() => joinCampaignMutation.mutate(campaign.id)}
-                                                    className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-6 rounded-xl"
+                                                    className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold py-6 rounded-xl"
                                                     disabled={joinCampaignMutation.isPending || (activeCampaign && activeCampaign.id === campaign.id)}
                                                 >
                                                     {activeCampaign && activeCampaign.id === campaign.id ? "Currently Active" : "Start Journey"}
