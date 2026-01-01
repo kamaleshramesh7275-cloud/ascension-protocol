@@ -12,9 +12,10 @@ interface WeekCardProps {
 }
 
 export function WeekCard({ week, index }: WeekCardProps) {
-    // Calculate progress
-    const completedTasks = week.tasks.filter(t => t.completed).length;
-    const totalTasks = week.tasks.length;
+    // Calculate progress with safety check for missing tasks
+    const tasks = week.tasks || [];
+    const completedTasks = tasks.filter(t => t.completed).length;
+    const totalTasks = tasks.length;
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const isComplete = progress === 100;
 
@@ -91,15 +92,19 @@ export function WeekCard({ week, index }: WeekCardProps) {
 
                 {/* Tasks List */}
                 <div className="p-4 space-y-2">
-                    {week.tasks
-                        .sort((a, b) => a.order - b.order)
-                        .map((task) => (
-                            <TaskItem
-                                key={task.id}
-                                task={task}
-                                isWeekLocked={week.isLocked}
-                            />
-                        ))}
+                    {tasks.length > 0 ? (
+                        tasks
+                            .sort((a, b) => a.order - b.order)
+                            .map((task) => (
+                                <TaskItem
+                                    key={task.id}
+                                    task={task}
+                                    isWeekLocked={week.isLocked}
+                                />
+                            ))
+                    ) : (
+                        <p className="text-xs text-zinc-600 italic">No tasks assigned for this week.</p>
+                    )}
                 </div>
 
                 {/* Locked Overlay */}

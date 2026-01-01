@@ -57,7 +57,13 @@ router.get("/", requireAuth, async (req, res) => {
         // Fetch weeks for this roadmap (newly created or existing)
         const weeks = await storage.getRoadmapWeeks(roadmap.id);
 
-        res.json({ ...roadmap, weeks });
+        // Fetch tasks for each week to satisfy the frontend RoadmapData type
+        const weeksWithTasks = await Promise.all(weeks.map(async (week) => {
+            const tasks = await storage.getRoadmapTasks(week.id);
+            return { ...week, tasks };
+        }));
+
+        res.json({ ...roadmap, weeks: weeksWithTasks });
     } catch (error) {
         console.error("Get roadmap error:", error);
         res.status(500).json({ error: "Failed to fetch roadmap" });
