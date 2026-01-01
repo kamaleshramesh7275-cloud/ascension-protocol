@@ -264,6 +264,7 @@ export interface IStorage {
   getRoadmapTasks(weekId: string): Promise<RoadmapTask[]>;
   createRoadmapTask(task: InsertRoadmapTask): Promise<RoadmapTask>;
   updateRoadmapTask(id: string, updates: Partial<RoadmapTask>): Promise<RoadmapTask>;
+  deleteRoadmapTask(id: string): Promise<void>;
   toggleRoadmapTask(taskId: string): Promise<RoadmapTask>;
 }
 
@@ -1871,6 +1872,11 @@ export class MemStorage implements IStorage {
     this.roadmapTasks.set(id, updatedTask);
     return updatedTask;
   }
+
+  async deleteRoadmapTask(id: string): Promise<void> {
+    if (!this.roadmapTasks.has(id)) throw new Error("Task not found");
+    this.roadmapTasks.delete(id);
+  }
 }
 
 
@@ -3056,6 +3062,14 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!updated) throw new Error("Task not found");
     return updated;
+  }
+
+  async deleteRoadmapTask(id: string): Promise<void> {
+    const [deleted] = await db!
+      .delete(roadmapTasks)
+      .where(eq(roadmapTasks.id, id))
+      .returning();
+    if (!deleted) throw new Error("Task not found");
   }
 }
 

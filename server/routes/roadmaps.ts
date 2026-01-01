@@ -186,6 +186,31 @@ router.patch("/admin/roadmap-tasks/:id", requireAdminPassword, async (req, res) 
     }
 });
 
+// Create a new roadmap task (Admin only)
+router.post("/admin/roadmap-tasks", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const newTask = await storage.createRoadmapTask(req.body);
+        res.json(newTask);
+    } catch (error) {
+        console.error("Create roadmap task error:", error);
+        res.status(500).json({ error: "Failed to create task" });
+    }
+});
+
+// Delete a roadmap task (Admin only)
+router.delete("/admin/roadmap-tasks/:id", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        await storage.deleteRoadmapTask(id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Delete roadmap task error:", error);
+        res.status(500).json({ error: "Failed to delete task" });
+    }
+});
+
 // Assign a roadmap to a user (Create from Skeleton)
 router.post("/assign", requireAdminPassword, async (req, res) => {
     const storage = getStorage();
@@ -272,15 +297,25 @@ function getDefaultRoadmapSkeleton() {
 }
 
 function generateDefaultTasksForWeek(weekNum: number) {
-    // Generate 7 daily tasks (one per day)
+    // Generate 5 daily tasks (one per day) x 7 days = 35 tasks
     const tasks = [];
+    const taskTypes = [
+        "Deep Focus Session",
+        "Physical Optimization",
+        "Mental Fortitude",
+        "Skill Acquisition",
+        "Daily Review"
+    ];
+
     for (let day = 1; day <= 7; day++) {
-        tasks.push({
-            dayNumber: day,
-            text: `Day ${day}: Core Study/Work Session`,
-            isBoss: false,
-            order: day
-        });
+        for (let i = 0; i < taskTypes.length; i++) {
+            tasks.push({
+                dayNumber: day,
+                text: `Day ${day}: ${taskTypes[i]}`,
+                isBoss: day === 7 && i === 4, // Last task of Day 7 is the "Boss"
+                order: (day * 10) + i
+            });
+        }
     }
     return tasks;
 }

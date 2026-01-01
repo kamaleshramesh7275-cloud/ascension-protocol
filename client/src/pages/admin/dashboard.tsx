@@ -232,6 +232,27 @@ export default function AdminDashboard() {
         },
     });
 
+    const createRoadmapTaskMutation = useMutation({
+        mutationFn: async (task: any) => {
+            const res = await apiRequest("POST", "/api/roadmap/admin/roadmap-tasks", task, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: () => {
+            if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
+            showNotification("success", "Task added successfully");
+        },
+    });
+
+    const deleteRoadmapTaskMutation = useMutation({
+        mutationFn: async (taskId: string) => {
+            await apiRequest("DELETE", `/api/roadmap/admin/roadmap-tasks/${taskId}`, undefined, getAdminHeaders());
+        },
+        onSuccess: () => {
+            if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
+            showNotification("success", "Task deleted successfully");
+        },
+    });
+
     const fetchRoadmapDetails = async (roadmapId: string) => {
         try {
             const res = await apiRequest("GET", `/api/roadmap/admin/roadmaps/${roadmapId}`, undefined, getAdminHeaders());
@@ -1061,33 +1082,63 @@ export default function AdminDashboard() {
                                                             <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
                                                                 Daily Tasks <div className="h-px flex-1 bg-zinc-800" />
                                                             </h4>
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                                {week.tasks?.map((task: any) => (
-                                                                    <div key={task.id} className="flex gap-2 items-center bg-black/40 p-3 rounded-lg border border-zinc-800 group transition-all hover:border-zinc-700">
-                                                                        <div className="flex flex-col items-center justify-center min-w-[3rem] border-r border-zinc-800 pr-2">
-                                                                            <span className="text-[10px] text-zinc-500 font-bold uppercase">Day</span>
-                                                                            <span className="text-lg font-bold text-white">{task.dayNumber}</span>
+                                                            <div className="space-y-6">
+                                                                {[1, 2, 3, 4, 5, 6, 7].map((dayNum) => (
+                                                                    <div key={dayNum} className="space-y-2">
+                                                                        <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                                                                            <h5 className="text-sm font-bold text-zinc-400">Day {dayNum} Protocol</h5>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="ghost"
+                                                                                className="h-7 text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
+                                                                                onClick={() => createRoadmapTaskMutation.mutate({
+                                                                                    weekId: week.id,
+                                                                                    dayNumber: dayNum,
+                                                                                    text: "New Task",
+                                                                                    order: (dayNum * 10) + (week.tasks?.filter((t: any) => t.dayNumber === dayNum).length || 0)
+                                                                                })}
+                                                                            >
+                                                                                <Plus className="w-3.5 h-3.5 mr-1" /> Add Task
+                                                                            </Button>
                                                                         </div>
-                                                                        <div className="flex-1 space-y-1">
-                                                                            <Input
-                                                                                value={task.text}
-                                                                                onChange={(e) => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { text: e.target.value } })}
-                                                                                className="bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
-                                                                            />
-                                                                            <div className="flex items-center gap-2">
-                                                                                <button
-                                                                                    onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { isBoss: !task.isBoss } })}
-                                                                                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${task.isBoss
-                                                                                        ? "bg-red-500/20 text-red-400 border-red-500/50"
-                                                                                        : "bg-zinc-800 text-zinc-500 border-zinc-700"
-                                                                                        }`}
-                                                                                >
-                                                                                    Boss Battle
-                                                                                </button>
-                                                                                {task.completed && (
-                                                                                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-[9px] h-4">Completed</Badge>
-                                                                                )}
-                                                                            </div>
+                                                                        <div className="grid grid-cols-1 gap-2">
+                                                                            {week.tasks
+                                                                                ?.filter((t: any) => t.dayNumber === dayNum)
+                                                                                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                                                                                .map((task: any) => (
+                                                                                    <div key={task.id} className="flex gap-2 items-center bg-black/40 p-2 rounded border border-zinc-800 group transition-all hover:border-zinc-700">
+                                                                                        <div className="flex-1">
+                                                                                            <Input
+                                                                                                value={task.text}
+                                                                                                onChange={(e) => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { text: e.target.value } })}
+                                                                                                className="bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-1.5">
+                                                                                            <button
+                                                                                                onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { isBoss: !task.isBoss } })}
+                                                                                                className={`text-[9px] px-1.5 py-0.5 rounded-full border transition-colors ${task.isBoss
+                                                                                                    ? "bg-red-500/20 text-red-400 border-red-500/50"
+                                                                                                    : "bg-zinc-800 text-zinc-500 border-zinc-700"
+                                                                                                    }`}
+                                                                                            >
+                                                                                                Boss
+                                                                                            </button>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="icon"
+                                                                                                className="h-6 w-6 text-zinc-600 hover:text-red-400"
+                                                                                                onClick={() => {
+                                                                                                    if (confirm("Delete this task?")) {
+                                                                                                        deleteRoadmapTaskMutation.mutate(task.id);
+                                                                                                    }
+                                                                                                }}
+                                                                                            >
+                                                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
                                                                         </div>
                                                                     </div>
                                                                 ))}
