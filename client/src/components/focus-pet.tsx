@@ -56,7 +56,7 @@ export function FocusPet() {
 
             toast({
                 title: "Yummy! 🍎",
-                description: "Pet fed! (+10 Happiness, -50 Coins)",
+                description: "Pet fed! (+1 Level, +10 Happiness, -50 Coins)",
             });
 
             setTimeout(() => setIsFeeding(false), 1000);

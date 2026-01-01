@@ -143,8 +143,13 @@ export function usePet() {
 
     const feedPet = useCallback(() => {
         setPet(prev => {
+            const addedMinutes = 60; // Feeding gives 1 hour of growth (+1 Level)
+            const newTotal = prev.totalFocusMinutes + addedMinutes;
             const updated = {
                 ...prev,
+                totalFocusMinutes: newTotal,
+                level: calculateLevel(newTotal),
+                stage: calculateStage(newTotal, prev.hasChosenPath),
                 happiness: Math.min(100, prev.happiness + 10),
                 lastFed: new Date(),
             };
