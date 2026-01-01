@@ -92,7 +92,7 @@ import {
   roadmapWeeks,
   roadmapTasks
 } from "@shared/schema";
-import { eq, and, desc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
+import { eq, and, desc, asc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
@@ -1156,680 +1156,694 @@ export class MemStorage implements IStorage {
     return stats;
   }
 
-    return stats;
-  }
+  async deleteOldMessages(retentionHours: number): Promise<void> {
+    const cutoff = new Date(Date.now() - retentionHours * 60 * 60 * 1000);
 
-  async deleteOldMessages(retentionHours: number): Promise < void> {
-  const cutoff = new Date(Date.now() - retentionHours * 60 * 60 * 1000);
-
-  // Cleanup global messages
-  let deletedGlobal = 0;
-  for(const [id, msg] of this.messages.entries()) {
-  if (msg.createdAt < cutoff) {
-    this.messages.delete(id);
-    deletedGlobal++;
-  }
-}
-
-// Cleanup guild messages
-let deletedGuild = 0;
-for (const [id, msg] of this.guildMessages.entries()) {
-  const createdAt = new Date(msg.createdAt);
-  if (createdAt < cutoff) {
-    this.guildMessages.delete(id);
-    deletedGuild++;
-  }
-}
-
-if (deletedGlobal > 0 || deletedGuild > 0) {
-  console.log(`[MemStorage] Cleaned up ${deletedGlobal} global and ${deletedGuild} guild messages older than ${retentionHours} hours`);
-  this.autoSave();
-}
-  }
-
-  async createQuest(insertQuest: InsertQuest): Promise < Quest > {
-  const id = randomUUID();
-  const quest: Quest = {
-    id,
-    ...insertQuest,
-    createdAt: new Date(),
-    completed: false,
-    completedAt: null,
-    campaignId: null,
-    parentQuestId: null,
-    isBoss: false,
-    bossHealth: null,
-    bossMaxHealth: null,
-    difficulty: insertQuest.difficulty || "normal",
-    rewardCoins: insertQuest.rewardCoins || 0,
-    rewardStats: insertQuest.rewardStats || null,
-    content: insertQuest.content || null,
-    dayNumber: insertQuest.dayNumber || null,
-    expiresAt: insertQuest.expiresAt || null,
-  };
-  this.quests.set(id, quest);
-  this.autoSave();
-  return quest;
-}
-
-  async updateQuest(id: string, updates: Partial<Quest>): Promise < Quest > {
-  const quest = this.quests.get(id);
-  if(!quest) throw new Error("Quest not found");
-  const updated = { ...quest, ...updates };
-  this.quests.set(id, updated);
-  this.autoSave();
-  return updated;
-}
-
-  async deleteQuest(id: string): Promise < void> {
-  this.quests.delete(id);
-  this.autoSave();
-}
-
-  async getActivity(id: string): Promise < Activity | undefined > {
-  return this.activities.get(id);
-}
-
-  async getUserActivities(userId: string): Promise < Activity[] > {
-  return Array.from(this.activities.values())
-    .filter(a => a.userId === userId)
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-}
-
-  async createActivity(insertActivity: InsertActivity): Promise < Activity > {
-  const id = randomUUID();
-  const activity: Activity = {
-    id,
-    ...insertActivity,
-    questId: insertActivity.questId || null,
-    xpDelta: insertActivity.xpDelta || 0,
-    coinsDelta: insertActivity.coinsDelta || 0,
-    statDeltas: insertActivity.statDeltas || null,
-    timestamp: new Date()
-  };
-  this.activities.set(id, activity);
-
-  // Update rivalry scores
-  if((activity.xpDelta || 0) > 0) {
-  const activeRivalries = Array.from(this.rivalries.values()).filter(r =>
-    (r.challengerId === activity.userId || r.defenderId === activity.userId) &&
-    r.status === "active"
-  );
-
-  for (const rivalry of activeRivalries) {
-    if (rivalry.challengerId === activity.userId) {
-      rivalry.challengerScore += (activity.xpDelta || 0);
-    } else {
-      rivalry.defenderScore += (activity.xpDelta || 0);
+    // Cleanup global messages
+    let deletedGlobal = 0;
+    for (const [id, msg] of this.messages.entries()) {
+      if (msg.createdAt < cutoff) {
+        this.messages.delete(id);
+        deletedGlobal++;
+      }
     }
-    this.rivalries.set(rivalry.id, rivalry);
+
+    // Cleanup guild messages
+    let deletedGuild = 0;
+    for (const [id, msg] of this.guildMessages.entries()) {
+      const createdAt = new Date(msg.createdAt);
+      if (createdAt < cutoff) {
+        this.guildMessages.delete(id);
+        deletedGuild++;
+      }
+    }
+
+    if (deletedGlobal > 0 || deletedGuild > 0) {
+      console.log(`[MemStorage] Cleaned up ${deletedGlobal} global and ${deletedGuild} guild messages older than ${retentionHours} hours`);
+      this.autoSave();
+    }
   }
-}
 
-this.autoSave();
-return activity;
+  async createQuest(insertQuest: InsertQuest): Promise<Quest> {
+    const id = randomUUID();
+    const quest: Quest = {
+      id,
+      ...insertQuest,
+      createdAt: new Date(),
+      completed: false,
+      completedAt: null,
+      campaignId: null,
+      parentQuestId: null,
+      isBoss: false,
+      bossHealth: null,
+      bossMaxHealth: null,
+      difficulty: insertQuest.difficulty || "normal",
+      rewardCoins: insertQuest.rewardCoins || 0,
+      rewardStats: insertQuest.rewardStats || null,
+      content: insertQuest.content || null,
+      dayNumber: insertQuest.dayNumber || null,
+      expiresAt: insertQuest.expiresAt || null,
+    };
+    this.quests.set(id, quest);
+    this.autoSave();
+    return quest;
   }
 
-  async getRankTrial(id: string): Promise < RankTrial | undefined > {
-  return this.rankTrials.get(id);
-}
+  async updateQuest(id: string, updates: Partial<Quest>): Promise<Quest> {
+    const quest = this.quests.get(id);
+    if (!quest) throw new Error("Quest not found");
+    const updated = { ...quest, ...updates };
+    this.quests.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
 
-  async getUserRankTrials(userId: string): Promise < RankTrial[] > {
-  return Array.from(this.rankTrials.values()).filter(t => t.userId === userId);
-}
+  async deleteQuest(id: string): Promise<void> {
+    this.quests.delete(id);
+    this.autoSave();
+  }
 
-  async createRankTrial(insertTrial: InsertRankTrial): Promise < RankTrial > {
-  const id = randomUUID();
-  const trial: RankTrial = {
-    id,
-    ...insertTrial,
-    completed: false,
-    completedAt: null,
-    createdAt: new Date()
-  };
-  this.rankTrials.set(id, trial);
-  this.autoSave();
-  return trial;
-}
+  async getActivity(id: string): Promise<Activity | undefined> {
+    return this.activities.get(id);
+  }
 
-  async updateRankTrial(id: string, updates: Partial<RankTrial>): Promise < RankTrial > {
-  const trial = this.rankTrials.get(id);
-  if(!trial) throw new Error("Trial not found");
-  const updated = { ...trial, ...updates };
-  this.rankTrials.set(id, updated);
-  this.autoSave();
-  return updated;
-}
+  async getUserActivities(userId: string): Promise<Activity[]> {
+    return Array.from(this.activities.values())
+      .filter(a => a.userId === userId)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
 
-  async getShopItems(): Promise < ShopItem[] > {
-  return Array.from(this.shopItems.values());
-}
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const id = randomUUID();
+    const activity: Activity = {
+      id,
+      ...insertActivity,
+      questId: insertActivity.questId || null,
+      xpDelta: insertActivity.xpDelta || 0,
+      coinsDelta: insertActivity.coinsDelta || 0,
+      statDeltas: insertActivity.statDeltas || null,
+      timestamp: new Date()
+    };
+    this.activities.set(id, activity);
 
-  async getShopItem(id: string): Promise < ShopItem | undefined > {
-  return this.shopItems.get(id);
-}
+    // Update rivalry scores
+    if ((activity.xpDelta || 0) > 0) {
+      const activeRivalries = Array.from(this.rivalries.values()).filter(r =>
+        (r.challengerId === activity.userId || r.defenderId === activity.userId) &&
+        r.status === "active"
+      );
 
-  async createShopItem(item: InsertShopItem): Promise < ShopItem > {
-  const id = randomUUID();
-  const shopItem: ShopItem = {
-    id,
-    ...item,
-    createdAt: new Date(),
-    isPremium: item.isPremium ?? false,
-    rarity: item.rarity ?? "common"
-  };
-  this.shopItems.set(id, shopItem);
-  this.autoSave();
-  return shopItem;
-}
+      for (const rivalry of activeRivalries) {
+        if (rivalry.challengerId === activity.userId) {
+          rivalry.challengerScore += (activity.xpDelta || 0);
+        } else {
+          rivalry.defenderScore += (activity.xpDelta || 0);
+        }
+        this.rivalries.set(rivalry.id, rivalry);
+      }
+    }
 
-  async getUserItems(userId: string): Promise < UserItem[] > {
-  return Array.from(this.userItems.values()).filter(i => i.userId === userId);
-}
+    this.autoSave();
+    return activity;
+  }
 
-  async createUserItem(item: InsertUserItem): Promise < UserItem > {
-  const id = randomUUID();
-  const userItem: UserItem = {
-    id, ...item, equipped: false, acquiredAt: new Date()
-  };
-  this.userItems.set(id, userItem);
-  this.autoSave();
-  return userItem;
-}
+  async getRankTrial(id: string): Promise<RankTrial | undefined> {
+    return this.rankTrials.get(id);
+  }
 
-  async updateUserItem(id: string, updates: Partial<UserItem>): Promise < UserItem > {
-  const item = this.userItems.get(id);
-  if(!item) throw new Error("Item not found");
-  const updated = { ...item, ...updates };
-  this.userItems.set(id, updated);
-  this.autoSave();
-  return updated;
-}
+  async getUserRankTrials(userId: string): Promise<RankTrial[]> {
+    return Array.from(this.rankTrials.values()).filter(t => t.userId === userId);
+  }
 
-  async getGuild(id: string): Promise < Guild | undefined > {
-  return this.guilds.get(id);
-}
+  async createRankTrial(insertTrial: InsertRankTrial): Promise<RankTrial> {
+    const id = randomUUID();
+    const trial: RankTrial = {
+      id,
+      ...insertTrial,
+      completed: false,
+      completedAt: null,
+      createdAt: new Date()
+    };
+    this.rankTrials.set(id, trial);
+    this.autoSave();
+    return trial;
+  }
 
-  async getAllGuilds(): Promise < Guild[] > {
-  return Array.from(this.guilds.values());
-}
+  async updateRankTrial(id: string, updates: Partial<RankTrial>): Promise<RankTrial> {
+    const trial = this.rankTrials.get(id);
+    if (!trial) throw new Error("Trial not found");
+    const updated = { ...trial, ...updates };
+    this.rankTrials.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
 
-  async getGuildMembers(guildId: string): Promise < User[] > {
-  return Array.from(this.users.values()).filter(u => u.guildId === guildId);
-}
+  async getShopItems(): Promise<ShopItem[]> {
+    return Array.from(this.shopItems.values());
+  }
 
-  async createGuild(insertGuild: InsertGuild): Promise < Guild > {
-  const id = randomUUID();
-  const guild: Guild = {
-    id,
-    ...insertGuild,
-    description: insertGuild.description ?? null,
-    avatarUrl: null,
-    createdAt: new Date(),
-    level: 1, xp: 0, memberCount: 0, maxMembers: 50, isPublic: true, vicePresidentIds: [],
-    treasury: 0, activePerks: []
-  };
-  this.guilds.set(id, guild);
-  this.autoSave();
-  return guild;
-}
+  async getShopItem(id: string): Promise<ShopItem | undefined> {
+    return this.shopItems.get(id);
+  }
 
-  async updateGuild(id: string, updates: Partial<Guild>): Promise < Guild > {
-  const guild = this.guilds.get(id);
-  if(!guild) throw new Error("Guild not found");
-  const updated = { ...guild, ...updates };
-  this.guilds.set(id, updated);
-  this.autoSave();
-  return updated;
-}
+  async createShopItem(item: InsertShopItem): Promise<ShopItem> {
+    const id = randomUUID();
+    const shopItem: ShopItem = {
+      id,
+      ...item,
+      createdAt: new Date(),
+      isPremium: item.isPremium ?? false,
+      rarity: item.rarity ?? "common"
+    };
+    this.shopItems.set(id, shopItem);
+    this.autoSave();
+    return shopItem;
+  }
 
-  async deleteGuild(id: string): Promise < void> {
-  this.guilds.delete(id);
-  this.autoSave();
-}
+  async getUserItems(userId: string): Promise<UserItem[]> {
+    return Array.from(this.userItems.values()).filter(i => i.userId === userId);
+  }
 
-  async addGuildMessage(message: any): Promise < any > {
-  const id = `msg_${Date.now()}`;
-  // Ensure content is stored as 'content' to match schema/DB
-  const content = message.content || message.message;
+  async createUserItem(item: InsertUserItem): Promise<UserItem> {
+    const id = randomUUID();
+    const userItem: UserItem = {
+      id, ...item, equipped: false, acquiredAt: new Date()
+    };
+    this.userItems.set(id, userItem);
+    this.autoSave();
+    return userItem;
+  }
 
-  // Fetch user for enrichment
-  const user = this.users.get(message.userId);
+  async updateUserItem(id: string, updates: Partial<UserItem>): Promise<UserItem> {
+    const item = this.userItems.get(id);
+    if (!item) throw new Error("Item not found");
+    const updated = { ...item, ...updates };
+    this.userItems.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
 
-  const msg = {
-    id,
-    guildId: message.guildId,
-    userId: message.userId,
-    content: content,
-    type: message.type || "chat",
-    createdAt: new Date()
-  };
+  async getGuild(id: string): Promise<Guild | undefined> {
+    return this.guilds.get(id);
+  }
 
-  this.guildMessages.set(id, msg);
-  this.autoSave();
+  async getAllGuilds(): Promise<Guild[]> {
+    return Array.from(this.guilds.values());
+  }
 
-  // Return with adaptable fields for frontend and enriched user info
-  return {
-    ...msg,
-    message: content, // Frontend expects 'message'
-    userName: user?.name || "Unknown",
-    userAvatar: user?.avatarUrl
-  };
-}
+  async getGuildMembers(guildId: string): Promise<User[]> {
+    return Array.from(this.users.values()).filter(u => u.guildId === guildId);
+  }
 
-  async getGuildMessages(guildId: string): Promise < any[] > {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const msgs = Array.from(this.guildMessages.values())
-    .filter(m => m.guildId === guildId && m.createdAt > oneDayAgo)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 50);
+  async createGuild(insertGuild: InsertGuild): Promise<Guild> {
+    const id = randomUUID();
+    const guild: Guild = {
+      id,
+      ...insertGuild,
+      description: insertGuild.description ?? null,
+      avatarUrl: null,
+      createdAt: new Date(),
+      level: 1, xp: 0, memberCount: 0, maxMembers: 50, isPublic: true, vicePresidentIds: [],
+      treasury: 0, activePerks: []
+    };
+    this.guilds.set(id, guild);
+    this.autoSave();
+    return guild;
+  }
 
-  // Enrich with user info and frontend mapping
-  return msgs.map(msg => {
-    const user = this.users.get(msg.userId);
+  async updateGuild(id: string, updates: Partial<Guild>): Promise<Guild> {
+    const guild = this.guilds.get(id);
+    if (!guild) throw new Error("Guild not found");
+    const updated = { ...guild, ...updates };
+    this.guilds.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async deleteGuild(id: string): Promise<void> {
+    this.guilds.delete(id);
+    this.autoSave();
+  }
+
+  async addGuildMessage(message: any): Promise<any> {
+    const id = `msg_${Date.now()}`;
+    // Ensure content is stored as 'content' to match schema/DB
+    const content = message.content || message.message;
+
+    // Fetch user for enrichment
+    const user = this.users.get(message.userId);
+
+    const msg = {
+      id,
+      guildId: message.guildId,
+      userId: message.userId,
+      content: content,
+      type: message.type || "chat",
+      createdAt: new Date()
+    };
+
+    this.guildMessages.set(id, msg);
+    this.autoSave();
+
+    // Return with adaptable fields for frontend and enriched user info
     return {
       ...msg,
-      message: msg.content, // Frontend expects 'message'
+      message: content, // Frontend expects 'message'
       userName: user?.name || "Unknown",
       userAvatar: user?.avatarUrl
     };
-  });
-}
+  }
 
-  async getAllGuildMessages(): Promise < any[] > {
-  return Array.from(this.guildMessages.values());
-}
+  async getGuildMessages(guildId: string): Promise<any[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const msgs = Array.from(this.guildMessages.values())
+      .filter(m => m.guildId === guildId && m.createdAt > oneDayAgo)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 50);
 
-  async saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise < void> {
-  this.userCredentials.set(username.toLowerCase(), { username, passwordHash, userId });
-  this.autoSave();
-}
+    // Enrich with user info and frontend mapping
+    return msgs.map(msg => {
+      const user = this.users.get(msg.userId);
+      return {
+        ...msg,
+        message: msg.content, // Frontend expects 'message'
+        userName: user?.name || "Unknown",
+        userAvatar: user?.avatarUrl
+      };
+    });
+  }
 
-  async getCredentialsByUsername(username: string): Promise < { username: string; passwordHash: string; userId: string } | undefined > {
-  return this.userCredentials.get(username.toLowerCase());
-}
+  async getAllGuildMessages(): Promise<any[]> {
+    return Array.from(this.guildMessages.values());
+  }
 
-  async usernameExists(username: string): Promise < boolean > {
-  return this.userCredentials.has(username.toLowerCase());
-}
-
-  async getAllCredentials(): Promise < { username: string; passwordHash: string; userId: string }[] > {
-  return Array.from(this.userCredentials.values());
-}
-
-  async createFocusSession(insertSession: InsertFocusSession): Promise < FocusSession > {
-  const id = randomUUID();
-  const session: FocusSession = {
-    id,
-    ...insertSession,
-    task: insertSession.task || null,
-    backgroundType: insertSession.backgroundType || null,
-    completedAt: new Date(),
-  };
-  this.focusSessions.set(id, session);
-  this.autoSave();
-  return session;
-}
-
-  async getUserFocusSessions(userId: string): Promise < FocusSession[] > {
-  return Array.from(this.focusSessions.values())
-    .filter(s => s.userId === userId)
-    .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
-}
-
-  async getAllFocusSessions(): Promise < (FocusSession & { user: User })[] > {
-  const sessions = Array.from(this.focusSessions.values())
-    .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
-  return await Promise.all(sessions.map(async s => {
-    const user = await this.getUser(s.userId);
-    return { ...s, user: user! };
-  }));
-}
-
-  async getFocusSessionStats(userId: string): Promise < { totalMinutes: number; totalXP: number; sessionCount: number } > {
-  const sessions = await this.getUserFocusSessions(userId);
-  return {
-    totalMinutes: sessions.reduce((sum, s) => sum + s.duration, 0),
-    totalXP: sessions.reduce((sum, s) => sum + s.xpEarned, 0),
-    sessionCount: sessions.length,
-  };
-}
-
-  async createNotification(insertNotification: InsertNotification): Promise < Notification > {
-  const id = randomUUID();
-  const notification: Notification = {
-    id,
-    ...insertNotification,
-    read: false,
-    createdAt: new Date(),
-  };
-  this.notifications.set(id, notification);
-  this.autoSave();
-  return notification;
-}
-
-  async getUserNotifications(userId: string): Promise < Notification[] > {
-  return Array.from(this.notifications.values())
-    .filter(n => n.userId === userId)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-}
-
-  async markNotificationAsRead(notificationId: string): Promise < void> {
-  const n = this.notifications.get(notificationId);
-  if(n) {
-    n.read = true;
+  async saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise<void> {
+    this.userCredentials.set(username.toLowerCase(), { username, passwordHash, userId });
     this.autoSave();
   }
-}
 
-  async getAdminNotificationHistory(): Promise < any[] > {
-  return Array.from(this.notifications.values()).filter(n =>
-    ["admin", "announcement", "update", "event"].includes(n.type)
-  );
-}
-
-  async createMessage(insertMessage: InsertMessage): Promise < Message > {
-  const id = randomUUID();
-  const message: Message = {
-    id,
-    userId: insertMessage.userId,
-    content: insertMessage.content,
-    createdAt: new Date(),
-  };
-  this.messages.set(id, message);
-  this.autoSave();
-  return message;
-}
-
-  async getMessages(limit = 50): Promise < (Message & { user: User })[] > {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const msgs = Array.from(this.messages.values())
-    .filter(m => m.createdAt > oneDayAgo)
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-    .slice(-limit);
-
-  return Promise.all(msgs.map(async m => {
-    const user = await this.getUser(m.userId) || { id: "deleted", name: "Deleted", avatarUrl: null } as User;
-    return { ...m, user };
-  }));
-}
-
-  async purchaseItem(userId: string, itemId: string): Promise < UserItem > {
-  const user = await this.getUser(userId);
-  const item = await this.getShopItem(itemId);
-  if(!user || !item) throw new Error("User or Item not found");
-if (user.coins < item.cost) throw new Error("Insufficient coins");
-
-const updatedUser = { ...user, coins: user.coins - item.cost };
-this.users.set(userId, updatedUser);
-
-const userItem = await this.createUserItem({ userId, itemId });
-this.autoSave();
-return userItem;
+  async getCredentialsByUsername(username: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined> {
+    return this.userCredentials.get(username.toLowerCase());
   }
 
-  async equipItem(userId: string, itemId: string, type: 'title' | 'badge' | 'theme'): Promise < User > {
-  const user = await this.getUser(userId);
-  const userItems = await this.getUserItems(userId);
-  const shopItem = await this.getShopItem(itemId);
-
-  // Check if user actually owns this item
-  const ownsItem = userItems.some(ui => ui.itemId === itemId);
-
-  if(!user || !ownsItem || !shopItem) throw new Error("Item not found or not owned");
-
-let updates: Partial<User> = {};
-if (type === 'title') updates.activeTitle = shopItem.name;
-if (type === 'badge') updates.activeBadgeId = shopItem.value;
-if (type === 'theme') updates.theme = shopItem.value;
-
-const updated = { ...user, ...updates };
-this.users.set(userId, updated);
-this.autoSave();
-return updated;
+  async usernameExists(username: string): Promise<boolean> {
+    return this.userCredentials.has(username.toLowerCase());
   }
 
-  async awardCoins(userId: string, amount: number): Promise < User > {
-  const user = this.users.get(userId);
-  if(!user) throw new Error("User not found");
-  const updated = { ...user, coins: user.coins + amount };
-  this.users.set(userId, updated);
-  this.autoSave();
-  return updated;
-}
+  async getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]> {
+    return Array.from(this.userCredentials.values());
+  }
 
-  async createPartnership(user1Id: string, user2Id: string): Promise < Partnership > {
-  const id = randomUUID();
-  const p: Partnership = {
-    id, user1Id, user2Id, status: "pending", createdAt: new Date(), acceptedAt: null
-  };
-  this.partnerships.set(id, p);
-  this.autoSave();
-  return p;
-}
+  async createFocusSession(insertSession: InsertFocusSession): Promise<FocusSession> {
+    const id = randomUUID();
+    const session: FocusSession = {
+      id,
+      ...insertSession,
+      task: insertSession.task || null,
+      backgroundType: insertSession.backgroundType || null,
+      completedAt: new Date(),
+    };
+    this.focusSessions.set(id, session);
+    this.autoSave();
+    return session;
+  }
 
-  async getPartnerships(userId: string): Promise < Partnership[] > {
-  return Array.from(this.partnerships.values()).filter(p => p.user1Id === userId || p.user2Id === userId);
-}
+  async getUserFocusSessions(userId: string): Promise<FocusSession[]> {
+    return Array.from(this.focusSessions.values())
+      .filter(s => s.userId === userId)
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }
 
-  async getAllPartnerships(): Promise < (Partnership & { user1: User; user2: User })[] > {
-  const all = Array.from(this.partnerships.values());
-  return await Promise.all(all.map(async p => {
-    const u1 = await this.getUser(p.user1Id);
-    const u2 = await this.getUser(p.user2Id);
-    return { ...p, user1: u1!, user2: u2! };
-  }));
-}
+  async getAllFocusSessions(): Promise<(FocusSession & { user: User })[]> {
+    const sessions = Array.from(this.focusSessions.values())
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+    return await Promise.all(sessions.map(async s => {
+      const user = await this.getUser(s.userId);
+      return { ...s, user: user! };
+    }));
+  }
 
-  async updatePartnership(id: string, updates: Partial<Partnership>): Promise < Partnership > {
-  const p = this.partnerships.get(id);
-  if(!p) throw new Error("Partnership not found");
-  const updated = { ...p, ...updates };
-  this.partnerships.set(id, updated);
-  this.autoSave();
-  return updated;
-}
+  async getFocusSessionStats(userId: string): Promise<{ totalMinutes: number; totalXP: number; sessionCount: number }> {
+    const sessions = await this.getUserFocusSessions(userId);
+    return {
+      totalMinutes: sessions.reduce((sum, s) => sum + s.duration, 0),
+      totalXP: sessions.reduce((sum, s) => sum + s.xpEarned, 0),
+      sessionCount: sessions.length,
+    };
+  }
 
-  async updatePartnershipStatus(id: string, status: string): Promise < Partnership > {
-  const p = this.partnerships.get(id);
-  if(!p) throw new Error("Not found");
-  const updated: Partnership = { ...p, status, acceptedAt: status === "accepted" ? new Date() : p.acceptedAt };
-  this.partnerships.set(id, updated);
-  this.autoSave();
-  return updated;
-}
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const id = randomUUID();
+    const notification: Notification = {
+      id,
+      ...insertNotification,
+      read: false,
+      createdAt: new Date(),
+    };
+    this.notifications.set(id, notification);
+    this.autoSave();
+    return notification;
+  }
 
-  async findPotentialPartners(userId: string): Promise < User[] > {
-  return Array.from(this.users.values()).filter(u => u.id !== userId);
-}
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(n => n.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 
-  async createDirectMessage(insertMessage: InsertDirectMessage): Promise < DirectMessage > {
-  const id = randomUUID();
-  const dm: DirectMessage = { id, ...insertMessage, read: false, createdAt: new Date() };
-  this.directMessages.set(id, dm);
-  this.autoSave();
-  return dm;
-}
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    const n = this.notifications.get(notificationId);
+    if (n) {
+      n.read = true;
+      this.autoSave();
+    }
+  }
 
-  async getDirectMessages(user1Id: string, user2Id: string): Promise < DirectMessage[] > {
-  return Array.from(this.directMessages.values())
-    .filter(m => (m.senderId === user1Id && m.receiverId === user2Id) || (m.senderId === user2Id && m.receiverId === user1Id))
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-}
+  async getAdminNotificationHistory(): Promise<any[]> {
+    return Array.from(this.notifications.values()).filter(n =>
+      ["admin", "announcement", "update", "event"].includes(n.type)
+    );
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const id = randomUUID();
+    const message: Message = {
+      id,
+      userId: insertMessage.userId,
+      content: insertMessage.content,
+      createdAt: new Date(),
+    };
+    this.messages.set(id, message);
+    this.autoSave();
+    return message;
+  }
+
+  async getMessages(limit = 50): Promise<(Message & { user: User })[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const msgs = Array.from(this.messages.values())
+      .filter(m => m.createdAt > oneDayAgo)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .slice(-limit);
+
+    return Promise.all(msgs.map(async m => {
+      const user = await this.getUser(m.userId) || { id: "deleted", name: "Deleted", avatarUrl: null } as User;
+      return { ...m, user };
+    }));
+  }
+
+  async purchaseItem(userId: string, itemId: string): Promise<UserItem> {
+    const user = await this.getUser(userId);
+    const item = await this.getShopItem(itemId);
+    if (!user || !item) throw new Error("User or Item not found");
+    if (user.coins < item.cost) throw new Error("Insufficient coins");
+
+    const updatedUser = { ...user, coins: user.coins - item.cost };
+    this.users.set(userId, updatedUser);
+
+    const userItem = await this.createUserItem({ userId, itemId });
+    this.autoSave();
+    return userItem;
+  }
+
+  async equipItem(userId: string, itemId: string, type: 'title' | 'badge' | 'theme'): Promise<User> {
+    const user = await this.getUser(userId);
+    const userItems = await this.getUserItems(userId);
+    const shopItem = await this.getShopItem(itemId);
+
+    // Check if user actually owns this item
+    const ownsItem = userItems.some(ui => ui.itemId === itemId);
+
+    if (!user || !ownsItem || !shopItem) throw new Error("Item not found or not owned");
+
+    let updates: Partial<User> = {};
+    if (type === 'title') updates.activeTitle = shopItem.name;
+    if (type === 'badge') updates.activeBadgeId = shopItem.value;
+    if (type === 'theme') updates.theme = shopItem.value;
+
+    const updated = { ...user, ...updates };
+    this.users.set(userId, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async awardCoins(userId: string, amount: number): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) throw new Error("User not found");
+    const updated = { ...user, coins: user.coins + amount };
+    this.users.set(userId, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async createPartnership(user1Id: string, user2Id: string): Promise<Partnership> {
+    const id = randomUUID();
+    const p: Partnership = {
+      id, user1Id, user2Id, status: "pending", createdAt: new Date(), acceptedAt: null
+    };
+    this.partnerships.set(id, p);
+    this.autoSave();
+    return p;
+  }
+
+  async getPartnerships(userId: string): Promise<Partnership[]> {
+    return Array.from(this.partnerships.values()).filter(p => p.user1Id === userId || p.user2Id === userId);
+  }
+
+  async getAllPartnerships(): Promise<(Partnership & { user1: User; user2: User })[]> {
+    const all = Array.from(this.partnerships.values());
+    return await Promise.all(all.map(async p => {
+      const u1 = await this.getUser(p.user1Id);
+      const u2 = await this.getUser(p.user2Id);
+      return { ...p, user1: u1!, user2: u2! };
+    }));
+  }
+
+  async updatePartnership(id: string, updates: Partial<Partnership>): Promise<Partnership> {
+    const p = this.partnerships.get(id);
+    if (!p) throw new Error("Partnership not found");
+    const updated = { ...p, ...updates };
+    this.partnerships.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async updatePartnershipStatus(id: string, status: string): Promise<Partnership> {
+    const p = this.partnerships.get(id);
+    if (!p) throw new Error("Not found");
+    const updated: Partnership = { ...p, status, acceptedAt: status === "accepted" ? new Date() : p.acceptedAt };
+    this.partnerships.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async findPotentialPartners(userId: string): Promise<User[]> {
+    return Array.from(this.users.values()).filter(u => u.id !== userId);
+  }
+
+  async createDirectMessage(insertMessage: InsertDirectMessage): Promise<DirectMessage> {
+    const id = randomUUID();
+    const dm: DirectMessage = { id, ...insertMessage, read: false, createdAt: new Date() };
+    this.directMessages.set(id, dm);
+    this.autoSave();
+    return dm;
+  }
+
+  async getDirectMessages(user1Id: string, user2Id: string): Promise<DirectMessage[]> {
+    return Array.from(this.directMessages.values())
+      .filter(m => (m.senderId === user1Id && m.receiverId === user2Id) || (m.senderId === user2Id && m.receiverId === user1Id))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
 
 
   // --- Persistence Logic ---
 
-  async persist(): Promise < void> {
-  if(process.env.VERCEL) return;
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  const data = {
-    users: Array.from(this.users.entries()),
-    quests: Array.from(this.quests.entries()),
-    activities: Array.from(this.activities.entries()),
-    rankTrials: Array.from(this.rankTrials.entries()),
-    shopItems: Array.from(this.shopItems.entries()),
-    userItems: Array.from(this.userItems.entries()),
-    guilds: Array.from(this.guilds.entries()),
-    deletedUids: Array.from(this.deletedUids),
-    userCredentials: Array.from(this.userCredentials.entries()),
-    guildMessages: Array.from(this.guildMessages.entries()),
-    focusSessions: Array.from(this.focusSessions.entries()),
-    notifications: Array.from(this.notifications.entries()),
-    messages: Array.from(this.messages.entries()),
-    partnerships: Array.from(this.partnerships.entries()),
-    directMessages: Array.from(this.directMessages.entries()),
-    premiumRequests: Array.from(this.premiumRequests.entries()),
-  };
-  try {
-    const backupDir = path.resolve(process.cwd(), ".backup");
-    await fs.mkdir(backupDir, { recursive: true });
-    await fs.writeFile(path.join(backupDir, "backup.json"), JSON.stringify(data, null, 2));
-    console.log("💾 Data persisted to backup.json");
-  } catch(error) {
-    console.error("Failed to persist data:", error);
+  async persist(): Promise<void> {
+    if (process.env.VERCEL) return;
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    const data = {
+      users: Array.from(this.users.entries()),
+      quests: Array.from(this.quests.entries()),
+      activities: Array.from(this.activities.entries()),
+      rankTrials: Array.from(this.rankTrials.entries()),
+      shopItems: Array.from(this.shopItems.entries()),
+      userItems: Array.from(this.userItems.entries()),
+      guilds: Array.from(this.guilds.entries()),
+      deletedUids: Array.from(this.deletedUids),
+      userCredentials: Array.from(this.userCredentials.entries()),
+      guildMessages: Array.from(this.guildMessages.entries()),
+      focusSessions: Array.from(this.focusSessions.entries()),
+      notifications: Array.from(this.notifications.entries()),
+      messages: Array.from(this.messages.entries()),
+      partnerships: Array.from(this.partnerships.entries()),
+      directMessages: Array.from(this.directMessages.entries()),
+      premiumRequests: Array.from(this.premiumRequests.entries()),
+    };
+    try {
+      const backupDir = path.resolve(process.cwd(), ".backup");
+      await fs.mkdir(backupDir, { recursive: true });
+      await fs.writeFile(path.join(backupDir, "backup.json"), JSON.stringify(data, null, 2));
+      console.log("💾 Data persisted to backup.json");
+    } catch (error) {
+      console.error("Failed to persist data:", error);
+    }
   }
-}
 
-  async createBackup(): Promise < string > {
-  if(process.env.VERCEL) return "vercel-unsupported";
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  const now = new Date();
-  const timestamp = now.toISOString().replace(/T/, '-').replace(/\..+/, '').replace(/:/g, '-');
-  const filename = `backup-${timestamp}.json`;
+  async createBackup(): Promise<string> {
+    if (process.env.VERCEL) return "vercel-unsupported";
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/T/, '-').replace(/\..+/, '').replace(/:/g, '-');
+    const filename = `backup-${timestamp}.json`;
 
-  const data = {
-    users: Array.from(this.users.entries()),
-    quests: Array.from(this.quests.entries()),
-    activities: Array.from(this.activities.entries()),
-    rankTrials: Array.from(this.rankTrials.entries()),
-    shopItems: Array.from(this.shopItems.entries()),
-    userItems: Array.from(this.userItems.entries()),
-    guilds: Array.from(this.guilds.entries()),
-    deletedUids: Array.from(this.deletedUids),
-    userCredentials: Array.from(this.userCredentials.entries()),
-    guildMessages: Array.from(this.guildMessages.entries()),
-    focusSessions: Array.from(this.focusSessions.entries()),
-    notifications: Array.from(this.notifications.entries()),
-    messages: Array.from(this.messages.entries()),
-    partnerships: Array.from(this.partnerships.entries()),
-    directMessages: Array.from(this.directMessages.entries()),
-    premiumRequests: Array.from(this.premiumRequests.entries()),
-  };
-
-  try {
-    const backupDir = path.resolve(process.cwd(), ".backup");
-    await fs.mkdir(backupDir, { recursive: true });
-    await fs.writeFile(path.join(backupDir, filename), JSON.stringify(data, null, 2));
-    console.log(`💾 Backup created: ${filename}`);
-    return filename;
-  } catch(error) {
-    console.error("Failed to create backup:", error);
-    throw error;
-  }
-}
-
-  async hydrate(): Promise < void> {
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  try {
-    const backupPath = path.resolve(process.cwd(), ".backup", "backup.json");
-    const content = await fs.readFile(backupPath, "utf-8");
-
-    // JSON Reviver to safely restore Date objects
-    const reviver = (key: string, value: any) => {
-      if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-        return new Date(value);
-      }
-      return value;
+    const data = {
+      users: Array.from(this.users.entries()),
+      quests: Array.from(this.quests.entries()),
+      activities: Array.from(this.activities.entries()),
+      rankTrials: Array.from(this.rankTrials.entries()),
+      shopItems: Array.from(this.shopItems.entries()),
+      userItems: Array.from(this.userItems.entries()),
+      guilds: Array.from(this.guilds.entries()),
+      deletedUids: Array.from(this.deletedUids),
+      userCredentials: Array.from(this.userCredentials.entries()),
+      guildMessages: Array.from(this.guildMessages.entries()),
+      focusSessions: Array.from(this.focusSessions.entries()),
+      notifications: Array.from(this.notifications.entries()),
+      messages: Array.from(this.messages.entries()),
+      partnerships: Array.from(this.partnerships.entries()),
+      directMessages: Array.from(this.directMessages.entries()),
+      premiumRequests: Array.from(this.premiumRequests.entries()),
     };
 
-    const data = JSON.parse(content, reviver);
-
-    this.users = new Map(data.users);
-    this.quests = new Map(data.quests);
-    this.activities = new Map(data.activities);
-    this.rankTrials = new Map(data.rankTrials);
-    // DON'T load shopItems from backup - always use DEFAULT_SHOP_ITEMS
-    // this.shopItems = new Map(data.shopItems);
-    this.userItems = new Map(data.userItems);
-    this.guilds = new Map(data.guilds);
-    this.deletedUids = new Set(data.deletedUids);
-    this.userCredentials = new Map(data.userCredentials);
-    this.guildMessages = new Map(data.guildMessages);
-    this.focusSessions = new Map(data.focusSessions);
-    this.notifications = new Map(data.notifications);
-    this.messages = new Map(data.messages);
-    this.partnerships = new Map(data.partnerships || []);
-    this.directMessages = new Map(data.directMessages || []);
-    this.tasks = new Map(data.tasks || []);
-    this.premiumRequests = new Map(data.premiumRequests || []);
-
-    console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
-  } catch(e) {
-    console.log("No backup found or failed to load. Starting fresh.");
+    try {
+      const backupDir = path.resolve(process.cwd(), ".backup");
+      await fs.mkdir(backupDir, { recursive: true });
+      await fs.writeFile(path.join(backupDir, filename), JSON.stringify(data, null, 2));
+      console.log(`💾 Backup created: ${filename}`);
+      return filename;
+    } catch (error) {
+      console.error("Failed to create backup:", error);
+      throw error;
+    }
   }
-}
+
+  async hydrate(): Promise<void> {
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    try {
+      const backupPath = path.resolve(process.cwd(), ".backup", "backup.json");
+      const content = await fs.readFile(backupPath, "utf-8");
+
+      // JSON Reviver to safely restore Date objects
+      const reviver = (key: string, value: any) => {
+        if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+          return new Date(value);
+        }
+        return value;
+      };
+
+      const data = JSON.parse(content, reviver);
+
+      this.users = new Map(data.users);
+      this.quests = new Map(data.quests);
+      this.activities = new Map(data.activities);
+      this.rankTrials = new Map(data.rankTrials);
+      // DON'T load shopItems from backup - always use DEFAULT_SHOP_ITEMS
+      // this.shopItems = new Map(data.shopItems);
+      this.userItems = new Map(data.userItems);
+      this.guilds = new Map(data.guilds);
+      this.deletedUids = new Set(data.deletedUids);
+      this.userCredentials = new Map(data.userCredentials);
+      this.guildMessages = new Map(data.guildMessages);
+      this.focusSessions = new Map(data.focusSessions);
+      this.notifications = new Map(data.notifications);
+      this.messages = new Map(data.messages);
+      this.partnerships = new Map(data.partnerships || []);
+      this.directMessages = new Map(data.directMessages || []);
+      this.tasks = new Map(data.tasks || []);
+      this.premiumRequests = new Map(data.premiumRequests || []);
+
+      console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
+    } catch (e) {
+      console.log("No backup found or failed to load. Starting fresh.");
+    }
+  }
 
   private async autoSave() {
-  this.persist().catch(err => console.error(err));
-}
+    this.persist().catch(err => console.error(err));
+  }
 
   // Roadmap operations
-  async createRoadmap(roadmap: InsertRoadmap): Promise < Roadmap > {
-  const id = randomUUID();
-  const newRoadmap: Roadmap = { ...roadmap, id, createdAt: new Date(), updatedAt: new Date() };
-  this.roadmaps.set(id, newRoadmap);
-  return newRoadmap;
-}
+  async createRoadmap(roadmap: InsertRoadmap): Promise<Roadmap> {
+    const id = randomUUID();
+    const newRoadmap: Roadmap = {
+      ...roadmap,
+      id,
+      startDate: new Date(),
+      status: roadmap.status ?? "active",
+      currentWeek: roadmap.currentWeek ?? 1
+    };
+    this.roadmaps.set(id, newRoadmap);
+    return newRoadmap;
+  }
 
-  async getActiveRoadmap(userId: string): Promise < Roadmap | undefined > {
-  return Array.from(this.roadmaps.values()).find(r => r.userId === userId && r.status === "active");
-}
+  async getActiveRoadmap(userId: string): Promise<Roadmap | undefined> {
+    return Array.from(this.roadmaps.values()).find(r => r.userId === userId && r.status === "active");
+  }
 
-  async getRoadmap(id: string): Promise < Roadmap | undefined > {
-  return this.roadmaps.get(id);
-}
+  async getRoadmap(id: string): Promise<Roadmap | undefined> {
+    return this.roadmaps.get(id);
+  }
 
-  async getRoadmapWeeks(roadmapId: string): Promise < RoadmapWeek[] > {
-  return Array.from(this.roadmapWeeks.values())
-    .filter(w => w.roadmapId === roadmapId)
-    .sort((a, b) => a.weekNumber - b.weekNumber);
-}
+  async getRoadmapWeeks(roadmapId: string): Promise<RoadmapWeek[]> {
+    return Array.from(this.roadmapWeeks.values())
+      .filter(w => w.roadmapId === roadmapId)
+      .sort((a, b) => a.weekNumber - b.weekNumber);
+  }
 
-  async getRoadmapWeek(id: string): Promise < RoadmapWeek | undefined > {
-  return this.roadmapWeeks.get(id);
-}
+  async getRoadmapWeek(id: string): Promise<RoadmapWeek | undefined> {
+    return this.roadmapWeeks.get(id);
+  }
 
-  async createRoadmapWeek(week: InsertRoadmapWeek): Promise < RoadmapWeek > {
-  const id = randomUUID();
-  const newWeek: RoadmapWeek = { ...week, id };
-  this.roadmapWeeks.set(id, newWeek);
-  return newWeek;
-}
+  async createRoadmapWeek(week: InsertRoadmapWeek): Promise<RoadmapWeek> {
+    const id = randomUUID();
+    const newWeek: RoadmapWeek = {
+      ...week,
+      id,
+      description: week.description ?? null,
+      isLocked: week.isLocked ?? true
+    };
+    this.roadmapWeeks.set(id, newWeek);
+    return newWeek;
+  }
 
-  async getRoadmapTasks(weekId: string): Promise < RoadmapTask[] > {
-  return Array.from(this.roadmapTasks.values())
-    .filter(t => t.weekId === weekId)
-    .sort((a, b) => a.dayNumber - b.dayNumber);
-}
+  async getRoadmapTasks(weekId: string): Promise<RoadmapTask[]> {
+    return Array.from(this.roadmapTasks.values())
+      .filter(t => t.weekId === weekId)
+      .sort((a, b) => a.dayNumber - b.dayNumber);
+  }
 
-  async createRoadmapTask(task: InsertRoadmapTask): Promise < RoadmapTask > {
-  const id = randomUUID();
-  const newTask: RoadmapTask = { ...task, id, completedAt: null };
-  this.roadmapTasks.set(id, newTask);
-  return newTask;
-}
+  async createRoadmapTask(task: InsertRoadmapTask): Promise<RoadmapTask> {
+    const id = randomUUID();
+    const newTask: RoadmapTask = {
+      ...task,
+      id,
+      isBoss: task.isBoss ?? false,
+      completed: task.completed ?? false,
+      order: task.order ?? 0
+    };
+    this.roadmapTasks.set(id, newTask);
+    return newTask;
+  }
 
-  async toggleRoadmapTask(taskId: string): Promise < RoadmapTask > {
-  const task = this.roadmapTasks.get(taskId);
-  if(!task) throw new Error("Task not found");
-  const updatedTask = { ...task, completed: !task.completed, completedAt: !task.completed ? new Date() : null };
-  this.roadmapTasks.set(taskId, updatedTask);
-  return updatedTask;
-}
+  async toggleRoadmapTask(taskId: string): Promise<RoadmapTask> {
+    const task = this.roadmapTasks.get(taskId);
+    if (!task) throw new Error("Task not found");
+    const updatedTask = { ...task, completed: !task.completed };
+    this.roadmapTasks.set(taskId, updatedTask);
+    return updatedTask;
+  }
 }
 
 
@@ -2978,7 +2992,6 @@ export class DatabaseStorage implements IStorage {
       .update(roadmapTasks)
       .set({
         completed: !task[0].completed,
-        completedAt: !task[0].completed ? new Date() : null,
       })
       .where(eq(roadmapTasks.id, taskId))
       .returning();
