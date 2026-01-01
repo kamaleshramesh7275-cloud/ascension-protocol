@@ -127,6 +127,40 @@ const requireAdminPassword = (req: any, res: any, next: any) => {
     next();
 };
 
+// Update a roadmap (Admin only)
+router.patch("/admin/roadmaps/:id", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        const updatedRoadmap = await storage.updateRoadmap(id, req.body);
+        res.json(updatedRoadmap);
+    } catch (error) {
+        console.error("Update roadmap error:", error);
+        res.status(500).json({ error: "Failed to update roadmap" });
+    }
+});
+
+// Bulk update tasks (Admin only)
+router.post("/admin/roadmaps/:id/bulk", requireAdminPassword, async (req, res) => {
+    const storage = getStorage();
+    try {
+        const { id } = req.params;
+        const { weekId, dayNumber, completed } = req.body;
+
+        await storage.bulkUpdateRoadmapTasks({
+            roadmapId: id,
+            weekId,
+            dayNumber,
+            updates: { completed }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Bulk update roadmap tasks error:", error);
+        res.status(500).json({ error: "Failed to perform bulk update" });
+    }
+});
+
 // Get all roadmaps (Admin only)
 router.get("/admin/roadmaps", requireAdminPassword, async (_req, res) => {
     const storage = getStorage();

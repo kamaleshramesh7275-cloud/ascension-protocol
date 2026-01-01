@@ -11,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Trash2, Users, TrendingUp, Award, RefreshCw, Shield, ShoppingBag,
-    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map
+    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map,
+    ChevronUp, ChevronDown, Check
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { AdminNotificationComposer } from "@/components/admin-notification-composer";
 import { AdminNotificationHistory } from "@/components/admin-notification-history";
@@ -240,6 +242,28 @@ export default function AdminDashboard() {
         onSuccess: () => {
             if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
             showNotification("success", "Task added successfully");
+        },
+    });
+
+    const updateRoadmapMutation = useMutation({
+        mutationFn: async ({ roadmapId, updates }: { roadmapId: string; updates: any }) => {
+            const res = await apiRequest("PATCH", `/api/roadmap/admin/roadmaps/${roadmapId}`, updates, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/roadmap/admin/roadmaps"] });
+            showNotification("success", "Roadmap updated successfully");
+        },
+    });
+
+    const bulkUpdateRoadmapTasksMutation = useMutation({
+        mutationFn: async ({ roadmapId, weekId, dayNumber, completed }: { roadmapId: string; weekId?: string; dayNumber?: number; completed: boolean }) => {
+            const res = await apiRequest("POST", `/api/roadmap/admin/roadmaps/${roadmapId}/bulk`, { weekId, dayNumber, completed }, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: () => {
+            if (editingRoadmap) fetchRoadmapDetails(editingRoadmap.id);
+            showNotification("success", "Bulk update completed");
         },
     });
 
@@ -970,7 +994,7 @@ export default function AdminDashboard() {
                                                 <TableHead>User</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead>Start Date</TableHead>
-                                                <TableHead>Current Week</TableHead>
+                                                <TableHead>Progress</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -999,7 +1023,20 @@ export default function AdminDashboard() {
                                                         </TableCell>
                                                         <TableCell className="text-zinc-500">{new Date(roadmap.startDate).toLocaleDateString()}</TableCell>
                                                         <TableCell>
-                                                            <Badge variant="outline">Week {roadmap.currentWeek}</Badge>
+                                                            <div className="flex flex-col gap-1">
+                                                                <Badge variant="outline" className="w-fit">Week {roadmap.currentWeek}</Badge>
+                                                                {roadmap.progress && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-20 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-purple-500"
+                                                                                style={{ width: `${(roadmap.progress.completed / roadmap.progress.total) * 100}%` }}
+                                                                            />
+                                                                        </div>
+                                                                        <span className="text-[10px] text-zinc-500">{roadmap.progress.completed}/{roadmap.progress.total}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <Button
@@ -1041,39 +1078,68 @@ export default function AdminDashboard() {
                                             {roadmapDetails.weeks.map((week: any) => (
                                                 <Card key={week.id} className="bg-black/30 border-zinc-800 overflow-hidden">
                                                     <CardHeader className="bg-zinc-800/20 border-b border-zinc-800">
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="space-y-3 flex-1 mr-4">
-                                                                <div className="flex items-center gap-4">
-                                                                    <Badge className="bg-purple-600">Week {week.weekNumber}</Badge>
-                                                                    <Input
-                                                                        value={week.phaseName}
-                                                                        onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { phaseName: e.target.value } })}
-                                                                        className="bg-transparent border-zinc-700 text-lg font-bold h-8 px-2 w-auto min-w-[200px]"
-                                                                    />
+                                                        <div className="flex flex-col gap-4">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="space-y-3 flex-1 mr-4">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <Badge className="bg-purple-600">Week {week.weekNumber}</Badge>
+                                                                        <Input
+                                                                            value={week.phaseName}
+                                                                            onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { phaseName: e.target.value } })}
+                                                                            className="bg-transparent border-zinc-700 text-lg font-bold h-8 px-2 w-auto min-w-[200px]"
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <Label className="text-xs text-zinc-500">Weekly Goal</Label>
+                                                                        <Input
+                                                                            value={week.goal}
+                                                                            onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { goal: e.target.value } })}
+                                                                            className="bg-transparent border-zinc-700 mt-1"
+                                                                        />
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <Label className="text-xs text-zinc-500">Weekly Goal</Label>
-                                                                    <Input
-                                                                        value={week.goal}
-                                                                        onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { goal: e.target.value } })}
-                                                                        className="bg-transparent border-zinc-700 mt-1"
-                                                                    />
+                                                                <div className="flex flex-col items-end gap-2 text-right">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs text-zinc-500">Locked:</span>
+                                                                        <Select
+                                                                            value={week.isLocked ? "true" : "false"}
+                                                                            onValueChange={(v) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { isLocked: v === "true" } })}
+                                                                        >
+                                                                            <SelectTrigger className="w-24 h-8 bg-zinc-900 border-zinc-700">
+                                                                                <SelectValue />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                                                                <SelectItem value="true">Locked</SelectItem>
+                                                                                <SelectItem value="false">Unlocked</SelectItem>
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            className="h-7 px-2 text-[10px] text-emerald-400 border-emerald-900/50 hover:bg-emerald-900/20"
+                                                                            onClick={() => bulkUpdateRoadmapTasksMutation.mutate({ roadmapId: (roadmapDetails as any).id, weekId: week.id, completed: true })}
+                                                                        >
+                                                                            Complete All
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            className="h-7 px-2 text-[10px] text-red-400 border-red-900/50 hover:bg-red-900/20"
+                                                                            onClick={() => bulkUpdateRoadmapTasksMutation.mutate({ roadmapId: (roadmapDetails as any).id, weekId: week.id, completed: false })}
+                                                                        >
+                                                                            Reset All
+                                                                        </Button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs text-zinc-500">Locked:</span>
-                                                                <Select
-                                                                    value={week.isLocked ? "true" : "false"}
-                                                                    onValueChange={(v) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { isLocked: v === "true" } })}
-                                                                >
-                                                                    <SelectTrigger className="w-24 h-8 bg-zinc-900 border-zinc-700">
-                                                                        <SelectValue />
-                                                                    </SelectTrigger>
-                                                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                                                        <SelectItem value="true">Locked</SelectItem>
-                                                                        <SelectItem value="false">Unlocked</SelectItem>
-                                                                    </SelectContent>
-                                                                </Select>
+                                                            <div>
+                                                                <Label className="text-xs text-zinc-500">Mission Dossier (Detailed Description)</Label>
+                                                                <textarea
+                                                                    value={week.description || ""}
+                                                                    onChange={(e) => updateRoadmapWeekMutation.mutate({ weekId: week.id, updates: { description: e.target.value } })}
+                                                                    className="w-full mt-1 bg-transparent border border-zinc-700 rounded-md p-2 text-sm text-zinc-300 min-h-[80px] focus:ring-1 focus:ring-purple-500 outline-none"
+                                                                    placeholder="Enter detailed protocol context for this week..."
+                                                                />
                                                             </div>
                                                         </div>
                                                     </CardHeader>
@@ -1087,34 +1153,71 @@ export default function AdminDashboard() {
                                                                     <div key={dayNum} className="space-y-2">
                                                                         <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
                                                                             <h5 className="text-sm font-bold text-zinc-400">Day {dayNum} Protocol</h5>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="ghost"
-                                                                                className="h-7 text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
-                                                                                onClick={() => createRoadmapTaskMutation.mutate({
-                                                                                    weekId: week.id,
-                                                                                    dayNumber: dayNum,
-                                                                                    text: "New Task",
-                                                                                    order: (dayNum * 10) + (week.tasks?.filter((t: any) => t.dayNumber === dayNum).length || 0)
-                                                                                })}
-                                                                            >
-                                                                                <Plus className="w-3.5 h-3.5 mr-1" /> Add Task
-                                                                            </Button>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    className="h-6 px-1.5 text-[9px] text-emerald-400/70 hover:text-emerald-400 hover:bg-emerald-900/20"
+                                                                                    onClick={() => bulkUpdateRoadmapTasksMutation.mutate({ roadmapId: (roadmapDetails as any).id, weekId: week.id, dayNumber: dayNum, completed: true })}
+                                                                                >
+                                                                                    Complete Day
+                                                                                </Button>
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    variant="ghost"
+                                                                                    className="h-7 text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
+                                                                                    onClick={() => createRoadmapTaskMutation.mutate({
+                                                                                        weekId: week.id,
+                                                                                        dayNumber: dayNum,
+                                                                                        text: "New Task",
+                                                                                        order: (dayNum * 10) + (week.tasks?.filter((t: any) => t.dayNumber === dayNum).length || 0)
+                                                                                    })}
+                                                                                >
+                                                                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Task
+                                                                                </Button>
+                                                                            </div>
                                                                         </div>
                                                                         <div className="grid grid-cols-1 gap-2">
                                                                             {week.tasks
                                                                                 ?.filter((t: any) => t.dayNumber === dayNum)
                                                                                 .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                                                                                .map((task: any) => (
+                                                                                .map((task: any, idx: number) => (
                                                                                     <div key={task.id} className="flex gap-2 items-center bg-black/40 p-2 rounded border border-zinc-800 group transition-all hover:border-zinc-700">
+                                                                                        <button
+                                                                                            onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { completed: !task.completed } })}
+                                                                                            className={cn(
+                                                                                                "w-6 h-6 rounded flex items-center justify-center transition-colors border",
+                                                                                                task.completed
+                                                                                                    ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                                                                                    : "bg-zinc-900 border-zinc-800 text-zinc-600 hover:border-zinc-600"
+                                                                                            )}
+                                                                                        >
+                                                                                            {task.completed && <Check className="w-3.5 h-3.5" />}
+                                                                                        </button>
                                                                                         <div className="flex-1">
                                                                                             <Input
                                                                                                 value={task.text}
                                                                                                 onChange={(e) => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { text: e.target.value } })}
-                                                                                                className="bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+                                                                                                className={cn(
+                                                                                                    "bg-transparent border-none p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm",
+                                                                                                    task.completed && "text-zinc-500 line-through decoration-emerald-500/30"
+                                                                                                )}
                                                                                             />
                                                                                         </div>
-                                                                                        <div className="flex items-center gap-1.5">
+                                                                                        <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                                                            <div className="flex flex-col gap-0.5 mr-1">
+                                                                                                <button
+                                                                                                    onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { order: (task.order || 0) - 1 } })}
+                                                                                                    className="hover:text-purple-400"
+                                                                                                >
+                                                                                                    <ChevronUp className="w-3 h-3" />
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { order: (task.order || 0) + 1 } })}
+                                                                                                    className="hover:text-purple-400"
+                                                                                                >
+                                                                                                    <ChevronDown className="w-3 h-3" />
+                                                                                                </button>
+                                                                                            </div>
                                                                                             <button
                                                                                                 onClick={() => updateRoadmapTaskMutation.mutate({ taskId: task.id, updates: { isBoss: !task.isBoss } })}
                                                                                                 className={`text-[9px] px-1.5 py-0.5 rounded-full border transition-colors ${task.isBoss

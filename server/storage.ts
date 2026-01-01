@@ -92,7 +92,7 @@ import {
   roadmapWeeks,
   roadmapTasks
 } from "@shared/schema";
-import { eq, and, desc, asc, lt, gt, ne, or } from "drizzle-orm"; // Import operators
+import { eq, and, desc, asc, lt, gt, ne, or, inArray } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
@@ -260,10 +260,12 @@ export interface IStorage {
   getRoadmapWeeks(roadmapId: string): Promise<RoadmapWeek[]>;
   getRoadmapWeek(id: string): Promise<RoadmapWeek | undefined>;
   createRoadmapWeek(week: InsertRoadmapWeek): Promise<RoadmapWeek>;
+  updateRoadmap(id: string, updates: Partial<Roadmap>): Promise<Roadmap>;
   updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek>;
   getRoadmapTasks(weekId: string): Promise<RoadmapTask[]>;
   createRoadmapTask(task: InsertRoadmapTask): Promise<RoadmapTask>;
   updateRoadmapTask(id: string, updates: Partial<RoadmapTask>): Promise<RoadmapTask>;
+  bulkUpdateRoadmapTasks(params: { roadmapId?: string; weekId?: string; dayNumber?: number; updates: Partial<RoadmapTask> }): Promise<void>;
   deleteRoadmapTask(id: string): Promise<void>;
   toggleRoadmapTask(taskId: string): Promise<RoadmapTask>;
 }
@@ -1849,12 +1851,36 @@ export class MemStorage implements IStorage {
     return updatedTask;
   }
 
-  async getAllRoadmaps(): Promise<(Roadmap & { user: User })[]> {
-    return Array.from(this.roadmaps.values()).map(r => {
+  async getAllRoadmaps(): Promise<(Roadmap & { user: User; progress?: { completed: number; total: number } })[]> {
+    const roadmapsArray = Array.from(this.roadmaps.values());
+    const results = [];
+
+    for (const r of roadmapsArray) {
       const user = this.users.get(r.userId);
-      if (!user) throw new Error(`User ${r.userId} not found for roadmap ${r.id}`);
-      return { ...r, user };
-    });
+      if (!user) continue;
+
+      const weeks = Array.from(this.roadmapWeeks.values()).filter(w => w.roadmapId === r.id);
+      let total = 0;
+      let completed = 0;
+
+      for (const week of weeks) {
+        const tasks = Array.from(this.roadmapTasks.values()).filter(t => t.weekId === week.id);
+        total += tasks.length;
+        completed += tasks.filter(t => t.completed).length;
+      }
+
+      results.push({ ...r, user, progress: { total, completed } });
+    }
+
+    return results;
+  }
+
+  async updateRoadmap(id: string, updates: Partial<Roadmap>): Promise<Roadmap> {
+    const roadmap = this.roadmaps.get(id);
+    if (!roadmap) throw new Error("Roadmap not found");
+    const updated = { ...roadmap, ...updates };
+    this.roadmaps.set(id, updated);
+    return updated;
   }
 
   async updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek> {
@@ -1871,6 +1897,27 @@ export class MemStorage implements IStorage {
     const updatedTask = { ...task, ...updates };
     this.roadmapTasks.set(id, updatedTask);
     return updatedTask;
+  }
+
+  async bulkUpdateRoadmapTasks(params: { roadmapId?: string; weekId?: string; dayNumber?: number; updates: Partial<RoadmapTask> }): Promise<void> {
+    const tasksArray = Array.from(this.roadmapTasks.values());
+
+    for (const task of tasksArray) {
+      let match = false;
+      if (params.weekId) {
+        match = task.weekId === params.weekId;
+        if (match && params.dayNumber) {
+          match = task.dayNumber === params.dayNumber;
+        }
+      } else if (params.roadmapId) {
+        const week = this.roadmapWeeks.get(task.weekId);
+        match = week?.roadmapId === params.roadmapId;
+      }
+
+      if (match) {
+        this.roadmapTasks.set(task.id, { ...task, ...params.updates });
+      }
+    }
   }
 
   async deleteRoadmapTask(id: string): Promise<void> {
@@ -3032,7 +3079,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getAllRoadmaps(): Promise<(Roadmap & { user: User })[]> {
+  async getAllRoadmaps(): Promise<(Roadmap & { user: User; progress?: { completed: number; total: number } })[]> {
     const results = await db!
       .select({
         roadmap: roadmaps,
@@ -3041,7 +3088,31 @@ export class DatabaseStorage implements IStorage {
       .from(roadmaps)
       .innerJoin(users, eq(roadmaps.userId, users.id));
 
-    return results.map(r => ({ ...r.roadmap, user: r.user }));
+    const enriched = await Promise.all(results.map(async (r) => {
+      const weeks = await db!.select().from(roadmapWeeks).where(eq(roadmapWeeks.roadmapId, r.roadmap.id));
+      let total = 0;
+      let completed = 0;
+
+      for (const week of weeks) {
+        const tasks = await db!.select().from(roadmapTasks).where(eq(roadmapTasks.weekId, week.id));
+        total += tasks.length;
+        completed += tasks.filter(t => t.completed).length;
+      }
+
+      return { ...r.roadmap, user: r.user, progress: { total, completed } };
+    }));
+
+    return enriched;
+  }
+
+  async updateRoadmap(id: string, updates: Partial<Roadmap>): Promise<Roadmap> {
+    const [updated] = await db!
+      .update(roadmaps)
+      .set(updates)
+      .where(eq(roadmaps.id, id))
+      .returning();
+    if (!updated) throw new Error("Roadmap not found");
+    return updated;
   }
 
   async updateRoadmapWeek(id: string, updates: Partial<RoadmapWeek>): Promise<RoadmapWeek> {
@@ -3062,6 +3133,32 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!updated) throw new Error("Task not found");
     return updated;
+  }
+
+  async bulkUpdateRoadmapTasks(params: { roadmapId?: string; weekId?: string; dayNumber?: number; updates: Partial<RoadmapTask> }): Promise<void> {
+    if (params.weekId) {
+      if (params.dayNumber) {
+        await db!
+          .update(roadmapTasks)
+          .set(params.updates)
+          .where(and(eq(roadmapTasks.weekId, params.weekId), eq(roadmapTasks.dayNumber, params.dayNumber)));
+      } else {
+        await db!
+          .update(roadmapTasks)
+          .set(params.updates)
+          .where(eq(roadmapTasks.weekId, params.weekId));
+      }
+    } else if (params.roadmapId) {
+      const weeksInRoadmap = db!
+        .select({ id: roadmapWeeks.id })
+        .from(roadmapWeeks)
+        .where(eq(roadmapWeeks.roadmapId, params.roadmapId));
+
+      await db!
+        .update(roadmapTasks)
+        .set(params.updates)
+        .where(inArray(roadmapTasks.weekId, weeksInRoadmap));
+    }
   }
 
   async deleteRoadmapTask(id: string): Promise<void> {
