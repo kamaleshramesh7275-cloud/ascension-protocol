@@ -67,17 +67,41 @@ export default function Dashboard() {
       const res = await apiRequest("POST", "/api/tasks", { text });
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      setNewTodo("");
-      toast({ title: "Task added" });
+    onMutate: async (text) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/tasks"] });
+
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData<Task[]>(["/api/tasks"]);
+
+      // Optimistically update
+      const optimisticTask: Task = {
+        id: `temp-${Date.now()}`,
+        text,
+        completed: false,
+        userId: user?.id || '',
+        createdAt: new Date()
+      };
+
+      queryClient.setQueryData<Task[]>(["/api/tasks"], (old = []) => [...old, optimisticTask]);
+
+      return { previousTodos };
     },
-    onError: (error: Error) => {
+    onError: (err, text, context) => {
+      // Rollback on error
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/tasks"], context.previousTodos);
+      }
       toast({
         title: "Failed to add task",
-        description: error.message,
+        description: err.message,
         variant: "destructive"
       });
+    },
+    onSettled: () => {
+      // Refetch to sync with server
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      setNewTodo("");
     }
   });
 
@@ -86,16 +110,55 @@ export default function Dashboard() {
       const res = await apiRequest("PATCH", `/api/tasks/${id}`, { completed });
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/tasks"] })
+    onMutate: async ({ id, completed }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/tasks"] });
+
+      const previousTodos = queryClient.getQueryData<Task[]>(["/api/tasks"]);
+
+      // Optimistically update
+      queryClient.setQueryData<Task[]>(["/api/tasks"], (old = []) =>
+        old.map(task => task.id === id ? { ...task, completed } : task)
+      );
+
+      return { previousTodos };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/tasks"], context.previousTodos);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    }
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/tasks/${id}`);
     },
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/tasks"] });
+
+      const previousTodos = queryClient.getQueryData<Task[]>(["/api/tasks"]);
+
+      // Optimistically remove
+      queryClient.setQueryData<Task[]>(["/api/tasks"], (old = []) =>
+        old.filter(task => task.id !== id)
+      );
+
+      return { previousTodos };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousTodos) {
+        queryClient.setQueryData(["/api/tasks"], context.previousTodos);
+      }
+      toast({
+        title: "Failed to delete task",
+        variant: "destructive"
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({ title: "Task deleted" });
     }
   });
 
