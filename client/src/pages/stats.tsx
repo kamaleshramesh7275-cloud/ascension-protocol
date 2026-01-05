@@ -49,7 +49,7 @@ export default function StatsPage() {
     };
 
     return (
-        <div className="p-8 min-h-screen bg-background/50">
+        <div className="p-8 min-h-screen bg-background/50" data-tour="stats-page">
             <motion.div
                 variants={container}
                 initial="hidden"

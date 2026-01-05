@@ -111,7 +111,7 @@ export default function LibraryPage() {
                 />
             </div>
 
-            <div className="relative z-10 p-6 space-y-6">
+            <div className="relative z-10 p-6 space-y-6" data-tour="library-page">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}

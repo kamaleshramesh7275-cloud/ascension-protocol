@@ -141,7 +141,7 @@ export default function GlobalChatPage() {
     };
 
     return (
-        <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 p-4 max-w-6xl mx-auto">
+        <div className="h-[calc(100vh-2rem)] flex flex-col gap-4 p-4 max-w-6xl mx-auto" data-tour="global-chat-page">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">

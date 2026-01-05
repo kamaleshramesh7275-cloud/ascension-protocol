@@ -141,7 +141,7 @@ export default function PartnersPage() {
     const pendingRivalries = rivalries.filter((r: any) => r.status === 'pending' && r.defenderId === user?.id);
 
     return (
-        <div className="space-y-8 p-8 min-h-screen text-white">
+        <div className="space-y-8 p-8 min-h-screen text-white" data-tour="partners-page">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">

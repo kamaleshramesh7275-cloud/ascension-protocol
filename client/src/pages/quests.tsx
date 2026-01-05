@@ -137,7 +137,7 @@ export default function QuestsPage() {
                 />
             </div>
 
-            <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8">
+            <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8" data-tour="quests-page">
                 {/* Header */}
                 <h1 className="text-5xl font-display font-bold mb-2 text-foreground drop-shadow-sm">
                     Quest Board

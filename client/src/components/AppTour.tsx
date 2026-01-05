@@ -4,76 +4,86 @@ import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const steps: Step[] = [
     {
         target: 'body',
         placement: 'center',
         title: 'Welcome to Ascension Protocol! 🚀',
-        content: "I'll take you on a quick tour of your new base of operations. Let's get started!",
+        content: "I'll take you on a quick tour of your new base of operations. Let's explore the system together!",
     },
     {
         target: '[data-tour="sidebar-dashboard"]',
-        content: 'Your Dashboard is where you can see your overview, progress, and daily goals.',
-        title: 'Command Center',
+        content: 'This is your Command Center. You can always come back here for a quick overview.',
+        title: 'Dashboard',
     },
     {
-        target: '[data-tour="streak-value"]',
-        content: 'Keep your streak alive by logging in and completing tasks every day!',
-        title: 'Daily Consistency',
-    },
-    {
-        target: '[data-tour="rank-badge"]',
-        content: 'Earn XP to rank up from Iron to legendary tiers.',
-        title: 'Your Rank',
-    },
-    {
-        target: '[data-tour="active-quests"]',
-        content: 'Complete these daily and weekly quests to earn XP and Coins.',
-        title: 'Quests',
-    },
-    {
-        target: '[data-tour="sidebar-focus-sanctum"]',
-        content: 'Enter the Focus Sanctum for deep work sessions. Your Focus Pet will grow as you work!',
-        title: 'Deep Work',
+        target: '[data-tour="quests-page"]',
+        content: 'The Quest Board contains your Daily Objectives and long-term Journeys. Completing these earns you XP and Coins.',
+        title: 'Earn Your Keep',
+        placement: 'center',
     },
     {
         target: '[data-tour="focus-pet"]',
-        content: 'Hover over your pet to see stats. Click or use the tooltip button to feed it with coins!',
-        title: 'Your Focus Companion',
+        content: 'The Focus Sanctum is where you do deep work. Your pet thrives on your focus sessions!',
+        title: 'Focus & Pets',
+        placement: 'center',
     },
     {
         target: '[data-tour="sidebar-roadmap"]',
-        content: 'The 30-Day Protocol is a structured path to mastery. Premium members get full access.',
-        title: 'The Path to Ascension',
+        content: 'The 30-Day Protocol provides a structured path to mastery. Follow the roadmap to reach new heights.',
+        title: 'Structured Mastery',
     },
     {
-        target: '[data-tour="sidebar-partners"]',
-        content: 'Find study partners and build your network for mutual accountability.',
-        title: 'Allies',
+        target: '[data-tour="partners-page"]',
+        content: 'Connect with other ascendants for mutual accountability and study sessions.',
+        title: 'Build Your Network',
+        placement: 'center',
     },
     {
-        target: '[data-tour="sidebar-global-chat"]',
-        content: 'Connect with the entire Ascension community in real-time.',
-        title: 'Global Comms',
+        target: '[data-tour="global-chat-page"]',
+        content: 'Engage with the community in real-time. Share your progress and cheer others on!',
+        title: 'Global Communications',
+        placement: 'center',
     },
     {
-        target: '[data-tour="sidebar-store"]',
-        content: 'Spend your hard-earned coins on titles, badges, and custom themes!',
-        title: 'The Armory',
+        target: '[data-tour="library-page"]',
+        content: 'Access a wealth of knowledge in our curated library. From fitness to mindfulness, we have you covered.',
+        title: 'The Archives',
+        placement: 'center',
     },
     {
-        target: '[data-tour="sidebar-profile"]',
-        content: 'You can replay this tutorial anytime from your profile settings.',
-        title: 'Finishing Up',
+        target: '[data-tour="stats-page"]',
+        content: 'Monitor your growth across different attributes. Strength, Intelligence, and more—every action counts.',
+        title: 'Attribute Analysis',
+        placement: 'center',
+    },
+    {
+        target: '[data-tour="leaderboard-page"]',
+        content: 'See how you stack up against the best in the protocol. Rise through the ranks!',
+        title: 'Global Rankings',
+        placement: 'center',
+    },
+    {
+        target: '[data-tour="store-tabs"]',
+        content: 'Spend your coins on custom themes, titles, and gear in the Armory.',
+        title: 'The Store',
+        placement: 'center',
+    },
+    {
+        target: '[data-tour="profile-page"]',
+        content: 'This is your personal record. You can manage your settings and replay this tour anytime here.',
+        title: 'Your Legacy',
+        placement: 'center',
     }
 ];
-
-import { useSidebar } from '@/components/ui/sidebar';
 
 export function AppTour() {
     const { user: authUser } = useAuth();
     const queryClient = useQueryClient();
+    const [location, setLocation] = useLocation();
     const { setOpen, setOpenMobile, isMobile, open, openMobile } = useSidebar();
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
@@ -113,13 +123,30 @@ export function AppTour() {
 
         if (type === 'step:before') {
             const currentStep = steps[index];
-            if (currentStep && typeof currentStep.target === 'string' && currentStep.target.includes('sidebar')) {
-                // Ensure sidebar is open for sidebar steps
+            const target = typeof currentStep.target === 'string' ? currentStep.target : '';
+
+            // Handle Navigation
+            if (target === '[data-tour="quests-page"]') setLocation('/quests');
+            if (target === '[data-tour="focus-pet"]') setLocation('/focus');
+            if (target === '[data-tour="sidebar-roadmap"]') setLocation('/roadmap');
+            if (target === '[data-tour="partners-page"]') setLocation('/partners');
+            if (target === '[data-tour="global-chat-page"]') setLocation('/global-chat');
+            if (target === '[data-tour="library-page"]') setLocation('/library');
+            if (target === '[data-tour="stats-page"]') setLocation('/stats');
+            if (target === '[data-tour="leaderboard-page"]') setLocation('/leaderboard');
+            if (target === '[data-tour="store-tabs"]') setLocation('/store');
+            if (target === '[data-tour="profile-page"]') setLocation('/profile');
+
+            // Handle Sidebar Visibility for sidebar-specific steps
+            if (target.includes('sidebar')) {
                 if (isMobile) {
                     if (!openMobile) setOpenMobile(true);
                 } else {
                     if (!open) setOpen(true);
                 }
+            } else if (target && target !== 'body') {
+                // For non-sidebar steps, maybe close sidebar on mobile to see content better
+                if (isMobile && openMobile) setOpenMobile(false);
             }
         }
 
@@ -152,6 +179,7 @@ export function AppTour() {
                     textColor: '#ffffff',
                     arrowColor: '#18181b',
                     overlayColor: 'rgba(0, 0, 0, 0.75)',
+                    zIndex: 1000,
                 },
                 tooltipContainer: {
                     textAlign: 'left',
@@ -173,13 +201,7 @@ export function AppTour() {
 
 // Export a way to trigger it manually
 export function useAppTour() {
-    const queryClient = useQueryClient();
-
     const triggerTour = async () => {
-        // We set hasSeenTutorial to false temporarily to trigger it if we want to "Replay"
-        // But Joyride usually needs a local state. 
-        // For "Replay", we can just force the 'run' state in the component.
-        // Let's implement that by adding a custom event or a shared state.
         window.dispatchEvent(new CustomEvent('start-app-tour'));
     };
 

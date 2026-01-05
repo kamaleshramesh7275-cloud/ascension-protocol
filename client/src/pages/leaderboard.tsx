@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
     };
 
     return (
-        <div className="p-4 md:p-8 min-h-screen bg-background/50">
+        <div className="p-4 md:p-8 min-h-screen bg-background/50" data-tour="leaderboard-page">
             <motion.div
                 variants={container}
                 initial="hidden"
