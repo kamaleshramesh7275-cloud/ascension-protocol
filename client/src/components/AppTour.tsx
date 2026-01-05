@@ -203,7 +203,7 @@ export function AppTour() {
 
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-        if (finishedStatuses.includes(status)) {
+        if (finishedStatuses.includes(status) || type === 'tour:end') {
             console.log('[AppTour] Tour finished or skipped');
             setRun(false);
             if (!user?.hasSeenTutorial) {
@@ -236,6 +236,16 @@ export function AppTour() {
 
         if (type === 'step:after') {
             const nextIndex = index + (action === 'next' ? 1 : -1);
+
+            // Check if we just finished the last step
+            if (action === 'next' && index === steps.length - 1) {
+                setRun(false);
+                if (!user?.hasSeenTutorial) {
+                    markSeenMutation.mutate();
+                }
+                return;
+            }
+
             if (nextIndex >= 0 && nextIndex < steps.length) {
                 const nextStep = steps[nextIndex];
 
