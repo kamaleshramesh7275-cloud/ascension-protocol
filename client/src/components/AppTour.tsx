@@ -7,76 +7,95 @@ import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { useSidebar } from '@/components/ui/sidebar';
 
-const steps: Step[] = [
+const steps: (Step & { path?: string })[] = [
     {
         target: 'body',
         placement: 'center',
         title: 'Welcome to Ascension Protocol! 🚀',
         content: "I'll take you on a quick tour of your new base of operations. Let's explore the system together!",
+        path: '/dashboard'
     },
     {
         target: '[data-tour="sidebar-dashboard"]',
-        content: 'This is your Command Center. You can always come back here for a quick overview.',
-        title: 'Dashboard',
+        content: 'This is your Command Center. You can always come back here for a quick overview of your progress.',
+        title: 'Your Command Center',
+        path: '/dashboard'
     },
     {
         target: '[data-tour="quests-page"]',
-        content: 'The Quest Board contains your Daily Objectives and long-term Journeys. Completing these earns you XP and Coins.',
-        title: 'Earn Your Keep',
+        content: 'The Quest Board contains your Daily Objectives. Completing these earns you XP and Coins to level up.',
+        title: 'Quests & Rewards',
         placement: 'center',
+        path: '/quests'
     },
     {
         target: '[data-tour="focus-pet"]',
-        content: 'The Focus Sanctum is where you do deep work. Your pet thrives on your focus sessions!',
-        title: 'Focus & Pets',
+        content: 'The Focus Sanctum is where you do deep work. Your pet grows stronger and evolves as you work!',
+        title: 'Focus & Companions',
         placement: 'center',
+        path: '/focus'
     },
     {
         target: '[data-tour="sidebar-roadmap"]',
         content: 'The 30-Day Protocol provides a structured path to mastery. Follow the roadmap to reach new heights.',
         title: 'Structured Mastery',
+        path: '/roadmap'
     },
     {
         target: '[data-tour="partners-page"]',
-        content: 'Connect with other ascendants for mutual accountability and study sessions.',
-        title: 'Build Your Network',
+        content: 'Connect with other ascendants for mutual accountability, rivalries, and study sessions.',
+        title: 'The Community',
         placement: 'center',
+        path: '/partners'
     },
     {
         target: '[data-tour="global-chat-page"]',
         content: 'Engage with the community in real-time. Share your progress and cheer others on!',
         title: 'Global Communications',
         placement: 'center',
+        path: '/global-chat'
     },
     {
         target: '[data-tour="library-page"]',
-        content: 'Access a wealth of knowledge in our curated library. From fitness to mindfulness, we have you covered.',
-        title: 'The Archives',
+        content: 'Access a wealth of knowledge in our curated library. Learn from expert guides and videos.',
+        title: 'Knowledge Archives',
         placement: 'center',
+        path: '/library'
     },
     {
         target: '[data-tour="stats-page"]',
         content: 'Monitor your growth across different attributes. Strength, Intelligence, and more—every action counts.',
         title: 'Attribute Analysis',
         placement: 'center',
+        path: '/stats'
     },
     {
         target: '[data-tour="leaderboard-page"]',
-        content: 'See how you stack up against the best in the protocol. Rise through the ranks!',
+        content: 'See how you stack up against the best. High-ranking members earn exclusive rewards!',
         title: 'Global Rankings',
         placement: 'center',
+        path: '/leaderboard'
     },
     {
         target: '[data-tour="store-tabs"]',
-        content: 'Spend your coins on custom themes, titles, and gear in the Armory.',
-        title: 'The Store',
+        content: 'Spend your hard-earned coins on custom themes, titles, and gear in the Store.',
+        title: 'The Armory',
         placement: 'center',
+        path: '/store'
     },
     {
         target: '[data-tour="profile-page"]',
-        content: 'This is your personal record. You can manage your settings and replay this tour anytime here.',
+        content: 'This is your personal record. You can manage your settings and replay this tour anytime.',
         title: 'Your Legacy',
         placement: 'center',
+        path: '/profile'
+    },
+    {
+        target: 'body',
+        placement: 'center',
+        title: 'Ascension Commences! 🎖',
+        content: "You're all set, Commander. Your journey to the top begins now. We'll see you in the rankings!",
+        path: '/profile'
     }
 ];
 
@@ -109,6 +128,7 @@ export function AppTour() {
         }
 
         const handleStartTour = () => {
+            setLocation('/dashboard');
             setStepIndex(0);
             setTourKey(prev => prev + 1);
             setRun(true);
@@ -125,18 +145,6 @@ export function AppTour() {
             const currentStep = steps[index];
             const target = typeof currentStep.target === 'string' ? currentStep.target : '';
 
-            // Handle Navigation
-            if (target === '[data-tour="quests-page"]') setLocation('/quests');
-            if (target === '[data-tour="focus-pet"]') setLocation('/focus');
-            if (target === '[data-tour="sidebar-roadmap"]') setLocation('/roadmap');
-            if (target === '[data-tour="partners-page"]') setLocation('/partners');
-            if (target === '[data-tour="global-chat-page"]') setLocation('/global-chat');
-            if (target === '[data-tour="library-page"]') setLocation('/library');
-            if (target === '[data-tour="stats-page"]') setLocation('/stats');
-            if (target === '[data-tour="leaderboard-page"]') setLocation('/leaderboard');
-            if (target === '[data-tour="store-tabs"]') setLocation('/store');
-            if (target === '[data-tour="profile-page"]') setLocation('/profile');
-
             // Handle Sidebar Visibility for sidebar-specific steps
             if (target.includes('sidebar')) {
                 if (isMobile) {
@@ -144,9 +152,30 @@ export function AppTour() {
                 } else {
                     if (!open) setOpen(true);
                 }
-            } else if (target && target !== 'body') {
-                // For non-sidebar steps, maybe close sidebar on mobile to see content better
-                if (isMobile && openMobile) setOpenMobile(false);
+            }
+        }
+
+        if (type === 'step:after') {
+            const nextIndex = index + (action === 'next' ? 1 : -1);
+            if (nextIndex >= 0 && nextIndex < steps.length) {
+                const nextStep = steps[nextIndex];
+                if (nextStep.path && location !== nextStep.path) {
+                    setLocation(nextStep.path);
+                }
+                setStepIndex(nextIndex);
+            }
+        }
+
+        if (type === 'error:target_not_found') {
+            // If target isn't found, check if we're on the right path.
+            // If not, it might be because navigation is still in progress.
+            const currentStep = steps[index];
+            if (currentStep && currentStep.path && location !== currentStep.path) {
+                setLocation(currentStep.path);
+            } else {
+                // If we are on the right path but target still not found, 
+                // it might just be a slow render. Do NOT increment.
+                console.warn(`Target not found: ${currentStep.target}`);
             }
         }
 
@@ -155,8 +184,6 @@ export function AppTour() {
             if (!user?.hasSeenTutorial) {
                 markSeenMutation.mutate();
             }
-        } else if (type === 'step:after' || type === 'error:target_not_found') {
-            setStepIndex(index + (action === 'next' ? 1 : -1));
         }
     };
 
@@ -171,6 +198,9 @@ export function AppTour() {
             showSkipButton
             disableScrolling={false}
             scrollToFirstStep
+            disableOverlayClose
+            disableCloseOnEsc
+            spotlightClicks={false}
             callback={handleJoyrideCallback}
             styles={{
                 options: {
