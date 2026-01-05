@@ -69,10 +69,15 @@ const steps: Step[] = [
     }
 ];
 
+import { useSidebar } from '@/components/ui/sidebar';
+
 export function AppTour() {
     const { user: authUser } = useAuth();
     const queryClient = useQueryClient();
+    const { setOpen, setOpenMobile, isMobile, open, openMobile } = useSidebar();
     const [run, setRun] = useState(false);
+    const [stepIndex, setStepIndex] = useState(0);
+    const [tourKey, setTourKey] = useState(0);
 
     const { data: user } = useQuery<User>({
         queryKey: ["/api/user"],
@@ -93,30 +98,52 @@ export function AppTour() {
             setRun(true);
         }
 
-        const handleStartTour = () => setRun(true);
+        const handleStartTour = () => {
+            setStepIndex(0);
+            setTourKey(prev => prev + 1);
+            setRun(true);
+        };
         window.addEventListener('start-app-tour', handleStartTour);
         return () => window.removeEventListener('start-app-tour', handleStartTour);
     }, [user]);
 
     const handleJoyrideCallback = (data: CallBackProps) => {
-        const { status } = data;
+        const { status, index, type, action } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+
+        if (type === 'step:before') {
+            const currentStep = steps[index];
+            if (currentStep && typeof currentStep.target === 'string' && currentStep.target.includes('sidebar')) {
+                // Ensure sidebar is open for sidebar steps
+                if (isMobile) {
+                    if (!openMobile) setOpenMobile(true);
+                } else {
+                    if (!open) setOpen(true);
+                }
+            }
+        }
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
             if (!user?.hasSeenTutorial) {
                 markSeenMutation.mutate();
             }
+        } else if (type === 'step:after' || type === 'error:target_not_found') {
+            setStepIndex(index + (action === 'next' ? 1 : -1));
         }
     };
 
     return (
         <Joyride
+            key={tourKey}
             steps={steps}
             run={run}
+            stepIndex={stepIndex}
             continuous
             showProgress
             showSkipButton
+            disableScrolling={false}
+            scrollToFirstStep
             callback={handleJoyrideCallback}
             styles={{
                 options: {
