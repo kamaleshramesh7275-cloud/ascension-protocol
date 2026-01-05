@@ -276,7 +276,7 @@ export default function Dashboard() {
       </div>
 
       {/* XP Progress */}
-      <Card>
+      <Card data-tour="xp-progress">
         <CardContent className="pt-6">
           <XPProgress xp={user.xp} tier={user.tier as any} />
         </CardContent>

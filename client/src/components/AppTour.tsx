@@ -22,6 +22,24 @@ const steps: (Step & { path?: string })[] = [
         path: '/dashboard'
     },
     {
+        target: '[data-tour="streak-value"]',
+        content: 'Keep your streak alive by logging in and completing tasks every day!',
+        title: 'Daily Consistency',
+        path: '/dashboard'
+    },
+    {
+        target: '[data-tour="rank-badge"]',
+        content: 'Earn XP to rank up from Iron to legendary tiers. Higher ranks unlock exclusive perks!',
+        title: 'Your Rank',
+        path: '/dashboard'
+    },
+    {
+        target: '[data-tour="xp-progress"]',
+        content: 'This bar shows your journey to the next level. Every bit of XP counts!',
+        title: 'Experience Points',
+        path: '/dashboard'
+    },
+    {
         target: '[data-tour="quests-page"]',
         content: 'The Quest Board contains your Daily Objectives. Completing these earns you XP and Coins to level up.',
         title: 'Quests & Rewards',
@@ -141,11 +159,19 @@ export function AppTour() {
         const { status, index, type, action } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
+        if (finishedStatuses.includes(status)) {
+            setRun(false);
+            if (!user?.hasSeenTutorial) {
+                markSeenMutation.mutate();
+            }
+            return;
+        }
+
         if (type === 'step:before') {
             const currentStep = steps[index];
             const target = typeof currentStep.target === 'string' ? currentStep.target : '';
 
-            // Handle Sidebar Visibility for sidebar-specific steps
+            // Handle Sidebar Visibility
             if (target.includes('sidebar')) {
                 if (isMobile) {
                     if (!openMobile) setOpenMobile(true);
@@ -159,33 +185,50 @@ export function AppTour() {
             const nextIndex = index + (action === 'next' ? 1 : -1);
             if (nextIndex >= 0 && nextIndex < steps.length) {
                 const nextStep = steps[nextIndex];
+
+                // If navigation is needed, do it but don't advance the index yet
+                // The useEffect will handle index advancement once the location matches
                 if (nextStep.path && location !== nextStep.path) {
                     setLocation(nextStep.path);
+                    // We don't setStepIndex here; we wait for the location to change
+                } else {
+                    setStepIndex(nextIndex);
                 }
-                setStepIndex(nextIndex);
             }
         }
 
         if (type === 'error:target_not_found') {
-            // If target isn't found, check if we're on the right path.
-            // If not, it might be because navigation is still in progress.
             const currentStep = steps[index];
             if (currentStep && currentStep.path && location !== currentStep.path) {
                 setLocation(currentStep.path);
-            } else {
-                // If we are on the right path but target still not found, 
-                // it might just be a slow render. Do NOT increment.
-                console.warn(`Target not found: ${currentStep.target}`);
-            }
-        }
-
-        if (finishedStatuses.includes(status)) {
-            setRun(false);
-            if (!user?.hasSeenTutorial) {
-                markSeenMutation.mutate();
+            } else if (run) {
+                // Persistent retry if we are on the right page but element hasn't appeared
+                setTimeout(() => {
+                    if (run) setStepIndex(index);
+                }, 500);
             }
         }
     };
+
+    // Auto-advance step index when location matches the next step's path
+    useEffect(() => {
+        if (!run) return;
+
+        const currentStep = steps[stepIndex];
+        // If we're stuck on a step because we navigated but haven't updated the index
+        // Handle indices that might be "behind" after a location change
+        const findNextStepIndex = () => {
+            // Check if we just navigated to a new page and need to show the first step of that page
+            // but only if we are at the end of a previous sequence
+            // For now, let's keep it simple: if the current location matched the *next* expected step's path, advance.
+            const nextStep = steps[stepIndex + 1];
+            if (nextStep && nextStep.path === location) {
+                setStepIndex(stepIndex + 1);
+            }
+        };
+
+        findNextStepIndex();
+    }, [location, run, stepIndex]);
 
     return (
         <Joyride
@@ -202,6 +245,7 @@ export function AppTour() {
             disableCloseOnEsc
             spotlightClicks={false}
             callback={handleJoyrideCallback}
+            debug
             styles={{
                 options: {
                     primaryColor: '#8b5cf6', // violet-500

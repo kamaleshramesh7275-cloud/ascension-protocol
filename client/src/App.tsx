@@ -245,55 +245,49 @@ function AppContent() {
     return <Router />;
   }
 
-  // Show onboarding page without sidebar (full-screen dedicated experience)
-  if (location === "/onboarding") {
-    return <Router />;
-  }
-
-  // Show focus page without sidebar (immersive focus experience)
-  if (location === "/focus") {
-    return <Router />;
-  }
-
-  // Show app with sidebar for authenticated users on other pages
+  // Wraps authenticated app content with necessary providers
   return (
     <SidebarProvider defaultOpen={false} style={sidebarStyle as React.CSSProperties}>
-      <div className="flex h-screen w-full flex-col md:flex-row">
-        {/* Sidebar - hidden on mobile, visible on tablet/desktop */}
-        <div className="hidden md:flex">
-          <AppSidebar />
+      <AppTour />
+      {location === "/onboarding" || location === "/focus" ? (
+        <Router />
+      ) : (
+        <div className="flex h-screen w-full flex-col md:flex-row">
+          {/* Sidebar - hidden on mobile, visible on tablet/desktop */}
+          <div className="hidden md:flex">
+            <AppSidebar />
+          </div>
+
+          <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Header with responsive padding */}
+            <header className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger data-testid="button-sidebar-toggle" className="md:inline-flex" />
+                <h1 className="text-lg md:text-xl font-bold md:hidden">Ascension</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationCenter />
+                <ThemeToggle />
+              </div>
+            </header>
+
+            {/* Main content with responsive padding */}
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
+              <div className="max-w-7xl mx-auto">
+                <Router />
+              </div>
+            </main>
+
+            {/* Mobile bottom navigation - only visible on mobile */}
+            <MobileBottomNav className="md:hidden fixed bottom-0 left-0 right-0 z-50" />
+          </div>
+
+          {/* Focus button - hidden on mobile to avoid overlap with bottom nav */}
+          <div className="hidden md:block">
+            <FocusFloatingButton />
+          </div>
         </div>
-
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Header with responsive padding */}
-          <header className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger data-testid="button-sidebar-toggle" className="md:inline-flex" />
-              <h1 className="text-lg md:text-xl font-bold md:hidden">Ascension</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationCenter />
-              <ThemeToggle />
-            </div>
-          </header>
-
-          {/* Main content with responsive padding */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
-            <div className="max-w-7xl mx-auto">
-              <AppTour />
-              <Router />
-            </div>
-          </main>
-
-          {/* Mobile bottom navigation - only visible on mobile */}
-          <MobileBottomNav className="md:hidden fixed bottom-0 left-0 right-0 z-50" />
-        </div>
-
-        {/* Focus button - hidden on mobile to avoid overlap with bottom nav */}
-        <div className="hidden md:block">
-          <FocusFloatingButton />
-        </div>
-      </div>
+      )}
     </SidebarProvider>
   );
 }
