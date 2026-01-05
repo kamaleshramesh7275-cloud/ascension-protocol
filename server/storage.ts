@@ -2209,7 +2209,7 @@ export class DatabaseStorage implements IStorage {
       .from(activities)
       .where(eq(activities.userId, userId))
       .orderBy(desc(activities.timestamp))
-      .limit(20); // Limit to latest 20 activities
+      .limit(10); // Tightened from 20 to 10 for ultra-aggressive optimization
   }
 
   async createActivity(activity: InsertActivity): Promise<Activity> {
@@ -2354,7 +2354,7 @@ export class DatabaseStorage implements IStorage {
         gt(guildMessages.createdAt, oneDayAgo)
       ))
       .orderBy(desc(guildMessages.createdAt))
-      .limit(50);
+      .limit(15); // Tightened from 50 to 15 for payload reduction
 
     return msgs.map(r => ({
       ...r.msg,
@@ -2427,7 +2427,7 @@ export class DatabaseStorage implements IStorage {
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt))
-      .limit(30); // Reduced from all to latest 30
+      .limit(15); // Tightened from 30 to 15
   }
 
   async markNotificationAsRead(notificationId: string): Promise<void> {
@@ -2457,7 +2457,7 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .innerJoin(users, eq(messages.userId, users.id))
       .where(gt(messages.createdAt, oneDayAgo))
-      .limit(limit)
+      .limit(15) // Tightened from 50 to 15
       .orderBy(desc(messages.createdAt));
 
     return results.map(r => ({
@@ -2721,7 +2721,7 @@ export class DatabaseStorage implements IStorage {
     return await db!.select().from(guildDonations)
       .where(eq(guildDonations.guildId, guildId))
       .orderBy(desc(guildDonations.createdAt))
-      .limit(limit || 50);
+      .limit(10); // Fixed limit of 10 for optimization
   }
 
   async getGuildTreasury(guildId: string): Promise<number> {

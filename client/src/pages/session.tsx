@@ -42,8 +42,8 @@ export default function SessionPage() {
             const res = await apiRequest("GET", `/api/partners/${id}/messages`);
             return res.json();
         },
-        refetchInterval: 10000, // Reduced from 3s to 10s for better performance
-        staleTime: 5000,
+        refetchInterval: 15000, // Increased from 10s to 15s for extra conservation
+        staleTime: 10000,
         enabled: !!id
     });
 

@@ -82,7 +82,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: true, // Re-enable to make fetching focus-aware
-      staleTime: 60000, // Reduced from Infinity to 60s for better data freshness while saving compute
+      staleTime: 300000, // Increased from 1m to 5m for ultra-aggressive conservation
       retry: false,
     },
     mutations: {

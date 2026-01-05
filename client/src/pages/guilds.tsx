@@ -94,8 +94,8 @@ export default function GuildsPage() {
     const { data: messages = [] } = useQuery<GuildMessage[]>({
         queryKey: [`/api/guilds/${userGuild?.id}/messages`],
         enabled: !!userGuild,
-        refetchInterval: 15000, // Reduced from 5s to 15s for better performance
-        staleTime: 10000,
+        refetchInterval: 30000, // Increased to 30s for advanced conservation
+        staleTime: 15000,
     });
 
     // Guild quests - updated to use new endpoint
@@ -130,7 +130,7 @@ export default function GuildsPage() {
     const { data: activeWar } = useQuery<any>({
         queryKey: ["/api/guild-wars/active"],
         enabled: !!user?.guildId,
-        refetchInterval: 30000,
+        refetchInterval: 60000, // Increased to 60s
     });
 
     const { data: warParticipants = [] } = useQuery<any[]>({
@@ -141,7 +141,7 @@ export default function GuildsPage() {
     const { data: warEvents = [] } = useQuery<any[]>({
         queryKey: [`/api/guild-wars/${activeWar?.id}/events`],
         enabled: !!activeWar?.id,
-        refetchInterval: 20000,
+        refetchInterval: 60000, // Increased to 60s
     });
 
     const startMatchmakingMutation = useMutation({
