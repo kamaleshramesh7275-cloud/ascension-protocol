@@ -186,49 +186,30 @@ export function AppTour() {
             if (nextIndex >= 0 && nextIndex < steps.length) {
                 const nextStep = steps[nextIndex];
 
-                // If navigation is needed, do it but don't advance the index yet
-                // The useEffect will handle index advancement once the location matches
+                // Trigger navigation first
                 if (nextStep.path && location !== nextStep.path) {
                     setLocation(nextStep.path);
-                    // We don't setStepIndex here; we wait for the location to change
-                } else {
-                    setStepIndex(nextIndex);
                 }
+
+                // Always advance index so Joyride knows we're moving
+                setStepIndex(nextIndex);
             }
         }
 
         if (type === 'error:target_not_found') {
             const currentStep = steps[index];
             if (currentStep && currentStep.path && location !== currentStep.path) {
+                // Still navigating...
                 setLocation(currentStep.path);
             } else if (run) {
-                // Persistent retry if we are on the right page but element hasn't appeared
+                // On correct page, but target missing. Wait and retry.
+                // Using a shorter timeout for better responsiveness.
                 setTimeout(() => {
                     if (run) setStepIndex(index);
-                }, 500);
+                }, 200);
             }
         }
     };
-
-    // Auto-advance step index when location matches the next step's path
-    useEffect(() => {
-        if (!run) return;
-
-        const currentStep = steps[stepIndex];
-        // If we're stuck on a step because we navigated but haven't updated the index
-        // Handle indices that might be "behind" after a location change
-        const findNextStepIndex = () => {
-            // Check if we just navigated to a new page and need to show the first step of that page
-            // but only if we are at the end of a previous sequence
-            // For now, let's keep it simple: if the current location matched the *next* expected step's path, advance.
-            const nextStep = steps[stepIndex + 1];
-            if (nextStep && nextStep.path === location) {
-                setStepIndex(stepIndex + 1);
-            }
-        };
-
-        findNextStepIndex();
-    }, [location, run, stepIndex]);
 
     return (
         <Joyride
