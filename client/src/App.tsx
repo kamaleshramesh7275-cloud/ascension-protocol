@@ -68,8 +68,8 @@ function NotificationWatcher() {
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     enabled: !!user,
-    refetchInterval: 30000, // Reduced from 15s to 30s for better performance
-    staleTime: 20000,
+    refetchInterval: 120000, // Reduced from 30s to 2m for low Neon compute usage
+    staleTime: 60000,
   });
 
   useEffect(() => {

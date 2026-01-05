@@ -2070,6 +2070,10 @@ export class MemStorage implements IStorage {
 
 
 export class DatabaseStorage implements IStorage {
+  private campaignsCache: Campaign[] | null = null;
+  private shopItemsCache: ShopItem[] | null = null;
+  private guildPerksCache: GuildPerk[] | null = null;
+
   constructor() {
     console.log("🗄️ DatabaseStorage initialized");
     this.seedShopItems();
@@ -2200,7 +2204,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserActivities(userId: string): Promise<Activity[]> {
-    return await db!.select().from(activities).where(eq(activities.userId, userId)).orderBy(desc(activities.timestamp));
+    return await db!
+      .select()
+      .from(activities)
+      .where(eq(activities.userId, userId))
+      .orderBy(desc(activities.timestamp))
+      .limit(20); // Limit to latest 20 activities
   }
 
   async createActivity(activity: InsertActivity): Promise<Activity> {
@@ -2256,7 +2265,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getShopItems(): Promise<ShopItem[]> {
-    return await db!.select().from(shopItems);
+    if (this.shopItemsCache) return this.shopItemsCache;
+    const items = await db!.select().from(shopItems);
+    this.shopItemsCache = items;
+    return items;
   }
 
   async getShopItem(id: string): Promise<ShopItem | undefined> {
@@ -2329,7 +2341,14 @@ export class DatabaseStorage implements IStorage {
 
   async getGuildMessages(guildId: string): Promise<any[]> {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const msgs = await db!.select().from(guildMessages)
+    const msgs = await db!
+      .select({
+        msg: guildMessages,
+        userName: users.name,
+        userAvatar: users.avatarUrl
+      })
+      .from(guildMessages)
+      .innerJoin(users, eq(guildMessages.userId, users.id))
       .where(and(
         eq(guildMessages.guildId, guildId),
         gt(guildMessages.createdAt, oneDayAgo)
@@ -2337,19 +2356,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(guildMessages.createdAt))
       .limit(50);
 
-    // Enrich with user details
-    const enriched = await Promise.all(msgs.map(async (msg) => {
-      const user = await this.getUser(msg.userId);
-      return {
-        ...msg,
-        userName: user?.name || "Unknown",
-        userAvatar: user?.avatarUrl,
-        message: msg.content, // Frontend expects 'message' property
-        type: "chat"
-      };
-    }));
-
-    return enriched.reverse(); // Return in chronological order
+    return msgs.map(r => ({
+      ...r.msg,
+      userName: r.userName || "Unknown",
+      userAvatar: r.userAvatar,
+      message: r.msg.content,
+      type: "chat"
+    })).reverse();
   }
 
 
@@ -2409,7 +2422,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserNotifications(userId: string): Promise<Notification[]> {
-    return await db!.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+    return await db!
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(30); // Reduced from all to latest 30
   }
 
   async markNotificationAsRead(notificationId: string): Promise<void> {
@@ -2431,15 +2449,21 @@ export class DatabaseStorage implements IStorage {
 
   async getMessages(limit = 50): Promise<(Message & { user: User })[]> {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const results = await db!.select().from(messages)
+    const results = await db!
+      .select({
+        msg: messages,
+        user: users
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.userId, users.id))
       .where(gt(messages.createdAt, oneDayAgo))
       .limit(limit)
       .orderBy(desc(messages.createdAt));
-    const withUsers = await Promise.all(results.map(async m => {
-      const user = await this.getUser(m.userId);
-      return { ...m, user: user! };
-    }));
-    return withUsers.reverse();
+
+    return results.map(r => ({
+      ...r.msg,
+      user: normalizeUser(r.user)
+    })).reverse();
   }
 
   // Rivalry operations
@@ -2592,8 +2616,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDirectMessages(u1: string, u2: string): Promise<DirectMessage[]> {
-    // Basic fetch
-    return await db!.select().from(directMessages);
+    return await db!
+      .select()
+      .from(directMessages)
+      .where(or(
+        and(eq(directMessages.senderId, u1), eq(directMessages.receiverId, u2)),
+        and(eq(directMessages.senderId, u2), eq(directMessages.receiverId, u1))
+      ))
+      .orderBy(asc(directMessages.createdAt))
+      .limit(100);
   }
 
 
@@ -2753,7 +2784,10 @@ export class DatabaseStorage implements IStorage {
 
   // --- Campaign Methods (DB) ---
   async getCampaigns(): Promise<Campaign[]> {
-    return await db!.select().from(campaigns);
+    if (this.campaignsCache) return this.campaignsCache;
+    const all = await db!.select().from(campaigns);
+    this.campaignsCache = all;
+    return all;
   }
 
   async getActiveCampaign(userId: string): Promise<UserCampaign | undefined> {

@@ -43,7 +43,7 @@ const notificationColors: Record<string, string> = {
 export function NotificationCenter() {
     const { data: notifications } = useQuery<Notification[]>({
         queryKey: ["/api/notifications"],
-        refetchInterval: 60000, // Refresh every minute
+        refetchInterval: 120000, // Refresh every 2 minutes to save compute
     });
     const [, setLocation] = useLocation();
 

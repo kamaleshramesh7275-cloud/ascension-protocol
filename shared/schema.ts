@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, jsonb, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, jsonb, decimal, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -115,6 +115,11 @@ export const quests = pgTable("quests", {
   dueAt: timestamp("due_at").notNull(),
   completed: boolean("completed").default(false).notNull(),
   completedAt: timestamp("completed_at"),
+}, (table) => {
+  return {
+    userIdIdx: index("quests_user_id_idx").on(table.userId),
+    campaignIdIdx: index("quests_campaign_id_idx").on(table.campaignId),
+  };
 });
 
 
@@ -143,6 +148,10 @@ export const userCampaigns = pgTable("user_campaigns", {
   completed: boolean("completed").default(false).notNull(),
   startedAt: timestamp("started_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
+}, (table) => {
+  return {
+    userIdIdx: index("user_campaigns_user_id_idx").on(table.userId),
+  };
 });
 
 // Content Library
@@ -173,7 +182,9 @@ export const sleepLogs = pgTable("sleep_logs", {
   quality: integer("quality").notNull(), // 1-10 rating
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("sleep_logs_user_id_idx").on(table.userId),
+}));
 
 // Nutrition Tracking
 export const nutritionLogs = pgTable("nutrition_logs", {
@@ -188,7 +199,9 @@ export const nutritionLogs = pgTable("nutrition_logs", {
   fats: decimal("fats", { precision: 5, scale: 2 }), // grams
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("nutrition_logs_user_id_idx").on(table.userId),
+}));
 
 // Habit Tracking
 export const habitTracking = pgTable("habit_tracking", {
@@ -202,6 +215,10 @@ export const habitTracking = pgTable("habit_tracking", {
   totalCompletions: integer("total_completions").default(0).notNull(),
   lastCompletedAt: timestamp("last_completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("habit_tracking_user_id_idx").on(table.userId),
+  };
 });
 
 // Focus Sessions (Focus Sanctum)
@@ -213,6 +230,10 @@ export const focusSessions = pgTable("focus_sessions", {
   task: text("task"), // Optional: what the user was working on
   backgroundType: text("background_type"), // rain, forest, ocean, cyberpunk, space
   completedAt: timestamp("completed_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("focus_sessions_user_id_idx").on(table.userId),
+  };
 });
 
 // Notifications table
@@ -224,6 +245,10 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   read: boolean("read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("notifications_user_id_idx").on(table.userId),
+  };
 });
 
 // Activity history table
@@ -236,6 +261,10 @@ export const activityHistory = pgTable("activity_history", {
   coinsDelta: integer("coins_delta").default(0).notNull(),
   statDeltas: jsonb("stat_deltas").$type<Record<string, number>>(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("activity_history_user_id_idx").on(table.userId),
+  };
 });
 
 // Rank Trial challenges triggered when crossing tier thresholds
@@ -286,7 +315,10 @@ export const userItems = pgTable("user_items", {
   itemId: varchar("item_id").notNull().references(() => shopItems.id),
   equipped: boolean("equipped").default(false).notNull(),
   acquiredAt: timestamp("acquired_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("user_items_user_id_idx").on(table.userId),
+  itemIdIdx: index("user_items_item_id_idx").on(table.itemId),
+}));
 
 // Global Chat Messages
 export const messages = pgTable("messages", {
@@ -294,6 +326,10 @@ export const messages = pgTable("messages", {
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("messages_user_id_idx").on(table.userId),
+  };
 });
 
 // Direct Messages between partners
@@ -304,6 +340,11 @@ export const directMessages = pgTable("direct_messages", {
   content: text("content").notNull(),
   read: boolean("read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    senderIdIdx: index("direct_messages_sender_id_idx").on(table.senderId),
+    receiverIdIdx: index("direct_messages_receiver_id_idx").on(table.receiverId),
+  };
 });
 
 // To-Do List Tasks
@@ -313,6 +354,10 @@ export const tasks = pgTable("tasks", {
   text: text("text").notNull(),
   completed: boolean("completed").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("tasks_user_id_idx").on(table.userId),
+  };
 });
 
 // Partnerships table
@@ -323,6 +368,11 @@ export const partnerships = pgTable("partnerships", {
   status: text("status").notNull().default("pending"), // pending, accepted, rejected
   createdAt: timestamp("created_at").defaultNow().notNull(),
   acceptedAt: timestamp("accepted_at"),
+}, (table) => {
+  return {
+    user1Idx: index("partnerships_user1_idx").on(table.user1Id),
+    user2Idx: index("partnerships_user2_idx").on(table.user2Id),
+  };
 });
 
 // Zod schemas for validation
@@ -832,7 +882,9 @@ export const roadmaps = pgTable("roadmaps", {
   status: text("status").notNull().default("active"), // active, completed, archived
   startDate: timestamp("start_date").defaultNow().notNull(),
   currentWeek: integer("current_week").default(1).notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("roadmaps_user_id_idx").on(table.userId),
+}));
 
 export const roadmapWeeks = pgTable("roadmap_weeks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -842,7 +894,9 @@ export const roadmapWeeks = pgTable("roadmap_weeks", {
   goal: text("goal").notNull(),
   description: text("description"),
   isLocked: boolean("is_locked").default(true).notNull(),
-});
+}, (table) => ({
+  roadmapIdIdx: index("roadmap_weeks_roadmap_id_idx").on(table.roadmapId),
+}));
 
 export const roadmapTasks = pgTable("roadmap_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -852,7 +906,9 @@ export const roadmapTasks = pgTable("roadmap_tasks", {
   completed: boolean("completed").default(false).notNull(),
   isBoss: boolean("is_boss").default(false).notNull(), // Highlights "Boss Battle" tasks
   order: integer("order").default(0).notNull(),
-});
+}, (table) => ({
+  weekIdIdx: index("roadmap_tasks_week_id_idx").on(table.weekId),
+}));
 
 export const insertRoadmapSchema = createInsertSchema(roadmaps).omit({
   id: true,
