@@ -30,37 +30,37 @@ export default function LeaderboardPage() {
 
     const getRankIcon = (index: number) => {
         switch (index) {
-            case 0: return <Crown className="h-6 w-6 text-yellow-500 fill-yellow-500" />;
-            case 1: return <Medal className="h-6 w-6 text-gray-400 fill-gray-400" />;
-            case 2: return <Medal className="h-6 w-6 text-amber-700 fill-amber-700" />;
-            default: return <span className="text-lg font-bold text-muted-foreground w-6 text-center">{index + 1}</span>;
+            case 0: return <Crown className="h-4 w-4 md:h-6 md:w-6 text-yellow-500 fill-yellow-500" />;
+            case 1: return <Medal className="h-4 w-4 md:h-6 md:w-6 text-gray-400 fill-gray-400" />;
+            case 2: return <Medal className="h-4 w-4 md:h-6 md:w-6 text-amber-700 fill-amber-700" />;
+            default: return <span className="text-sm md:text-lg font-bold text-muted-foreground w-6 text-center">{index + 1}</span>;
         }
     };
 
     return (
-        <div className="p-8 min-h-screen bg-background/50">
+        <div className="p-4 md:p-8 min-h-screen bg-background/50">
             <motion.div
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="max-w-4xl mx-auto space-y-8"
+                className="max-w-4xl mx-auto space-y-4 md:space-y-8"
             >
-                <div className="text-center mb-12">
+                <div className="text-center mb-6 md:mb-12">
                     <motion.h1
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl font-bold bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent flex items-center justify-center gap-3"
+                        className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent flex items-center justify-center gap-2 md:gap-3"
                     >
-                        <Trophy className="h-10 w-10 text-yellow-500" /> Global Rankings
+                        <Trophy className="h-6 w-6 md:h-10 md:w-10 text-yellow-500" /> Global Rankings
                     </motion.h1>
-                    <p className="text-muted-foreground mt-2">
+                    <p className="text-muted-foreground mt-2 text-sm md:text-base px-4">
                         The most ascended individuals in the protocol.
                     </p>
                 </div>
 
                 <Card className="border-white/10 bg-black/40 backdrop-blur-xl">
-                    <CardHeader>
-                        <CardTitle className="text-yellow-500">Top Ascendants</CardTitle>
+                    <CardHeader className="p-4 md:p-6">
+                        <CardTitle className="text-yellow-500 text-lg md:text-xl">Top Ascendants</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <div className="divide-y divide-white/10">
@@ -71,38 +71,38 @@ export default function LeaderboardPage() {
                                     whileHover={{ backgroundColor: "rgba(234, 179, 8, 0.05)" }}
                                     onClick={() => window.location.href = `/profile/${user.id}`}
                                     className={`
-                    flex items-center p-4 transition-colors cursor-pointer
+                    flex items-center p-3 md:p-4 transition-colors cursor-pointer gap-2 md:gap-0
                     ${currentUser?.uid === user.firebaseUid ? "bg-yellow-500/10 border-l-2 border-yellow-500" : ""}
                   `}
                                 >
-                                    <div className="flex items-center justify-center w-12 mr-4">
+                                    <div className="flex items-center justify-center w-8 md:w-12 mr-2 md:mr-4 flex-shrink-0">
                                         {getRankIcon(index)}
                                     </div>
 
-                                    <Avatar className={`h-10 w-10 mr-4 border ${user.isPremium ? 'ring-4 ring-yellow-500/50 shadow-lg shadow-yellow-500/30 border-yellow-500/50' : 'border-white/10'}`}>
+                                    <Avatar className={`h-8 w-8 md:h-10 md:w-10 mr-2 md:mr-4 flex-shrink-0 border ${user.isPremium ? 'ring-2 md:ring-4 ring-yellow-500/50 shadow-lg shadow-yellow-500/30 border-yellow-500/50' : 'border-white/10'}`}>
                                         <AvatarImage src={user.avatarUrl || undefined} />
-                                        <AvatarFallback className="bg-yellow-500/20 text-yellow-500 font-bold">
+                                        <AvatarFallback className="bg-yellow-500/20 text-yellow-500 font-bold text-xs md:text-sm">
                                             {user.name.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
 
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-lg hover:underline">{user.name}</h3>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1 md:gap-2 flex-wrap">
+                                            <h3 className="font-bold text-sm md:text-lg hover:underline truncate">{user.name}</h3>
                                             {user.isPremium && (
-                                                <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                                <Crown className="h-3 w-3 md:h-4 md:w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                                             )}
                                             {currentUser?.uid === user.firebaseUid && (
                                                 <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30">You</Badge>
                                             )}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">Level {user.level} • Rank {user.tier}</p>
+                                        <p className="text-xs md:text-sm text-muted-foreground truncate">Level {user.level} • Rank {user.tier}</p>
                                     </div>
 
-                                    <div className="text-right">
-                                        <div className="font-bold text-xl text-yellow-500">{user.xp.toLocaleString()} XP</div>
+                                    <div className="text-right flex-shrink-0">
+                                        <div className="font-bold text-sm md:text-xl text-yellow-500 whitespace-nowrap">{user.xp.toLocaleString()} XP</div>
                                         <div className="text-xs text-muted-foreground flex items-center justify-end gap-1">
-                                            <TrendingUp className="h-3 w-3" /> {user.streak} Day Streak
+                                            <TrendingUp className="h-3 w-3" /> {user.streak}d
                                         </div>
                                     </div>
                                 </motion.div>
