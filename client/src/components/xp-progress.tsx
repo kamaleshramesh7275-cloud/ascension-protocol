@@ -11,14 +11,17 @@ interface XPProgressProps {
 const tierOrder: Tier[] = ["D", "C", "B", "A", "S"];
 
 export function XPProgress({ xp, tier, className }: XPProgressProps) {
-  const currentTierIndex = tierOrder.indexOf(tier);
+  // Normalize tier input to handle potential legacy or invalid values
+  const normalizedTier = tierOrder.includes(tier) ? tier : "D";
+
+  const currentTierIndex = tierOrder.indexOf(normalizedTier);
   const nextTier = tierOrder[currentTierIndex + 1];
-  
-  const currentThreshold = TIER_THRESHOLDS[tier];
-  const nextThreshold = nextTier ? TIER_THRESHOLDS[nextTier] : TIER_THRESHOLDS.S + 10000;
-  
-  const xpInCurrentTier = xp - currentThreshold;
-  const xpNeededForNextTier = nextThreshold - currentThreshold;
+
+  const currentThreshold = TIER_THRESHOLDS[normalizedTier] ?? 0;
+  const nextThreshold = nextTier ? (TIER_THRESHOLDS[nextTier] ?? currentThreshold + 1000) : currentThreshold + 10000;
+
+  const xpInCurrentTier = Math.max(0, xp - currentThreshold);
+  const xpNeededForNextTier = Math.max(1, nextThreshold - currentThreshold);
   const progress = Math.min((xpInCurrentTier / xpNeededForNextTier) * 100, 100);
 
   return (
@@ -46,7 +49,7 @@ export function XPProgress({ xp, tier, className }: XPProgressProps) {
           </div>
         )}
       </div>
-      
+
       <div className="relative">
         <Progress value={progress} className="h-8" />
         <div className="absolute inset-0 flex items-center justify-center">

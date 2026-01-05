@@ -5,6 +5,7 @@ import { RankBadge } from "@/components/rank-badge";
 import { XPProgress } from "@/components/xp-progress";
 import { StatBar } from "@/components/stat-bar";
 import { QuestCard } from "@/components/quest-card";
+import { DailyProtocol } from "@/components/daily-protocol";
 import { User, Quest, Task, STAT_NAMES } from "@shared/schema";
 import { Flame, Target, CheckSquare, Plus, Trash2, TrendingUp, Zap, Award, BookOpen, Calendar, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -463,6 +464,7 @@ export default function Dashboard() {
 
         {/* Quests Panel */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6" data-tour="active-quests">
+          <DailyProtocol />
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

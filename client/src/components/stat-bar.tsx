@@ -1,13 +1,13 @@
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { 
-  Dumbbell, 
-  Zap, 
-  Heart, 
-  Shield, 
-  Brain, 
-  Target, 
-  Users 
+import {
+  Dumbbell,
+  Zap,
+  Heart,
+  Shield,
+  Brain,
+  Target,
+  Users
 } from "lucide-react";
 
 interface StatBarProps {
@@ -38,8 +38,12 @@ const statColors: Record<string, string> = {
 };
 
 export function StatBar({ name, value, max = 100, className }: StatBarProps) {
+  // Defensive checks for potentially invalid or missing values
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const safeMax = typeof max === 'number' && !isNaN(max) && max > 0 ? max : 100;
+
   const Icon = statIcons[name.toLowerCase()] || Target;
-  const progress = Math.min((value / max) * 100, 100);
+  const progress = Math.min((safeValue / safeMax) * 100, 100);
   const color = statColors[name.toLowerCase()] || "hsl(var(--primary))";
 
   return (
@@ -54,8 +58,8 @@ export function StatBar({ name, value, max = 100, className }: StatBarProps) {
         </span>
       </div>
       <div className="relative">
-        <Progress 
-          value={progress} 
+        <Progress
+          value={progress}
           className="h-3"
           style={{
             // @ts-ignore - CSS custom property

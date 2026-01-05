@@ -10,7 +10,8 @@ import {
   insertGuildMessageSchema,
   insertGuildQuestSchema,
   insertMessageSchema,
-  insertTaskSchema
+  insertTaskSchema,
+  insertHabitSchema
 } from "@shared/schema";
 
 // Enable CORS for all routes (allow admin frontend to make DELETE with custom header)
@@ -324,6 +325,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(message);
     } catch (error) {
       res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // --- Habit Tracking ---
+  app.get("/api/habits", requireAuth, async (req, res) => {
+    try {
+      const habits = await storage.getHabits((req as any).user!.id);
+      res.json(habits);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch habits" });
+    }
+  });
+
+  app.post("/api/habits", requireAuth, async (req, res) => {
+    try {
+      const data = insertHabitSchema.parse({
+        ...req.body,
+        userId: (req as any).user!.id,
+      });
+      const habit = await storage.createHabit(data);
+      res.status(201).json(habit);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid habit data" });
+    }
+  });
+
+  app.patch("/api/habits/:id", requireAuth, async (req, res) => {
+    try {
+      const habit = await storage.updateHabit(req.params.id, req.body);
+      res.json(habit);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update habit" });
+    }
+  });
+
+  app.delete("/api/habits/:id", requireAuth, async (req, res) => {
+    try {
+      await storage.deleteHabit(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete habit" });
+    }
+  });
+
+  app.post("/api/habits/:id/complete", requireAuth, async (req, res) => {
+    try {
+      const habit = await storage.completeHabit(req.params.id);
+      res.json(habit);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to complete habit" });
     }
   });
 

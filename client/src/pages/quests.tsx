@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { HabitTracker } from "@/components/habit-tracker";
+import { DailyProtocol } from "@/components/daily-protocol";
 import { useAnimations } from "@/context/animation-context";
 import { Progress } from "@/components/ui/progress";
 
@@ -306,7 +306,7 @@ export default function QuestsPage() {
                             </TabsContent>
 
                             <TabsContent value="habits">
-                                <HabitTracker />
+                                <DailyProtocol />
                             </TabsContent>
                         </motion.div>
                     </AnimatePresence>

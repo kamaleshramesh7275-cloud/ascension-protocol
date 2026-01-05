@@ -23,19 +23,21 @@ const sizeClasses = {
   lg: "w-32 h-32 text-6xl",
 };
 
-export function RankBadge({ 
-  tier, 
-  level, 
-  size = "md", 
+export function RankBadge({
+  tier,
+  level,
+  size = "md",
   showLevel = true,
-  className 
+  className
 }: RankBadgeProps) {
+  const normalizedTier = (tier && tierColors[tier]) ? tier : "D";
+
   return (
     <div className={cn("flex flex-col items-center gap-2", className)} data-testid="badge-rank">
       <div
         className={cn(
           "relative rounded-xl bg-gradient-to-br border-2 flex items-center justify-center font-display font-black shadow-lg",
-          tierColors[tier],
+          tierColors[normalizedTier],
           sizeClasses[size]
         )}
       >

@@ -268,6 +268,13 @@ export interface IStorage {
   bulkUpdateRoadmapTasks(params: { roadmapId?: string; weekId?: string; dayNumber?: number; updates: Partial<RoadmapTask> }): Promise<void>;
   deleteRoadmapTask(id: string): Promise<void>;
   toggleRoadmapTask(taskId: string): Promise<RoadmapTask>;
+
+  // Habit operations
+  getHabits(userId: string): Promise<HabitTracking[]>;
+  createHabit(habit: InsertHabit): Promise<HabitTracking>;
+  updateHabit(id: string, updates: Partial<HabitTracking>): Promise<HabitTracking>;
+  deleteHabit(id: string): Promise<void>;
+  completeHabit(id: string): Promise<HabitTracking>;
 }
 
 // Shop Items
@@ -287,6 +294,54 @@ const DEFAULT_SHOP_ITEMS: InsertShopItem[] = [
   { name: "Arctic Frost", description: "Cool whites and icy blues.", type: "theme", rarity: "rare", value: "arctic-frost", cost: 700, isPremium: true },
   { name: "Vampire's Kiss", description: "Deep red and black gothic vibes.", type: "theme", rarity: "epic", value: "vampires-kiss", cost: 1000, isPremium: true },
 ];
+
+// Helper to normalize user data and handle legacy fields/values
+function normalizeUser(user: any): User {
+  if (!user) return user;
+
+  // Ensure all stat fields exist
+  const stats = {
+    strength: user.strength ?? 10,
+    agility: user.agility ?? 10,
+    stamina: user.stamina ?? 10,
+    vitality: user.vitality ?? 10,
+    intelligence: user.intelligence ?? 10,
+    willpower: user.willpower ?? 10,
+    charisma: user.charisma ?? 10,
+  };
+
+  // Map legacy tier names to valid Tier values
+  let tier: Tier = "D";
+  const validTiers: Tier[] = ["D", "C", "B", "A", "S"];
+  if (user.tier && validTiers.includes(user.tier as Tier)) {
+    tier = user.tier as Tier;
+  } else if (user.tier === "Iron" || user.tier === "Bronze") {
+    tier = "D"; // Map legacy "Iron/Bronze" to "D"
+  } else if (user.tier === "Silver") {
+    tier = "C";
+  } else if (user.tier === "Gold") {
+    tier = "B";
+  } else if (user.tier === "Platinum") {
+    tier = "A";
+  } else if (user.tier === "Diamond" || user.tier === "Master") {
+    tier = "S";
+  }
+
+  return {
+    ...user,
+    ...stats,
+    tier,
+    xp: user.xp ?? 0,
+    level: user.level ?? 1,
+    coins: user.coins ?? 0,
+    streak: user.streak ?? 0,
+    onboardingCompleted: user.onboardingCompleted ?? true, // Assume true for old users
+    lastActive: user.lastActive || new Date(),
+    theme: user.theme || "default",
+    role: user.role || "user",
+    timezone: user.timezone || "UTC"
+  } as User;
+}
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
@@ -319,6 +374,7 @@ export class MemStorage implements IStorage {
   private guildWarParticipants: Map<string, GuildWarParticipant>;
   private guildWarEvents: Map<string, GuildWarEvent>;
   private premiumRequests: Map<string, PremiumRequest>;
+  private habitTracking: Map<string, HabitTracking>;
 
   constructor() {
     this.guilds = new Map();
@@ -404,6 +460,7 @@ export class MemStorage implements IStorage {
     this.guildWarParticipants = new Map();
     this.guildWarEvents = new Map();
     this.premiumRequests = new Map();
+    this.habitTracking = new Map();
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -820,11 +877,13 @@ export class MemStorage implements IStorage {
   // --- Implementation of IStorage Methods (In-Memory) ---
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const user = this.users.get(id);
+    return user ? normalizeUser(user) : undefined;
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid);
+    const user = Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid);
+    return user ? normalizeUser(user) : undefined;
   }
 
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
@@ -1684,6 +1743,7 @@ export class MemStorage implements IStorage {
       partnerships: Array.from(this.partnerships.entries()),
       directMessages: Array.from(this.directMessages.entries()),
       premiumRequests: Array.from(this.premiumRequests.entries()),
+      habitTracking: Array.from(this.habitTracking.entries()),
     };
     try {
       const backupDir = path.resolve(process.cwd(), ".backup");
@@ -1720,6 +1780,7 @@ export class MemStorage implements IStorage {
       partnerships: Array.from(this.partnerships.entries()),
       directMessages: Array.from(this.directMessages.entries()),
       premiumRequests: Array.from(this.premiumRequests.entries()),
+      habitTracking: Array.from(this.habitTracking.entries()),
     };
 
     try {
@@ -1769,6 +1830,7 @@ export class MemStorage implements IStorage {
       this.directMessages = new Map(data.directMessages || []);
       this.tasks = new Map(data.tasks || []);
       this.premiumRequests = new Map(data.premiumRequests || []);
+      this.habitTracking = new Map(data.habitTracking || []);
 
       console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
     } catch (e) {
@@ -1924,6 +1986,86 @@ export class MemStorage implements IStorage {
     if (!this.roadmapTasks.has(id)) throw new Error("Task not found");
     this.roadmapTasks.delete(id);
   }
+
+  // Habit methods
+  async getHabits(userId: string): Promise<HabitTracking[]> {
+    return Array.from(this.habitTracking.values()).filter(h => h.userId === userId);
+  }
+
+  async createHabit(insertHabit: InsertHabit): Promise<HabitTracking> {
+    const id = randomUUID();
+    const habit: HabitTracking = {
+      id,
+      ...insertHabit,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalCompletions: 0,
+      lastCompletedAt: null,
+      createdAt: new Date(),
+    };
+    this.habitTracking.set(id, habit);
+    return habit;
+  }
+
+  async updateHabit(id: string, updates: Partial<HabitTracking>): Promise<HabitTracking> {
+    const habit = this.habitTracking.get(id);
+    if (!habit) throw new Error("Habit not found");
+    const updated = { ...habit, ...updates };
+    this.habitTracking.set(id, updated);
+    return updated;
+  }
+
+  async deleteHabit(id: string): Promise<void> {
+    this.habitTracking.delete(id);
+  }
+
+  async completeHabit(id: string): Promise<HabitTracking> {
+    const habit = this.habitTracking.get(id);
+    if (!habit) throw new Error("Habit not found");
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastCompleted = habit.lastCompletedAt ? new Date(habit.lastCompletedAt) : null;
+    const lastDate = lastCompleted ? new Date(lastCompleted.getFullYear(), lastCompleted.getMonth(), lastCompleted.getDate()) : null;
+
+    if (lastDate && lastDate.getTime() === today.getTime()) {
+      return habit; // Already completed today
+    }
+
+    let newStreak = habit.currentStreak + 1;
+    if (lastDate) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastDate.getTime() < yesterday.getTime()) {
+        newStreak = 1; // Streak broken
+      }
+    }
+
+    const updated = {
+      ...habit,
+      currentStreak: newStreak,
+      longestStreak: Math.max(habit.longestStreak, newStreak),
+      totalCompletions: habit.totalCompletions + 1,
+      lastCompletedAt: now,
+    };
+
+    this.habitTracking.set(id, updated);
+
+    // Award XP (XP Only as requested)
+    const user = this.users.get(habit.userId);
+    if (user) {
+      await this.updateUser(user.id, { xp: user.xp + 25 });
+      await this.createActivity({
+        userId: user.id,
+        action: "completeHabit",
+        xpDelta: 25,
+        coinsDelta: 0,
+        description: `Completed habit: ${habit.habitName}`
+      } as any);
+    }
+
+    return updated;
+  }
 }
 
 
@@ -1983,11 +2125,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return await db!.query.users.findFirst({ where: eq(users.id, id) });
+    const user = await db!.query.users.findFirst({ where: eq(users.id, id) });
+    return user ? normalizeUser(user) : undefined;
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    return await db!.query.users.findFirst({ where: eq(users.firebaseUid, firebaseUid) });
+    const user = await db!.query.users.findFirst({ where: eq(users.firebaseUid, firebaseUid) });
+    return user ? normalizeUser(user) : undefined;
   }
 
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
@@ -3167,6 +3311,73 @@ export class DatabaseStorage implements IStorage {
       .where(eq(roadmapTasks.id, id))
       .returning();
     if (!deleted) throw new Error("Task not found");
+  }
+
+  // Habit operations
+  async getHabits(userId: string): Promise<HabitTracking[]> {
+    return await db!.select().from(habitTracking).where(eq(habitTracking.userId, userId));
+  }
+
+  async createHabit(habit: InsertHabit): Promise<HabitTracking> {
+    const [h] = await db!.insert(habitTracking).values(habit).returning();
+    return h;
+  }
+
+  async updateHabit(id: string, updates: Partial<HabitTracking>): Promise<HabitTracking> {
+    const [h] = await db!.update(habitTracking).set(updates).where(eq(habitTracking.id, id)).returning();
+    return h;
+  }
+
+  async deleteHabit(id: string): Promise<void> {
+    await db!.delete(habitTracking).where(eq(habitTracking.id, id));
+  }
+
+  async completeHabit(id: string): Promise<HabitTracking> {
+    const habit = await db!.query.habitTracking.findFirst({ where: eq(habitTracking.id, id) });
+    if (!habit) throw new Error("Habit not found");
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastCompleted = habit.lastCompletedAt ? new Date(habit.lastCompletedAt) : null;
+    const lastDate = lastCompleted ? new Date(lastCompleted.getFullYear(), lastCompleted.getMonth(), lastCompleted.getDate()) : null;
+
+    if (lastDate && lastDate.getTime() === today.getTime()) {
+      return habit;
+    }
+
+    let newStreak = habit.currentStreak + 1;
+    if (lastDate) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastDate.getTime() < yesterday.getTime()) {
+        newStreak = 1;
+      }
+    }
+
+    const [updated] = await db!.update(habitTracking)
+      .set({
+        currentStreak: newStreak,
+        longestStreak: Math.max(habit.longestStreak, newStreak),
+        totalCompletions: habit.totalCompletions + 1,
+        lastCompletedAt: now,
+      })
+      .where(eq(habitTracking.id, id))
+      .returning();
+
+    // Reward XP
+    const user = await this.getUser(habit.userId);
+    if (user) {
+      await this.updateUser(user.id, { xp: user.xp + 25 });
+      await this.createActivity({
+        userId: user.id,
+        action: "completeHabit",
+        xpDelta: 25,
+        coinsDelta: 0,
+        description: `Completed habit: ${habit.habitName}`
+      } as any);
+    }
+
+    return updated;
   }
 }
 
