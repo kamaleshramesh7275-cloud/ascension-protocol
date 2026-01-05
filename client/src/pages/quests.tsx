@@ -122,7 +122,7 @@ export default function QuestsPage() {
     };
 
     if (isLoadingQuests || isLoadingCampaign) {
-        return <div className="p-10 text-white">Loading your journey...</div>;
+        return <div data-tour="quests-page" className="p-10 text-white">Loading your journey...</div>;
     }
 
     return (

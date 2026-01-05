@@ -125,6 +125,7 @@ export function AppTour() {
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [tourKey, setTourKey] = useState(0);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     const { data: user } = useQuery<User>({
         queryKey: ["/api/user"],
@@ -150,10 +151,25 @@ export function AppTour() {
             setStepIndex(0);
             setTourKey(prev => prev + 1);
             setRun(true);
+            setIsTransitioning(false);
         };
         window.addEventListener('start-app-tour', handleStartTour);
         return () => window.removeEventListener('start-app-tour', handleStartTour);
     }, [user]);
+
+    // Transition Stabilizer: Wait for path and then a bit more for component mounting
+    useEffect(() => {
+        if (!run || !isTransitioning) return;
+
+        const nextStep = steps[stepIndex];
+        if (nextStep && nextStep.path === location) {
+            // Path matches, wait for React to mount the page content
+            const timer = setTimeout(() => {
+                setIsTransitioning(false);
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [location, isTransitioning, run, stepIndex]);
 
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, index, type, action } = data;
@@ -186,27 +202,28 @@ export function AppTour() {
             if (nextIndex >= 0 && nextIndex < steps.length) {
                 const nextStep = steps[nextIndex];
 
-                // Trigger navigation first
                 if (nextStep.path && location !== nextStep.path) {
+                    // Navigation needed
+                    setIsTransitioning(true);
+                    setStepIndex(nextIndex); // Move Joyride to the next index immediately
                     setLocation(nextStep.path);
+                } else {
+                    // Same page
+                    setStepIndex(nextIndex);
                 }
-
-                // Always advance index so Joyride knows we're moving
-                setStepIndex(nextIndex);
             }
         }
 
         if (type === 'error:target_not_found') {
             const currentStep = steps[index];
             if (currentStep && currentStep.path && location !== currentStep.path) {
-                // Still navigating...
                 setLocation(currentStep.path);
-            } else if (run) {
-                // On correct page, but target missing. Wait and retry.
-                // Using a shorter timeout for better responsiveness.
+                setIsTransitioning(true);
+            } else if (run && !isTransitioning) {
+                // Persistent retry if we are on the right page but element hasn't appeared
                 setTimeout(() => {
                     if (run) setStepIndex(index);
-                }, 200);
+                }, 500);
             }
         }
     };
@@ -215,7 +232,7 @@ export function AppTour() {
         <Joyride
             key={tourKey}
             steps={steps}
-            run={run}
+            run={run && !isTransitioning} // Pause Joyride while transitioning
             stepIndex={stepIndex}
             continuous
             showProgress
