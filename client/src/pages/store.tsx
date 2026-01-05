@@ -170,7 +170,7 @@ export default function StorePage() {
                         Spend your hard-earned coins on exclusive titles, badges, and themes.
                     </p>
                 </div>
-                <Card className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
+                <Card className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20" data-tour="store-balance">
                     <CardContent className="p-4 flex items-center gap-4">
                         <div className="p-3 bg-yellow-500/20 rounded-full">
                             <Coins className="h-6 w-6 text-yellow-500" />
@@ -183,7 +183,7 @@ export default function StorePage() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="themes" className="w-full">
+            <Tabs defaultValue="themes" className="w-full" data-tour="store-tabs">
                 <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
                     <TabsTrigger value="themes">Themes</TabsTrigger>
                     <TabsTrigger value="titles">Titles</TabsTrigger>

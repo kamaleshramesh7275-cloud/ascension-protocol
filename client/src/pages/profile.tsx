@@ -8,7 +8,7 @@ import { RankBadge } from "@/components/rank-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft } from "lucide-react";
+import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
@@ -18,12 +18,14 @@ import { useParams } from "wouter";
 import { PremiumBenefitsDialog } from "@/components/premium-benefits-dialog";
 import { PremiumSuccessAnim } from "@/components/premium-success-anim";
 import { useLocation } from "wouter";
+import { useAppTour } from "@/components/AppTour";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
     const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
+    const { triggerTour } = useAppTour();
     const params = useParams<{ id?: string }>(); // Get ID from params
     const viewUserId = params.id;
     const [location, setLocation] = useLocation();
@@ -254,6 +256,17 @@ export default function ProfilePage() {
                                                         className="border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
                                                     >
                                                         <Edit className="h-4 w-4 mr-2" /> Edit
+                                                    </Button>
+                                                </motion.div>
+                                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => triggerTour()}
+                                                        className="hover:bg-emerald-500/10 text-emerald-500"
+                                                        title="Play Tutorial"
+                                                    >
+                                                        <PlayCircle className="h-4 w-4" />
                                                     </Button>
                                                 </motion.div>
                                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

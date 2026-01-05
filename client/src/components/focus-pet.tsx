@@ -97,7 +97,7 @@ export function FocusPet({ className }: FocusPetProps) {
 
     return (
         <>
-            <div className={className || "fixed bottom-8 right-8 z-40"}>
+            <div className={className || "fixed bottom-8 right-8 z-40"} data-tour="focus-pet">
                 {/* Pet Display */}
                 <motion.div
                     className="relative"

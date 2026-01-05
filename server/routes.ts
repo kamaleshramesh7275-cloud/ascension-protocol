@@ -516,6 +516,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark tutorial as completed
+  app.patch("/api/user/tutorial", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const updatedUser = await storage.updateUser(user.id, {
+        hasSeenTutorial: true
+      });
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update tutorial status" });
+    }
+  });
+
   // Feed Pet Endpoint
   app.post("/api/user/feed-pet", requireAuth, async (req, res) => {
     try {

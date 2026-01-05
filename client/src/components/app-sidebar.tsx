@@ -202,6 +202,7 @@ export function AppSidebar() {
                                             transition={{ delay: 0.1 * index }}
                                         >
                                             <SidebarMenuButton
+                                                data-tour={`sidebar-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                                                 isActive={isActive}
                                                 onClick={() => setLocation(item.url)}
                                                 className={`

@@ -54,6 +54,7 @@ export default function RoadmapPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-md text-center space-y-8 relative z-10"
+                    data-tour="premium-lock"
                 >
                     <div className="relative inline-block">
                         <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />

@@ -67,6 +67,7 @@ export const users = pgTable("users", {
   notificationsEnabled: boolean("notifications_enabled").default(true).notNull(),
   notificationTime: integer("notification_time").default(9).notNull(), // hour (0-23)
   lastNotificationSent: timestamp("last_notification_sent"),
+  hasSeenTutorial: boolean("has_seen_tutorial").default(false).notNull(),
 });
 
 // Guilds table
@@ -339,6 +340,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   isPremium: true,
   premiumExpiry: true,
   role: true,
+  hasSeenTutorial: true,
 }).partial({
   avatarUrl: true,
   timezone: true,
@@ -350,6 +352,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   isPremium: true,
   premiumExpiry: true,
   role: true,
+  hasSeenTutorial: true,
 });
 
 export const insertGuildSchema = createInsertSchema(guilds);

@@ -265,11 +265,13 @@ export default function Dashboard() {
             <Flame className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
             <div>
               <p className="text-xs text-muted-foreground">Streak</p>
-              <p className="text-base md:text-lg font-bold" data-testid="text-streak">{user.streak} days</p>
+              <p className="text-base md:text-lg font-bold" data-tour="streak-value">{user.streak} days</p>
             </div>
           </div>
 
-          <RankBadge tier={user.tier as any} level={user.level} />
+          <div data-tour="rank-badge">
+            <RankBadge tier={user.tier as any} level={user.level} />
+          </div>
         </div>
       </div>
 
@@ -281,7 +283,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Quick Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4" data-tour="quick-stats">
         <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-purple-500 hover:scale-105">
           <CardContent className="pt-4 md:pt-6">
             <div className="flex items-center justify-between">
@@ -346,7 +348,7 @@ export default function Dashboard() {
       {/* Weekly Progress Chart & Daily Goal */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Weekly Progress Chart */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow" data-tour="weekly-progress">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base md:text-lg">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
@@ -377,7 +379,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Daily Goal Progress */}
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow" data-tour="daily-goal">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-green-500" />
@@ -443,7 +445,7 @@ export default function Dashboard() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Stats Panel */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1" data-tour="user-stats">
           <CardHeader>
             <CardTitle className="text-base md:text-lg">Your Stats</CardTitle>
           </CardHeader>
@@ -460,7 +462,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Quests Panel */}
-        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6" data-tour="active-quests">
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

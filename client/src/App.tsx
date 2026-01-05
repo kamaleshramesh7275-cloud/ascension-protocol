@@ -12,6 +12,7 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useToast } from "@/hooks/use-toast";
+import { AppTour } from "@/components/AppTour";
 import { User } from "@shared/schema";
 import { AnimationProvider, useAnimations } from "@/context/animation-context";
 import { useState, useEffect } from "react";
@@ -296,6 +297,7 @@ function AppContent() {
   );
 }
 
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -305,6 +307,7 @@ function App() {
             <AnimationProvider>
               <TierWatcher />
               <NotificationWatcher />
+              <AppTour />
               <AppContent />
               <Toaster />
             </AnimationProvider>
