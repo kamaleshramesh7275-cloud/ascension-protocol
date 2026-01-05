@@ -157,30 +157,67 @@ export function AppTour() {
         return () => window.removeEventListener('start-app-tour', handleStartTour);
     }, [user]);
 
+    // Helper to normalize paths for comparison (handles trailing slashes)
+    const normalizePath = (p: string) => p.replace(/\/$/, '') || '/';
+
     // Transition Stabilizer: Wait for path and then a bit more for component mounting
     useEffect(() => {
         if (!run || !isTransitioning) return;
 
         const nextStep = steps[stepIndex];
-        if (nextStep && nextStep.path === location) {
+        const normalizedLocation = normalizePath(location);
+        const normalizedTarget = nextStep?.path ? normalizePath(nextStep.path) : null;
+
+        console.log(`[AppTour] Transition check: location=${normalizedLocation}, target=${normalizedTarget}`);
+
+        if (nextStep && normalizedTarget === normalizedLocation) {
+            console.log(`[AppTour] Path matched, settling...`);
             // Path matches, wait for React to mount the page content
             const timer = setTimeout(() => {
+                console.log(`[AppTour] Transition complete.`);
                 setIsTransitioning(false);
             }, 800);
             return () => clearTimeout(timer);
         }
+
+        // Safety timeout: if we're stuck in isTransitioning for too long, just resume
+        const safetyTimer = setTimeout(() => {
+            if (isTransitioning) {
+                console.warn(`[AppTour] Transition safety timeout reached. Resuming.`);
+                setIsTransitioning(false);
+            }
+        }, 5000);
+        return () => clearTimeout(safetyTimer);
     }, [location, isTransitioning, run, stepIndex]);
 
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, index, type, action } = data;
+
+        console.groupCollapsed(`[AppTour] Joyride Event: ${type}`);
+        console.log('Action:', action);
+        console.log('Index:', index);
+        console.log('Status:', status);
+        console.log('Current Location:', location);
+        console.log('Step Path:', steps[index]?.path);
+        console.groupEnd();
+
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
         if (finishedStatuses.includes(status)) {
+            console.log('[AppTour] Tour finished or skipped');
             setRun(false);
             if (!user?.hasSeenTutorial) {
                 markSeenMutation.mutate();
             }
             return;
+        }
+
+        if (status === 'error') {
+            console.error('[AppTour] Joyride Error Status detected');
+            // Try to recover by resetting the index or forcing a re-run
+            setTimeout(() => {
+                if (run) setStepIndex(index);
+            }, 200);
         }
 
         if (type === 'step:before') {
@@ -202,7 +239,11 @@ export function AppTour() {
             if (nextIndex >= 0 && nextIndex < steps.length) {
                 const nextStep = steps[nextIndex];
 
-                if (nextStep.path && location !== nextStep.path) {
+                const normalizedLocation = normalizePath(location);
+                const normalizedNextPath = nextStep.path ? normalizePath(nextStep.path) : null;
+
+                if (normalizedNextPath && normalizedLocation !== normalizedNextPath && nextStep.path) {
+                    console.log(`[AppTour] Navigating from ${normalizedLocation} to ${normalizedNextPath}`);
                     // Navigation needed
                     setIsTransitioning(true);
                     setStepIndex(nextIndex); // Move Joyride to the next index immediately
@@ -216,11 +257,16 @@ export function AppTour() {
 
         if (type === 'error:target_not_found') {
             const currentStep = steps[index];
-            if (currentStep && currentStep.path && location !== currentStep.path) {
+            const normalizedLocation = normalizePath(location);
+            const normalizedStepPath = currentStep?.path ? normalizePath(currentStep.path) : null;
+
+            if (normalizedStepPath && normalizedLocation !== normalizedStepPath && currentStep.path) {
+                console.log(`[AppTour] Target missing and on wrong page. Navigating to ${normalizedStepPath}`);
                 setLocation(currentStep.path);
                 setIsTransitioning(true);
             } else if (run && !isTransitioning) {
                 // Persistent retry if we are on the right page but element hasn't appeared
+                console.log(`[AppTour] Target missing on correct page. Retrying index ${index}...`);
                 setTimeout(() => {
                     if (run) setStepIndex(index);
                 }, 500);
