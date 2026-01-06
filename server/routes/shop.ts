@@ -210,6 +210,9 @@ async function seedShop() {
 
 // Get all shop items
 router.get("/", async (req, res) => {
+    // CACHE: Shop items are static, cache for 1 hour (3600s)
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
     const storage = getStorage();
     await seedShop(); // Ensure items exist
     const items = await storage.getShopItems();

@@ -21,7 +21,12 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+import compression from "compression";
+
 export const app = express();
+
+// Enable Gzip compression (saves ~70% network bandwidth)
+app.use(compression());
 
 declare module 'http' {
   interface IncomingMessage {

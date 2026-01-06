@@ -136,6 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // DEBUG: Endpoint to list users
   app.get("/api/debug/users", async (req, res) => {
+    // No caching for debug
     const users = await storage.getAllUsers();
     res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
   });
@@ -150,6 +151,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --- Campaign Routes ---
   app.get("/api/campaigns", async (req, res) => {
     try {
+      // CACHE: Campaigns change rarely, cache for 1 hour (3600s)
+      res.setHeader('Cache-Control', 'public, max-age=3600');
       const campaigns = await storage.getCampaigns();
       res.json(campaigns);
     } catch (err) {
@@ -483,19 +486,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get public user profile
   app.get("/api/users/:id/public", requireAuth, async (req, res) => {
     try {
+      // CACHE: Public profiles are semi-static, cache for 5 minutes
+      // This allows instant navigation when revisiting profiles
+      res.setHeader('Cache-Control', 'public, max-age=300');
+
       const user = await storage.getUser(req.params.id);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      // Return only public data
+      // Return only public data - minimal payload
       const publicData = {
         id: user.id,
         name: user.name,
         level: user.level,
         tier: user.tier,
-        xp: user.xp,
+        // xp removed - not critical for public view
         bio: (user as any).bio,
         avatarUrl: user.avatarUrl,
         streak: user.streak,
+        // Stats block preserved but can be removed if needed for extreme optimization
         stats: {
           strength: user.strength,
           agility: user.agility,
