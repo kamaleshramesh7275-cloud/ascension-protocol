@@ -7,11 +7,18 @@ import { z } from "zod";
 
 const router = Router();
 
+let hasSeeded = false;
+
 // Seed Shop Items if empty
 async function seedShop() {
+    if (hasSeeded) return; // Optimization: Skip DB check if already done in this process
+
     const storage = getStorage();
     const items = await storage.getShopItems();
-    if (items.length > 0) return;
+    if (items.length > 0) {
+        hasSeeded = true;
+        return;
+    }
 
     const seeds = [
         // --- Avatars ---

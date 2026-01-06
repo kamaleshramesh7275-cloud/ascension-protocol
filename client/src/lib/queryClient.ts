@@ -1,5 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { auth } from "@/lib/firebase";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { get, set, del } from "idb-keyval";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -10,7 +12,6 @@ async function throwIfResNotOk(res: Response) {
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const user = auth.currentUser;
-  console.log("[Debug] getAuthHeaders: Current Firebase user:", user?.uid);
 
   if (user) {
     return {
@@ -20,7 +21,6 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 
   // Check for guest session
   const guestUid = localStorage.getItem("guest_uid");
-  console.log("[Debug] getAuthHeaders: LocalStorage guest_uid:", guestUid);
 
   if (guestUid) {
     return {
@@ -38,7 +38,6 @@ export async function apiRequest(
   headers?: HeadersInit,
 ): Promise<Response> {
   const authHeaders = await getAuthHeaders();
-  console.log(`[Debug] apiRequest ${method} ${url} Headers:`, { ...authHeaders, ...headers });
 
   const res = await fetch(url, {
     method,
@@ -81,8 +80,9 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: true, // Re-enable to make fetching focus-aware
-      staleTime: 300000, // Increased from 1m to 5m for ultra-aggressive conservation
+      refetchOnWindowFocus: true,
+      staleTime: 5 * 60 * 1000, // 5 minutes global stale time
+      gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours (for persistence)
       retry: false,
     },
     mutations: {
@@ -90,3 +90,46 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Create IDB Persister for offline storage
+export const persister = {
+  persistClient: async (client: QueryClient) => {
+    // We can't use sync storage for IDB, so we implement a custom async persister structure
+    // But @tanstack/react-query-persist-client handles the async nature.
+    // However, createSyncStoragePersister is for localStorage/sessionStorage. 
+    // For IDB, we create a simple object adhering to Persister interface.
+    // wait, for simplicity let's use a wrapper.
+  },
+  restoreClient: async () => {
+    // ...
+  }
+} as any;
+
+// Simple custom persister using idb-keyval
+export const idbPersister = {
+  persistClient: async (client: any) => {
+    await set('reactQueryClient', client);
+  },
+  restoreClient: async () => {
+    return await get('reactQueryClient');
+  },
+  removeClient: async () => {
+    await del('reactQueryClient');
+  },
+} as any;
+
+// Using a simpler approach recommended for v5:
+export const persisterOptions = {
+  persister: {
+    persistClient: async (client: any) => {
+      await set('REACT_QUERY_OFFLINE_CACHE', client);
+    },
+    restoreClient: async () => {
+      return await get('REACT_QUERY_OFFLINE_CACHE');
+    },
+    removeClient: async () => {
+      await del('REACT_QUERY_OFFLINE_CACHE');
+    },
+  },
+  maxAge: 1000 * 60 * 60 * 24, // 24 hours
+};

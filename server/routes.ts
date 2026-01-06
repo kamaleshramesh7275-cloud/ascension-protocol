@@ -50,10 +50,22 @@ function calculateLevel(xp: number): number {
 }
 
 // Helper to assign daily quests to a user
+// Helper to assign daily quests to a user
 async function assignDailyQuests(userId: string) {
   const storage = getStorage(); // Lazy load
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // OPTIMIZATION: Check last check time first
+  const user = await storage.getUser(userId);
+  if (!user) return;
+
+  if (user.lastDailyQuestCheck && new Date(user.lastDailyQuestCheck) >= today) {
+    return; // Already checked today
+  }
+
+  // Update check time immediately
+  await storage.updateUser(userId, { lastDailyQuestCheck: new Date() });
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -68,10 +80,6 @@ async function assignDailyQuests(userId: string) {
   if (todayQuests.length > 0) {
     return; // Already has quests for today
   }
-
-  // Get user data for personalized quest generation
-  const user = await storage.getUser(userId);
-  if (!user) return;
 
   // Generate personalized quests based on user's goal
   const { generateDailyQuests } = await import("./services/quest-generator");
@@ -95,6 +103,7 @@ async function assignWeeklyQuest(userId: string) {
   weekEnd.setDate(weekStart.getDate() + 7);
 
   // Check if user already has this week's quests
+  // For weekly, we can just rely on the existing check as it's less frequent
   const existingQuests = await storage.getUserQuests(userId);
   const weeklyQuests = existingQuests.filter((q: any) => {
     const questDate = new Date(q.createdAt);
@@ -105,7 +114,7 @@ async function assignWeeklyQuest(userId: string) {
     return; // Already has weekly quests
   }
 
-  // Get user data
+  // Get user data (reload to ensure fresh)
   const user = await storage.getUser(userId);
   if (!user) return;
 
