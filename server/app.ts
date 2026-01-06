@@ -28,6 +28,40 @@ export const app = express();
 // Enable Gzip compression (saves ~70% network bandwidth)
 app.use(compression());
 
+// Security Hardening
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
+// Trust proxy is required for rate limiting behind Vercel/proxies
+app.set("trust proxy", 1);
+
+// Set security headers (CSP disabled to allow Vite/React inline scripts for now)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+// Global Rate Limiter: 100 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: "Too many requests, please try again later."
+});
+app.use(globalLimiter);
+
+// Auth Rate Limiter: 5 login attempts per 15 minutes per IP (Strict)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: "Too many login attempts, please try again after 15 minutes."
+});
+app.use("/api/auth", authLimiter);
+
+
 // Radical Optimization: Edge Caching for Static Data
 app.use((req, res, next) => {
   // Cache Shop and Campaigns on Edge for 1 hour

@@ -15,7 +15,31 @@ import {
 } from "@shared/schema";
 
 // Enable CORS for all routes (allow admin frontend to make DELETE with custom header)
-const corsOptions = { origin: true, credentials: true };
+// Enable CORS with strict origin check
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Allowed origins
+    const allowedOrigins = [
+      /^http:\/\/localhost:\d+$/,
+      /^https:\/\/.*\.vercel\.app$/,
+      "https://ascension-protocol.com" // Add your custom domain here
+    ];
+
+    const isAllowed = allowedOrigins.some(pattern =>
+      typeof pattern === 'string' ? pattern === origin : pattern.test(origin)
+    );
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+};
 
 import { getRandomDailyQuests, getRandomWeeklyQuest, getRankTrialQuest } from "./quest-templates";
 import { mockContent } from "./data/mock-content";
