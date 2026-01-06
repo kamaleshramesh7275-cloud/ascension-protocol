@@ -7,8 +7,8 @@ export function initCronJobs(storage: IStorage) {
     console.log("[Cron] Initializing Cron Jobs...");
 
     // Run immediately on startup to catch up
-    runDailyGuildQuests(storage);
-    processGuildWars(storage);
+    // runDailyGuildQuests(storage);
+    // processGuildWars(storage);
     processPremiumBonuses(storage);
     // storage.deleteOldMessages(48) - Removed immediate run to strictly follow midnight schedule, 
     // or we could keep it for safety. User said "set a time a 12 am", implying the schedule is key.
@@ -16,8 +16,8 @@ export function initCronJobs(storage: IStorage) {
 
     // Schedule periodic run for general tasks
     setInterval(() => {
-        runDailyGuildQuests(storage);
-        processGuildWars(storage);
+        // runDailyGuildQuests(storage);
+        // processGuildWars(storage);
         processPremiumBonuses(storage);
     }, CRON_INTERVAL);
 

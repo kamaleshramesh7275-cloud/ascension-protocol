@@ -379,6 +379,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.guilds = new Map();
     // Pre-populate standard guilds
+    /*
     const standardNames = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta"];
     standardNames.forEach((name, idx) => {
       const id = `guild-${idx + 1}`;
@@ -399,6 +400,7 @@ export class MemStorage implements IStorage {
         activePerks: [],
       });
     });
+    */
     this.users = new Map();
     this.quests = new Map();
     this.activities = new Map();

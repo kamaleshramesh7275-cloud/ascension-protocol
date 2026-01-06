@@ -1662,9 +1662,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Guild Routes
-  app.use("/api/guilds", requireAuth, guildRouter);
-  app.use("/api/guild-enhancements", requireAuth, guildEnhancementsRouter);
-  app.use("/api/guild-wars", guildWarsRouter);
+  // app.use("/api/guilds", requireAuth, guildRouter);
+  // app.use("/api/guild-enhancements", requireAuth, guildEnhancementsRouter);
+  // app.use("/api/guild-wars", guildWarsRouter);
   app.use("/api/shop", requireAuth, shopRouter);
   app.use("/api/subscription", subscriptionRouter);
 
