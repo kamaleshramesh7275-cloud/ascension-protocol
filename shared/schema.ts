@@ -71,6 +71,12 @@ export const users = pgTable("users", {
 
   // Optimization: Track last time we checked for daily quests to avoid redundant DB queries
   lastDailyQuestCheck: timestamp("last_daily_quest_check"),
+}, (table) => {
+  return {
+    firebaseUidIdx: index("idx_users_firebase_uid").on(table.firebaseUid),
+    // For leaderboard
+    xpIdx: index("idx_users_xp_desc").on(table.xp),
+  };
 });
 
 // Guilds table
@@ -251,6 +257,8 @@ export const notifications = pgTable("notifications", {
 }, (table) => {
   return {
     userIdIdx: index("notifications_user_id_idx").on(table.userId),
+    // Performance: Filter by unread notifications
+    userReadIdx: index("idx_notifications_user_read").on(table.userId, table.read),
   };
 });
 
@@ -332,6 +340,8 @@ export const messages = pgTable("messages", {
 }, (table) => {
   return {
     userIdIdx: index("messages_user_id_idx").on(table.userId),
+    // Performance: Sort by recent messages
+    createdAtIndex: index("idx_messages_created_at_desc").on(table.createdAt),
   };
 });
 
