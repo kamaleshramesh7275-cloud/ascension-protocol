@@ -28,6 +28,19 @@ export const app = express();
 // Enable Gzip compression (saves ~70% network bandwidth)
 app.use(compression());
 
+// Radical Optimization: Edge Caching for Static Data
+app.use((req, res, next) => {
+  // Cache Shop and Campaigns on Edge for 1 hour
+  if (req.url.startsWith('/api/shop') || req.url.startsWith('/api/campaigns')) {
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
+  }
+  // Cache Leaderboards for 10 minutes
+  if (req.url.startsWith('/api/leaderboard')) {
+    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=60');
+  }
+  next();
+});
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

@@ -23,6 +23,7 @@ import guildRouter from "./routes/guilds";
 import guildEnhancementsRouter from "./routes/guild-enhancements";
 import guildWarsRouter from "./routes/guild-wars";
 import shopRouter from "./routes/shop";
+import syncRouter from "./routes/sync";
 import subscriptionRouter from "./routes/subscription";
 import roadmapRouter from "./routes/roadmaps";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
@@ -152,6 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // DEBUG: Ping route
   app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now(), location: "routes.ts" }));
+
+  // Sync Router (Radical Optimization)
+  app.use("/api", syncRouter);
 
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);
