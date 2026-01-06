@@ -45,8 +45,15 @@ export function registerLocalAuthRoutes(app: Express) {
                 timezone: "UTC",
                 onboardingCompleted: false,
                 assessmentData: {
-                    age, weight, height, pushups, pullups,
-                    intelligence, willpower, vitality, charisma
+                    age: parseInt(String(age)),
+                    weight: parseInt(String(weight)),
+                    height: parseInt(String(height)),
+                    pushups: parseInt(String(pushups)),
+                    pullups: parseInt(String(pullups)),
+                    intelligence: parseInt(String(intelligence)),
+                    willpower: parseInt(String(willpower)),
+                    vitality: parseInt(String(vitality)),
+                    charisma: parseInt(String(charisma))
                 }
             });
 

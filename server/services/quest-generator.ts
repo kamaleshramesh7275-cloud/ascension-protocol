@@ -195,12 +195,15 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
 
     // 1. Primary Goal Quests (Multiple per category)
     if (category === "fitness") {
-        const pushups = (user.assessmentData as any)?.pushups || 10;
-        const targetPushups = Math.ceil(pushups * (1.1 + (difficultyMult - 1) * 0.1));
+        const rawPushups = (user.assessmentData as any)?.pushups;
+        const pushups = rawPushups ? parseInt(String(rawPushups)) : 10; // Handle string "0" or number 0
+        const effectivePushups = Math.max(pushups, 5); // Minimum floor of 5 to avoid "0 pushups" quest
+
+        const targetPushups = Math.ceil(effectivePushups * (1.1 + (difficultyMult - 1) * 0.1));
 
         quests.push(createQuest(
             `💪 Strength: ${targetPushups} Pushups`,
-            `Complete ${targetPushups} pushups in a single set. Baseline: ${pushups}.`,
+            `Complete ${targetPushups} pushups in a single set. Baseline: ${effectivePushups}.`,
             10, 2, { strength: Math.floor(2 * difficultyMult) }, 'normal'
         ));
 
