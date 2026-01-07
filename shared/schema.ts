@@ -407,199 +407,249 @@ export const partnerships = pgTable("partnerships", {
 });
 
 // Zod schemas for validation
-export const insertUserSchema = createInsertSchema(users).pick({
-  firebaseUid: true,
-  name: true,
-  email: true,
-  avatarUrl: true,
-  timezone: true,
-  onboardingCompleted: true,
-  assessmentData: true,
-  currentGoal: true,
-  studySubject: true,
-  studyAvailability: true,
-  isPremium: true,
-  premiumExpiry: true,
-  role: true,
-  hasSeenTutorial: true,
-  referralCode: true,
-  referredBy: true,
-}).partial({
-  avatarUrl: true,
-  timezone: true,
-  onboardingCompleted: true,
-  assessmentData: true,
-  currentGoal: true,
-  studySubject: true,
-  studyAvailability: true,
-  isPremium: true,
-  premiumExpiry: true,
-  role: true,
-  hasSeenTutorial: true,
-  referralCode: true,
-  referredBy: true,
+export const insertUserSchema = z.object({
+  firebaseUid: z.string().min(1),
+  name: z.string().min(1),
+  email: z.string().email(),
+  avatarUrl: z.string().nullable().optional(),
+  timezone: z.string().nullable().optional(),
+  onboardingCompleted: z.boolean().optional(),
+  assessmentData: z.any().nullable().optional(),
+  currentGoal: z.string().nullable().optional(),
+  studySubject: z.string().nullable().optional(),
+  studyAvailability: z.string().nullable().optional(),
+  isPremium: z.boolean().optional(),
+  premiumExpiry: z.date().nullable().optional(),
+  role: z.string().optional(),
+  hasSeenTutorial: z.boolean().optional(),
+  referralCode: z.string().nullable().optional(),
+  referredBy: z.string().nullable().optional(),
+}).partial();
+
+export const insertGuildSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  leaderId: z.string().min(1),
+  avatarUrl: z.string().nullable().optional(),
+  isPublic: z.boolean().optional(),
 });
 
-export const insertGuildSchema = createInsertSchema(guilds);
-
-export const insertQuestSchema = createInsertSchema(quests).omit({
-  id: true,
-  createdAt: true,
-  completed: true,
-  completedAt: true,
+export const insertQuestSchema = z.object({
+  userId: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  type: z.string(),
+  difficulty: z.string(),
+  rewardXP: z.number().int(),
+  rewardCoins: z.number().int().optional(),
+  rewardStats: z.any().nullable().optional(),
+  campaignId: z.string().nullable().optional(),
+  parentQuestId: z.string().nullable().optional(),
+  isBoss: z.boolean().optional(),
+  bossHealth: z.number().int().nullable().optional(),
+  bossMaxHealth: z.number().int().nullable().optional(),
+  content: z.string().nullable().optional(),
+  dayNumber: z.number().int().nullable().optional(),
+  expiresAt: z.date().nullable().optional(),
+  dueAt: z.date(),
 });
 
-export const insertCampaignSchema = createInsertSchema(campaigns).omit({
-  id: true,
-  createdAt: true,
+export const insertCampaignSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  category: z.string().min(1),
+  difficulty: z.string().min(1),
+  durationDays: z.number().int().optional(),
+  totalQuests: z.number().int(),
+  rewardXP: z.number().int(),
+  rewardCoins: z.number().int(),
+  imageUrl: z.string().nullable().optional(),
 });
 
-export const insertContentSchema = createInsertSchema(contentLibrary).omit({
-  id: true,
-  createdAt: true,
-  views: true,
-  likes: true,
+export const insertUserCampaignSchema = z.object({
+  userId: z.string().min(1),
+  campaignId: z.string().min(1),
+  questsCompleted: z.number().int().optional(),
+  completed: z.boolean().optional(),
+  startedAt: z.date().optional(),
 });
 
-export const insertSleepLogSchema = createInsertSchema(sleepLogs).omit({
-  id: true,
-  createdAt: true,
+export const insertContentLibrarySchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  type: z.string(),
+  category: z.string(),
+  content: z.string().nullable().optional(),
+  videoUrl: z.string().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  duration: z.number().int().nullable().optional(),
+  isPremium: z.boolean().optional(),
 });
 
-export const insertNutritionLogSchema = createInsertSchema(nutritionLogs).omit({
-  id: true,
-  createdAt: true,
+export const insertContentSchema = insertContentLibrarySchema; // Alias for backward compatibility
+
+export const insertSleepLogSchema = z.object({
+  userId: z.string().min(1),
+  date: z.date(),
+  bedtime: z.date(),
+  wakeTime: z.date(),
+  duration: z.string(), // decimal is often string in JS
+  quality: z.number().int().min(1).max(10),
+  notes: z.string().nullable().optional(),
 });
 
-export const insertActivitySchema = createInsertSchema(activityHistory).omit({
-  id: true,
-  timestamp: true,
+export const insertNutritionLogSchema = z.object({
+  userId: z.string().min(1),
+  date: z.date(),
+  mealType: z.string(),
+  foodName: z.string().min(1),
+  calories: z.number().int(),
+  protein: z.string().nullable().optional(),
+  carbs: z.string().nullable().optional(),
+  fats: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
-export const insertRankTrialSchema = createInsertSchema(rankTrials).omit({
-  id: true,
-  completed: true,
-  completedAt: true,
-  createdAt: true,
+export const insertActivityHistorySchema = z.object({
+  userId: z.string().min(1),
+  action: z.string().min(1),
+  questId: z.string().nullable().optional(),
+  xpDelta: z.number().int().optional(),
+  coinsDelta: z.number().int().optional(),
+  statDeltas: z.any().nullable().optional(),
 });
 
-export const insertHabitSchema = createInsertSchema(habitTracking).omit({
-  id: true,
-  createdAt: true,
+export const insertActivitySchema = insertActivityHistorySchema;
+
+export const insertRankTrialSchema = z.object({
+  userId: z.string().min(1),
+  tier: z.string().min(1),
+  questId: z.string().min(1),
 });
 
-export const insertFocusSessionSchema = createInsertSchema(focusSessions).omit({
-  id: true,
-  completedAt: true,
+export const insertHabitTrackingSchema = z.object({
+  userId: z.string().min(1),
+  habitId: z.string().min(1),
+  habitName: z.string().min(1),
+  frequency: z.string(),
 });
 
-export const insertNotificationSchema = createInsertSchema(notifications).omit({
-  id: true,
-  read: true,
-  createdAt: true,
+export const insertHabitSchema = insertHabitTrackingSchema;
+
+export const insertFocusSessionSchema = z.object({
+  userId: z.string().min(1),
+  duration: z.number().int().min(1),
+  xpEarned: z.number().int().min(0),
+  task: z.string().nullable().optional(),
+  backgroundType: z.string().nullable().optional(),
+});
+
+export const insertNotificationSchema = z.object({
+  userId: z.string().min(1),
+  type: z.string(),
+  title: z.string().min(1),
+  message: z.string().min(1),
 });
 
 // TypeScript types
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type InsertGuild = z.infer<typeof insertGuildSchema>;
 export type Guild = typeof guilds.$inferSelect;
+export type InsertGuild = z.infer<typeof insertGuildSchema>;
 
-export type InsertQuest = z.infer<typeof insertQuestSchema>;
 export type Quest = typeof quests.$inferSelect;
+export type InsertQuest = z.infer<typeof insertQuestSchema>;
 
-export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 
-export const insertUserCampaignSchema = createInsertSchema(userCampaigns).omit({
-  id: true,
-  startedAt: true,
-  completed: true,
-  questsCompleted: true,
-  completedAt: true
-});
-
-export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
 export type UserCampaign = typeof userCampaigns.$inferSelect;
+export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
 
-export type InsertContent = z.infer<typeof insertContentSchema>;
 export type Content = typeof contentLibrary.$inferSelect;
+export type InsertContent = z.infer<typeof insertContentSchema>;
 
-export type InsertSleepLog = z.infer<typeof insertSleepLogSchema>;
 export type SleepLog = typeof sleepLogs.$inferSelect;
+export type InsertSleepLog = z.infer<typeof insertSleepLogSchema>;
 
-export type InsertNutritionLog = z.infer<typeof insertNutritionLogSchema>;
 export type NutritionLog = typeof nutritionLogs.$inferSelect;
+export type InsertNutritionLog = z.infer<typeof insertNutritionLogSchema>;
 
-export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activityHistory.$inferSelect;
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
-export type InsertRankTrial = z.infer<typeof insertRankTrialSchema>;
 export type RankTrial = typeof rankTrials.$inferSelect;
+export type InsertRankTrial = z.infer<typeof insertRankTrialSchema>;
 
-export type InsertHabit = z.infer<typeof insertHabitSchema>;
 export type HabitTracking = typeof habitTracking.$inferSelect;
+export type InsertHabit = z.infer<typeof insertHabitSchema>;
 
-export type InsertFocusSession = z.infer<typeof insertFocusSessionSchema>;
 export type FocusSession = typeof focusSessions.$inferSelect;
+export type InsertFocusSession = z.infer<typeof insertFocusSessionSchema>;
 
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
-
-
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type Theme = typeof themes.$inferSelect;
 
-export const insertShopItemSchema = createInsertSchema(shopItems).omit({
-  id: true,
-  createdAt: true,
+export const insertShopItemSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  price: z.number().int(),
+  type: z.string(),
+  rarity: z.string(),
+  imageUrl: z.string().nullable().optional(),
+  requirements: z.any().nullable().optional(),
 });
 
-export const insertUserItemSchema = createInsertSchema(userItems).omit({
-  id: true,
-  acquiredAt: true,
+export const insertUserItemSchema = z.object({
+  userId: z.string().min(1),
+  itemId: z.string().min(1),
+  isEquipped: z.boolean().optional(),
 });
 
-export type InsertShopItem = z.infer<typeof insertShopItemSchema>;
 export type ShopItem = typeof shopItems.$inferSelect;
+export type InsertShopItem = z.infer<typeof insertShopItemSchema>;
 
-export type InsertUserItem = z.infer<typeof insertUserItemSchema>;
 export type UserItem = typeof userItems.$inferSelect;
+export type InsertUserItem = z.infer<typeof insertUserItemSchema>;
 
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  createdAt: true,
+export const insertMessageSchema = z.object({
+  userId: z.string().min(1),
+  content: z.string().min(1),
 });
 
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
-export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({
-  id: true,
-  createdAt: true,
-  read: true,
+export const insertDirectMessageSchema = z.object({
+  senderId: z.string().min(1),
+  receiverId: z.string().min(1),
+  content: z.string().min(1),
 });
 
-export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type DirectMessage = typeof directMessages.$inferSelect;
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 
-export const insertPartnershipSchema = createInsertSchema(partnerships).omit({
-  id: true,
-  createdAt: true,
-  acceptedAt: true,
+export const insertPartnershipSchema = z.object({
+  user1Id: z.string().min(1),
+  user2Id: z.string().min(1),
+  status: z.string().optional(),
 });
 
-export const insertTaskSchema = createInsertSchema(tasks).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertTask = z.infer<typeof insertTaskSchema>;
-export type Task = typeof tasks.$inferSelect;
-
-export type InsertPartnership = z.infer<typeof insertPartnershipSchema>;
 export type Partnership = typeof partnerships.$inferSelect;
+export type InsertPartnership = z.infer<typeof insertPartnershipSchema>;
+
+export const insertTaskSchema = z.object({
+  userId: z.string().min(1),
+  text: z.string().min(1),
+  completed: z.boolean().optional(),
+});
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
 
 export type ItemType = "avatar" | "badge" | "theme" | "title";
 export type ItemRarity = "common" | "rare" | "epic" | "legendary";
@@ -616,15 +666,10 @@ export type UserStats = {
 };
 
 export type Tier = "D" | "C" | "B" | "A" | "S";
-
 export type QuestType = "daily" | "weekly" | "ai" | "campaign" | "boss";
-
 export type QuestDifficulty = "easy" | "normal" | "hard" | "epic";
-
 export type ContentType = "article" | "video" | "guide" | "template";
-
 export type ContentCategory = "fitness" | "productivity" | "mindfulness" | "nutrition" | "sleep";
-
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 // Constants for game mechanics
@@ -648,7 +693,6 @@ export const STAT_NAMES = [
 
 export type StatName = typeof STAT_NAMES[number];
 
-// Coin rewards by quest difficulty
 export const COIN_REWARDS: Record<QuestDifficulty, number> = {
   easy: 10,
   normal: 25,
@@ -656,7 +700,6 @@ export const COIN_REWARDS: Record<QuestDifficulty, number> = {
   epic: 100,
 };
 
-// Available themes
 export const AVAILABLE_THEMES = [
   { id: "default", name: "Default", isPremium: false },
   { id: "emerald", name: "Emerald Dream", isPremium: false },
@@ -686,21 +729,23 @@ export const guildMessages = pgTable("guild_messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCredentialSchema = createInsertSchema(credentials).omit({
-  id: true,
-  createdAt: true,
+export const insertCredentialSchema = z.object({
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  passwordHash: z.string().min(1),
 });
 
-export type InsertCredential = z.infer<typeof insertCredentialSchema>;
 export type Credential = typeof credentials.$inferSelect;
+export type InsertCredential = z.infer<typeof insertCredentialSchema>;
 
-export const insertGuildMessageSchema = createInsertSchema(guildMessages).omit({
-  id: true,
-  createdAt: true,
+export const insertGuildMessageSchema = z.object({
+  guildId: z.string().min(1),
+  userId: z.string().min(1),
+  content: z.string().min(1),
 });
 
-export type InsertGuildMessage = z.infer<typeof insertGuildMessageSchema>;
 export type GuildMessage = typeof guildMessages.$inferSelect;
+export type InsertGuildMessage = z.infer<typeof insertGuildMessageSchema>;
 
 // Rivalries
 export const rivalries = pgTable("rivalries", {
@@ -717,46 +762,48 @@ export const rivalries = pgTable("rivalries", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertRivalrySchema = createInsertSchema(rivalries).omit({
-  id: true,
-  createdAt: true,
-  status: true,
-  challengerScore: true,
-  defenderScore: true,
-  winnerId: true,
+export const insertRivalrySchema = z.object({
+  challengerId: z.string().min(1),
+  defenderId: z.string().min(1),
+  endDate: z.date(),
+  reward: z.number().int().optional(),
 });
 
-export type InsertRivalry = z.infer<typeof insertRivalrySchema>;
 export type Rivalry = typeof rivalries.$inferSelect;
+export type InsertRivalry = z.infer<typeof insertRivalrySchema>;
 
-// Guild Quests - collaborative challenges for guilds
+// Guild Quests
 export const guildQuests = pgTable("guild_quests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   guildId: varchar("guild_id").notNull().references(() => guilds.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  type: text("type").notNull(), // "collective_xp", "collective_focus", "member_participation"
-  targetValue: integer("target_value").notNull(), // e.g., 10000 XP, 100 hours
+  type: text("type").notNull(),
+  targetValue: integer("target_value").notNull(),
   currentValue: integer("current_value").default(0).notNull(),
   rewardCoins: integer("reward_coins").notNull(),
   rewardXP: integer("reward_xp").notNull(),
-  status: text("status").default("active").notNull(), // "active", "completed", "expired"
+  status: text("status").default("active").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 });
 
-export const insertGuildQuestSchema = createInsertSchema(guildQuests).omit({
-  id: true,
-  createdAt: true,
-  currentValue: true,
-  completedAt: true,
+export const insertGuildQuestSchema = z.object({
+  guildId: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  type: z.string(),
+  targetValue: z.number().int(),
+  rewardCoins: z.number().int(),
+  rewardXP: z.number().int(),
+  expiresAt: z.date(),
 });
 
-export type InsertGuildQuest = z.infer<typeof insertGuildQuestSchema>;
 export type GuildQuest = typeof guildQuests.$inferSelect;
+export type InsertGuildQuest = z.infer<typeof insertGuildQuestSchema>;
 
-// Track individual member contributions to guild quests
+// Track contributions
 export const guildQuestProgress = pgTable("guild_quest_progress", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   questId: varchar("quest_id").notNull().references(() => guildQuests.id),
@@ -765,33 +812,39 @@ export const guildQuestProgress = pgTable("guild_quest_progress", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertGuildQuestProgressSchema = createInsertSchema(guildQuestProgress).omit({
-  id: true,
-  updatedAt: true,
+export const insertGuildQuestProgressSchema = z.object({
+  questId: z.string().min(1),
+  userId: z.string().min(1),
+  contribution: z.number().int(),
 });
 
-export type InsertGuildQuestProgress = z.infer<typeof insertGuildQuestProgressSchema>;
 export type GuildQuestProgress = typeof guildQuestProgress.$inferSelect;
+export type InsertGuildQuestProgress = z.infer<typeof insertGuildQuestProgressSchema>;
 
-// Guild Perks - upgrades that benefit all members
+// Guild Perks
 export const guildPerks = pgTable("guild_perks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  cost: integer("cost").notNull(), // Cost in guild treasury coins
-  effect: text("effect").notNull(), // "xp_boost_10", "coin_boost_20", "quest_slots_1"
-  iconName: text("icon_name"), // For UI
-  tier: integer("tier").default(1).notNull(), // Unlock tier
+  cost: integer("cost").notNull(),
+  effect: text("effect").notNull(),
+  iconName: text("icon_name"),
+  tier: integer("tier").default(1).notNull(),
 });
 
-export const insertGuildPerkSchema = createInsertSchema(guildPerks).omit({
-  id: true,
+export const insertGuildPerkSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  cost: z.number().int(),
+  effect: z.string().min(1),
+  iconName: z.string().nullable().optional(),
+  tier: z.number().int().optional(),
 });
 
-export type InsertGuildPerk = z.infer<typeof insertGuildPerkSchema>;
 export type GuildPerk = typeof guildPerks.$inferSelect;
+export type InsertGuildPerk = z.infer<typeof insertGuildPerkSchema>;
 
-// Guild Donations - track member contributions
+// Guild Donations
 export const guildDonations = pgTable("guild_donations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   guildId: varchar("guild_id").notNull().references(() => guilds.id),
@@ -800,24 +853,25 @@ export const guildDonations = pgTable("guild_donations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertGuildDonationSchema = createInsertSchema(guildDonations).omit({
-  id: true,
-  createdAt: true,
+export const insertGuildDonationSchema = z.object({
+  guildId: z.string().min(1),
+  userId: z.string().min(1),
+  amount: z.number().int().min(1),
 });
 
-export type InsertGuildDonation = z.infer<typeof insertGuildDonationSchema>;
 export type GuildDonation = typeof guildDonations.$inferSelect;
+export type InsertGuildDonation = z.infer<typeof insertGuildDonationSchema>;
 
-// Guild Wars - competitive guild vs guild battles
+// Guild Wars
 export const guildWars = pgTable("guild_wars", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  season: integer("season").notNull(), // Season number for tracking
-  status: text("status").notNull().default("matchmaking"), // matchmaking, active, completed
+  season: integer("season").notNull(),
+  status: text("status").notNull().default("matchmaking"),
   guild1Id: varchar("guild1_id").notNull().references(() => guilds.id),
   guild2Id: varchar("guild2_id").notNull().references(() => guilds.id),
   guild1Score: integer("guild1_score").default(0).notNull(),
   guild2Score: integer("guild2_score").default(0).notNull(),
-  winnerId: varchar("winner_id"), // Guild ID of winner
+  winnerId: varchar("winner_id"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   rewards: jsonb("rewards").$type<{
@@ -833,7 +887,6 @@ export const guildWars = pgTable("guild_wars", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Track individual member contributions to guild wars
 export const guildWarParticipants = pgTable("guild_war_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   warId: varchar("war_id").notNull().references(() => guildWars.id),
@@ -845,76 +898,80 @@ export const guildWarParticipants = pgTable("guild_war_participants", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Guild War Events - activity log for wars
 export const guildWarEvents = pgTable("guild_war_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   warId: varchar("war_id").notNull().references(() => guildWars.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   guildId: varchar("guild_id").notNull().references(() => guilds.id),
-  eventType: text("event_type").notNull(), // quest_complete, focus_session, level_up, daily_login
+  eventType: text("event_type").notNull(),
   points: integer("points").notNull(),
   description: text("description").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
-export const insertGuildWarSchema = createInsertSchema(guildWars).omit({
-  id: true,
-  createdAt: true,
-  guild1Score: true,
-  guild2Score: true,
-  winnerId: true,
+export const insertGuildWarSchema = z.object({
+  season: z.number().int(),
+  status: z.string().optional(),
+  guild1Id: z.string().min(1),
+  guild2Id: z.string().min(1),
+  startDate: z.date(),
+  endDate: z.date(),
+  rewards: z.any().nullable().optional(),
 });
 
-export const insertGuildWarParticipantSchema = createInsertSchema(guildWarParticipants).omit({
-  id: true,
-  updatedAt: true,
-  pointsContributed: true,
-  questsCompleted: true,
-  focusMinutes: true,
+export const insertGuildWarParticipantSchema = z.object({
+  warId: z.string().min(1),
+  userId: z.string().min(1),
+  guildId: z.string().min(1),
+  pointsContributed: z.number().int().optional(),
+  questsCompleted: z.number().int().optional(),
+  focusMinutes: z.number().int().optional(),
 });
 
-export const insertGuildWarEventSchema = createInsertSchema(guildWarEvents).omit({
-  id: true,
-  timestamp: true,
+export const insertGuildWarEventSchema = z.object({
+  warId: z.string().min(1),
+  userId: z.string().min(1),
+  guildId: z.string().min(1),
+  eventType: z.string().min(1),
+  points: z.number().int(),
+  description: z.string().min(1),
 });
 
-export type InsertGuildWar = z.infer<typeof insertGuildWarSchema>;
 export type GuildWar = typeof guildWars.$inferSelect;
+export type InsertGuildWar = z.infer<typeof insertGuildWarSchema>;
 
-export type InsertGuildWarParticipant = z.infer<typeof insertGuildWarParticipantSchema>;
 export type GuildWarParticipant = typeof guildWarParticipants.$inferSelect;
+export type InsertGuildWarParticipant = z.infer<typeof insertGuildWarParticipantSchema>;
 
-export type InsertGuildWarEvent = z.infer<typeof insertGuildWarEventSchema>;
 export type GuildWarEvent = typeof guildWarEvents.$inferSelect;
+export type InsertGuildWarEvent = z.infer<typeof insertGuildWarEventSchema>;
 
 // Premium Activation Requests
 export const premiumRequests = pgTable("premium_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  status: text("status").notNull().default("pending"),
   adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
 });
 
-export const insertPremiumRequestSchema = createInsertSchema(premiumRequests).omit({
-  id: true,
-  createdAt: true,
-  resolvedAt: true,
+export const insertPremiumRequestSchema = z.object({
+  userId: z.string().min(1),
+  status: z.string().optional(),
+  adminNotes: z.string().nullable().optional(),
 });
 
-export type InsertPremiumRequest = z.infer<typeof insertPremiumRequestSchema>;
 export type PremiumRequest = typeof premiumRequests.$inferSelect;
+export type InsertPremiumRequest = z.infer<typeof insertPremiumRequestSchema>;
 
 export type WarStatus = "matchmaking" | "active" | "completed";
-
-
 
 // 30-Day Premium Roadmap
 export const roadmaps = pgTable("roadmaps", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  status: text("status").notNull().default("active"), // active, completed, archived
+  status: text("status").notNull().default("active"),
   startDate: timestamp("start_date").defaultNow().notNull(),
   currentWeek: integer("current_week").default(1).notNull(),
 }, (table) => ({
@@ -924,8 +981,8 @@ export const roadmaps = pgTable("roadmaps", {
 export const roadmapWeeks = pgTable("roadmap_weeks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   roadmapId: varchar("roadmap_id").notNull().references(() => roadmaps.id),
-  weekNumber: integer("week_number").notNull(), // 1-4
-  phaseName: text("phase_name").notNull(), // Stability, Pressure, Dominance, Ascension
+  weekNumber: integer("week_number").notNull(),
+  phaseName: text("phase_name").notNull(),
   goal: text("goal").notNull(),
   description: text("description"),
   isLocked: boolean("is_locked").default(true).notNull(),
@@ -936,33 +993,51 @@ export const roadmapWeeks = pgTable("roadmap_weeks", {
 export const roadmapTasks = pgTable("roadmap_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   weekId: varchar("week_id").notNull().references(() => roadmapWeeks.id),
-  dayNumber: integer("day_number").notNull(), // 1-7
+  dayNumber: integer("day_number").notNull(),
   text: text("text").notNull(),
   completed: boolean("completed").default(false).notNull(),
-  isBoss: boolean("is_boss").default(false).notNull(), // Highlights "Boss Battle" tasks
+  isBoss: boolean("is_boss").default(false).notNull(),
   order: integer("order").default(0).notNull(),
 }, (table) => ({
   weekIdIdx: index("roadmap_tasks_week_id_idx").on(table.weekId),
 }));
 
-export const insertRoadmapSchema = createInsertSchema(roadmaps).omit({
-  id: true,
-  startDate: true,
+export const insertRoadmapSchema = z.object({
+  userId: z.string().min(1),
+  status: z.string().optional(),
 });
 
-export const insertRoadmapWeekSchema = createInsertSchema(roadmapWeeks).omit({
-  id: true,
+export const insertRoadmapWeekSchema = z.object({
+  roadmapId: z.string().min(1),
+  weekNumber: z.number().int().min(1),
+  phaseName: z.string().min(1),
+  goal: z.string().min(1),
+  description: z.string().nullable().optional(),
 });
 
-export const insertRoadmapTaskSchema = createInsertSchema(roadmapTasks).omit({
-  id: true,
+export const insertRoadmapTaskSchema = z.object({
+  weekId: z.string().min(1),
+  dayNumber: z.number().int().min(1).max(7),
+  text: z.string().min(1),
+  completed: z.boolean().optional(),
+  isBoss: z.boolean().optional(),
+  order: z.number().optional(),
 });
 
-export type InsertRoadmap = z.infer<typeof insertRoadmapSchema>;
 export type Roadmap = typeof roadmaps.$inferSelect;
+export type InsertRoadmap = z.infer<typeof insertRoadmapSchema>;
 
-export type InsertRoadmapWeek = z.infer<typeof insertRoadmapWeekSchema>;
 export type RoadmapWeek = typeof roadmapWeeks.$inferSelect;
+export type InsertRoadmapWeek = z.infer<typeof insertRoadmapWeekSchema>;
 
-export type InsertRoadmapTask = z.infer<typeof insertRoadmapTaskSchema>;
 export type RoadmapTask = typeof roadmapTasks.$inferSelect;
+export type InsertRoadmapTask = z.infer<typeof insertRoadmapTaskSchema>;
+
+export const insertReferralSchema = z.object({
+  referrerId: z.string().min(1),
+  referredUserId: z.string().min(1),
+  status: z.string().optional(),
+});
+
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;

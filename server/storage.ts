@@ -70,7 +70,6 @@ import {
   contentLibrary,
   sleepLogs,
   nutritionLogs,
-  habitTracking,
   rivalries,
   guildQuests,
   guildQuestProgress,
@@ -90,15 +89,21 @@ import {
   type InsertRoadmapTask,
   roadmapWeeks,
   roadmapTasks,
+  roadmaps,
   referrals,
   type Referral,
-  type InsertReferral
+  type InsertReferral,
+  habitTracking,
+  type HabitTracking,
+  type InsertHabit
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, ne, or, inArray } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "./db";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const activities = activityHistory;
 
@@ -231,7 +236,6 @@ export interface IStorage {
   donateToGuild(guildId: string, userId: string, amount: number): Promise<GuildDonation>;
   getGuildDonations(guildId: string, limit?: number): Promise<GuildDonation[]>;
   getGuildTreasury(guildId: string): Promise<number>;
-  hydrate(): Promise<void>;
 
   // Tasks
   getTasks(userId: string): Promise<Task[]>;
@@ -426,6 +430,8 @@ export class MemStorage implements IStorage {
     this.roadmaps = new Map();
     this.roadmapWeeks = new Map();
     this.roadmapTasks = new Map();
+    this.campaigns = new Map();
+    this.userCampaigns = new Map();
 
     // SEED CAMPAIGNS FROM DATA
     CAMPAIGNS_DATA.forEach(c => {
@@ -892,11 +898,6 @@ export class MemStorage implements IStorage {
 
   // --- Implementation of IStorage Methods (In-Memory) ---
 
-  async getUser(id: string): Promise<User | undefined> {
-    const user = this.users.get(id);
-    return user ? normalizeUser(user) : undefined;
-  }
-
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
     const user = Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid);
     return user ? normalizeUser(user) : undefined;
@@ -904,47 +905,6 @@ export class MemStorage implements IStorage {
 
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
     return this.deletedUids.has(firebaseUid);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = {
-      id,
-      ...insertUser,
-      name: insertUser.name,
-      firebaseUid: insertUser.firebaseUid,
-      email: insertUser.email,
-      avatarUrl: insertUser.avatarUrl || null,
-      createdAt: new Date(),
-      level: 1,
-      xp: 0,
-      tier: "D",
-      streak: 0,
-      lastActive: new Date(),
-      strength: 10, agility: 10, stamina: 10, vitality: 10, intelligence: 10, willpower: 10, charisma: 10,
-      coins: 100,
-      guildId: null,
-      theme: "default",
-      activeBadgeId: null,
-      activeTitle: null,
-      assessmentData: null,
-      currentGoal: null,
-      studySubject: null,
-      studyAvailability: null,
-      notificationsEnabled: true,
-      notificationTime: 9,
-      onboardingCompleted: insertUser.onboardingCompleted ?? false,
-      isPremium: insertUser.isPremium ?? false,
-      premiumExpiry: insertUser.premiumExpiry ?? null,
-      lastNotificationSent: null,
-      timezone: insertUser.timezone || "UTC",
-      lastPremiumBonusAt: null,
-      stripeCustomerId: null,
-      role: "user"
-    };
-    this.users.set(id, user);
-    this.autoSave();
-    return user;
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
@@ -1443,9 +1403,9 @@ export class MemStorage implements IStorage {
     const newUser: User = {
       ...user,
       id,
-      coins: user.coins ?? 500, // Starting coins
+      coins: (user as any).coins ?? 500, // Starting coins
       role: user.role ?? "user",
-      tier: "Iron", // Default tier
+      tier: "D", // Default tier as per schema
       xp: 0,
       level: 1,
       createdAt: new Date(),
@@ -1820,8 +1780,6 @@ export class MemStorage implements IStorage {
 
   async persist(): Promise<void> {
     if (process.env.VERCEL) return;
-    const fs = await import("fs/promises");
-    const path = await import("path");
     const data = {
       users: Array.from(this.users.entries()),
       quests: Array.from(this.quests.entries()),
@@ -1853,8 +1811,6 @@ export class MemStorage implements IStorage {
 
   async createBackup(): Promise<string> {
     if (process.env.VERCEL) return "vercel-unsupported";
-    const fs = await import("fs/promises");
-    const path = await import("path");
     const now = new Date();
     const timestamp = now.toISOString().replace(/T/, '-').replace(/\..+/, '').replace(/:/g, '-');
     const filename = `backup-${timestamp}.json`;
@@ -1892,8 +1848,6 @@ export class MemStorage implements IStorage {
   }
 
   async hydrate(): Promise<void> {
-    const fs = await import("fs/promises");
-    const path = await import("path");
     try {
       const backupPath = path.resolve(process.cwd(), ".backup", "backup.json");
       const content = await fs.readFile(backupPath, "utf-8");
@@ -2226,6 +2180,16 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> {
     const user = await db!.query.users.findFirst({ where: eq(users.id, id) });
+    if (user && !user.referralCode) {
+      // Lazy generation for existing users
+      const code = generateReferralCode();
+      try {
+        await db!.update(users).set({ referralCode: code }).where(eq(users.id, id));
+        (user as any).referralCode = code;
+      } catch (e) {
+        console.error("Failed to lazy generate referral code", e);
+      }
+    }
     return user ? normalizeUser(user) : undefined;
   }
 
@@ -2249,7 +2213,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db!.insert(users).values({ ...insertUser, coins: 5000 } as any).returning();
+    const code = generateReferralCode();
+    const [user] = await db!.insert(users).values({
+      ...insertUser,
+      coins: 5000,
+      referralCode: code
+    } as any).returning();
+
+    // Create referral record if referredBy exists
+    if (insertUser.referredBy) {
+      // Check validity managed in frontend/route usually, but strictly:
+      // referredBy in insertUser is the REFERRER ID (as per schema update)
+      // Ensure referrer exists
+      const referrer = await db!.query.users.findFirst({ where: eq(users.id, insertUser.referredBy) });
+      if (referrer) {
+        await db!.insert(referrals).values({
+          referrerId: referrer.id,
+          referredUserId: user.id,
+          status: "completed"
+        });
+        // Grant bonus? Future task.
+      }
+    }
+
     return user;
   }
 
@@ -2295,48 +2281,6 @@ export class DatabaseStorage implements IStorage {
   async getUserByReferralCode(code: string): Promise<User | undefined> {
     const user = await db!.query.users.findFirst({ where: eq(users.referralCode, code) });
     return user ? normalizeUser(user) : undefined;
-  }
-
-  async getUser(id: string): Promise<User | undefined> {
-    const user = await db!.query.users.findFirst({ where: eq(users.id, id) });
-    if (user && !user.referralCode) {
-      // Lazy generation for existing users
-      const code = generateReferralCode();
-      try {
-        await db!.update(users).set({ referralCode: code }).where(eq(users.id, id));
-        (user as any).referralCode = code;
-      } catch (e) {
-        console.error("Failed to lazy generate referral code", e);
-      }
-    }
-    return user ? normalizeUser(user) : undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const code = generateReferralCode();
-    const [user] = await db!.insert(users).values({
-      ...insertUser,
-      coins: 5000,
-      referralCode: code
-    } as any).returning();
-
-    // Create referral record if referredBy exists
-    if (insertUser.referredBy) {
-      // Check validity managed in frontend/route usually, but strictly:
-      // referredBy in insertUser is the REFERRER ID (as per schema update)
-      // Ensure referrer exists
-      const referrer = await db!.query.users.findFirst({ where: eq(users.id, insertUser.referredBy) });
-      if (referrer) {
-        await db!.insert(referrals).values({
-          referrerId: referrer.id,
-          referredUserId: user.id,
-          status: "completed"
-        });
-        // Grant bonus? Future task.
-      }
-    }
-
-    return user;
   }
 
   async deleteOldMessages(retentionHours: number): Promise<void> {
@@ -2911,8 +2855,6 @@ export class DatabaseStorage implements IStorage {
 
   async createBackup(): Promise<string> {
     if (process.env.VERCEL) return "vercel-unsupported";
-    const fs = await import("fs/promises");
-    const path = await import("path");
     const now = new Date();
     const timestamp = now.toISOString().replace(/T/, '-').replace(/\..+/, '').replace(/:/g, '-');
     const filename = `backup-${timestamp}.json`;
