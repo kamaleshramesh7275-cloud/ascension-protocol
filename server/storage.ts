@@ -95,7 +95,10 @@ import {
   type InsertReferral,
   habitTracking,
   type HabitTracking,
-  type InsertHabit
+  type InsertHabit,
+  referralProfiles,
+  type ReferralProfile,
+  type InsertReferralProfile
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, ne, or, inArray } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -295,6 +298,11 @@ export interface IStorage {
   getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]>;
   getAllReferrals(adminPassword?: string): Promise<(Referral & { referrer: User, referredUser: User })[]>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
+
+  // Decoupled Referral Profile operations
+  createReferralProfile(profile: InsertReferralProfile): Promise<ReferralProfile>;
+  getReferralProfile(userId: string): Promise<ReferralProfile | undefined>;
+  getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined>;
 }
 
 // Shop Items
@@ -389,6 +397,7 @@ export class MemStorage implements IStorage {
   private tasks: Map<string, Task>;
   private roadmaps: Map<string, Roadmap>;
   private roadmapWeeks: Map<string, RoadmapWeek>;
+  private referralProfiles: Map<string, ReferralProfile>;
   private roadmapTasks: Map<string, RoadmapTask>;
   private guildWars: Map<string, GuildWar>;
   private guildWarParticipants: Map<string, GuildWarParticipant>;
@@ -431,6 +440,7 @@ export class MemStorage implements IStorage {
     this.roadmaps = new Map();
     this.roadmapWeeks = new Map();
     this.roadmapTasks = new Map();
+    this.referralProfiles = new Map();
     this.campaigns = new Map();
     this.userCampaigns = new Map();
 
@@ -2143,6 +2153,28 @@ export class MemStorage implements IStorage {
 
     return updated;
   }
+  // Decoupled Referral Profile operations
+  async createReferralProfile(profile: InsertReferralProfile): Promise<ReferralProfile> {
+    const id = randomUUID();
+    const newProfile: ReferralProfile = {
+      ...profile,
+      id,
+      userId: profile.userId,
+      referredById: profile.referredById || null,
+      totalReferrals: 0,
+      createdAt: new Date(),
+    };
+    this.referralProfiles.set(id, newProfile);
+    return newProfile;
+  }
+
+  async getReferralProfile(userId: string): Promise<ReferralProfile | undefined> {
+    return Array.from(this.referralProfiles.values()).find(p => p.userId === userId);
+  }
+
+  async getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined> {
+    return Array.from(this.referralProfiles.values()).find(p => p.referralCode === code);
+  }
 }
 
 
@@ -3558,6 +3590,26 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updated;
+  }
+
+  // Decoupled Referral Profile operations
+  async createReferralProfile(profile: InsertReferralProfile): Promise<ReferralProfile> {
+    const [newProfile] = await db!.insert(referralProfiles).values(profile).returning();
+    return newProfile;
+  }
+
+  async getReferralProfile(userId: string): Promise<ReferralProfile | undefined> {
+    const profile = await db!.query.referralProfiles.findFirst({
+      where: eq(referralProfiles.userId, userId)
+    });
+    return profile;
+  }
+
+  async getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined> {
+    const profile = await db!.query.referralProfiles.findFirst({
+      where: eq(referralProfiles.referralCode, code)
+    });
+    return profile;
   }
 }
 

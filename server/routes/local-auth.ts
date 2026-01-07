@@ -4,6 +4,16 @@ import { getStorage } from "../storage";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
+// Helper to generate referral code
+function generateReferralCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 // Validation Schemas
 const registerSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
@@ -17,7 +27,7 @@ const registerSchema = z.object({
     willpower: z.coerce.number().int().min(1).max(10),
     vitality: z.coerce.number().int().min(1).max(10),
     charisma: z.coerce.number().int().min(1).max(10),
-    // referralCode: z.string().optional(),
+    referralCode: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -46,14 +56,14 @@ export function registerLocalAuthRoutes(app: Express) {
 
             // 3.5. Validate Referral Code (if provided)
             let referrerId: string | undefined;
-            // if (data.referralCode) {
-            //     const referrer = await storage.getUserByReferralCode(data.referralCode);
-            //     if (!referrer) {
-            //         return res.status(400).json({ error: "Invalid referral code" });
-            //     }
-            //     referrerId = referrer.id;
-            //     console.log(`[REGISTER] Valid referral code from user: ${referrer.name}`);
-            // }
+            if (data.referralCode) {
+                const referrerProfile = await storage.getReferralProfileByCode(data.referralCode);
+                if (!referrerProfile) {
+                    return res.status(400).json({ error: "Invalid referral code" });
+                }
+                referrerId = referrerProfile.userId;
+                console.log(`[REGISTER] Valid referral code from profile: ${referrerProfile.referralCode}`);
+            }
 
             // 4. Create User
             const user = await storage.createUser({
@@ -75,6 +85,14 @@ export function registerLocalAuthRoutes(app: Express) {
                     vitality: data.vitality,
                     charisma: data.charisma
                 }
+            });
+
+            // 4.5 Create Referral Profile
+            await storage.createReferralProfile({
+                userId: user.id,
+                referralCode: generateReferralCode(),
+                referredById: referrerId,
+                totalReferrals: 0,
             });
 
             // 5. Save Credentials

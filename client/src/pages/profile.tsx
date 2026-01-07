@@ -37,14 +37,14 @@ export default function ProfilePage() {
     // Determine if we are viewing our own profile
     const isOwnProfile = !viewUserId;
 
-    // const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
-    //     referralCode: string;
-    //     totalReferrals: number;
-    //     referrals: any[];
-    // }>({
-    //     queryKey: ["/api/referrals/user/stats"],
-    //     enabled: isOwnProfile
-    // });
+    const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
+        referralCode: string;
+        totalReferrals: number;
+        referrals: any[];
+    }>({
+        queryKey: ["/api/referrals/user/stats"],
+        enabled: isOwnProfile
+    });
 
     // Determine if we are viewing our own profile
     // Note: firebaseUser.uid is the firebase auth ID, but our user object uses a different ID. 
@@ -399,7 +399,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Referral Section (Own Profile Only) */}
-                {/* {isOwnProfile && (
+                {isOwnProfile && (
                     <motion.div variants={item}>
                         <div className="grid md:grid-cols-3 gap-6">
                             <Card className="md:col-span-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-xl relative overflow-hidden group">
@@ -425,7 +425,7 @@ export default function ProfilePage() {
                                             <div>
                                                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Your Referral Code</p>
                                                 <p className="text-2xl font-mono font-bold tracking-wider text-white">
-                                                    {user.referralCode || "GENERATING..."}
+                                                    {referralStats?.referralCode || "GENERATING..."}
                                                 </p>
                                             </div>
                                             <Button
@@ -433,8 +433,8 @@ export default function ProfilePage() {
                                                 size="sm"
                                                 className="border-purple-500/30 hover:bg-purple-500/20"
                                                 onClick={() => {
-                                                    if (user.referralCode) {
-                                                        navigator.clipboard.writeText(user.referralCode);
+                                                    if (referralStats?.referralCode) {
+                                                        navigator.clipboard.writeText(referralStats.referralCode);
                                                         setCopied(true);
                                                         setTimeout(() => setCopied(false), 2000);
                                                         toast({ title: "Copied to clipboard!" });
@@ -489,7 +489,7 @@ export default function ProfilePage() {
                             </Card>
                         </div>
                     </motion.div>
-                )} */}
+                )}
 
                 {/* Stats Overview */}
                 <motion.div variants={item} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">

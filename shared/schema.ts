@@ -83,6 +83,20 @@ export const users = pgTable("users", {
   };
 });
 
+// Decoupled Referral System
+export const referralProfiles = pgTable("referral_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(), // Foreign key to users.id
+  referralCode: text("referral_code").notNull().unique(),
+  referredById: varchar("referred_by_id"), // Optional: ID of the user who referred this user
+  totalReferrals: integer("total_referrals").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertReferralProfileSchema = createInsertSchema(referralProfiles);
+export type InsertReferralProfile = z.infer<typeof insertReferralProfileSchema>;
+export type ReferralProfile = typeof referralProfiles.$inferSelect;
+
 // Guilds table
 export const guilds = pgTable("guilds", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
