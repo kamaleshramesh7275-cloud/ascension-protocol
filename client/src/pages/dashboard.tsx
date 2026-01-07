@@ -21,8 +21,9 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { data: user, isLoading: userLoading } = useQuery<User>({
+  const { data: user, isLoading: userLoading, error: userError } = useQuery<User>({
     queryKey: ["/api/user"],
+    retry: 1,
   });
 
   const { data: quests, isLoading: questsLoading } = useQuery<Quest[]>({
@@ -192,14 +193,35 @@ export default function Dashboard() {
     setCurrentQuote(randomQuote);
   }, []);
 
-  if (userLoading || !user) {
+
+
+  if (userLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full bg-slate-800" />
         <div className="grid md:grid-cols-2 gap-6">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
+          <Skeleton className="h-64 bg-slate-800" />
+          <Skeleton className="h-64 bg-slate-800" />
         </div>
+      </div>
+    );
+  }
+
+  if (userError) {
+    return (
+      <div className="p-4 border border-red-500 rounded bg-red-500/10">
+        <h2 className="text-xl font-bold text-red-500 mb-2">Failed to load user data</h2>
+        <p className="text-red-400">{userError.message}</p>
+        <p className="text-sm mt-2 text-muted-foreground">Try refreshing the page.</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="p-4 border border-yellow-500 rounded bg-yellow-500/10">
+        <h2 className="text-xl font-bold text-yellow-500">User data missing</h2>
+        <p className="text-yellow-400">The server returned no user data.</p>
       </div>
     );
   }

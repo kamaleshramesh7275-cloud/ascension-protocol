@@ -56,7 +56,7 @@ export function createReferralRouter(storage: IStorage): Router {
             const referrals = await storage.getReferrals(userId);
 
             res.json({
-                referralCode: user.referralCode,
+                // referralCode: user.referralCode,
                 totalReferrals: referrals.length,
                 referrals: referrals.map(r => ({
                     userId: r.referredUser.id,

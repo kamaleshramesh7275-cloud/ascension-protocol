@@ -37,8 +37,8 @@ export const users = pgTable("users", {
   role: text("role").default("user").notNull(), // user, admin
 
   // Referral System
-  referralCode: text("referral_code").unique(),
-  referredBy: text("referred_by"), // ID of the user who referred this user
+  // referralCode: text("referral_code").unique(),
+  // referredBy: text("referred_by"), // ID of the user who referred this user
 
   // Stats - 7 core attributes (1-100)
   strength: integer("strength").default(10).notNull(),
@@ -422,8 +422,8 @@ export const insertUserSchema = z.object({
   premiumExpiry: z.date().nullable().optional(),
   role: z.string().optional(),
   hasSeenTutorial: z.boolean().optional(),
-  referralCode: z.string().nullable().optional(),
-  referredBy: z.string().nullable().optional(),
+  // referralCode: z.string().nullable().optional(),
+  // referredBy: z.string().nullable().optional(),
 }).partial();
 
 export const insertGuildSchema = z.object({

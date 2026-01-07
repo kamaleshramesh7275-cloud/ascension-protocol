@@ -37,14 +37,14 @@ export default function ProfilePage() {
     // Determine if we are viewing our own profile
     const isOwnProfile = !viewUserId;
 
-    const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
-        referralCode: string;
-        totalReferrals: number;
-        referrals: any[];
-    }>({
-        queryKey: ["/api/referrals/user/stats"],
-        enabled: isOwnProfile
-    });
+    // const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
+    //     referralCode: string;
+    //     totalReferrals: number;
+    //     referrals: any[];
+    // }>({
+    //     queryKey: ["/api/referrals/user/stats"],
+    //     enabled: isOwnProfile
+    // });
 
     // Determine if we are viewing our own profile
     // Note: firebaseUser.uid is the firebase auth ID, but our user object uses a different ID. 
@@ -399,10 +399,9 @@ export default function ProfilePage() {
                 )}
 
                 {/* Referral Section (Own Profile Only) */}
-                {isOwnProfile && (
+                {/* {isOwnProfile && (
                     <motion.div variants={item}>
                         <div className="grid md:grid-cols-3 gap-6">
-                            {/* Referral Promo Card */}
                             <Card className="md:col-span-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-xl relative overflow-hidden group">
                                 <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Gift className="h-40 w-40 text-purple-500 rotate-12" />
@@ -450,7 +449,6 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
 
-                            {/* Referral Stats Card */}
                             <Card className="border-emerald-500/20 bg-black/40 backdrop-blur-xl">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-sm">
@@ -491,7 +489,7 @@ export default function ProfilePage() {
                             </Card>
                         </div>
                     </motion.div>
-                )}
+                )} */}
 
                 {/* Stats Overview */}
                 <motion.div variants={item} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
