@@ -439,7 +439,7 @@ export const insertQuestSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   type: z.string(),
-  difficulty: z.string(),
+  difficulty: z.string().optional(),
   rewardXP: z.number().int(),
   rewardCoins: z.number().int().optional(),
   rewardStats: z.any().nullable().optional(),
@@ -597,17 +597,17 @@ export const insertShopItemSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1),
   description: z.string().min(1),
-  price: z.number().int(),
+  cost: z.number().int(),
   type: z.string(),
   rarity: z.string(),
-  imageUrl: z.string().nullable().optional(),
-  requirements: z.any().nullable().optional(),
+  value: z.string().min(1),
+  isPremium: z.boolean().optional(),
 });
 
 export const insertUserItemSchema = z.object({
   userId: z.string().min(1),
   itemId: z.string().min(1),
-  isEquipped: z.boolean().optional(),
+  equipped: z.boolean().optional(),
 });
 
 export type ShopItem = typeof shopItems.$inferSelect;
@@ -767,6 +767,7 @@ export const insertRivalrySchema = z.object({
   defenderId: z.string().min(1),
   endDate: z.date(),
   reward: z.number().int().optional(),
+  startDate: z.date().optional(),
 });
 
 export type Rivalry = typeof rivalries.$inferSelect;
@@ -798,6 +799,7 @@ export const insertGuildQuestSchema = z.object({
   rewardCoins: z.number().int(),
   rewardXP: z.number().int(),
   expiresAt: z.date(),
+  status: z.string().optional(),
 });
 
 export type GuildQuest = typeof guildQuests.$inferSelect;
@@ -1005,6 +1007,7 @@ export const roadmapTasks = pgTable("roadmap_tasks", {
 export const insertRoadmapSchema = z.object({
   userId: z.string().min(1),
   status: z.string().optional(),
+  currentWeek: z.number().int().optional(),
 });
 
 export const insertRoadmapWeekSchema = z.object({
@@ -1013,6 +1016,7 @@ export const insertRoadmapWeekSchema = z.object({
   phaseName: z.string().min(1),
   goal: z.string().min(1),
   description: z.string().nullable().optional(),
+  isLocked: z.boolean().optional(),
 });
 
 export const insertRoadmapTaskSchema = z.object({

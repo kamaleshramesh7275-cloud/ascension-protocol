@@ -1,0 +1,6 @@
+
+> rest-express@1.0.0 check
+> tsc
+
+server/storage.ts(557,9): error TS2393: Duplicate function implementation.
+server/storage.ts(1876,9): error TS2393: Duplicate function implementation.
