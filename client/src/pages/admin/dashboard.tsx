@@ -69,6 +69,22 @@ interface ShopItem {
     rarity: string;
 }
 
+interface Referral {
+    id: string;
+    referrer: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    referredUser: {
+        id: string;
+        name: string;
+        email: string;
+    };
+    status: string;
+    createdAt: string;
+}
+
 export default function AdminDashboard() {
     const [, setLocation] = useLocation();
     const queryClient = useQueryClient();
@@ -208,6 +224,15 @@ export default function AdminDashboard() {
         enabled: isAuthenticated && activeTab === "roadmaps",
         queryFn: async () => {
             const res = await apiRequest("GET", "/api/roadmap/admin/roadmaps", undefined, getAdminHeaders());
+            return res.json();
+        },
+    });
+
+    const { data: referralData = { total: 0, referrals: [] } } = useQuery<{ total: number; referrals: Referral[] }>({
+        queryKey: ["/api/referrals/admin/all"],
+        enabled: isAuthenticated && activeTab === "referrals",
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/referrals/admin/all", undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -531,6 +556,7 @@ export default function AdminDashboard() {
                         { id: "study-logs", icon: Clock, label: "Study Logs" },
                         { id: "partners", icon: Users, label: "Partner Matching" },
                         { id: "requests", icon: Clock, label: "Activation Requests" },
+                        { id: "referrals", icon: Users, label: "Referrals" },
                         { id: "roadmaps", icon: Map, label: "Roadmaps" },
                         { id: "notifications", icon: Bell, label: "Notifications" },
                         { id: "data", icon: Database, label: "Data Management" },

@@ -8,8 +8,9 @@ import { RankBadge } from "@/components/rank-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle } from "lucide-react";
+import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle, Users, Copy, CheckCircle2, Gift } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
@@ -30,6 +31,20 @@ export default function ProfilePage() {
     const viewUserId = params.id;
     const [location, setLocation] = useLocation();
     const [showPremiumAnim, setShowPremiumAnim] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const { toast } = useToast();
+
+    // Determine if we are viewing our own profile
+    const isOwnProfile = !viewUserId;
+
+    const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
+        referralCode: string;
+        totalReferrals: number;
+        referrals: any[];
+    }>({
+        queryKey: ["/api/referrals/user/stats"],
+        enabled: isOwnProfile
+    });
 
     // Determine if we are viewing our own profile
     // Note: firebaseUser.uid is the firebase auth ID, but our user object uses a different ID. 
@@ -39,8 +54,6 @@ export default function ProfilePage() {
     // Let's assume if viewUserId is present, we treat it as "view mode" initially, 
     // but if the fetched public profile ID matches our own ID (from /api/user context), we could enable edit.
     // For simplicity: If viewUserId is set, use public endpoint. If not, use private endpoint.
-
-    const isOwnProfile = !viewUserId;
 
     const { data: user, isLoading: userLoading } = useQuery<User>({
         queryKey: isOwnProfile ? ["/api/user"] : [`/api/users/${viewUserId}/public`],
@@ -382,6 +395,101 @@ export default function ProfilePage() {
                                 )}
                             </CardContent>
                         </Card>
+                    </motion.div>
+                )}
+
+                {/* Referral Section (Own Profile Only) */}
+                {isOwnProfile && (
+                    <motion.div variants={item}>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {/* Referral Promo Card */}
+                            <Card className="md:col-span-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-transparent backdrop-blur-xl relative overflow-hidden group">
+                                <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Gift className="h-40 w-40 text-purple-500 rotate-12" />
+                                </div>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-purple-400">
+                                        <Gift className="h-5 w-5" />
+                                        Ascension Protocol: Referral Program
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="relative z-10">
+                                        <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                                            Refer 3 people and get 3,000 Coins!
+                                        </h3>
+                                        <p className="text-muted-foreground mb-4 max-w-md">
+                                            Help others start their ascension journey. When 3 friends sign up using your code, you'll be rewarded with a massive coin boost.
+                                        </p>
+
+                                        <div className="bg-black/40 border border-purple-500/20 rounded-xl p-4 flex items-center justify-between group/code">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Your Referral Code</p>
+                                                <p className="text-2xl font-mono font-bold tracking-wider text-white">
+                                                    {user.referralCode || "GENERATING..."}
+                                                </p>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-purple-500/30 hover:bg-purple-500/20"
+                                                onClick={() => {
+                                                    if (user.referralCode) {
+                                                        navigator.clipboard.writeText(user.referralCode);
+                                                        setCopied(true);
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                        toast({ title: "Copied to clipboard!" });
+                                                    }
+                                                }}
+                                            >
+                                                {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                                <span className="ml-2">{copied ? "Copied" : "Copy"}</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Referral Stats Card */}
+                            <Card className="border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-sm">
+                                        <Users className="h-4 w-4 text-emerald-400" />
+                                        Referral Progress
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-col items-center justify-center pt-2">
+                                    <div className="relative h-24 w-24 mb-4">
+                                        <svg className="h-full w-full" viewBox="0 0 36 36">
+                                            <path
+                                                className="stroke-zinc-800"
+                                                strokeWidth="3"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                            <motion.path
+                                                initial={{ strokeDasharray: "0, 100" }}
+                                                animate={{ strokeDasharray: `${Math.min(100, (referralStats?.totalReferrals || 0) * 33.33)}, 100` }}
+                                                className="stroke-emerald-500"
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                fill="none"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            />
+                                        </svg>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span className="text-2xl font-bold">{referralStats?.totalReferrals || 0}</span>
+                                            <span className="text-[10px] text-muted-foreground uppercase">Referrals</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        {referralStats?.totalReferrals || 0 < 3
+                                            ? `${3 - (referralStats?.totalReferrals || 0)} more to reach 3,000 coins!`
+                                            : "Reward goal reached!"}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </motion.div>
                 )}
 

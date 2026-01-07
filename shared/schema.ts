@@ -36,6 +36,10 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   role: text("role").default("user").notNull(), // user, admin
 
+  // Referral System
+  referralCode: text("referral_code").unique(),
+  referredBy: text("referred_by"), // ID of the user who referred this user
+
   // Stats - 7 core attributes (1-100)
   strength: integer("strength").default(10).notNull(),
   agility: integer("agility").default(10).notNull(),
@@ -345,6 +349,20 @@ export const messages = pgTable("messages", {
   };
 });
 
+// Referrals Table
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id),
+  referredUserId: varchar("referred_user_id").notNull().references(() => users.id),
+  status: text("status").default("completed").notNull(), // pending, completed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    referrerIdIdx: index("referrals_referrer_id_idx").on(table.referrerId),
+    referredUserIdIdx: index("referrals_referred_user_id_idx").on(table.referredUserId),
+  };
+});
+
 // Direct Messages between partners
 export const directMessages = pgTable("direct_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -404,6 +422,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   premiumExpiry: true,
   role: true,
   hasSeenTutorial: true,
+  referralCode: true,
+  referredBy: true,
 }).partial({
   avatarUrl: true,
   timezone: true,
@@ -416,6 +436,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   premiumExpiry: true,
   role: true,
   hasSeenTutorial: true,
+  referralCode: true,
+  referredBy: true,
 });
 
 export const insertGuildSchema = createInsertSchema(guilds);

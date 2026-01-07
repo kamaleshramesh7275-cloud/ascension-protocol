@@ -37,6 +37,7 @@ export default function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [referralCode, setReferralCode] = useState("");
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
@@ -114,6 +115,7 @@ export default function Register() {
                 body: JSON.stringify({
                     username,
                     password,
+                    referralCode: referralCode || undefined,
                     ...assessment,
                 }),
             });
@@ -415,6 +417,22 @@ export default function Register() {
                                     <p className="text-xs text-green-500 flex items-center gap-1">
                                         <Check className="w-3 h-3" /> Passwords match
                                     </p>
+                                )}
+                            </div>
+
+                            {/* Referral Code (Optional) */}
+                            <div className="space-y-2">
+                                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                                <Input
+                                    id="referralCode"
+                                    value={referralCode}
+                                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                                    className="bg-black border-zinc-700"
+                                    placeholder="Enter referral code if you have one"
+                                    maxLength={8}
+                                />
+                                {referralCode && (
+                                    <p className="text-xs text-zinc-400">Referral code will be validated during registration</p>
                                 )}
                             </div>
 

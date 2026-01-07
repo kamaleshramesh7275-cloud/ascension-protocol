@@ -50,6 +50,7 @@ import shopRouter from "./routes/shop";
 import syncRouter from "./routes/sync";
 import subscriptionRouter from "./routes/subscription";
 import roadmapRouter from "./routes/roadmaps";
+import { createReferralRouter } from "./routes/referrals";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
@@ -184,6 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);
   app.use("/api/roadmap", roadmapRouter);
+  app.use("/api/referrals", createReferralRouter(storage));
 
   // --- Campaign Routes ---
   app.get("/api/campaigns", async (req, res) => {

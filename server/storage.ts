@@ -88,9 +88,11 @@ import {
   type InsertRoadmapWeek,
   type RoadmapTask,
   type InsertRoadmapTask,
-  roadmaps,
   roadmapWeeks,
-  roadmapTasks
+  roadmapTasks,
+  referrals,
+  type Referral,
+  type InsertReferral
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, ne, or, inArray } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -99,6 +101,15 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 
 const activities = activityHistory;
+
+function generateReferralCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 export interface IStorage {
   // User operations
@@ -221,7 +232,6 @@ export interface IStorage {
   getGuildDonations(guildId: string, limit?: number): Promise<GuildDonation[]>;
   getGuildTreasury(guildId: string): Promise<number>;
   hydrate(): Promise<void>;
-  hydrate(): Promise<void>;
 
   // Tasks
   getTasks(userId: string): Promise<Task[]>;
@@ -275,6 +285,11 @@ export interface IStorage {
   updateHabit(id: string, updates: Partial<HabitTracking>): Promise<HabitTracking>;
   deleteHabit(id: string): Promise<void>;
   completeHabit(id: string): Promise<HabitTracking>;
+
+  // Referral operations
+  getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]>;
+  getAllReferrals(adminPassword?: string): Promise<(Referral & { referrer: User, referredUser: User })[]>;
+  getUserByReferralCode(code: string): Promise<User | undefined>;
 }
 
 // Shop Items
@@ -375,6 +390,7 @@ export class MemStorage implements IStorage {
   private guildWarEvents: Map<string, GuildWarEvent>;
   private premiumRequests: Map<string, PremiumRequest>;
   private habitTracking: Map<string, HabitTracking>;
+  private referrals: Map<string, Referral>;
 
   constructor() {
     this.guilds = new Map();
@@ -406,16 +422,12 @@ export class MemStorage implements IStorage {
     this.activities = new Map();
     this.rankTrials = new Map();
     this.shopItems = new Map();
-    this.campaigns = new Map();
-    this.campaigns = new Map();
-    this.userCampaigns = new Map();
     this.tasks = new Map();
     this.roadmaps = new Map();
     this.roadmapWeeks = new Map();
     this.roadmapTasks = new Map();
 
     // SEED CAMPAIGNS FROM DATA
-    this.campaigns = new Map();
     CAMPAIGNS_DATA.forEach(c => {
       const id = randomUUID();
       this.campaigns.set(id, {
@@ -463,6 +475,7 @@ export class MemStorage implements IStorage {
     this.guildWarEvents = new Map();
     this.premiumRequests = new Map();
     this.habitTracking = new Map();
+    this.referrals = new Map();
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -570,6 +583,7 @@ export class MemStorage implements IStorage {
         studySubject: "Demoology",
         studyAvailability: "Always",
         lastNotificationSent: null,
+        referralCode: "DEMO1234",
       } as any;
 
       this.users.set(demoUser.id.toString(), demoUser);
@@ -1401,6 +1415,86 @@ export class MemStorage implements IStorage {
     return userItem;
   }
 
+  // Referral operations
+  async getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]> {
+    const userReferrals = Array.from(this.referrals.values()).filter(r => r.referrerId === userId);
+    return userReferrals.map(r => ({
+      ...r,
+      referredUser: this.users.get(r.referredUserId)!
+    })).filter(r => r.referredUser);
+  }
+
+  async getAllReferrals(adminPassword?: string): Promise<(Referral & { referrer: User, referredUser: User })[]> {
+    // Admin password check should be handled in route, but interface has it.
+    // For storage, we just return data.
+    return Array.from(this.referrals.values()).map(r => ({
+      ...r,
+      referrer: this.users.get(r.referrerId)!,
+      referredUser: this.users.get(r.referredUserId)!
+    })).filter(r => r.referrer && r.referredUser);
+  }
+
+  async getUserByReferralCode(code: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => u.referralCode === code);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const newUser: User = {
+      ...user,
+      id,
+      coins: user.coins ?? 500, // Starting coins
+      role: user.role ?? "user",
+      tier: "Iron", // Default tier
+      xp: 0,
+      level: 1,
+      createdAt: new Date(),
+      lastActive: new Date(),
+      streak: 0,
+      onboardingCompleted: false, // Start onboarding
+      activePerks: [],
+      stats: {
+        strength: 10, agility: 10, stamina: 10, vitality: 10, intelligence: 10, willpower: 10, charisma: 10
+      },
+      hasSeenTutorial: false,
+      referralCode: generateReferralCode(),
+      referredBy: user.referredBy || null
+    } as any;
+
+    this.users.set(id, newUser);
+
+    // If referred, create referral record
+    if (user.referredBy) {
+      const referrer = await this.getUser(user.referredBy);
+      if (referrer) {
+        const referralId = randomUUID();
+        this.referrals.set(referralId, {
+          id: referralId,
+          referrerId: referrer.id,
+          referredUserId: id,
+          status: "completed",
+          createdAt: new Date()
+        });
+
+        // Bonus for referrer? Could add here or separate logic.
+        // For now, just track.
+      }
+    }
+
+    this.autoSave();
+    return newUser;
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (user && !user.referralCode) {
+      user.referralCode = generateReferralCode();
+      this.users.set(id, user); // Lazy update
+      this.autoSave();
+    }
+    return user;
+  }
+
   async updateUserItem(id: string, updates: Partial<UserItem>): Promise<UserItem> {
     const item = this.userItems.get(id);
     if (!item) throw new Error("Item not found");
@@ -2137,6 +2231,16 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
     const user = await db!.query.users.findFirst({ where: eq(users.firebaseUid, firebaseUid) });
+    if (user && !user.referralCode) {
+      // Lazy load for firebase lookup too, as this is primary entry
+      const code = generateReferralCode();
+      try {
+        await db!.update(users).set({ referralCode: code }).where(eq(users.id, user.id));
+        (user as any).referralCode = code;
+      } catch (e) {
+        console.error("Failed to lazy generate referral code (firebase)", e);
+      }
+    }
     return user ? normalizeUser(user) : undefined;
   }
 
@@ -2163,6 +2267,76 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db!.select().from(users);
+  }
+
+  async getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]> {
+    // Join not easy with query builder for partial return, doing two queries
+    const refs = await db!.select().from(referrals).where(eq(referrals.referrerId, userId));
+
+    // Enrich with referred user data
+    const results = await Promise.all(refs.map(async (r) => {
+      const referredUser = await this.getUser(r.referredUserId);
+      return { ...r, referredUser: referredUser! };
+    }));
+
+    return results.filter(r => r.referredUser);
+  }
+
+  async getAllReferrals(adminPassword?: string): Promise<(Referral & { referrer: User, referredUser: User })[]> {
+    const refs = await db!.select().from(referrals);
+    const results = await Promise.all(refs.map(async (r) => {
+      const referrer = await this.getUser(r.referrerId);
+      const referredUser = await this.getUser(r.referredUserId);
+      return { ...r, referrer: referrer!, referredUser: referredUser! };
+    }));
+    return results.filter(r => r.referrer && r.referredUser);
+  }
+
+  async getUserByReferralCode(code: string): Promise<User | undefined> {
+    const user = await db!.query.users.findFirst({ where: eq(users.referralCode, code) });
+    return user ? normalizeUser(user) : undefined;
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const user = await db!.query.users.findFirst({ where: eq(users.id, id) });
+    if (user && !user.referralCode) {
+      // Lazy generation for existing users
+      const code = generateReferralCode();
+      try {
+        await db!.update(users).set({ referralCode: code }).where(eq(users.id, id));
+        (user as any).referralCode = code;
+      } catch (e) {
+        console.error("Failed to lazy generate referral code", e);
+      }
+    }
+    return user ? normalizeUser(user) : undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const code = generateReferralCode();
+    const [user] = await db!.insert(users).values({
+      ...insertUser,
+      coins: 5000,
+      referralCode: code
+    } as any).returning();
+
+    // Create referral record if referredBy exists
+    if (insertUser.referredBy) {
+      // Check validity managed in frontend/route usually, but strictly:
+      // referredBy in insertUser is the REFERRER ID (as per schema update)
+      // Ensure referrer exists
+      const referrer = await db!.query.users.findFirst({ where: eq(users.id, insertUser.referredBy) });
+      if (referrer) {
+        await db!.insert(referrals).values({
+          referrerId: referrer.id,
+          referredUserId: user.id,
+          status: "completed"
+        });
+        // Grant bonus? Future task.
+      }
+    }
+
+    return user;
   }
 
   async deleteOldMessages(retentionHours: number): Promise<void> {

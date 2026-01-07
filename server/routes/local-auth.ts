@@ -17,6 +17,7 @@ const registerSchema = z.object({
     willpower: z.coerce.number().int().min(1).max(10),
     vitality: z.coerce.number().int().min(1).max(10),
     charisma: z.coerce.number().int().min(1).max(10),
+    referralCode: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -43,6 +44,17 @@ export function registerLocalAuthRoutes(app: Express) {
             const passwordHash = await bcrypt.hash(data.password, 10);
             const firebaseUid = `local_${randomUUID()}`;
 
+            // 3.5. Validate Referral Code (if provided)
+            let referrerId: string | undefined;
+            if (data.referralCode) {
+                const referrer = await storage.getUserByReferralCode(data.referralCode);
+                if (!referrer) {
+                    return res.status(400).json({ error: "Invalid referral code" });
+                }
+                referrerId = referrer.id;
+                console.log(`[REGISTER] Valid referral code from user: ${referrer.name}`);
+            }
+
             // 4. Create User
             const user = await storage.createUser({
                 firebaseUid,
@@ -51,6 +63,7 @@ export function registerLocalAuthRoutes(app: Express) {
                 avatarUrl: null,
                 timezone: "UTC",
                 onboardingCompleted: false,
+                referredBy: referrerId,
                 assessmentData: {
                     age: data.age,
                     weight: data.weight,
