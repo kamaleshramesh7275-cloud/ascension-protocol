@@ -139,7 +139,6 @@ export default function FocusSanctum() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [quote, setQuote] = useState(QUOTES[0]);
   const { user } = useAuth();
   const [showLimitOverlay, setShowLimitOverlay] = useState(false);
