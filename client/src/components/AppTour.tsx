@@ -143,7 +143,11 @@ export function AppTour() {
 
     useEffect(() => {
         if (user && !user.hasSeenTutorial) {
-            setRun(true);
+            // Add a delay to prevent overlap with other welcome dialogs
+            const timer = setTimeout(() => {
+                setRun(true);
+            }, 2000); // 2 second delay
+            return () => clearTimeout(timer);
         }
 
         const handleStartTour = () => {
