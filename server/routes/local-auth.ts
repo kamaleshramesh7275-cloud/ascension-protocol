@@ -57,12 +57,17 @@ export function registerLocalAuthRoutes(app: Express) {
             // 3.5. Validate Referral Code (if provided)
             let referrerId: string | undefined;
             if (data.referralCode) {
-                const referrerProfile = await storage.getReferralProfileByCode(data.referralCode);
-                if (!referrerProfile) {
+                try {
+                    const referrerProfile = await storage.getReferralProfileByCode(data.referralCode);
+                    if (!referrerProfile) {
+                        return res.status(400).json({ error: "Invalid referral code" });
+                    }
+                    referrerId = referrerProfile.userId;
+                    console.log(`[REGISTER] Valid referral code from profile: ${referrerProfile.referralCode}`);
+                } catch (refError) {
+                    console.error("[REGISTER] Referral code validation error:", refError);
                     return res.status(400).json({ error: "Invalid referral code" });
                 }
-                referrerId = referrerProfile.userId;
-                console.log(`[REGISTER] Valid referral code from profile: ${referrerProfile.referralCode}`);
             }
 
             // 4. Create User
@@ -136,12 +141,14 @@ export function registerLocalAuthRoutes(app: Express) {
             console.log("[REGISTER] Success:", user.id);
             res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
 
-        } catch (error) {
+        } catch (error: any) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors[0].message });
             }
             console.error("[REGISTER] Error:", error);
-            res.status(500).json({ error: "Registration failed" });
+            // Ensure we always return JSON, even for unexpected errors
+            const errorMessage = error?.message || "Registration failed";
+            res.status(500).json({ error: errorMessage });
         }
     });
 
