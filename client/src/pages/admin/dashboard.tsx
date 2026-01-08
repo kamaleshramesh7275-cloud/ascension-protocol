@@ -1796,6 +1796,71 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
+                    {activeTab === "referrals" && (
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm">
+                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-sm font-medium text-zinc-400">Total Referral Events</CardTitle>
+                                        <Users className="w-4 h-4 text-blue-500" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-3xl font-bold text-white">{referralData?.total || 0}</div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <Card className="bg-zinc-900/50 border-zinc-800">
+                                <CardHeader>
+                                    <CardTitle>Referral Events</CardTitle>
+                                    <CardDescription>All successful user referrals tracked by the system.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-zinc-800 hover:bg-zinc-900">
+                                                <TableHead>Referrer</TableHead>
+                                                <TableHead>Referred User</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {referralData?.referrals.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center py-8 text-zinc-500">
+                                                        No referral events found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                referralData?.referrals.map((ref) => (
+                                                    <TableRow key={ref.id} className="border-zinc-800 hover:bg-zinc-800/50">
+                                                        <TableCell>
+                                                            <div className="font-medium text-white">{ref.referrer.name}</div>
+                                                            <div className="text-xs text-zinc-500">{ref.referrer.email}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="font-medium text-white">{ref.referredUser.name}</div>
+                                                            <div className="text-xs text-zinc-500">{ref.referredUser.email}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-800">
+                                                                {ref.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-500">
+                                                            {new Date(ref.createdAt).toLocaleDateString()}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
                     {
                         activeTab === "system" && (
                             <div
