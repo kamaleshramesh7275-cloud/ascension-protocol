@@ -1086,7 +1086,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate and sanitize updates
       const allowedFields = [
         'name', 'email', 'level', 'xp', 'tier', 'coins', 'streak',
-        'strength', 'agility', 'stamina', 'vitality', 'intelligence', 'willpower', 'charisma'
+        'strength', 'agility', 'stamina', 'vitality', 'intelligence', 'willpower', 'charisma',
+        'isPremium', 'premiumExpiry'
       ];
 
       const sanitizedUpdates: any = {};

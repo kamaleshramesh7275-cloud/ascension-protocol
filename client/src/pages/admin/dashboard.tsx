@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Trash2, Users, TrendingUp, Award, RefreshCw, Shield, ShoppingBag,
-    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map,
+    Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map, Ban,
     ChevronUp, ChevronDown, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -803,6 +803,21 @@ export default function AdminDashboard() {
                                                                     title="Activate 30d Premium"
                                                                 >
                                                                     <Award className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
+                                                            {user.isPremium && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        if (confirm("Are you sure you want to remove premium from this user?")) {
+                                                                            updateUserMutation.mutate({ userId: user.id, updates: { isPremium: false, premiumExpiry: null } });
+                                                                        }
+                                                                    }}
+                                                                    className="text-red-500 hover:text-red-400 hover:bg-red-900/20"
+                                                                    title="Remove Premium"
+                                                                >
+                                                                    <Ban className="w-4 h-4" />
                                                                 </Button>
                                                             )}
                                                             <Button
