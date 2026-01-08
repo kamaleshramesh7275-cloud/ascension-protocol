@@ -566,7 +566,10 @@ export const insertNotificationSchema = z.object({
 });
 
 // TypeScript types
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  isTrial?: boolean;
+  trialEndsAt?: string;
+};
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Guild = typeof guilds.$inferSelect;
@@ -1059,3 +1062,4 @@ export const insertReferralSchema = z.object({
 
 export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
+

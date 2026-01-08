@@ -41,6 +41,8 @@ interface User {
     intelligence?: number;
     willpower?: number;
     charisma?: number;
+    isTrial?: boolean;
+    trialEndsAt?: string;
 }
 
 interface PremiumRequest {
@@ -714,6 +716,7 @@ export default function AdminDashboard() {
                                             <TableHead>Tier</TableHead>
                                             <TableHead>Coins</TableHead>
                                             <TableHead>Premium</TableHead>
+                                            <TableHead>Trial Status</TableHead>
                                             <TableHead>Password</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
@@ -749,6 +752,23 @@ export default function AdminDashboard() {
                                                             <Badge variant="outline" className="text-zinc-500 border-zinc-800">
                                                                 Standard
                                                             </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {user.isPremium ? (
+                                                            <span className="text-zinc-500">-</span>
+                                                        ) : !user.isTrial || !user.trialEndsAt ? (
+                                                            <Badge variant="destructive" className="bg-red-900/20 text-red-400 border-red-800">Expired</Badge>
+                                                        ) : (
+                                                            (() => {
+                                                                const end = new Date(user.trialEndsAt);
+                                                                const now = new Date();
+                                                                const diff = end.getTime() - now.getTime();
+                                                                if (diff <= 0) return <Badge variant="destructive" className="bg-red-900/20 text-red-400 border-red-800">Expired</Badge>;
+                                                                const hours = Math.floor(diff / (1000 * 60 * 60));
+                                                                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                return <Badge variant="outline" className="text-yellow-500 border-yellow-800">{hours}h {minutes}m</Badge>;
+                                                            })()
                                                         )}
                                                     </TableCell>
                                                     <TableCell>

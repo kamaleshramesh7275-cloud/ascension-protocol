@@ -12,6 +12,9 @@ import { FocusSettings } from "@/components/focus-settings";
 import { usePet } from "@/hooks/use-pet";
 import { useFocusSettings } from "@/hooks/use-focus-settings";
 import { syncEngine } from "@/lib/sync-engine";
+import { useAuth } from "@/hooks/use-auth";
+import { TrialExpiredOverlay } from "@/components/premium/trial-expired-overlay";
+import { format } from "date-fns";
 
 const PRESETS = [
   { name: "Pomodoro", minutes: 25, description: "25 min work", icon: Clock },
@@ -136,7 +139,33 @@ export default function FocusSanctum() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [quote, setQuote] = useState(QUOTES[0]);
+  const { user } = useAuth();
+  const [showLimitOverlay, setShowLimitOverlay] = useState(false);
+
+  // Check usage limit
+  const checkDailyLimit = () => {
+    if (!user || user.isPremium || user.isTrial) return true;
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const usage = JSON.parse(localStorage.getItem('focus_daily_usage') || '{}');
+
+    if (usage.date === today && usage.count >= 1) {
+      return false;
+    }
+    return true;
+  };
+
+  const incrementDailyUsage = () => {
+    if (!user || user.isPremium || user.isTrial) return;
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const usage = JSON.parse(localStorage.getItem('focus_daily_usage') || '{}');
+
+    const newCount = (usage.date === today ? usage.count : 0) + 1;
+    localStorage.setItem('focus_daily_usage', JSON.stringify({ date: today, count: newCount }));
+  };
 
   const toggleFullScreen = async () => {
     try {
@@ -199,6 +228,16 @@ export default function FocusSanctum() {
   }, [timeLeft, totalTime]);
 
   const handleStart = (minutes: number) => {
+    if (!checkDailyLimit()) {
+      setShowLimitOverlay(true);
+      return;
+    }
+
+    // Prepare increment (will actually increment on start to prevent abuse, or on complete? 
+    // Requirement says "1 session per day". If they start and stop, does it count?
+    // Let's count it on START to be strict as per "Nuclear Option".
+    incrementDailyUsage();
+
     setTotalTime(minutes * 60);
     setTimeLeft(minutes * 60);
     setIsRunning(true);
@@ -419,6 +458,7 @@ export default function FocusSanctum() {
       </div>
       <FocusPet className={isRunning ? "fixed top-1/2 right-12 -translate-y-1/2 z-40 transition-all duration-700" : "fixed bottom-8 right-8 z-40 transition-all duration-700"} />
       <FocusSettings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {showLimitOverlay && <TrialExpiredOverlay />}
     </div>
   );
 }

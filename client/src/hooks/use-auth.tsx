@@ -14,6 +14,8 @@ export interface User {
   activeBadgeId?: string | null;
   tier?: string;
   theme?: string;
+  isTrial?: boolean;
+  trialEndsAt?: string;
 }
 
 interface AuthContextType {
@@ -69,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 activeBadgeId: userData.activeBadgeId,
                 tier: userData.tier,
                 theme: userData.theme,
+                isTrial: userData.isTrial,
+                trialEndsAt: userData.trialEndsAt,
               });
               // Update localStorage with the correct ID
               localStorage.setItem("userId", userData.id);

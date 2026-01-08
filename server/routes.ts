@@ -604,10 +604,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Ensure user has quests
-      await assignDailyQuests(user.id);
       await assignWeeklyQuest(user.id);
 
-      res.json(user);
+      // Calculate effective subscription status (redundant check but good for explicit response)
+      const { getSubscriptionStatus } = await import("./utils/subscription");
+      const { isPremium, isTrial, trialEndsAt } = getSubscriptionStatus(user);
+
+      res.json({
+        ...user,
+        isPremium, // Override DB value with effective value
+        isTrial,
+        trialEndsAt
+      });
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -768,7 +776,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const users = await storage.getAllUsers();
-      res.json(users);
+      const { getSubscriptionStatus } = await import("./utils/subscription");
+
+      const usersWithStatus = users.map(user => {
+        const status = getSubscriptionStatus(user);
+        return {
+          ...user,
+          ...status
+        };
+      });
+
+      res.json(usersWithStatus);
     } catch (error) {
       console.error("Get all users error:", error);
       res.status(500).json({ error: "Failed to get users" });

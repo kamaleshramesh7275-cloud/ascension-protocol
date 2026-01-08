@@ -3,16 +3,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { ShopItem, UserItem, User } from "@shared/schema";
-import { Loader2, Coins, ShoppingBag, Check, Shield, Award, Palette } from "lucide-react";
+import { Loader2, Coins, ShoppingBag, Check, Shield, Award, Palette, Crown, Timer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function StorePage() {
     const { user } = useAuth();
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const [location] = useLocation();
+    const [activeTab, setActiveTab] = useState("themes");
+    const [hasClickedPay, setHasClickedPay] = useState(false);
+
+    useEffect(() => {
+        // If user is redirected from lock screen, default to premium tab
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("tab") === "premium") {
+            setActiveTab("premium");
+        }
+    }, []);
 
     const { data: items, isLoading: itemsLoading } = useQuery<ShopItem[]>({
         queryKey: ["/api/shop"],
@@ -64,6 +77,33 @@ export default function StorePage() {
             });
         },
     });
+
+    const premiumRequestMutation = useMutation({
+        mutationFn: async () => {
+            const res = await apiRequest("POST", "/api/subscription/request", {});
+            return res.json();
+        },
+        onSuccess: () => {
+            toast({
+                title: "Payment Confirmation Sent",
+                description: "Your premium status will be activated within 45 minutes.",
+            });
+            setHasClickedPay(false); // Reset
+        },
+        onError: (error: Error) => {
+            toast({
+                title: "Request Failed",
+                description: error.message,
+                variant: "destructive",
+            });
+        },
+    });
+
+    const handlePayClick = () => {
+        const upiLink = "upi://pay?pa=6383526774@paytm&pn=KamaleshkumarRameshkumar&am=100";
+        window.location.href = upiLink;
+        setHasClickedPay(true);
+    };
 
     if (itemsLoading || inventoryLoading || !user) {
         return (
@@ -183,12 +223,117 @@ export default function StorePage() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="themes" className="w-full" data-tour="store-tabs">
-                <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-tour="store-tabs">
+                <TabsList className="grid w-full grid-cols-4 max-w-[800px]">
                     <TabsTrigger value="themes">Themes</TabsTrigger>
                     <TabsTrigger value="titles">Titles</TabsTrigger>
                     <TabsTrigger value="badges">Badges</TabsTrigger>
+                    <TabsTrigger value="premium" className="text-yellow-500 font-bold data-[state=active]:bg-yellow-500/10">Premium</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="premium" className="mt-6">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="max-w-2xl mx-auto"
+                    >
+                        <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-900/10 to-black overflow-hidden relative">
+                            <div className="absolute top-0 right-0 p-8 opacity-10">
+                                <Crown className="w-64 h-64 text-yellow-500" />
+                            </div>
+
+                            <CardHeader className="text-center relative z-10">
+                                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                                    <Crown className="w-8 h-8 text-yellow-500" />
+                                </div>
+                                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent">
+                                    Ascension Protocol Premium
+                                </CardTitle>
+                                <CardDescription className="text-lg mt-2">
+                                    Unlock the full potential of your evolution.
+                                </CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-6 relative z-10">
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Shield className="w-5 h-5 text-blue-400" />
+                                            <h3 className="font-bold text-white">Full Protocol Access</h3>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Unlock detailed stats, roadmap phases, and quest packs.</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Timer className="w-5 h-5 text-green-400" />
+                                            <h3 className="font-bold text-white">Unlimited Focus</h3>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Remove daily limits on Focus Sanctum sessions.</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Palette className="w-5 h-5 text-pink-400" />
+                                            <h3 className="font-bold text-white">Exclusive Themes</h3>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Access premium themes like Cyberpunk & Forest.</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Award className="w-5 h-5 text-purple-400" />
+                                            <h3 className="font-bold text-white">Priority Support</h3>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Get your partnership requests processed faster.</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-center space-y-4">
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-yellow-500/80 uppercase tracking-widest font-bold">Lifetime Access</p>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <span className="text-4xl font-bold text-white">₹100</span>
+                                            <span className="text-muted-foreground line-through">₹499</span>
+                                        </div>
+                                    </div>
+
+                                    {!hasClickedPay ? (
+                                        <Button
+                                            size="lg"
+                                            onClick={handlePayClick}
+                                            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-lg h-14"
+                                        >
+                                            Pay ₹100 via UPI
+                                        </Button>
+                                    ) : (
+                                        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                                            <p className="text-sm text-muted-foreground">
+                                                Please complete the payment in your UPI app.
+                                            </p>
+                                            <Button
+                                                size="lg"
+                                                onClick={() => premiumRequestMutation.mutate()}
+                                                disabled={premiumRequestMutation.isPending}
+                                                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold text-lg h-14 animate-pulse"
+                                            >
+                                                {premiumRequestMutation.isPending ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                                ) : (
+                                                    <Check className="w-5 h-5 mr-2" />
+                                                )}
+                                                Payment Successful - Activate Now
+                                            </Button>
+                                            <button
+                                                onClick={() => setHasClickedPay(false)}
+                                                className="text-xs text-muted-foreground underline hover:text-white"
+                                            >
+                                                Back to Payment
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </TabsContent>
 
                 <TabsContent value="titles" className="mt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

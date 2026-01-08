@@ -39,6 +39,7 @@ import Login from "@/pages/login";
 import FocusSanctum from "@/pages/focus";
 import StorePage from "@/pages/store";
 import RoadmapPage from "@/pages/roadmap";
+import { TrialExpiredOverlay } from "@/components/premium/trial-expired-overlay";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -144,6 +145,19 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   // If user is registered (not anonymous) and on onboarding page, redirect to dashboard
   if (!user.isAnonymous && window.location.pathname === "/onboarding") {
     return <Redirect to="/dashboard" />;
+  }
+
+  // Check for expired trial (Nuclear Option)
+  const isExpired = user && !user.isPremium && !user.isTrial;
+  const currentPath = window.location.pathname;
+
+  if (isExpired) {
+    const allowedPaths = ["/store", "/focus"];
+    const isAllowed = allowedPaths.some(path => currentPath.startsWith(path)) || currentPath.startsWith("/profile");
+
+    if (!isAllowed) {
+      return <TrialExpiredOverlay />;
+    }
   }
 
   return <Component />;

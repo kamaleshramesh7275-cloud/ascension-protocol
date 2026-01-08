@@ -44,7 +44,19 @@ export async function requireAuth(req: Request, res: Response, next: Function) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
-    console.log(`Auth check for ${req.path}`);
+    // Calculate subscription status
+    const { getSubscriptionStatus } = await import("../utils/subscription");
+    const { isPremium, isTrial, trialEndsAt } = getSubscriptionStatus(user);
+
+    // Inject effective premium status
+    // We override the DB value with the effective value (Trial OR Premium)
+    // This allows existing routes to work without modification
+    (user as any).isPremium = isPremium;
+    (user as any).isTrial = isTrial;
+    (user as any).trialEndsAt = trialEndsAt;
+
+    console.log(`Auth check for ${req.path} | User: ${user.name} | Premium: ${isPremium} (Trial: ${isTrial})`);
+
     req.firebaseUid = firebaseUid;
     (req as any).user = user;
     next();
