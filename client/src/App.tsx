@@ -39,7 +39,7 @@ import Login from "@/pages/login";
 import FocusSanctum from "@/pages/focus";
 import StorePage from "@/pages/store";
 import RoadmapPage from "@/pages/roadmap";
-import { TrialExpiredOverlay } from "@/components/premium/trial-expired-overlay";
+import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -156,7 +156,12 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     const isAllowed = allowedPaths.some(path => currentPath.startsWith(path)) || currentPath.startsWith("/profile");
 
     if (!isAllowed) {
-      return <TrialExpiredOverlay />;
+      return (
+        <div className="relative w-full h-full">
+          <Component />
+          <FeatureLockOverlay />
+        </div>
+      );
     }
   }
 
