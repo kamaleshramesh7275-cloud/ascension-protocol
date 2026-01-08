@@ -39,6 +39,7 @@ import Login from "@/pages/login";
 import FocusSanctum from "@/pages/focus";
 import StorePage from "@/pages/store";
 import RoadmapPage from "@/pages/roadmap";
+import PaymentRedirect from "@/pages/pay-redirect";
 import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
 
 function TierWatcher() {
@@ -152,6 +153,10 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   const currentPath = window.location.pathname;
 
   if (isExpired) {
+    if (window.location.pathname === "/pay-redirect") {
+      return <Component />;
+    }
+
     return (
       <div className="relative w-full h-full">
         <Component />
@@ -213,6 +218,7 @@ function Router() {
         <Route path="/partners" component={() => <ProtectedRoute component={PartnersPage} />} />
         <Route path="/global-chat" component={() => <ProtectedRoute component={GlobalChatPage} />} />
         <Route path="/store" component={() => <ProtectedRoute component={StorePage} />} />
+        <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/session/:id" component={() => <ProtectedRoute component={SessionPage} />} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route component={NotFound} />

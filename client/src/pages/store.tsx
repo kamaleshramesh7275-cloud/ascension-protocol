@@ -296,13 +296,20 @@ export default function StorePage() {
                                     </div>
 
                                     {!hasClickedPay ? (
-                                        <Button
-                                            size="lg"
-                                            onClick={handlePayClick}
-                                            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-lg h-14"
+                                        <a
+                                            href="/pay-redirect"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setHasClickedPay(true)}
+                                            className="block w-full"
                                         >
-                                            Pay ₹100 via UPI
-                                        </Button>
+                                            <Button
+                                                size="lg"
+                                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-lg h-14"
+                                            >
+                                                Pay ₹100 via UPI
+                                            </Button>
+                                        </a>
                                     ) : (
                                         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                                             <p className="text-sm text-muted-foreground">

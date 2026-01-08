@@ -41,10 +41,10 @@ export function FeatureLockOverlay() {
     };
 
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-50 flex items-start justify-center pt-20 md:pt-24 bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300 overflow-y-auto">
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 className="relative w-full max-w-4xl"
             >
@@ -124,7 +124,7 @@ export function FeatureLockOverlay() {
                         <div className="space-y-4">
                             {!paymentSent ? (
                                 <>
-                                    <a href={upiLink} className="block w-full">
+                                    <a href="/pay-redirect" target="_blank" className="block w-full">
                                         <Button
                                             className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold h-14 text-lg shadow-lg shadow-yellow-500/20"
                                         >

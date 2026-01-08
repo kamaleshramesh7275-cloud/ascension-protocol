@@ -16,6 +16,7 @@ export interface User {
   theme?: string;
   isTrial?: boolean;
   trialEndsAt?: string;
+  isPremium?: boolean;
 }
 
 interface AuthContextType {
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 theme: userData.theme,
                 isTrial: userData.isTrial,
                 trialEndsAt: userData.trialEndsAt,
+                isPremium: userData.isPremium,
               });
               // Update localStorage with the correct ID
               localStorage.setItem("userId", userData.id);
