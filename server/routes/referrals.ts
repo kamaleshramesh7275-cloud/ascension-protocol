@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { IStorage } from "../storage";
+import { requireAuth } from "../middleware/auth";
 
 export function createReferralRouter(storage: IStorage): Router {
     const router = Router();
@@ -42,9 +43,9 @@ export function createReferralRouter(storage: IStorage): Router {
     });
 
     // Get current user's referral statistics
-    router.get("/user/stats", async (req: any, res) => {
+    router.get("/user/stats", requireAuth, async (req: any, res) => {
         try {
-            const userId = req.user?.id;
+            const userId = (req as any).user?.id;
 
             if (!userId) {
                 return res.status(401).json({ message: "Unauthorized" });
@@ -55,18 +56,23 @@ export function createReferralRouter(storage: IStorage): Router {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            const profile = await storage.getReferralProfile(userId);
-            // TODO: We need to update getReferrals to work with new system or use referralProfiles table query
-            // For now, let's assume getReferrals might return empty or we need to fix it.
-            // But we can at least return the code being "GENERATING..." if not found
+            let profile = await storage.getReferralProfile(userId);
 
-            // To properly get count, we should count referralProfiles where referredById = userId
-            // For now, let's just return the code.
+            // Lazy creation if profile doesn't exist
+            if (!profile) {
+                console.log(`[REFERRALS] Lazily creating referral profile for user ${user.name}`);
+                profile = await storage.createReferralProfile({
+                    userId,
+                    referralCode: user.name.toUpperCase(),
+                    referredById: null,
+                    totalReferrals: 0,
+                });
+            }
 
             res.json({
                 referralCode: profile?.referralCode || null,
                 totalReferrals: profile?.totalReferrals || 0,
-                referrals: [] // client handles empty list gracefully?
+                referrals: []
             });
         } catch (error) {
             console.error("Error fetching user referrals:", error);
