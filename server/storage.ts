@@ -2229,18 +2229,31 @@ export class MemStorage implements IStorage {
 
     for (const profile of profiles) {
       if (profile.referredById) {
-        // Check if referral event exists
-        const exists = Array.from(this.referrals.values()).some(
-          r => r.referrerId === profile.referredById && r.referredUserId === profile.userId
-        );
+        try {
+          // Check if both users exist
+          const referrerExists = !!this.users.get(profile.referredById);
+          const referredUserExists = !!this.users.get(profile.userId);
 
-        if (!exists) {
-          await this.createReferral({
-            referrerId: profile.referredById,
-            referredUserId: profile.userId,
-            status: "completed"
-          });
-          createdCount++;
+          if (!referrerExists || !referredUserExists) {
+            console.warn(`[BACKFILL] Skipping referral for missing users: referrer=${profile.referredById} (${referrerExists}), referred=${profile.userId} (${referredUserExists})`);
+            continue;
+          }
+
+          // Check if referral event exists
+          const exists = Array.from(this.referrals.values()).some(
+            r => r.referrerId === profile.referredById && r.referredUserId === profile.userId
+          );
+
+          if (!exists) {
+            await this.createReferral({
+              referrerId: profile.referredById,
+              referredUserId: profile.userId,
+              status: "completed"
+            });
+            createdCount++;
+          }
+        } catch (err) {
+          console.error(`[BACKFILL] Error processing profile ${profile.id}:`, err);
         }
       }
     }
@@ -2425,20 +2438,36 @@ export class DatabaseStorage implements IStorage {
     const profiles = await db!.select().from(referralProfiles).where(isNotNull(referralProfiles.referredById));
 
     for (const profile of profiles) {
-      const [exists] = await db!.select().from(referrals).where(
-        and(
-          eq(referrals.referrerId, profile.referredById!),
-          eq(referrals.referredUserId, profile.userId)
-        )
-      ).limit(1);
+      try {
+        // Check if both users exist in DatabaseStorage
+        const referrerId = profile.referredById!;
+        const referredUserId = profile.userId;
 
-      if (!exists) {
-        await this.createReferral({
-          referrerId: profile.referredById!,
-          referredUserId: profile.userId,
-          status: "completed"
-        });
-        createdCount++;
+        const [referrer] = await db!.select().from(users).where(eq(users.id, referrerId)).limit(1);
+        const [referredUser] = await db!.select().from(users).where(eq(users.id, referredUserId)).limit(1);
+
+        if (!referrer || !referredUser) {
+          console.warn(`[BACKFILL-DB] Skipping referral for missing users: referrer=${referrerId} (${!!referrer}), referred=${referredUserId} (${!!referredUser})`);
+          continue;
+        }
+
+        const [exists] = await db!.select().from(referrals).where(
+          and(
+            eq(referrals.referrerId, referrerId),
+            eq(referrals.referredUserId, referredUserId)
+          )
+        ).limit(1);
+
+        if (!exists) {
+          await this.createReferral({
+            referrerId: referrerId,
+            referredUserId: referredUserId,
+            status: "completed"
+          });
+          createdCount++;
+        }
+      } catch (err) {
+        console.error(`[BACKFILL-DB] Error processing profile ${profile.id}:`, err);
       }
     }
 
