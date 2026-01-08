@@ -569,7 +569,7 @@ export default function AdminDashboard() {
                         { id: "shop", icon: ShoppingBag, label: "Shop Items" },
                         { id: "study-logs", icon: Clock, label: "Study Logs" },
                         { id: "partners", icon: Users, label: "Partner Matching" },
-                        { id: "requests", icon: Clock, label: "Activation Requests" },
+                        { id: "requests", icon: Clock, label: "Premium Verification" },
                         { id: "referrals", icon: Users, label: "Referrals" },
                         { id: "roadmaps", icon: Map, label: "Roadmaps" },
                         { id: "notifications", icon: Bell, label: "Notifications" },
@@ -953,14 +953,15 @@ export default function AdminDashboard() {
                         <div className="space-y-6">
                             <Card className="bg-zinc-900/50 border-zinc-800">
                                 <CardHeader>
-                                    <CardTitle>Activation Requests</CardTitle>
-                                    <CardDescription>Review and manage all premium activation requests from users.</CardDescription>
+                                    <CardTitle>Premium Verification</CardTitle>
+                                    <CardDescription>Verify user payments and approve premium access.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="border-zinc-800">
                                                 <TableHead>User</TableHead>
+                                                <TableHead>Verification Message</TableHead>
                                                 <TableHead>Date</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
@@ -981,6 +982,9 @@ export default function AdminDashboard() {
                                                                 <div className="font-medium text-white">{req.user.name}</div>
                                                                 <div className="text-xs text-zinc-500">{req.user.email}</div>
                                                             </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-300 italic">
+                                                            "Payment completed via UPI"
                                                         </TableCell>
                                                         <TableCell className="text-zinc-400">
                                                             {new Date(req.createdAt).toLocaleDateString()}
