@@ -532,10 +532,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalReferrals: 0,
         });
 
-        // 4. Increment referrer's count
+        // 4. Increment referrer's count & create event record
         if (referrerId) {
           console.log(`[REGISTER-GUEST] Incrementing referral count for referrer: ${referrerId}`);
           await storage.incrementReferralCount(referrerId);
+          await storage.createReferral({
+            referrerId: referrerId,
+            referredUserId: user.id,
+            status: "completed"
+          });
         }
 
         // 5. Assign initial quests

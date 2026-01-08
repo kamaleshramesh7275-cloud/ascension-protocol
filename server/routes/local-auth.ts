@@ -100,10 +100,15 @@ export function registerLocalAuthRoutes(app: Express) {
                 totalReferrals: 0,
             });
 
-            // Increment referrer's count if exists
+            // Increment referrer's count & create event record if exists
             if (referrerId) {
                 console.log(`[REGISTER] Incrementing referral count for referrer: ${referrerId}`);
                 await storage.incrementReferralCount(referrerId);
+                await storage.createReferral({
+                    referrerId: referrerId,
+                    referredUserId: user.id,
+                    status: "completed"
+                });
             }
 
             // 5. Save Credentials

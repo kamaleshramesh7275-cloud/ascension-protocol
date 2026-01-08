@@ -297,6 +297,7 @@ export interface IStorage {
   // Referral operations
   getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]>;
   getAllReferrals(adminPassword?: string): Promise<(Referral & { referrer: User, referredUser: User })[]>;
+  createReferral(referral: InsertReferral): Promise<Referral>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
 
   // Decoupled Referral Profile operations
@@ -1431,6 +1432,19 @@ export class MemStorage implements IStorage {
     })).filter(r => r.referrer && r.referredUser);
   }
 
+  async createReferral(insertReferral: InsertReferral): Promise<Referral> {
+    const id = randomUUID();
+    const referral: Referral = {
+      id,
+      ...insertReferral,
+      status: insertReferral.status || "completed",
+      createdAt: new Date()
+    };
+    this.referrals.set(id, referral);
+    this.autoSave();
+    return referral;
+  }
+
   async getUserByReferralCode(code: string): Promise<User | undefined> {
     // return Array.from(this.users.values()).find(u => u.referralCode === code);
     return undefined;
@@ -2367,6 +2381,11 @@ export class DatabaseStorage implements IStorage {
       return { ...r, referrer: referrer!, referredUser: referredUser! };
     }));
     return results.filter(r => r.referrer && r.referredUser);
+  }
+
+  async createReferral(referral: InsertReferral): Promise<Referral> {
+    const [newReferral] = await db!.insert(referrals).values(referral).returning();
+    return newReferral;
   }
 
   async getUserByReferralCode(code: string): Promise<User | undefined> {
