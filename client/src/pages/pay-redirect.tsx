@@ -4,7 +4,7 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PaymentRedirect() {
-    const upiLink = "upi://pay?pa=6383526774@paytm&pn=KamaleshkumarRameshkumar&am=100";
+    const upiLink = "upi://pay?pa=6383525774@ptaxis&pn=KamaleshkumarRameshkumar&am=100";
 
     useEffect(() => {
         // Attempt redirect immediately

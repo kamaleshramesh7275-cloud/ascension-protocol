@@ -100,7 +100,7 @@ export default function StorePage() {
     });
 
     const handlePayClick = () => {
-        const upiLink = "upi://pay?pa=6383526774@paytm&pn=KamaleshkumarRameshkumar&am=100";
+        const upiLink = "upi://pay?pa=6383525774@ptaxis&pn=KamaleshkumarRameshkumar&am=100";
         window.location.href = upiLink;
         setHasClickedPay(true);
     };
