@@ -16,7 +16,7 @@ export function createReferralRouter(storage: IStorage): Router {
                 });
             }
 
-            const profile = await storage.getReferralProfileByCode(code);
+            const profile = await storage.getReferralProfileByCode(code.toUpperCase());
 
             if (!profile) {
                 return res.status(404).json({

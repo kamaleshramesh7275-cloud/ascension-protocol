@@ -87,10 +87,10 @@ export function registerLocalAuthRoutes(app: Express) {
                 }
             });
 
-            // 4.5 Create Referral Profile
+            // 4.5 Create Referral Profile (using username as referral code)
             await storage.createReferralProfile({
                 userId: user.id,
-                referralCode: generateReferralCode(),
+                referralCode: data.username.toUpperCase(),
                 referredById: referrerId,
                 totalReferrals: 0,
             });

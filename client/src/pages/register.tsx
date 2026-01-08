@@ -428,11 +428,10 @@ export default function Register() {
                                     value={referralCode}
                                     onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                                     className="bg-black border-zinc-700"
-                                    placeholder="Enter referral code if you have one"
-                                    maxLength={8}
+                                    placeholder="Enter friend's username"
                                 />
                                 {referralCode && (
-                                    <p className="text-xs text-zinc-400">Referral code will be validated during registration</p>
+                                    <p className="text-xs text-zinc-400">Enter the username of the person who referred you</p>
                                 )}
                             </div>
 
