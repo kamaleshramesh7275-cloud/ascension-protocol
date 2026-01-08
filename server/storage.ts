@@ -100,7 +100,7 @@ import {
   type ReferralProfile,
   type InsertReferralProfile
 } from "@shared/schema";
-import { eq, and, desc, asc, lt, gt, ne, or, inArray } from "drizzle-orm"; // Import operators
+import { eq, and, desc, asc, lt, gt, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
@@ -305,6 +305,7 @@ export interface IStorage {
   getReferralProfile(userId: string): Promise<ReferralProfile | undefined>;
   getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined>;
   incrementReferralCount(userId: string): Promise<void>;
+  backfillReferrals(): Promise<{ success: boolean; created: number }>;
 }
 
 // Shop Items
@@ -2221,6 +2222,31 @@ export class MemStorage implements IStorage {
       this.autoSave();
     }
   }
+
+  async backfillReferrals(): Promise<{ success: boolean; created: number }> {
+    let createdCount = 0;
+    const profiles = Array.from(this.referralProfiles.values());
+
+    for (const profile of profiles) {
+      if (profile.referredById) {
+        // Check if referral event exists
+        const exists = Array.from(this.referrals.values()).some(
+          r => r.referrerId === profile.referredById && r.referredUserId === profile.userId
+        );
+
+        if (!exists) {
+          await this.createReferral({
+            referrerId: profile.referredById,
+            referredUserId: profile.userId,
+            status: "completed"
+          });
+          createdCount++;
+        }
+      }
+    }
+
+    return { success: true, created: createdCount };
+  }
 }
 
 
@@ -2392,6 +2418,31 @@ export class DatabaseStorage implements IStorage {
     // const user = await db!.query.users.findFirst({ where: eq(users.referralCode, code) });
     // return user ? normalizeUser(user) : undefined;
     return undefined;
+  }
+
+  async backfillReferrals(): Promise<{ success: boolean; created: number }> {
+    let createdCount = 0;
+    const profiles = await db!.select().from(referralProfiles).where(isNotNull(referralProfiles.referredById));
+
+    for (const profile of profiles) {
+      const [exists] = await db!.select().from(referrals).where(
+        and(
+          eq(referrals.referrerId, profile.referredById!),
+          eq(referrals.referredUserId, profile.userId)
+        )
+      ).limit(1);
+
+      if (!exists) {
+        await this.createReferral({
+          referrerId: profile.referredById!,
+          referredUserId: profile.userId,
+          status: "completed"
+        });
+        createdCount++;
+      }
+    }
+
+    return { success: true, created: createdCount };
   }
 
   async deleteOldMessages(retentionHours: number): Promise<void> {

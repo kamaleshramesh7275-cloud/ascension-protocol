@@ -458,6 +458,18 @@ export default function AdminDashboard() {
         onError: () => showNotification("error", "Failed to resolve request"),
     });
 
+    const syncReferralsMutation = useMutation({
+        mutationFn: async () => {
+            const res = await apiRequest("POST", "/api/referrals/admin/backfill", undefined, getAdminHeaders());
+            return res.json();
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["/api/referrals/admin/all"] });
+            showNotification("success", `Referral data synced! Created ${data.created} records.`);
+        },
+        onError: () => showNotification("error", "Failed to sync referral data"),
+    });
+
     // Helpers
     const showNotification = (type: "success" | "error", message: string) => {
         setNotification({ type, message });
@@ -617,6 +629,17 @@ export default function AdminDashboard() {
                             <p className="text-zinc-400">System Status: <span className="text-green-400">Operational</span></p>
                         </div>
                         <div className="flex gap-3">
+                            {activeTab === "referrals" && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => syncReferralsMutation.mutate()}
+                                    disabled={syncReferralsMutation.isPending}
+                                    className="border-blue-700/50 hover:bg-blue-900/20 text-blue-400"
+                                >
+                                    {syncReferralsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Database className="w-4 h-4 mr-2" />}
+                                    Sync Old Data
+                                </Button>
+                            )}
                             <Button variant="outline" onClick={() => queryClient.invalidateQueries()} className="border-zinc-700 hover:bg-zinc-800">
                                 <RefreshCw className="w-4 h-4 mr-2" /> Refresh Data
                             </Button>

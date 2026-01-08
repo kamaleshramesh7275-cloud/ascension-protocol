@@ -115,5 +115,22 @@ export function createReferralRouter(storage: IStorage): Router {
         }
     });
 
+    // Backfill referral events from referral profiles (admin only)
+    router.post("/admin/backfill", async (req, res) => {
+        try {
+            const adminPassword = req.headers["x-admin-password"] as string;
+
+            if (!adminPassword || adminPassword !== process.env.ADMIN_PASSWORD) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+
+            const result = await storage.backfillReferrals();
+            res.json(result);
+        } catch (error) {
+            console.error("Error backfilling referrals:", error);
+            res.status(500).json({ message: "Server error" });
+        }
+    });
+
     return router;
 }
