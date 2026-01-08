@@ -303,6 +303,7 @@ export interface IStorage {
   createReferralProfile(profile: InsertReferralProfile): Promise<ReferralProfile>;
   getReferralProfile(userId: string): Promise<ReferralProfile | undefined>;
   getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined>;
+  incrementReferralCount(userId: string): Promise<void>;
 }
 
 // Shop Items
@@ -2173,7 +2174,17 @@ export class MemStorage implements IStorage {
   }
 
   async getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined> {
-    return Array.from(this.referralProfiles.values()).find(p => p.referralCode === code);
+    const searchCode = code.toUpperCase();
+    return Array.from(this.referralProfiles.values()).find(p => p.referralCode === searchCode);
+  }
+
+  async incrementReferralCount(userId: string): Promise<void> {
+    const profile = await this.getReferralProfile(userId);
+    if (profile) {
+      profile.totalReferrals += 1;
+      this.referralProfiles.set(profile.id, profile);
+      this.autoSave();
+    }
   }
 }
 
@@ -3607,9 +3618,19 @@ export class DatabaseStorage implements IStorage {
 
   async getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined> {
     const profile = await db!.query.referralProfiles.findFirst({
-      where: eq(referralProfiles.referralCode, code)
+      where: eq(referralProfiles.referralCode, code.toUpperCase())
     });
     return profile;
+  }
+
+  async incrementReferralCount(userId: string): Promise<void> {
+    const profile = await this.getReferralProfile(userId);
+    if (profile) {
+      await db!
+        .update(referralProfiles)
+        .set({ totalReferrals: profile.totalReferrals + 1 })
+        .where(eq(referralProfiles.id, profile.id));
+    }
   }
 }
 

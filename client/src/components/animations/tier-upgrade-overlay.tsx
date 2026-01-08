@@ -71,7 +71,10 @@ export function TierUpgradeOverlay({ tier, onClose }: TierUpgradeOverlayProps) {
                         </p>
 
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                onClose();
+                                window.dispatchEvent(new CustomEvent('rank-acknowledged'));
+                            }}
                             className="group relative px-8 py-3 overflow-hidden rounded-full bg-white/5 hover:bg-white/10 transition-colors"
                         >
                             <span className="relative z-10 text-xs uppercase tracking-[0.2em] text-white">Acknowledge</span>

@@ -143,11 +143,29 @@ export function AppTour() {
 
     useEffect(() => {
         if (user && !user.hasSeenTutorial) {
-            // Add a delay to prevent overlap with other welcome dialogs
-            const timer = setTimeout(() => {
-                setRun(true);
-            }, 2000); // 2 second delay
-            return () => clearTimeout(timer);
+            let timer: NodeJS.Timeout;
+
+            const startTourWithDelay = (delay: number) => {
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => {
+                    setRun(true);
+                }, delay);
+            };
+
+            // Fallback: Start after 20s if no acknowledgement is seen
+            // This handles cases for returning users or if the overlay doesn't trigger
+            startTourWithDelay(20000);
+
+            const handleAcknowledged = () => {
+                console.log("[AppTour] Rank acknowledged, starting 10s countdown");
+                startTourWithDelay(10000);
+            };
+
+            window.addEventListener('rank-acknowledged' as any, handleAcknowledged);
+            return () => {
+                if (timer) clearTimeout(timer);
+                window.removeEventListener('rank-acknowledged' as any, handleAcknowledged);
+            };
         }
 
         const handleStartTour = () => {
