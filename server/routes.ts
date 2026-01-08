@@ -501,7 +501,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByFirebaseUid(firebaseUid);
 
       if (!user) {
-        // Create new user
+        // 1. Validate Referral Code (if provided)
+        let referrerId: string | undefined;
+        if (req.body.referralCode) {
+          try {
+            const referrerProfile = await storage.getReferralProfileByCode(req.body.referralCode);
+            if (referrerProfile) {
+              referrerId = referrerProfile.userId;
+              console.log(`[REGISTER-GUEST] Valid referral code: ${req.body.referralCode}`);
+            }
+          } catch (refError) {
+            console.error("[REGISTER-GUEST] Referral validation error:", refError);
+          }
+        }
+
+        // 2. Create new user
         user = await storage.createUser({
           firebaseUid,
           name,
@@ -510,7 +524,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timezone: "UTC",
         });
 
-        // Assign initial quests
+        // 3. Create Referral Profile for new user
+        await storage.createReferralProfile({
+          userId: user.id,
+          referralCode: name.toUpperCase() + "_" + Math.floor(Math.random() * 1000), // Guests get a unique code
+          referredById: referrerId || null,
+          totalReferrals: 0,
+        });
+
+        // 4. Increment referrer's count
+        if (referrerId) {
+          console.log(`[REGISTER-GUEST] Incrementing referral count for referrer: ${referrerId}`);
+          await storage.incrementReferralCount(referrerId);
+        }
+
+        // 5. Assign initial quests
         await assignDailyQuests(user.id);
         await assignWeeklyQuest(user.id);
       }

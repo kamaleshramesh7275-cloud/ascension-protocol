@@ -2179,10 +2179,31 @@ export class MemStorage implements IStorage {
   }
 
   async incrementReferralCount(userId: string): Promise<void> {
-    const profile = await this.getReferralProfile(userId);
+    let profile = await this.getReferralProfile(userId);
+
+    if (!profile) {
+      // Lazy create if it doesn't exist
+      const user = await this.getUser(userId);
+      if (user) {
+        profile = await this.createReferralProfile({
+          userId,
+          referralCode: user.name.toUpperCase(),
+          referredById: null,
+          totalReferrals: 0,
+        });
+      }
+    }
+
     if (profile) {
       profile.totalReferrals += 1;
       this.referralProfiles.set(profile.id, profile);
+
+      // Award bonus at 3 referrals
+      if (profile.totalReferrals === 3) {
+        console.log(`[REFERRAL BONUS] Awarding 3000 coins to user ${userId} for 3 referrals`);
+        await this.awardCoins(userId, 3000);
+      }
+
       this.autoSave();
     }
   }
@@ -3624,12 +3645,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async incrementReferralCount(userId: string): Promise<void> {
-    const profile = await this.getReferralProfile(userId);
+    let profile = await this.getReferralProfile(userId);
+
+    if (!profile) {
+      const user = await this.getUser(userId);
+      if (user) {
+        profile = await this.createReferralProfile({
+          userId,
+          referralCode: user.name.toUpperCase(),
+          referredById: null,
+          totalReferrals: 0,
+        });
+      }
+    }
+
     if (profile) {
+      const newCount = (profile.totalReferrals || 0) + 1;
       await db!
         .update(referralProfiles)
-        .set({ totalReferrals: profile.totalReferrals + 1 })
+        .set({ totalReferrals: newCount })
         .where(eq(referralProfiles.id, profile.id));
+
+      // Award bonus at 3 referrals
+      if (newCount === 3) {
+        console.log(`[REFERRAL BONUS] Awarding 3000 coins to user ${userId} for 3 referrals`);
+        await this.awardCoins(userId, 3000);
+      }
     }
   }
 }
