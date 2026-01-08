@@ -124,13 +124,14 @@ export function FeatureLockOverlay() {
                         <div className="space-y-4">
                             {!paymentSent ? (
                                 <>
-                                    <Button
-                                        onClick={handlePay}
-                                        className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold h-14 text-lg shadow-lg shadow-yellow-500/20"
-                                    >
-                                        <Crown className="w-5 h-5 mr-2" />
-                                        Pay ₹100 via UPI
-                                    </Button>
+                                    <a href={upiLink} className="block w-full">
+                                        <Button
+                                            className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold h-14 text-lg shadow-lg shadow-yellow-500/20"
+                                        >
+                                            <Crown className="w-5 h-5 mr-2" />
+                                            Pay ₹100 via UPI
+                                        </Button>
+                                    </a>
                                     <Button
                                         variant="outline"
                                         onClick={() => premiumRequestMutation.mutate()}

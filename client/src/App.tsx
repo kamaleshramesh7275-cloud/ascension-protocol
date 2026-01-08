@@ -152,17 +152,12 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   const currentPath = window.location.pathname;
 
   if (isExpired) {
-    const allowedPaths = ["/store", "/focus"];
-    const isAllowed = allowedPaths.some(path => currentPath.startsWith(path)) || currentPath.startsWith("/profile");
-
-    if (!isAllowed) {
-      return (
-        <div className="relative w-full h-full">
-          <Component />
-          <FeatureLockOverlay />
-        </div>
-      );
-    }
+    return (
+      <div className="relative w-full h-full">
+        <Component />
+        <FeatureLockOverlay />
+      </div>
+    );
   }
 
   return <Component />;
