@@ -287,29 +287,41 @@ export default function StorePage() {
                                 </div>
 
                                 <div className="p-6 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-center space-y-4">
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-yellow-500/80 uppercase tracking-widest font-bold">Lifetime Access</p>
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="text-4xl font-bold text-white">₹100</span>
-                                            <span className="text-muted-foreground line-through">₹499</span>
+                                    {user.isPremium ? (
+                                        <div className="space-y-3 py-4">
+                                            <div className="flex items-center justify-center gap-2 text-yellow-500">
+                                                <Check className="w-8 h-8 font-bold" />
+                                                <span className="text-2xl font-bold uppercase tracking-tight">Premium Active</span>
+                                            </div>
+                                            <p className="text-muted-foreground">
+                                                You have full access to all Ascension Protocol features.
+                                                Enjoy your journey, Ascended.
+                                            </p>
                                         </div>
-                                    </div>
-
-                                    {!hasClickedPay ? (
-                                        <a
-                                            href="/pay-redirect"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            onClick={() => setHasClickedPay(true)}
-                                            className="block w-full"
-                                        >
-                                            <Button
-                                                size="lg"
-                                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-lg h-14"
+                                    ) : !hasClickedPay ? (
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-yellow-500/80 uppercase tracking-widest font-bold">Lifetime Access</p>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="text-4xl font-bold text-white">₹100</span>
+                                                    <span className="text-muted-foreground line-through">₹499</span>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href="/pay-redirect"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={() => setHasClickedPay(true)}
+                                                className="block w-full"
                                             >
-                                                Pay ₹100 via UPI
-                                            </Button>
-                                        </a>
+                                                <Button
+                                                    size="lg"
+                                                    className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-lg h-14"
+                                                >
+                                                    Pay ₹100 via UPI
+                                                </Button>
+                                            </a>
+                                        </div>
                                     ) : (
                                         <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                                             <p className="text-sm text-muted-foreground">

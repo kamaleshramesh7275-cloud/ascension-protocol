@@ -375,6 +375,7 @@ export default function AdminDashboard() {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
             queryClient.invalidateQueries({ queryKey: ["/api/subscription/status"] });
             queryClient.invalidateQueries({ queryKey: ["/api/subscription/admin/requests"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] }); // Invalidate user's own query cache
             showNotification("success", "User updated successfully");
             setEditUserDialogOpen(false);
         },
@@ -388,6 +389,7 @@ export default function AdminDashboard() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] }); // Invalidate user's own query cache
             showNotification("success", data.message || "Premium activated for 30 days");
         },
         onError: () => showNotification("error", "Failed to activate premium"),

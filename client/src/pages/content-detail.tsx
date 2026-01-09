@@ -1,11 +1,13 @@
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Clock, Eye, Heart, Share2, Bookmark, Play, Lock } from "lucide-react";
+import { ArrowLeft, Clock, Eye, Heart, Share2, Bookmark, Play, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
+import { User as BackendUser } from "@shared/schema";
 
 interface Content {
     id: string;
@@ -26,7 +28,13 @@ interface Content {
 export default function ContentDetailPage() {
     const [, params] = useRoute("/library/:id");
     const [, setLocation] = useLocation();
+    const { user: firebaseUser } = useAuth();
     const id = params?.id;
+
+    const { data: user } = useQuery<BackendUser>({
+        queryKey: ["/api/user"],
+        enabled: !!firebaseUser,
+    });
 
     const { data: content, isLoading } = useQuery<Content>({
         queryKey: [`/api/content/${id}`],
@@ -186,7 +194,11 @@ export default function ContentDetailPage() {
 
                             {content.isPremium && (
                                 <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-yellow-500/90 backdrop-blur-md flex items-center gap-2 shadow-lg">
-                                    <Lock className="h-4 w-4 text-black" />
+                                    {user?.isPremium ? (
+                                        <Unlock className="h-4 w-4 text-black" />
+                                    ) : (
+                                        <Lock className="h-4 w-4 text-black" />
+                                    )}
                                     <span className="text-sm font-bold text-black">Premium Content</span>
                                 </div>
                             )}

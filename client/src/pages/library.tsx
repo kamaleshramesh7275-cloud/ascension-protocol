@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { BookOpen, Video, FileText, Clock, Eye, Heart, Lock, Sparkles, Upload } from "lucide-react";
+import { BookOpen, Video, FileText, Clock, Eye, Heart, Lock, Unlock, Sparkles, Upload } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { User as BackendUser } from "@shared/schema";
 
 type ContentType = "all" | "article" | "video" | "guide";
 type ContentCategory = "all" | "fitness" | "productivity" | "mindfulness" | "nutrition" | "sleep";
@@ -32,9 +34,14 @@ interface Content {
 
 export default function LibraryPage() {
     const { toast } = useToast();
+    const { user: firebaseUser } = useAuth();
     const [selectedType, setSelectedType] = useState<ContentType>("all");
     const [selectedCategory, setSelectedCategory] = useState<ContentCategory>("all");
 
+    const { data: user } = useQuery<BackendUser>({
+        queryKey: ["/api/user"],
+        enabled: !!firebaseUser,
+    });
 
     const { data: content, isLoading } = useQuery<Content[]>({
         queryKey: ["/api/content", selectedCategory, selectedType],
@@ -220,7 +227,11 @@ export default function LibraryPage() {
                                                 {/* Premium Badge */}
                                                 {contentItem.isPremium && (
                                                     <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-yellow-500/90 backdrop-blur-sm flex items-center gap-1">
-                                                        <Lock className="h-3 w-3 text-black" />
+                                                        {user?.isPremium ? (
+                                                            <Unlock className="h-3 w-3 text-black" />
+                                                        ) : (
+                                                            <Lock className="h-3 w-3 text-black" />
+                                                        )}
                                                         <span className="text-xs font-bold text-black">Premium</span>
                                                     </div>
                                                 )}

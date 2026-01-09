@@ -139,7 +139,10 @@ export default function RoadmapPage() {
                             .map((week, index) => (
                                 <WeekCard
                                     key={week.id}
-                                    week={week}
+                                    week={{
+                                        ...week,
+                                        isLocked: user?.isPremium ? false : week.isLocked
+                                    }}
                                     index={index}
                                     onSelect={() => setSelectedWeekId(week.id)}
                                 />
