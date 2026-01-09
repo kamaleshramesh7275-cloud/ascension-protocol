@@ -1097,6 +1097,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Explicitly handle null values for premium fields to ensure they're cleared in the database
+      if ('premiumExpiry' in sanitizedUpdates && sanitizedUpdates.premiumExpiry === null) {
+        sanitizedUpdates.premiumExpiry = null;
+      }
+      if ('isPremium' in sanitizedUpdates && sanitizedUpdates.isPremium === false) {
+        // When removing premium, ensure premiumExpiry is also cleared
+        sanitizedUpdates.premiumExpiry = null;
+      }
+
       console.log("Updating user:", userId, "with updates:", sanitizedUpdates);
       const updatedUser = await storage.updateUser(userId, sanitizedUpdates);
       console.log("User updated successfully:", updatedUser);

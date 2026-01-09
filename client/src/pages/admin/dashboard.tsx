@@ -373,6 +373,8 @@ export default function AdminDashboard() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/subscription/status"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/subscription/admin/requests"] });
             showNotification("success", "User updated successfully");
             setEditUserDialogOpen(false);
         },
