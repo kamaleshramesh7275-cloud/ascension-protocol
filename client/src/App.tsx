@@ -41,6 +41,7 @@ import StorePage from "@/pages/store";
 import RoadmapPage from "@/pages/roadmap";
 import PaymentRedirect from "@/pages/pay-redirect";
 import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
+import ReferralRedirect from "@/pages/referral-redirect";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -219,6 +220,7 @@ function Router() {
         <Route path="/global-chat" component={() => <ProtectedRoute component={GlobalChatPage} />} />
         <Route path="/store" component={() => <ProtectedRoute component={StorePage} />} />
         <Route path="/pay-redirect" component={PaymentRedirect} />
+        <Route path="/ref/:code" component={ReferralRedirect} />
         <Route path="/session/:id" component={() => <ProtectedRoute component={SessionPage} />} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route component={NotFound} />
@@ -233,6 +235,7 @@ function Router() {
       <Route path="/account-selection" component={AccountSelection} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
+      <Route path="/ref/:code" component={ReferralRedirect} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
 
       {/* Catch-all: Redirect to home */}

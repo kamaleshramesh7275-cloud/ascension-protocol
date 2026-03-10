@@ -109,6 +109,20 @@ export function registerLocalAuthRoutes(app: Express) {
                     referredUserId: user.id,
                     status: "completed"
                 });
+
+                // Reward referrer with +200 coins
+                const referrerUser = await storage.getUser(referrerId);
+                if (referrerUser) {
+                    await storage.updateUser(referrerId, { coins: (referrerUser.coins ?? 0) + 200 });
+                    // Send notification to referrer
+                    await storage.createNotification({
+                        userId: referrerId,
+                        type: "achievement",
+                        title: "Referral Bonus! 🎉",
+                        message: `${data.username} joined using your referral link! +200 coins awarded to your account.`,
+                    });
+                    console.log(`[REGISTER] Awarded +200 coins to referrer ${referrerUser.name}`);
+                }
             }
 
             // 5. Save Credentials
@@ -146,7 +160,8 @@ export function registerLocalAuthRoutes(app: Express) {
                 willpower: cap(data.willpower * 4),
                 charisma: cap(data.charisma * 4),
                 onboardingCompleted: true,
-                coins: 100,
+                // Give +50 bonus coins if referred, otherwise 100 base
+                coins: referrerId ? 150 : 100,
             });
 
             console.log("[REGISTER] Success:", user.id);

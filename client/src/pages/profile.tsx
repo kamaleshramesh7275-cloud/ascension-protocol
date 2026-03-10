@@ -445,6 +445,31 @@ export default function ProfilePage() {
                                                 <span className="ml-2">{copied ? "Copied" : "Copy"}</span>
                                             </Button>
                                         </div>
+
+                                        {/* Shareable link row */}
+                                        {referralStats?.referralCode && (
+                                            <div className="bg-black/40 border border-purple-500/10 rounded-xl p-3 flex items-center justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Shareable Link</p>
+                                                    <p className="text-sm font-mono text-purple-300 truncate">
+                                                        {`${window.location.origin}/ref/${referralStats.referralCode}`}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="shrink-0 hover:bg-purple-500/20 text-purple-400"
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/ref/${referralStats.referralCode}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        toast({ title: "🔗 Link copied!", description: "Share it with your friends to earn +200 coins each!" });
+                                                    }}
+                                                >
+                                                    <Copy className="h-4 w-4 mr-1" /> Copy Link
+                                                </Button>
+                                            </div>
+                                        )}
+
                                     </div>
                                 </CardContent>
                             </Card>

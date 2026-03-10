@@ -38,8 +38,52 @@ export default function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [referralCode, setReferralCode] = useState("");
+    const [referralValid, setReferralValid] = useState<boolean | null>(null);
+    const [referralReferrerName, setReferralReferrerName] = useState<string | null>(null);
+    const [isValidatingReferral, setIsValidatingReferral] = useState(false);
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+
+    // Auto-fill referral code from localStorage (set by /ref/:code redirect)
+    useEffect(() => {
+        const savedCode = localStorage.getItem("referral_code");
+        if (savedCode) {
+            setReferralCode(savedCode);
+        }
+    }, []);
+
+    // Validate referral code with debounce
+    useEffect(() => {
+        if (!referralCode || referralCode.length < 3) {
+            setReferralValid(null);
+            setReferralReferrerName(null);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setIsValidatingReferral(true);
+            try {
+                const res = await fetch("/api/referrals/validate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: referralCode }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setReferralValid(true);
+                    setReferralReferrerName(data.referrerName);
+                } else {
+                    setReferralValid(false);
+                    setReferralReferrerName(null);
+                }
+            } catch {
+                setReferralValid(false);
+                setReferralReferrerName(null);
+            } finally {
+                setIsValidatingReferral(false);
+            }
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [referralCode]);
 
     // Check username availability
     useEffect(() => {
@@ -136,7 +180,8 @@ export default function Register() {
             // Update auth state
             await loginLocal(username, data.userId, data.firebaseUid);
 
-            toast({ title: "Account created successfully!" });
+            toast({ title: "Account created successfully! 🎉", description: referralCode ? "+50 bonus coins awarded!" : undefined });
+            localStorage.removeItem("referral_code");
             setLocation("/dashboard");
         } catch (error: any) {
             toast({ title: "Registration failed", description: error.message, variant: "destructive" });
@@ -422,16 +467,37 @@ export default function Register() {
 
                             {/* Referral Code (Optional) */}
                             <div className="space-y-2">
-                                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
-                                <Input
-                                    id="referralCode"
-                                    value={referralCode}
-                                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                                    className="bg-black border-zinc-700"
-                                    placeholder="Enter friend's username"
-                                />
-                                {referralCode && (
-                                    <p className="text-xs text-zinc-400">Enter the username of the person who referred you</p>
+                                <Label htmlFor="referralCode">Referral Code <span className="text-zinc-500">(Optional)</span></Label>
+                                <div className="relative">
+                                    <Input
+                                        id="referralCode"
+                                        value={referralCode}
+                                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                                        className={`bg-black border-zinc-700 pr-8 ${referralValid === true ? "border-green-500/60" :
+                                                referralValid === false ? "border-red-500/60" : ""
+                                            }`}
+                                        placeholder="e.g. ALEX_AB3K"
+                                    />
+                                    {isValidatingReferral && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full" />
+                                        </div>
+                                    )}
+                                    {!isValidatingReferral && referralValid === true && (
+                                        <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                                    )}
+                                    {!isValidatingReferral && referralValid === false && (
+                                        <X className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
+                                    )}
+                                </div>
+                                {referralValid === true && referralReferrerName && (
+                                    <p className="text-xs text-green-400 flex items-center gap-1">
+                                        <Check className="w-3 h-3" />
+                                        Referred by <strong>{referralReferrerName}</strong> — you'll get +50 bonus coins!
+                                    </p>
+                                )}
+                                {referralValid === false && (
+                                    <p className="text-xs text-red-400">Invalid referral code</p>
                                 )}
                             </div>
 
