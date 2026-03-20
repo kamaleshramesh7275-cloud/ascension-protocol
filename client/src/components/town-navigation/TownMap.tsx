@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MapAvatar } from "./MapAvatar";
+import { CyberGridBackground } from "../roadmap/CyberGridBackground";
 
 // Definition of all map locations
 const BUILDINGS: Omit<LocationNodeProps, 'activePath' | 'isActive' | 'isMapView'>[] = [
@@ -134,9 +135,13 @@ export function TownMap({ children }: TownMapProps) {
         setLocation(path);
     };
 
-    // Total transform offset
-    const currentX = baseMapOffset.x + dragOffset.x;
-    const currentY = baseMapOffset.y + dragOffset.y;
+    // Total transform offset (stable [0,0] when not in map view to prevent jitter)
+    const currentX = isMapView ? baseMapOffset.x + dragOffset.x : baseMapOffset.x;
+    const currentY = isMapView ? baseMapOffset.y + dragOffset.y : baseMapOffset.y;
+
+    // Theme color for the current location
+    const currentBuilding = BUILDINGS.find(b => b.id === activeBuildingId);
+    const themeColor = COLOR_MAP[currentBuilding?.themeColor || "primary"] || "#39ff14";
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-[#0F172A] select-none touch-none"
@@ -150,26 +155,35 @@ export function TownMap({ children }: TownMapProps) {
         >
 
             {/* 
-        The Map Container (GPU Accelerated Panning)
-        It is a 4000x4000 square that we move around.
-        Initial position makes its top-left corner at the exact center of the screen,
-        then the mapOffset pulls it back so the active building is centered.
-      */}
+                1. Static Page Background (Cyber Grid)
+                Only visible when NOT in map view. Provides a stable, premium feel.
+            */}
+            <div className={cn(
+                "absolute inset-0 z-0 transition-opacity duration-1000",
+                isMapView ? "opacity-0" : "opacity-100"
+            )}>
+                <CyberGridBackground />
+            </div>
+
+            {/* 
+                2. The Map Container (GPU Accelerated Panning)
+                Disabled motion when not in map view to fix "sliding" background feel.
+            */}
             <div
                 className={cn(
                     "absolute z-0",
-                    // Disable transition while dragging so it sticks immediately to the cursor
-                    isDragging
+                    // Disable transition while dragging or when hidden to prevent "phantom" sliding
+                    isDragging || !isMapView
                         ? "transition-none"
                         : "transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-                    isMapView ? "opacity-100" : "opacity-0 scale-105 pointer-events-none" // Hide map and scale up slightly when looking at page
+                    isMapView ? "opacity-100" : "opacity-0 scale-110 pointer-events-none"
                 )}
                 style={{
                     width: '4000px',
                     height: '4000px',
                     left: '50vw',
                     top: '50vh',
-                    transform: `translate(${currentX}px, ${currentY}px) scale(${isMapView ? 0.8 : 1})`,
+                    transform: `translate(${currentX}px, ${currentY}px) scale(${isMapView ? 0.8 : 1.1})`,
                     cursor: isMapView ? (isDragging ? 'grabbing' : 'grab') : 'default'
                 }}
             >
@@ -230,7 +244,13 @@ export function TownMap({ children }: TownMapProps) {
 
                 {/* The Route Content Container */}
                 <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-16 md:mt-20 pb-20 overflow-y-auto pointer-events-auto">
-                    <div className="bg-card/90 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-4 sm:p-6 min-h-[80vh]">
+                    <div 
+                        className="bg-card/95 backdrop-blur-xl border border-border/50 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-3xl p-4 sm:p-8 min-h-[80vh] transition-all duration-500"
+                        style={{
+                            boxShadow: `0 0 40px ${themeColor}15, inset 0 0 20px ${themeColor}05`,
+                            borderColor: `${themeColor}33`
+                        }}
+                    >
                         {children}
                     </div>
                 </div>
