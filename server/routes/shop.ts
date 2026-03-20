@@ -217,8 +217,8 @@ async function seedShop() {
 
 // Get all shop items
 router.get("/", async (req, res) => {
-    // CACHE: Shop items are static, cache for 1 hour (3600s)
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // CACHE: Disabled to prevent persisting old UUIDs during development
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
     const storage = getStorage();
     await seedShop(); // Ensure items exist
@@ -274,10 +274,7 @@ router.post("/buy", requireAuth, async (req, res) => {
         return res.status(404).send("Item not found");
     }
 
-    // Direct check for premium exclusive items
-    if (item.isPremium && !user.isPremium) {
-        return res.status(403).send("Premium membership required for this item");
-    }
+    // Premium membership check removed as per user request
 
     const dbUser = await storage.getUser(user.id);
     if (!dbUser) return res.status(404).send("User not found");
