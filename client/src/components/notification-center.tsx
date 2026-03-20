@@ -6,11 +6,12 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Shield, Megaphone, Info, Calendar, Target, CheckCircle, Flame, Award, Heart, UserPlus, LucideIcon } from "lucide-react";
+import { Bell, Shield, Megaphone, Info, Calendar, Target, CheckCircle, Flame, Award, Heart, UserPlus, LucideIcon, BellRing, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Notification } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 // Notification type to icon mapping
 const notificationIcons: Record<string, LucideIcon> = {
@@ -43,10 +44,11 @@ const notificationColors: Record<string, string> = {
 export function NotificationCenter() {
     const { data: notifications } = useQuery<Notification[]>({
         queryKey: ["/api/notifications"],
-        refetchInterval: 300000, // Refresh every 5 minutes to save compute
+        refetchInterval: 300000,
         staleTime: 300000,
     });
     const [, setLocation] = useLocation();
+    const { isSupported, permission, isLoading, subscribe } = usePushNotifications();
 
     const markAsRead = useMutation({
         mutationFn: (id: string) =>
@@ -106,6 +108,25 @@ export function NotificationCenter() {
                             </Button>
                         )}
                     </div>
+                    {/* Enable Push Notifications Banner */}
+                    {isSupported && permission !== 'granted' && (
+                        <button
+                            onClick={subscribe}
+                            disabled={isLoading || permission === 'denied'}
+                            className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <BellRing className="w-3.5 h-3.5" />
+                            )}
+                            {permission === 'denied'
+                                ? '🔕 Push blocked — enable in browser settings'
+                                : isLoading
+                                ? 'Enabling...'
+                                : '🔔 Enable Push Notifications'}
+                        </button>
+                    )}
                 </div>
                 <div className="overflow-y-auto flex-1">
                     {!notifications || notifications.length === 0 ? (

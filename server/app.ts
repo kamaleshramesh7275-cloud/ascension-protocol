@@ -49,7 +49,11 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: "Too many requests, please try again later."
 });
-app.use(globalLimiter);
+
+// Disable global rate limit in development because Vite loads hundreds of modules
+if (process.env.NODE_ENV === "production") {
+  app.use(globalLimiter);
+}
 
 // Auth Rate Limiter: 5 login attempts per 15 minutes per IP (Strict)
 const authLimiter = rateLimit({
@@ -59,7 +63,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: "Too many login attempts, please try again after 15 minutes."
 });
-app.use("/api/auth", authLimiter);
+if (process.env.NODE_ENV === "production") {
+  app.use("/api/auth", authLimiter);
+}
 
 
 // Radical Optimization: Edge Caching for Static Data

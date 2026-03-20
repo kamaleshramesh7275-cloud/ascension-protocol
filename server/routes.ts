@@ -52,6 +52,7 @@ import subscriptionRouter from "./routes/subscription";
 import roadmapRouter from "./routes/roadmaps";
 import { createReferralRouter } from "./routes/referrals";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
+import pushRouter from "./routes/push";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
 
@@ -182,6 +183,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sync Router (Radical Optimization)
   app.use("/api", syncRouter);
 
+  // Push Notification Routes
+  app.use("/api", pushRouter);
+
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);
   app.use("/api/roadmap", roadmapRouter);
@@ -308,6 +312,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: "New Partner Request",
           message: `${requester.name} wants to connect with you as a study partner!`,
         });
+        // Also send a push notification
+        const { pushNotifications } = await import("./utils/push-notifications");
+        await pushNotifications.partnerRequest(targetUserId, requester.name);
       } catch (notifError) {
         console.error("Failed to create notification:", notifError);
       }

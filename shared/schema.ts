@@ -71,8 +71,8 @@ export const users = pgTable("users", {
   notificationsEnabled: boolean("notifications_enabled").default(true).notNull(),
   notificationTime: integer("notification_time").default(9).notNull(), // hour (0-23)
   lastNotificationSent: timestamp("last_notification_sent"),
+  fcmTokens: jsonb("fcm_tokens").$type<string[]>().default([]).notNull(), // Device tokens for push
   hasSeenTutorial: boolean("has_seen_tutorial").default(false).notNull(),
-
   // Optimization: Track last time we checked for daily quests to avoid redundant DB queries
   lastDailyQuestCheck: timestamp("last_daily_quest_check"),
 }, (table) => {

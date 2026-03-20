@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
-import { useSidebar } from '@/components/ui/sidebar';
 
 const steps: (Step & { path?: string })[] = [
     {
@@ -121,7 +120,6 @@ export function AppTour() {
     const { user: authUser } = useAuth();
     const queryClient = useQueryClient();
     const [location, setLocation] = useLocation();
-    const { setOpen, setOpenMobile, isMobile, open, openMobile } = useSidebar();
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [tourKey, setTourKey] = useState(0);
@@ -245,15 +243,7 @@ export function AppTour() {
         if (type === 'step:before') {
             const currentStep = steps[index];
             const target = typeof currentStep.target === 'string' ? currentStep.target : '';
-
-            // Handle Sidebar Visibility
-            if (target.includes('sidebar')) {
-                if (isMobile) {
-                    if (!openMobile) setOpenMobile(true);
-                } else {
-                    if (!open) setOpen(true);
-                }
-            }
+            // Sidebar logic removed due to TownMap layout
         }
 
         if (type === 'step:after') {

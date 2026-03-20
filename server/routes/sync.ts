@@ -85,17 +85,65 @@ router.post("/sync", async (req, res) => {
         if (xpDelta !== 0 || coinsDelta !== 0) {
             const user = await storage.getUser(userId);
             if (user) {
+                const oldXp = user.xp;
+                const newXp = oldXp + xpDelta;
+                
+                // Detection for level up
+                const oldLevel = Math.floor(oldXp / 100) + 1;
+                const newLevel = Math.floor(newXp / 100) + 1;
+                
+                // Detection for rank up
+                const getTier = (xp: number) => {
+                    const { TIER_THRESHOLDS } = require("@shared/schema");
+                    if (xp >= TIER_THRESHOLDS.S) return "S";
+                    if (xp >= TIER_THRESHOLDS.A) return "A";
+                    if (xp >= TIER_THRESHOLDS.B) return "B";
+                    if (xp >= TIER_THRESHOLDS.C) return "C";
+                    return "D";
+                };
+                const oldTier = getTier(oldXp);
+                const newTier = getTier(newXp);
+
                 await storage.updateUser(userId, {
-                    xp: user.xp + xpDelta,
-                    coins: user.coins + coinsDelta
+                    xp: newXp,
+                    coins: user.coins + coinsDelta,
+                    level: newLevel,
+                    tier: newTier as any
                 });
+
+                // Send push notifications
+                try {
+                    const { pushNotifications } = await import("../utils/push-notifications");
+                    if (newLevel > oldLevel) {
+                        await pushNotifications.levelUp(userId, newLevel);
+                    }
+                    if (newTier !== oldTier) {
+                        await pushNotifications.rankUp(userId, newTier);
+                    }
+                } catch (pushErr) {
+                    console.error("[Sync] Level/Rank push failed:", pushErr);
+                }
             }
         }
 
         // 4. Mark Quests Complete
         for (const questId of completeQuests) {
             // Use updateQuest with partial update
-            await storage.updateQuest(questId, { completed: true });
+            const updatedQuest = await storage.updateQuest(questId, { completed: true });
+            
+            // Send push notification for quest completion
+            if (updatedQuest) {
+                try {
+                    const { pushNotifications } = await import("../utils/push-notifications");
+                    await pushNotifications.questComplete(
+                        userId, 
+                        updatedQuest.title, 
+                        updatedQuest.rewardXP
+                    );
+                } catch (pushErr) {
+                    console.error("[Sync] Push notification failed:", pushErr);
+                }
+            }
         }
 
         res.json({ success: true, processed: payload.events.length });

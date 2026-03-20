@@ -3,6 +3,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG6MOlkw0EREki69YhwA2qm1I0EmrTQAI",
@@ -17,6 +18,17 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Lazily get FCM messaging — only in supported browsers
+export async function getFCMMessaging() {
+  try {
+    const supported = await isSupported();
+    if (!supported) return null;
+    return getMessaging(app);
+  } catch {
+    return null;
+  }
+}
 
 export const signInWithGoogle = () => {
   return signInWithRedirect(auth, googleProvider);

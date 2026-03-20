@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { TownMap } from "@/components/town-navigation/TownMap";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useToast } from "@/hooks/use-toast";
@@ -271,48 +272,25 @@ function AppContent() {
 
   // Wraps authenticated app content with necessary providers
   return (
-    <SidebarProvider defaultOpen={false} style={sidebarStyle as React.CSSProperties}>
+    <>
       <AppTour />
-      {location === "/onboarding" || location === "/focus" ? (
+      {location === "/onboarding" ? (
         <Router />
       ) : (
-        <div className="flex h-screen w-full flex-col md:flex-row">
-          {/* Sidebar - hidden on mobile, visible on tablet/desktop */}
-          <div className="hidden md:flex">
-            <AppSidebar />
-          </div>
+        <TownMap>
+          <header className="absolute top-4 right-4 z-[60] pointer-events-auto flex items-center gap-2 bg-card/50 backdrop-blur-md p-2 rounded-full border border-border shadow-[0_0_15px_rgba(57,255,20,0.1)]">
+            <NotificationCenter />
+            <ThemeToggle />
+          </header>
 
-          <div className="flex flex-col flex-1 overflow-hidden">
-            {/* Header with responsive padding */}
-            <header className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger data-testid="button-sidebar-toggle" className="md:inline-flex" />
-                <h1 className="text-lg md:text-xl font-bold md:hidden">Ascension</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <NotificationCenter />
-                <ThemeToggle />
-              </div>
-            </header>
+          <Router />
 
-            {/* Main content with responsive padding */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6">
-              <div className="max-w-7xl mx-auto">
-                <Router />
-              </div>
-            </main>
-
-            {/* Mobile bottom navigation - only visible on mobile */}
-            <MobileBottomNav className="md:hidden fixed bottom-0 left-0 right-0 z-50" />
-          </div>
-
-          {/* Focus button - hidden on mobile to avoid overlap with bottom nav */}
-          <div className="hidden md:block">
+          <div className="fixed bottom-4 right-4 z-[60] pointer-events-auto hidden md:block">
             <FocusFloatingButton />
           </div>
-        </div>
+        </TownMap>
       )}
-    </SidebarProvider>
+    </>
   );
 }
 

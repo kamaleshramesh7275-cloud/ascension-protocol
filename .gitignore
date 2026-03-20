@@ -7,3 +7,7 @@ vite.config.ts.*
 .backup
 .vercel
 .env*.local
+.env
+.env.production
+.env.development
+*.env
