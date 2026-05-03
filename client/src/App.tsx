@@ -278,7 +278,7 @@ function AppContent() {
         <Router />
       ) : (
         <TownMap>
-          <header className="absolute top-4 right-4 z-[60] pointer-events-auto flex items-center gap-2 bg-card/50 backdrop-blur-md p-2 rounded-full border border-border shadow-[0_0_15px_rgba(57,255,20,0.1)]">
+          <header className="absolute top-2 right-4 z-[60] pointer-events-auto flex items-center gap-2 bg-card/50 backdrop-blur-md p-2 rounded-full border border-border shadow-[0_0_15px_rgba(57,255,20,0.1)]">
             <NotificationCenter />
             <ThemeToggle />
           </header>

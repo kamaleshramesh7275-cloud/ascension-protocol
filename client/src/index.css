@@ -839,6 +839,10 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    @apply h-full w-full m-0 p-0;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
@@ -1262,4 +1266,16 @@
   100% {
     transform: translateY(100%);
   }
+}
+
+/* Global Scrollbar Hide */
+html, body, .scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar, 
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

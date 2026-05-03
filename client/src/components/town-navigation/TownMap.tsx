@@ -242,17 +242,9 @@ export function TownMap({ children }: TownMapProps) {
                     </button>
                 </div>
 
-                {/* The Route Content Container */}
-                <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 mt-16 md:mt-20 pb-20 overflow-y-auto pointer-events-auto">
-                    <div 
-                        className="bg-card/95 backdrop-blur-xl border border-border/50 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-3xl p-4 sm:p-8 min-h-[80vh] transition-all duration-500"
-                        style={{
-                            boxShadow: `0 0 40px ${themeColor}15, inset 0 0 20px ${themeColor}05`,
-                            borderColor: `${themeColor}33`
-                        }}
-                    >
-                        {children}
-                    </div>
+                {/* The Route Content Container - Full screen, no background */}
+                <div className="absolute inset-0 mt-12 pb-16 overflow-y-auto overflow-x-hidden scrollbar-hide pointer-events-auto">
+                    {children}
                 </div>
 
                 {/* Bottom Navigation Dock */}

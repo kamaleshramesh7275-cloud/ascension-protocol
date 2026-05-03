@@ -1780,7 +1780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // app.use("/api/guilds", requireAuth, guildRouter);
   // app.use("/api/guild-enhancements", requireAuth, guildEnhancementsRouter);
   // app.use("/api/guild-wars", guildWarsRouter);
-  app.use("/api/shop", requireAuth, shopRouter);
+  // Note: Shop router is already registered at the top with seeding support
   app.use("/api/subscription", subscriptionRouter);
 
   return httpServer;
