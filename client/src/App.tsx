@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
@@ -249,10 +247,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
 
-  const sidebarStyle = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "4rem",
-  };
+
 
   if (loading) {
     return (

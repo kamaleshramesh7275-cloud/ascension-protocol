@@ -132,19 +132,20 @@ export function TownMap({ children }: TownMapProps) {
 
     const navigateTo = (path: string) => {
         setIsMapView(false);
+        setDragOffset({ x: 0, y: 0 }); // Reset pan when jumping to location
         setLocation(path);
     };
 
     // Total transform offset (stable [0,0] when not in map view to prevent jitter)
-    const currentX = isMapView ? baseMapOffset.x + dragOffset.x : baseMapOffset.x;
-    const currentY = isMapView ? baseMapOffset.y + dragOffset.y : baseMapOffset.y;
+    const currentX = isMapView ? (baseMapOffset.x + dragOffset.x) : baseMapOffset.x;
+    const currentY = isMapView ? (baseMapOffset.y + dragOffset.y) : baseMapOffset.y;
 
     // Theme color for the current location
     const currentBuilding = BUILDINGS.find(b => b.id === activeBuildingId);
     const themeColor = COLOR_MAP[currentBuilding?.themeColor || "primary"] || "#39ff14";
 
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-[#0F172A] select-none touch-none"
+        <div className="fixed inset-0 overflow-hidden bg-[#0F172A] select-none touch-none z-0"
             onMouseDown={handleDragStart}
             onMouseMove={handleDragMove}
             onMouseUp={handleDragEnd}

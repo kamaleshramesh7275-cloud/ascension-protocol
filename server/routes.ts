@@ -51,6 +51,7 @@ import syncRouter from "./routes/sync";
 import subscriptionRouter from "./routes/subscription";
 import roadmapRouter from "./routes/roadmaps";
 import { createReferralRouter } from "./routes/referrals";
+import citadelRouter from "./routes/citadel";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import pushRouter from "./routes/push";
 import { initCronJobs } from "./services/cron";
@@ -190,6 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/shop", shopRouter);
   app.use("/api/roadmap", roadmapRouter);
   app.use("/api/referrals", createReferralRouter(storage));
+  app.use("/api/citadel", citadelRouter);
 
   // --- Campaign Routes ---
   app.get("/api/campaigns", async (req, res) => {

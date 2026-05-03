@@ -8,7 +8,7 @@ import { RankBadge } from "@/components/rank-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle, Users, Copy, CheckCircle2, Gift } from "lucide-react";
+import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle, Users, Copy, CheckCircle2, Gift, Castle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -20,12 +20,14 @@ import { PremiumBenefitsDialog } from "@/components/premium-benefits-dialog";
 import { PremiumSuccessAnim } from "@/components/premium-success-anim";
 import { useLocation } from "wouter";
 import { useAppTour } from "@/components/AppTour";
+import { CitadelViewer } from "@/components/citadel-viewer";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
     const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
+    const [citadelViewerOpen, setCitadelViewerOpen] = useState(false);
     const { triggerTour } = useAppTour();
     const params = useParams<{ id?: string }>(); // Get ID from params
     const viewUserId = params.id;
@@ -259,6 +261,16 @@ export default function ProfilePage() {
                                 <div className="flex flex-col gap-2">
                                     <RankBadge tier={user.tier as any} level={user.level} size="lg" />
                                     <div className="flex gap-2">
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCitadelViewerOpen(true)}
+                                                className="border-yellow-500/30 hover:bg-yellow-500/10 hover:border-yellow-500/50 text-yellow-500"
+                                            >
+                                                <Castle className="h-4 w-4 mr-2" /> Citadel
+                                            </Button>
+                                        </motion.div>
                                         {isOwnProfile ? (
                                             <>
                                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -635,6 +647,12 @@ export default function ProfilePage() {
             <PremiumBenefitsDialog
                 open={premiumDialogOpen}
                 onOpenChange={setPremiumDialogOpen}
+            />
+            <CitadelViewer 
+                isOpen={citadelViewerOpen} 
+                onClose={() => setCitadelViewerOpen(false)} 
+                userId={user.id} 
+                username={user.name} 
             />
             <AnimatePresence>
                 {showPremiumAnim && (

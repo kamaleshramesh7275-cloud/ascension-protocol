@@ -1063,3 +1063,30 @@ export const insertReferralSchema = z.object({
 export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// Citadel Builder
+export const citadelBuildings = pgTable("citadel_buildings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // minor, major, monumental
+  buildingName: text("building_name").default("house").notNull(), // house, library, treasury, forge, barracks
+  x: integer("x").notNull(),
+  y: integer("y").notNull(),
+  status: text("status").notNull(), // building, completed, ruined
+  wager: integer("wager").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  lastCollectedAt: timestamp("last_collected_at").defaultNow().notNull(),
+});
+
+export const insertCitadelBuildingSchema = z.object({
+  userId: z.string().min(1),
+  type: z.string().min(1),
+  buildingName: z.string().optional(),
+  x: z.number().int(),
+  y: z.number().int(),
+  status: z.string().min(1),
+  wager: z.number().int().optional(),
+});
+
+export type CitadelBuilding = typeof citadelBuildings.$inferSelect;
+export type InsertCitadelBuilding = z.infer<typeof insertCitadelBuildingSchema>;

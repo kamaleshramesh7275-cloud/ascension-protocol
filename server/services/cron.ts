@@ -1,25 +1,30 @@
 import { IStorage } from "../storage";
 import { generateDailyGuildQuest } from "./quest-generator";
+import { db } from "../db";
+import { citadelBuildings } from "@shared/schema";
+import { eq, and, lt } from "drizzle-orm";
 
 const CRON_INTERVAL = 60 * 60 * 1000; // 1 hour
+const CONTAGION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
 
 export function initCronJobs(storage: IStorage) {
     console.log("[Cron] Initializing Cron Jobs...");
 
-    // Run immediately on startup to catch up
-    // runDailyGuildQuests(storage);
-    // processGuildWars(storage);
     processPremiumBonuses(storage);
+    processCitadelContagion(storage); // run immediately
     // storage.deleteOldMessages(48) - Removed immediate run to strictly follow midnight schedule, 
     // or we could keep it for safety. User said "set a time a 12 am", implying the schedule is key.
     // I'll leave other checks passing hourly.
 
     // Schedule periodic run for general tasks
     setInterval(() => {
-        // runDailyGuildQuests(storage);
-        // processGuildWars(storage);
         processPremiumBonuses(storage);
     }, CRON_INTERVAL);
+
+    // Citadel contagion: spread ruins every 6h
+    setInterval(() => {
+        processCitadelContagion(storage);
+    }, CONTAGION_INTERVAL);
 
     // Schedule message cleanup at midnight (12 AM)
     const now = new Date();
@@ -72,6 +77,74 @@ async function processPremiumBonuses(storage: IStorage) {
         }
     } catch (error) {
         console.error("[Cron] Error processing premium bonuses:", error);
+    }
+}
+
+// ─── CITADEL CONTAGION ────────────────────────────────────────────────────────
+// If a ruin hasn't been cleared in 48h, it spreads to adjacent completed buildings
+async function processCitadelContagion(storage: IStorage) {
+    console.log("[Cron] Processing Citadel Contagion...");
+    try {
+        const CONTAGION_THRESHOLD_MS = 48 * 60 * 60 * 1000; // 48 hours
+        const now = new Date();
+
+        // Get all ruins older than 48h
+        const allRuins = await db!.query.citadelBuildings.findMany({
+            where: and(
+                eq(citadelBuildings.status, "ruined"),
+                lt(citadelBuildings.createdAt, new Date(now.getTime() - CONTAGION_THRESHOLD_MS))
+            ),
+        });
+
+        if (allRuins.length === 0) {
+            console.log("[Cron] No ancient ruins found — city is safe.");
+            return;
+        }
+
+        const ADJACENT = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        let spreadCount = 0;
+
+        for (const ruin of allRuins) {
+            for (const [dx, dy] of ADJACENT) {
+                const nx = ruin.x + dx;
+                const ny = ruin.y + dy;
+
+                const neighbor = await db!.query.citadelBuildings.findFirst({
+                    where: and(
+                        eq(citadelBuildings.userId, ruin.userId),
+                        eq(citadelBuildings.x, nx),
+                        eq(citadelBuildings.y, ny),
+                        eq(citadelBuildings.status, "completed")
+                    ),
+                });
+
+                if (neighbor) {
+                    // Spread — convert neighbor to ruined
+                    await db!.update(citadelBuildings)
+                        .set({ status: "ruined" })
+                        .where(eq(citadelBuildings.id, neighbor.id));
+
+                    spreadCount++;
+                    console.log(`[Cron] Contagion spread to building ${neighbor.id} owned by user ${ruin.userId}`);
+
+                    // Notify the user
+                    await storage.createNotification({
+                        userId: ruin.userId,
+                        type: "citadel_contagion",
+                        title: "🔥 Ruin Contagion Spreading!",
+                        message: "Your uncleaned ruins are spreading and corrupting adjacent buildings! Clear them immediately before more of your city falls.",
+                        read: false,
+                    } as any);
+                    break; // Only spread once per ruin per cycle to be merciful
+                }
+            }
+        }
+
+        if (spreadCount > 0) {
+            console.log(`[Cron] Contagion spread to ${spreadCount} buildings total.`);
+        }
+    } catch (error) {
+        console.error("[Cron] Error processing citadel contagion:", error);
     }
 }
 

@@ -1,10 +1,10 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Square, X, Clock, TrendingUp, Target, Music, Volume2, VolumeX, Sparkles, Settings as SettingsIcon, Maximize, Minimize } from "lucide-react";
+import { Play, Pause, Square, X, Clock, TrendingUp, Target, Music, Volume2, VolumeX, Sparkles, Settings as SettingsIcon, Maximize, Minimize, Castle } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { FocusPet } from "@/components/focus-pet";
@@ -15,6 +15,10 @@ import { syncEngine } from "@/lib/sync-engine";
 import { useAuth } from "@/hooks/use-auth";
 import { TrialExpiredOverlay } from "@/components/premium/trial-expired-overlay";
 import { format } from "date-fns";
+import { FocusCitadel } from "@/components/focus-citadel";
+import { CitadelViewer } from "@/components/citadel-viewer";
+import { BlueprintSelector } from "@/components/blueprint-selector";
+import { useMutation } from "@tanstack/react-query";
 
 const PRESETS = [
   { name: "Pomodoro", minutes: 25, description: "25 min work", icon: Clock },
@@ -142,6 +146,52 @@ export default function FocusSanctum() {
   const [quote, setQuote] = useState(QUOTES[0]);
   const { user } = useAuth();
   const [showLimitOverlay, setShowLimitOverlay] = useState(false);
+  const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
+  const [citadelViewerOpen, setCitadelViewerOpen] = useState(false);
+  const [blueprintOpen, setBlueprintOpen] = useState(false);
+  const [pendingMinutes, setPendingMinutes] = useState(25);
+  const [selectedBlueprintId, setSelectedBlueprintId] = useState<string>("house");
+  const [currentWager, setCurrentWager] = useState<number>(0);
+
+  const startBuildingMutation = useMutation({
+    mutationFn: async ({ type, buildingName, x, y, wager }: { type: string; buildingName: string; x: number; y: number; wager: number }) => {
+      const res = await fetch("/api/citadel/build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, buildingName, x, y, wager })
+      });
+      if (!res.ok) throw new Error("Failed to start building");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setCurrentBuildingId(data.id);
+      queryClient.invalidateQueries({ queryKey: ["/api/citadel"] });
+    }
+  });
+
+  const completeBuildingMutation = useMutation({
+    mutationFn: async ({ id, focusMinutes }: { id: string; focusMinutes: number }) => {
+      await fetch(`/api/citadel/${id}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ focusMinutes }),
+      });
+    },
+    onSuccess: () => {
+      setCurrentBuildingId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/citadel"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/citadel/stats"] });
+    }
+  });
+  const failBuildingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/citadel/${id}/fail`, { method: "POST" });
+    },
+    onSuccess: () => {
+      setCurrentBuildingId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/citadel"] });
+    }
+  });
 
   // Check usage limit
   const checkDailyLimit = () => {
@@ -231,18 +281,31 @@ export default function FocusSanctum() {
       setShowLimitOverlay(true);
       return;
     }
+    // Open blueprint selector — user picks what to build and wager
+    setPendingMinutes(minutes);
+    setBlueprintOpen(true);
+  };
 
-    // Prepare increment (will actually increment on start to prevent abuse, or on complete? 
-    // Requirement says "1 session per day". If they start and stop, does it count?
-    // Let's count it on START to be strict as per "Nuclear Option".
+  const executeStart = (buildingId: string, wager: number) => {
     incrementDailyUsage();
-
+    const minutes = pendingMinutes;
     setTotalTime(minutes * 60);
     setTimeLeft(minutes * 60);
     setIsRunning(true);
     setIsPaused(false);
     setXpEarned(0);
+    setSelectedBlueprintId(buildingId);
+    setCurrentWager(wager);
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+
+    let buildingType = "minor";
+    if (minutes >= 50) buildingType = "major";
+    if (minutes >= 90) buildingType = "monumental";
+
+    const x = Math.floor(Math.random() * 5);
+    const y = Math.floor(Math.random() * 5);
+
+    startBuildingMutation.mutate({ type: buildingType, buildingName: buildingId, x, y, wager });
   };
 
   const handlePause = () => setIsPaused(!isPaused);
@@ -282,6 +345,7 @@ export default function FocusSanctum() {
 
   const handleStop = () => {
     saveSession(false);
+    if (currentBuildingId) failBuildingMutation.mutate(currentBuildingId);
     setIsRunning(false);
     setIsPaused(false);
     setTimeLeft(totalTime);
@@ -290,6 +354,8 @@ export default function FocusSanctum() {
 
   const handleComplete = () => {
     saveSession(true);
+    const elapsed = Math.floor((totalTime - timeLeft) / 60);
+    if (currentBuildingId) completeBuildingMutation.mutate({ id: currentBuildingId, focusMinutes: elapsed });
     setIsRunning(false);
     setIsPaused(false);
     setTimeLeft(totalTime);
@@ -326,35 +392,71 @@ export default function FocusSanctum() {
       >
         <X className="w-5 h-5 text-white" />
       </motion.button>
-
-      <motion.div className="fixed top-8 right-8 z-50 flex items-center gap-3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-2xl">
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }} 
+        animate={{ y: 0, opacity: 1 }} 
+        className="fixed top-6 right-6 z-[60] flex items-center gap-2"
+      >
+        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2 shadow-2xl">
           <div className="flex items-center gap-3">
-            <Button onClick={() => setMusicEnabled(!musicEnabled)} size="sm" variant="ghost" className="text-white hover:bg-white/20">
-              {musicEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            <Button
+              onClick={() => setMusicEnabled(!musicEnabled)}
+              size="icon"
+              variant="ghost"
+              className={`w-10 h-10 rounded-xl transition-all ${musicEnabled ? "bg-yellow-500/20 text-yellow-500" : "text-white/40 hover:text-white"}`}
+            >
+              {musicEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </Button>
+            
             {musicEnabled && (
-              <>
-                <Music className="w-4 h-4 text-yellow-300" />
+              <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
+                <Music className="w-4 h-4 text-yellow-300 animate-pulse" />
                 <select
                   value={currentTrack}
                   onChange={(e) => setCurrentTrack(Number(e.target.value))}
-                  className="bg-white/10 text-white text-xs rounded px-2 py-1 border border-white/20"
+                  className="bg-transparent text-white text-xs font-medium focus:outline-none border-none cursor-pointer"
                 >
                   {LOFI_TRACKS.map((track, i) => (
-                    <option key={i} value={i} className="bg-black">{track.name}</option>
+                    <option key={i} value={i} className="bg-slate-900 text-white">{track.name}</option>
                   ))}
                 </select>
-              </>
+              </div>
             )}
           </div>
+
+          <div className="w-[1px] h-6 bg-white/10 mx-1" />
+
+          <div className="flex items-center gap-1.5">
+            <Button 
+              onClick={toggleFullScreen} 
+              size="icon" 
+              variant="ghost"
+              className="w-10 h-10 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+              title="Fullscreen"
+            >
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+            </Button>
+            
+            <Button 
+              onClick={() => setCitadelViewerOpen(true)} 
+              size="icon" 
+              variant="ghost"
+              className="w-10 h-10 rounded-xl text-yellow-500/80 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all"
+              title="View Inner Citadel"
+            >
+              <Castle className="w-5 h-5" />
+            </Button>
+            
+            <Button 
+              onClick={() => setSettingsOpen(true)} 
+              size="icon" 
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 text-black shadow-lg shadow-yellow-500/20 hover:scale-105 active:scale-95 transition-all"
+              title="Settings"
+            >
+              <SettingsIcon className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-        <Button onClick={toggleFullScreen} size="icon" className="w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white shadow-2xl">
-          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-        </Button>
-        <Button onClick={() => setSettingsOpen(true)} size="icon" className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black shadow-2xl">
-          <SettingsIcon className="w-5 h-5" />
-        </Button>
       </motion.div>
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
@@ -455,8 +557,29 @@ export default function FocusSanctum() {
           )}
         </AnimatePresence>
       </div>
+      
+      <div className={isRunning ? "fixed top-1/2 left-24 -translate-y-1/2 z-30 transition-all duration-700 hidden md:block scale-75" : "hidden"}>
+        <FocusCitadel theme={theme} />
+      </div>
+      {!isRunning && (
+        <div className="absolute inset-0 flex items-center justify-center z-0 opacity-40 pointer-events-auto mt-64 hidden md:flex">
+           <FocusCitadel theme={theme} className="scale-100" />
+        </div>
+      )}
+
       <FocusPet className={isRunning ? "fixed top-1/2 right-12 -translate-y-1/2 z-40 transition-all duration-700" : "fixed bottom-8 right-8 z-40 transition-all duration-700"} />
       <FocusSettings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <CitadelViewer 
+        isOpen={citadelViewerOpen} 
+        onClose={() => setCitadelViewerOpen(false)} 
+        isRaining={isRunning}
+      />
+      <BlueprintSelector
+        isOpen={blueprintOpen}
+        onClose={() => setBlueprintOpen(false)}
+        selectedMinutes={pendingMinutes}
+        onSelect={(buildingId, wager) => executeStart(buildingId, wager)}
+      />
       {showLimitOverlay && <TrialExpiredOverlay />}
     </div>
   );
