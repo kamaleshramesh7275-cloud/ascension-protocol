@@ -9,7 +9,7 @@ import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useToast } from "@/hooks/use-toast";
@@ -283,9 +283,14 @@ function AppContent() {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-h-screen w-full relative">
               {/* Top Header Bar */}
-              <header className="sticky top-0 z-50 flex items-center justify-end gap-2 px-4 py-2 bg-card/80 backdrop-blur-md border-b border-border">
-                <NotificationCenter />
-                <ThemeToggle />
+              <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-card/80 backdrop-blur-md border-b border-border">
+                <div className="flex items-center">
+                  <SidebarTrigger className="hidden md:flex mr-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <NotificationCenter />
+                  <ThemeToggle />
+                </div>
               </header>
 
               {/* Page Content */}
