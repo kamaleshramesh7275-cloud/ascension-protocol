@@ -8,7 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
-import { TownMap } from "@/components/town-navigation/TownMap";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useToast } from "@/hooks/use-toast";
@@ -272,18 +273,38 @@ function AppContent() {
       {location === "/onboarding" ? (
         <Router />
       ) : (
-        <TownMap>
-          <header className="absolute top-2 right-4 z-[60] pointer-events-auto flex items-center gap-2 bg-card/50 backdrop-blur-md p-2 rounded-full border border-border shadow-[0_0_15px_rgba(57,255,20,0.1)]">
-            <NotificationCenter />
-            <ThemeToggle />
-          </header>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full">
+            {/* Desktop Sidebar */}
+            <div className="hidden md:block">
+              <AppSidebar />
+            </div>
 
-          <Router />
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col min-h-screen w-full relative">
+              {/* Top Header Bar */}
+              <header className="sticky top-0 z-50 flex items-center justify-end gap-2 px-4 py-2 bg-card/80 backdrop-blur-md border-b border-border">
+                <NotificationCenter />
+                <ThemeToggle />
+              </header>
 
-          <div className="fixed bottom-4 right-4 z-[60] pointer-events-auto hidden md:block">
-            <FocusFloatingButton />
+              {/* Page Content */}
+              <div className="flex-1 overflow-y-auto pb-20 md:pb-4">
+                <Router />
+              </div>
+
+              {/* Floating Focus Button (Desktop) */}
+              <div className="fixed bottom-4 right-4 z-50 hidden md:block">
+                <FocusFloatingButton />
+              </div>
+
+              {/* Mobile Bottom Nav */}
+              <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+                <MobileBottomNav />
+              </div>
+            </main>
           </div>
-        </TownMap>
+        </SidebarProvider>
       )}
     </>
   );
