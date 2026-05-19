@@ -276,9 +276,7 @@ function AppContent() {
         <SidebarProvider>
           <div className="flex min-h-screen w-full">
             {/* Desktop Sidebar */}
-            <div className="hidden md:block">
-              <AppSidebar />
-            </div>
+            <AppSidebar />
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-h-screen w-full relative">

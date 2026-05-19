@@ -1,6 +1,7 @@
-import { Home, Target, Users, Store, User, Map } from "lucide-react";
+import { Home, Target, Users, Store, User, Map, Menu } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface MobileBottomNavProps {
     className?: string;
@@ -8,12 +9,12 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
     const [location, setLocation] = useLocation();
+    const { toggleSidebar } = useSidebar();
 
     const navItems = [
         { icon: Home, label: "Home", path: "/dashboard" },
         { icon: Target, label: "Quests", path: "/quests" },
         { icon: Map, label: "Roadmap", path: "/roadmap" },
-        // { icon: Users, label: "Guilds", path: "/guilds" },
         { icon: Store, label: "Store", path: "/store" },
         { icon: User, label: "Profile", path: "/profile" },
     ];
@@ -43,6 +44,14 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                         </button>
                     );
                 })}
+                <button
+                    onClick={() => toggleSidebar()}
+                    className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    aria-label="Menu"
+                >
+                    <Menu className="h-5 w-5" />
+                    <span className="text-[10px] font-medium">Menu</span>
+                </button>
             </div>
         </nav>
     );

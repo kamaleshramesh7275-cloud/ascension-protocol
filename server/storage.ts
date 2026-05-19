@@ -2265,7 +2265,6 @@ export class MemStorage implements IStorage {
 
 export class DatabaseStorage implements IStorage {
   private campaignsCache: Campaign[] | null = null;
-  private shopItemsCache: ShopItem[] | null = null;
   private guildPerksCache: GuildPerk[] | null = null;
 
   constructor() {
@@ -2576,10 +2575,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getShopItems(): Promise<ShopItem[]> {
-    if (this.shopItemsCache) return this.shopItemsCache;
-    const items = await db!.select().from(shopItems);
-    this.shopItemsCache = items;
-    return items;
+    return await db!.select().from(shopItems);
   }
 
   async getShopItem(id: string): Promise<ShopItem | undefined> {
