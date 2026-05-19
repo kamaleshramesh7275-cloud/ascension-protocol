@@ -1,21 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import { ShopItem, UserItem, User } from "@shared/schema";
-import { Loader2, Coins, ShoppingBag, Check, Shield, Award, Palette, Crown, Timer } from "lucide-react";
+import { Loader2, Coins, Check, Shield, Award, Palette, Crown, Timer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 
 export default function StorePage() {
-    const { user } = useAuth();
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [location] = useLocation();
     const [activeTab, setActiveTab] = useState("themes");
     const [hasClickedPay, setHasClickedPay] = useState(false);
 
@@ -26,6 +22,11 @@ export default function StorePage() {
             setActiveTab("premium");
         }
     }, []);
+
+    // Always fetch the freshest user data directly — don't rely on useAuth() which can be stale
+    const { data: user, isLoading: userLoading } = useQuery<User>({
+        queryKey: ["/api/user"],
+    });
 
     const { data: items, isLoading: itemsLoading } = useQuery<ShopItem[]>({
         queryKey: ["/api/shop"],
@@ -38,11 +39,15 @@ export default function StorePage() {
     const purchaseMutation = useMutation({
         mutationFn: async (itemId: string) => {
             const res = await apiRequest("POST", "/api/shop/buy", { itemId });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Error ${res.status}`);
+            }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/shop/inventory"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/user"] }); // Update coins
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             toast({
                 title: "Purchase Successful!",
                 description: "Item added to your inventory.",
@@ -58,12 +63,17 @@ export default function StorePage() {
     });
 
     const equipMutation = useMutation({
-        mutationFn: async ({ itemId, type }: { itemId: string; type: 'title' | 'badge' | 'theme' }) => {
+        mutationFn: async ({ itemId, type }: { itemId: string; type: 'title' | 'badge' | 'theme' | 'avatar' }) => {
             const res = await apiRequest("POST", "/api/shop/equip", { itemId, type });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Error ${res.status}`);
+            }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/shop/inventory"] });
             toast({
                 title: "Equipped!",
                 description: "Your profile has been updated.",
@@ -88,7 +98,7 @@ export default function StorePage() {
                 title: "Payment Confirmation Sent",
                 description: "Your premium status will be activated within 45 minutes.",
             });
-            setHasClickedPay(false); // Reset
+            setHasClickedPay(false);
         },
         onError: (error: Error) => {
             toast({
@@ -99,33 +109,31 @@ export default function StorePage() {
         },
     });
 
-    const handlePayClick = () => {
-        const upiLink = "upi://pay?pa=6383525774@ptaxis&pn=KamaleshkumarRameshkumar&am=100";
-        window.location.href = upiLink;
-        setHasClickedPay(true);
-    };
-
-    if (itemsLoading || inventoryLoading || !user) {
+    if (itemsLoading || inventoryLoading || userLoading || !user) {
         return (
-            <div data-tour="store-tabs" className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
-    const ownedItemIds = new Set(inventory?.map((i) => i.itemId));
+    // Build a set of owned item IDs from the freshly fetched inventory
+    const ownedItemIds = new Set(inventory?.map((i) => i.itemId) ?? []);
 
     const titles = items?.filter((i) => i.type === "title") || [];
     const badges = items?.filter((i) => i.type === "badge") || [];
     const themes = items?.filter((i) => i.type === "theme") || [];
+    const avatars = items?.filter((i) => i.type === "avatar") || [];
 
     const ItemCard = ({ item }: { item: ShopItem }) => {
         const isOwned = ownedItemIds.has(item.id);
-        let isEquipped = false;
 
-        if (item.type === 'title') isEquipped = user.activeTitle === item.name;
-        else if (item.type === 'badge') isEquipped = user.activeBadgeId === item.value;
+        // Fix: activeBadgeId stores the item's DB ID, not item.value
+        let isEquipped = false;
+        if (item.type === 'title') isEquipped = user.activeTitle === item.value;
+        else if (item.type === 'badge') isEquipped = user.activeBadgeId === item.id;
         else if (item.type === 'theme') isEquipped = user.theme === item.value;
+        else if (item.type === 'avatar') isEquipped = user.avatarUrl === item.value;
 
         const canAfford = (user.coins || 0) >= item.cost;
 
@@ -143,6 +151,9 @@ export default function StorePage() {
                                 <CardTitle className="text-lg">{item.name}</CardTitle>
                                 <CardDescription className="mt-1">{item.description}</CardDescription>
                             </div>
+                            {item.type === 'avatar' && (
+                                <img src={item.value} alt={item.name} className="h-12 w-12 rounded-full border" />
+                            )}
                             {item.type === 'badge' && (
                                 <Award className={`h-8 w-8 ${item.rarity === 'common' ? 'text-orange-400' :
                                     item.rarity === 'rare' ? 'text-slate-400' :
@@ -166,6 +177,11 @@ export default function StorePage() {
                                 }`}>
                                 {item.rarity}
                             </span>
+                            {isOwned && !isEquipped && (
+                                <span className="px-2 py-1 rounded text-xs font-medium bg-green-500/10 text-green-500">
+                                    Owned
+                                </span>
+                            )}
                         </div>
                     </CardContent>
                     <CardFooter>
@@ -174,7 +190,7 @@ export default function StorePage() {
                                 className="w-full"
                                 variant={isEquipped ? "outline" : "default"}
                                 disabled={isEquipped || equipMutation.isPending}
-                                onClick={() => equipMutation.mutate({ itemId: item.id, type: item.type as 'title' | 'badge' | 'theme' })}
+                                onClick={() => equipMutation.mutate({ itemId: item.id, type: item.type as 'title' | 'badge' | 'theme' | 'avatar' })}
                             >
                                 {isEquipped ? (
                                     <>
@@ -217,17 +233,18 @@ export default function StorePage() {
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground font-medium">Your Balance</p>
-                            <p className="text-2xl font-bold text-yellow-500">{user.coins || 0} Coins</p>
+                            <p className="text-2xl font-bold text-yellow-500">{user.coins ?? 0} Coins</p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-tour="store-tabs">
-                <TabsList className="grid w-full grid-cols-4 max-w-[800px]">
+                <TabsList className="grid w-full grid-cols-5 max-w-[900px]">
                     <TabsTrigger value="themes">Themes</TabsTrigger>
                     <TabsTrigger value="titles">Titles</TabsTrigger>
                     <TabsTrigger value="badges">Badges</TabsTrigger>
+                    <TabsTrigger value="avatars">Avatars</TabsTrigger>
                     <TabsTrigger value="premium" className="text-yellow-500 font-bold data-[state=active]:bg-yellow-500/10">Premium</TabsTrigger>
                 </TabsList>
 
@@ -373,6 +390,14 @@ export default function StorePage() {
                 <TabsContent value="themes" className="mt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {themes.map((item) => (
+                            <ItemCard key={item.id} item={item} />
+                        ))}
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="avatars" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {avatars.map((item) => (
                             <ItemCard key={item.id} item={item} />
                         ))}
                     </div>

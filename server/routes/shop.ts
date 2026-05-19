@@ -15,7 +15,12 @@ async function seedShop() {
 
     const storage = getStorage();
     const items = await storage.getShopItems();
-    if (items.length > 0) {
+    
+    // Check which types are missing (allows adding new types to existing DB)
+    const existingTypes = new Set(items.map(i => i.type));
+    const missingTypes = ['avatar', 'badge', 'title', 'theme'].filter(t => !existingTypes.has(t));
+    
+    if (missingTypes.length === 0) {
         hasSeeded = true;
         return;
     }
@@ -211,8 +216,12 @@ async function seedShop() {
     ];
 
     for (const seed of seeds) {
-        await storage.createShopItem(seed);
+        // Only insert seeds for types that are missing from DB
+        if (missingTypes.includes(seed.type)) {
+            await storage.createShopItem(seed);
+        }
     }
+    hasSeeded = true;
 }
 
 // Get all shop items
