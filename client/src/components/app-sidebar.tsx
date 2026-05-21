@@ -1,4 +1,5 @@
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock } from "lucide-react";
+import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useLocation } from "wouter";
 import {
     Sidebar,
@@ -188,7 +189,7 @@ export function AppSidebar() {
                 </motion.div>
             </SidebarHeader>
 
-            <SidebarContent className="px-4 relative z-10">
+            <SidebarContent className="px-4 relative z-10 scrollbar-hide">
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu className="space-y-2">
@@ -278,6 +279,32 @@ export function AppSidebar() {
                         />
                     </div>
                 </motion.div>
+
+                {/* Contact & Feedback Navigation */}
+                <motion.button
+                    onClick={() => setLocation("/contact")}
+                    whileHover={{ scale: 1.02 }}
+                    className={`
+                        w-full mb-4 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm transition-all text-left flex items-center justify-between group
+                        ${location === "/contact" ? "border-violet-500/50 bg-violet-500/10 text-violet-400 font-semibold" : "text-zinc-400 hover:bg-white/10 hover:text-white"}
+                    `}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl transition-all ${location === "/contact" ? "bg-violet-500/20 text-violet-400" : "bg-white/5 text-zinc-400 group-hover:bg-violet-500/10 group-hover:text-violet-400"}`}>
+                            <MessageSquare className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white">Citadel Support</span>
+                            <span className="text-[10px] text-muted-foreground group-hover:text-violet-400 transition-colors">Feedback & Uplinks</span>
+                        </div>
+                    </div>
+                    <motion.div
+                        animate={{ x: location === "/contact" ? 3 : 0 }}
+                        className="text-muted-foreground group-hover:text-white transition-colors mr-1"
+                    >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </motion.div>
+                </motion.button>
 
                 <Button
                     variant="ghost"

@@ -12,13 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
     Trash2, Users, TrendingUp, Award, RefreshCw, Shield, ShoppingBag,
     Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map, Ban,
-    ChevronUp, ChevronDown, Check
+    ChevronUp, ChevronDown, Check, GitBranch
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { AdminNotificationComposer } from "@/components/admin-notification-composer";
 import { AdminNotificationHistory } from "@/components/admin-notification-history";
 import { apiRequest } from "@/lib/queryClient";
+import BridgePage from "./bridge";
 
 // Types
 interface User {
@@ -577,6 +578,7 @@ export default function AdminDashboard() {
                         { id: "referrals", icon: Users, label: "Referrals" },
                         { id: "roadmaps", icon: Map, label: "Roadmaps" },
                         { id: "notifications", icon: Bell, label: "Notifications" },
+                        { id: "bridge", icon: GitBranch, label: "Bridge" },
                         { id: "data", icon: Database, label: "Data Management" },
                         { id: "system", icon: Settings, label: "System" },
                     ].map((item) => (
@@ -1965,6 +1967,11 @@ export default function AdminDashboard() {
                                     </CardContent>
                                 </Card>
                             </div>
+                        )
+                    }
+                    {
+                        activeTab === "bridge" && (
+                            <BridgePage />
                         )
                     }
                 </div >

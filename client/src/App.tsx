@@ -42,6 +42,7 @@ import RoadmapPage from "@/pages/roadmap";
 import PaymentRedirect from "@/pages/pay-redirect";
 import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
 import ReferralRedirect from "@/pages/referral-redirect";
+import ContactPage from "@/pages/contact";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -219,6 +220,7 @@ function Router() {
         <Route path="/partners" component={() => <ProtectedRoute component={PartnersPage} />} />
         <Route path="/global-chat" component={() => <ProtectedRoute component={GlobalChatPage} />} />
         <Route path="/store" component={() => <ProtectedRoute component={StorePage} />} />
+        <Route path="/contact" component={() => <ProtectedRoute component={ContactPage} />} />
         <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/ref/:code" component={ReferralRedirect} />
         <Route path="/session/:id" component={() => <ProtectedRoute component={SessionPage} />} />

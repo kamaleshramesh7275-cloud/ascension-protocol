@@ -1785,5 +1785,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Note: Shop router is already registered at the top with seeding support
   app.use("/api/subscription", subscriptionRouter);
 
+  // ─────────────────────────────────────────────
+  // BRIDGE – Proposals, Reviews, Feature Requests
+  // ─────────────────────────────────────────────
+  // Simple in-memory store (consistent with the rest of the codebase)
+  const bridgeProposals: any[] = [];
+  const bridgeReviews: any[] = [];
+  const bridgeFeatures: any[] = [];
+  let bridgeIdCounter = 1;
+
+  const adminCheck = (req: Request, res: Response): boolean => {
+    const pwd = req.headers["x-admin-password"] as string;
+    if (pwd !== ADMIN_PASSWORD) {
+      res.status(403).json({ error: "Unauthorized" });
+      return false;
+    }
+    return true;
+  };
+
+  // --- Proposals ---
+  app.get("/api/admin/bridge/proposals", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    res.json(bridgeProposals.slice().reverse());
+  });
+
+  app.post("/api/admin/bridge/proposals", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const { title, description, submittedBy } = req.body;
+    if (!title || !description) return res.status(400).json({ error: "title and description are required" });
+    const proposal = {
+      id: String(bridgeIdCounter++),
+      title,
+      description,
+      submittedBy: submittedBy || "Admin",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    bridgeProposals.push(proposal);
+    res.status(201).json(proposal);
+  });
+
+  app.patch("/api/admin/bridge/proposals/:id", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const proposal = bridgeProposals.find(p => p.id === req.params.id);
+    if (!proposal) return res.status(404).json({ error: "Not found" });
+    Object.assign(proposal, req.body);
+    res.json(proposal);
+  });
+
+  app.delete("/api/admin/bridge/proposals/:id", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const idx = bridgeProposals.findIndex(p => p.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    bridgeProposals.splice(idx, 1);
+    res.json({ success: true });
+  });
+
+  // --- Reviews ---
+  app.get("/api/admin/bridge/reviews", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    res.json(bridgeReviews.slice().reverse());
+  });
+
+  app.post("/api/admin/bridge/reviews", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const { comment, rating, reviewer } = req.body;
+    if (!comment) return res.status(400).json({ error: "comment is required" });
+    const review = {
+      id: String(bridgeIdCounter++),
+      comment,
+      rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+      reviewer: reviewer || "Anonymous",
+      createdAt: new Date().toISOString(),
+    };
+    bridgeReviews.push(review);
+    res.status(201).json(review);
+  });
+
+  app.delete("/api/admin/bridge/reviews/:id", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const idx = bridgeReviews.findIndex(r => r.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    bridgeReviews.splice(idx, 1);
+    res.json({ success: true });
+  });
+
+  // --- Feature Requests ---
+  app.get("/api/admin/bridge/features", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    res.json(bridgeFeatures.slice().reverse());
+  });
+
+  app.post("/api/admin/bridge/features", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const { title, details, requestedBy, priority, category } = req.body;
+    if (!title || !details) return res.status(400).json({ error: "title and details are required" });
+    const feature = {
+      id: String(bridgeIdCounter++),
+      title,
+      details,
+      requestedBy: requestedBy || "Anonymous",
+      priority: priority || "medium",
+      category: category || "UI/UX Deck",
+      status: "open",
+      votes: 0,
+      votedUsers: [],
+      createdAt: new Date().toISOString(),
+    };
+    bridgeFeatures.push(feature);
+    res.status(201).json(feature);
+  });
+
+  app.patch("/api/admin/bridge/features/:id", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const feature = bridgeFeatures.find(f => f.id === req.params.id);
+    if (!feature) return res.status(404).json({ error: "Not found" });
+    Object.assign(feature, req.body);
+    res.json(feature);
+  });
+
+  app.delete("/api/admin/bridge/features/:id", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    const idx = bridgeFeatures.findIndex(f => f.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    bridgeFeatures.splice(idx, 1);
+    res.json({ success: true });
+  });
+
+  // --- Features / Proposals Public endpoints ---
+  app.get("/api/bridge/features", (req, res) => {
+    res.json(bridgeFeatures.slice().reverse());
+  });
+
+  app.post("/api/bridge/features/:id/vote", requireAuth, (req, res) => {
+    const user = (req as any).user;
+    const feature = bridgeFeatures.find(f => f.id === req.params.id);
+    if (!feature) return res.status(404).json({ error: "Feature request not found" });
+
+    if (!feature.votedUsers) feature.votedUsers = [];
+    if (!feature.votes) feature.votes = 0;
+
+    const userIndex = feature.votedUsers.indexOf(user.id);
+    if (userIndex > -1) {
+      // Remove vote
+      feature.votedUsers.splice(userIndex, 1);
+      feature.votes = Math.max(0, feature.votes - 1);
+      res.json({ voted: false, votes: feature.votes });
+    } else {
+      // Add vote
+      feature.votedUsers.push(user.id);
+      feature.votes += 1;
+      res.json({ voted: true, votes: feature.votes });
+    }
+  });
+
+  // Public-facing: Users can submit reviews and feature requests
+  app.post("/api/bridge/reviews", requireAuth, (req, res) => {
+    const { comment, rating } = req.body;
+    if (!comment) return res.status(400).json({ error: "comment is required" });
+    const user = (req as any).user;
+    const review = {
+      id: String(bridgeIdCounter++),
+      comment,
+      rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+      reviewer: user?.name || "User",
+      createdAt: new Date().toISOString(),
+    };
+    bridgeReviews.push(review);
+    res.status(201).json(review);
+  });
+
+  app.post("/api/bridge/features", requireAuth, (req, res) => {
+    const { title, details, priority, category } = req.body;
+    if (!title || !details) return res.status(400).json({ error: "title and details are required" });
+    const user = (req as any).user;
+    const feature = {
+      id: String(bridgeIdCounter++),
+      title,
+      details,
+      requestedBy: user?.name || "User",
+      priority: priority || "medium",
+      category: category || "UI/UX Deck",
+      status: "open",
+      votes: 0,
+      votedUsers: [],
+      createdAt: new Date().toISOString(),
+    };
+    bridgeFeatures.push(feature);
+    res.status(201).json(feature);
+  });
+
   return httpServer;
 }
