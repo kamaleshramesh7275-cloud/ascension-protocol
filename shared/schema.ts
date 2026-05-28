@@ -73,6 +73,7 @@ export const users = pgTable("users", {
   lastNotificationSent: timestamp("last_notification_sent"),
   fcmTokens: jsonb("fcm_tokens").$type<string[]>().default([]).notNull(), // Device tokens for push
   hasSeenTutorial: boolean("has_seen_tutorial").default(false).notNull(),
+  phone: text("phone"), // Mobile number collected during registration
   // Optimization: Track last time we checked for daily quests to avoid redundant DB queries
   lastDailyQuestCheck: timestamp("last_daily_quest_check"),
 }, (table) => {

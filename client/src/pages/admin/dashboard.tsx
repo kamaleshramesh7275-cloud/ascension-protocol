@@ -868,6 +868,7 @@ export default function AdminDashboard() {
                                     <TableHeader>
                                         <TableRow className="border-zinc-800 hover:bg-zinc-900">
                                             <TableHead>User</TableHead>
+                                            <TableHead>Phone</TableHead>
                                             <TableHead>Level</TableHead>
                                             <TableHead>Tier</TableHead>
                                             <TableHead>Coins</TableHead>
@@ -887,6 +888,9 @@ export default function AdminDashboard() {
                                                             <div className="font-medium text-white">{user.name}</div>
                                                             <div className="text-xs text-zinc-500">{user.email}</div>
                                                         </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="text-sm text-zinc-300">{user.phone || '—'}</span>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge variant="outline" className="bg-blue-900/20 text-blue-400 border-blue-800">

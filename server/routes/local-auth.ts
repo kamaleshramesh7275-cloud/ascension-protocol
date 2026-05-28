@@ -28,6 +28,7 @@ const registerSchema = z.object({
     vitality: z.coerce.number().int().min(1).max(10),
     charisma: z.coerce.number().int().min(1).max(10),
     referralCode: z.string().optional(),
+    phone: z.string().min(10, "Phone number must be at least 10 digits").optional(),
 });
 
 const loginSchema = z.object({
@@ -89,7 +90,8 @@ export function registerLocalAuthRoutes(app: Express) {
                     willpower: data.willpower,
                     vitality: data.vitality,
                     charisma: data.charisma
-                }
+                },
+                phone: data.phone || null,
             });
 
             // 4.5 Create Referral Profile (using username as referral code)

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Lock, Eye, EyeOff, Check, X } from "lucide-react";
+import { User, Lock, Eye, EyeOff, Check, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,7 @@ export default function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [referralCode, setReferralCode] = useState("");
+    const [phone, setPhone] = useState("");
     const [referralValid, setReferralValid] = useState<boolean | null>(null);
     const [referralReferrerName, setReferralReferrerName] = useState<string | null>(null);
     const [isValidatingReferral, setIsValidatingReferral] = useState(false);
@@ -159,6 +160,7 @@ export default function Register() {
                 body: JSON.stringify({
                     username,
                     password,
+                    phone: phone || undefined,
                     referralCode: referralCode || undefined,
                     ...assessment,
                 }),
@@ -392,6 +394,26 @@ export default function Register() {
                                 )}
                                 {usernameAvailable === true && (
                                     <p className="text-xs text-green-500">Username is available</p>
+                                )}
+                            </div>
+
+                            {/* Phone Number */}
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Mobile Number</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                    <Input
+                                        id="phone"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        className="bg-black border-zinc-700 pl-10"
+                                        placeholder="e.g. +91 9876543210"
+                                        required
+                                    />
+                                </div>
+                                {phone && phone.length < 10 && (
+                                    <p className="text-xs text-red-400">Enter a valid mobile number</p>
                                 )}
                             </div>
 
