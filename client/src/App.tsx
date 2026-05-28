@@ -18,6 +18,16 @@ import { User } from "@shared/schema";
 import { AnimationProvider, useAnimations } from "@/context/animation-context";
 import { useState, useEffect } from "react";
 import { TelemetryTracker } from "@/components/telemetry-tracker";
+import { Seo } from "@/components/seo";
+
+const withSeo = (Component: React.ComponentType<any>, seoProps: { title: string; description?: string; url?: string }) => {
+  return (props: any) => (
+    <>
+      <Seo {...seoProps} />
+      <Component {...props} />
+    </>
+  );
+};
 
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
@@ -202,31 +212,30 @@ function Router() {
           }}
         </Route>
 
-        <Route path="/account-selection" component={AccountSelection} />
-        <Route path="/register" component={Register} />
-        <Route path="/login" component={Login} />
+        <Route path="/account-selection" component={withSeo(AccountSelection, { title: "Choose Account Type", url: "/account-selection" })} />
+        <Route path="/register" component={withSeo(Register, { title: "Register", url: "/register" })} />
+        <Route path="/login" component={withSeo(Login, { title: "Login", url: "/login" })} />
 
-        <Route path="/onboarding" component={() => <ProtectedRoute component={OnboardingPage} />} />
-        <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
-        <Route path="/quests" component={() => <ProtectedRoute component={QuestsPage} />} />
-        <Route path="/roadmap" component={() => <ProtectedRoute component={RoadmapPage} />} />
-        <Route path="/focus" component={() => <ProtectedRoute component={FocusSanctum} />} />
-        <Route path="/stats" component={() => <ProtectedRoute component={StatsPage} />} />
-        <Route path="/leaderboard" component={() => <ProtectedRoute component={LeaderboardPage} />} />
-        <Route path="/profile/:id" component={() => <ProtectedRoute component={ProfilePage} />} />
-        <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
-        <Route path="/library" component={() => <ProtectedRoute component={LibraryPage} />} />
-        <Route path="/library/:id" component={() => <ProtectedRoute component={ContentDetailPage} />} />
-        {/* <Route path="/guilds" component={() => <ProtectedRoute component={GuildsPage} />} /> */}
-        <Route path="/partners" component={() => <ProtectedRoute component={PartnersPage} />} />
-        <Route path="/global-chat" component={() => <ProtectedRoute component={GlobalChatPage} />} />
-        <Route path="/store" component={() => <ProtectedRoute component={StorePage} />} />
-        <Route path="/contact" component={() => <ProtectedRoute component={ContactPage} />} />
+        <Route path="/onboarding" component={() => <ProtectedRoute component={withSeo(OnboardingPage, { title: "Onboarding" })} />} />
+        <Route path="/dashboard" component={() => <ProtectedRoute component={withSeo(Dashboard, { title: "Dashboard" })} />} />
+        <Route path="/quests" component={() => <ProtectedRoute component={withSeo(QuestsPage, { title: "Quests" })} />} />
+        <Route path="/roadmap" component={() => <ProtectedRoute component={withSeo(RoadmapPage, { title: "Roadmap" })} />} />
+        <Route path="/focus" component={() => <ProtectedRoute component={withSeo(FocusSanctum, { title: "Focus Sanctum" })} />} />
+        <Route path="/stats" component={() => <ProtectedRoute component={withSeo(StatsPage, { title: "Stats" })} />} />
+        <Route path="/leaderboard" component={() => <ProtectedRoute component={withSeo(LeaderboardPage, { title: "Leaderboard" })} />} />
+        <Route path="/profile/:id" component={() => <ProtectedRoute component={withSeo(ProfilePage, { title: "Profile" })} />} />
+        <Route path="/profile" component={() => <ProtectedRoute component={withSeo(ProfilePage, { title: "Profile" })} />} />
+        <Route path="/library" component={() => <ProtectedRoute component={withSeo(LibraryPage, { title: "Library" })} />} />
+        <Route path="/library/:id" component={() => <ProtectedRoute component={withSeo(ContentDetailPage, { title: "Library Content" })} />} />
+        <Route path="/partners" component={() => <ProtectedRoute component={withSeo(PartnersPage, { title: "Partners", url: "/partners" })} />} />
+        <Route path="/global-chat" component={() => <ProtectedRoute component={withSeo(GlobalChatPage, { title: "Global Chat" })} />} />
+        <Route path="/store" component={() => <ProtectedRoute component={withSeo(StorePage, { title: "Store" })} />} />
+        <Route path="/contact" component={() => <ProtectedRoute component={withSeo(ContactPage, { title: "Contact", url: "/contact" })} />} />
         <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/ref/:code" component={ReferralRedirect} />
-        <Route path="/session/:id" component={() => <ProtectedRoute component={SessionPage} />} />
-        <Route path="/admin/dashboard" component={AdminDashboard} />
-        <Route component={NotFound} />
+        <Route path="/session/:id" component={() => <ProtectedRoute component={withSeo(SessionPage, { title: "Session" })} />} />
+        <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
+        <Route component={withSeo(NotFound, { title: "404 Not Found" })} />
       </Switch>
     );
   }
@@ -234,12 +243,12 @@ function Router() {
   // Unauthenticated Routes
   return (
     <Switch>
-      <Route path="/" component={AuthPage} />
-      <Route path="/account-selection" component={AccountSelection} />
-      <Route path="/register" component={Register} />
-      <Route path="/login" component={Login} />
+      <Route path="/" component={withSeo(AuthPage, { title: "Level Up Your Life", url: "/" })} />
+      <Route path="/account-selection" component={withSeo(AccountSelection, { title: "Choose Account Type", url: "/account-selection" })} />
+      <Route path="/register" component={withSeo(Register, { title: "Register", url: "/register" })} />
+      <Route path="/login" component={withSeo(Login, { title: "Login", url: "/login" })} />
       <Route path="/ref/:code" component={ReferralRedirect} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
 
       {/* Catch-all: Redirect to home */}
       <Route component={() => <Redirect to="/" />} />

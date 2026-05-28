@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /quests
+Disallow: /admin
+Disallow: /library
+Disallow: /stats
+Disallow: /store
+Disallow: /session
+
+Sitemap: https://ascension-protocol.onrender.com/sitemap.xml
