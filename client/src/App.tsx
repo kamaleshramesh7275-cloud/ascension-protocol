@@ -17,6 +17,7 @@ import { AppTour } from "@/components/AppTour";
 import { User } from "@shared/schema";
 import { AnimationProvider, useAnimations } from "@/context/animation-context";
 import { useState, useEffect } from "react";
+import { TelemetryTracker } from "@/components/telemetry-tracker";
 
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth";
@@ -323,6 +324,7 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <AnimationProvider>
+              <TelemetryTracker />
               <TierWatcher />
               <NotificationWatcher />
               <AppContent />

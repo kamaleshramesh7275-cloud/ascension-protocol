@@ -240,6 +240,15 @@ export default function AdminDashboard() {
         },
     });
 
+    const { data: telemetryStats } = useQuery<any>({
+        queryKey: ["/api/admin/telemetry-stats"],
+        enabled: isAuthenticated && activeTab === "analytics",
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/admin/telemetry-stats", undefined, getAdminHeaders());
+            return res.json();
+        },
+    });
+
     const updateRoadmapWeekMutation = useMutation({
         mutationFn: async ({ weekId, updates }: { weekId: string; updates: any }) => {
             const res = await apiRequest("PATCH", `/api/roadmap/admin/roadmap-weeks/${weekId}`, updates, getAdminHeaders());
@@ -581,6 +590,7 @@ export default function AdminDashboard() {
                         { id: "bridge", icon: GitBranch, label: "Bridge" },
                         { id: "data", icon: Database, label: "Data Management" },
                         { id: "system", icon: Settings, label: "System" },
+                        { id: "analytics", icon: Activity, label: "Analytics" },
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -1972,6 +1982,148 @@ export default function AdminDashboard() {
                     {
                         activeTab === "bridge" && (
                             <BridgePage />
+                        )
+                    }
+                    {
+                        activeTab === "analytics" && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm text-zinc-400">Total Users</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-3xl font-bold text-white">{telemetryStats?.totalUsers || 0}</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm text-zinc-400">Active Today</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-3xl font-bold text-green-500">{telemetryStats?.activeTodayCount || 0}</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm text-zinc-400">Most Used Tab</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-xl font-bold text-blue-400 capitalize">{telemetryStats?.mostUsedTab?.name || "None"}</div>
+                                            <div className="text-xs text-zinc-500 mt-1">Total time: {Math.round((telemetryStats?.mostUsedTab?.count || 0) / 60)} mins</div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm text-zinc-400">Most Used Feature</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-xl font-bold text-purple-400 capitalize">{telemetryStats?.mostUsedFeature?.name || "None"}</div>
+                                            <div className="text-xs text-zinc-500 mt-1">{telemetryStats?.mostUsedFeature?.count || 0} uses</div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader>
+                                            <CardTitle>Tab Usage (Today)</CardTitle>
+                                            <CardDescription>Average time spent per tab</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="border-zinc-800">
+                                                        <TableHead>Tab Name</TableHead>
+                                                        <TableHead className="text-right">Total Time</TableHead>
+                                                        <TableHead className="text-right">Avg Time</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {telemetryStats?.tabUsageStats?.map((stat: any, i: number) => (
+                                                        <TableRow key={i} className="border-zinc-800">
+                                                            <TableCell className="font-medium capitalize">{stat.name}</TableCell>
+                                                            <TableCell className="text-right">{Math.round(stat.totalTime / 60)}m</TableCell>
+                                                            <TableCell className="text-right">{Math.round(stat.avgTime / 60)}m</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                    {(!telemetryStats?.tabUsageStats || telemetryStats.tabUsageStats.length === 0) && (
+                                                        <TableRow className="border-zinc-800">
+                                                            <TableCell colSpan={3} className="text-center text-zinc-500 py-4">No data available</TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-zinc-900/50 border-zinc-800">
+                                        <CardHeader>
+                                            <CardTitle>Feature Usage (Today)</CardTitle>
+                                            <CardDescription>Most frequently used features</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="border-zinc-800">
+                                                        <TableHead>Feature Name</TableHead>
+                                                        <TableHead className="text-right">Uses</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {telemetryStats?.featureUsageStats?.sort((a: any, b: any) => b.useCount - a.useCount).map((stat: any, i: number) => (
+                                                        <TableRow key={i} className="border-zinc-800">
+                                                            <TableCell className="font-medium capitalize">{stat.name.replace(/_/g, " ")}</TableCell>
+                                                            <TableCell className="text-right">{stat.useCount}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                    {(!telemetryStats?.featureUsageStats || telemetryStats.featureUsageStats.length === 0) && (
+                                                        <TableRow className="border-zinc-800">
+                                                            <TableCell colSpan={2} className="text-center text-zinc-500 py-4">No data available</TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                <Card className="bg-zinc-900/50 border-zinc-800 mt-6">
+                                    <CardHeader>
+                                        <CardTitle>Active Users Today</CardTitle>
+                                        <CardDescription>Users who logged in and their activity duration</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="border-zinc-800">
+                                                    <TableHead>User</TableHead>
+                                                    <TableHead>Email</TableHead>
+                                                    <TableHead>Last Active</TableHead>
+                                                    <TableHead className="text-right">Total Duration</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {telemetryStats?.activeTodayUsers?.map((user: any) => (
+                                                    <TableRow key={user.id} className="border-zinc-800">
+                                                        <TableCell className="font-medium">{user.name || 'Anonymous'}</TableCell>
+                                                        <TableCell>{user.email}</TableCell>
+                                                        <TableCell>{new Date(user.lastActive).toLocaleTimeString()}</TableCell>
+                                                        <TableCell className="text-right">{Math.round(user.totalDurationToday / 60)}m</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                {(!telemetryStats?.activeTodayUsers || telemetryStats.activeTodayUsers.length === 0) && (
+                                                    <TableRow className="border-zinc-800">
+                                                        <TableCell colSpan={4} className="text-center text-zinc-500 py-4">No active users today</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         )
                     }
                 </div >

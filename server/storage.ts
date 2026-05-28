@@ -98,7 +98,10 @@ import {
   type InsertHabit,
   referralProfiles,
   type ReferralProfile,
-  type InsertReferralProfile
+  type InsertReferralProfile,
+  telemetryEvents,
+  type TelemetryEvent,
+  type InsertTelemetryEvent
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -306,6 +309,10 @@ export interface IStorage {
   getReferralProfileByCode(code: string): Promise<ReferralProfile | undefined>;
   incrementReferralCount(userId: string): Promise<void>;
   backfillReferrals(): Promise<{ success: boolean; created: number }>;
+
+  // Telemetry operations
+  createTelemetryEvent(event: InsertTelemetryEvent): Promise<TelemetryEvent>;
+  getTelemetryStats(): Promise<any>;
 }
 
 // Shop Items
@@ -408,6 +415,7 @@ export class MemStorage implements IStorage {
   private premiumRequests: Map<string, PremiumRequest>;
   private habitTracking: Map<string, HabitTracking>;
   private referrals: Map<string, Referral>;
+  private telemetryEvents: Map<string, TelemetryEvent>;
 
   constructor() {
     this.guilds = new Map();
@@ -446,6 +454,7 @@ export class MemStorage implements IStorage {
     this.referralProfiles = new Map();
     this.campaigns = new Map();
     this.userCampaigns = new Map();
+    this.telemetryEvents = new Map();
 
     // SEED CAMPAIGNS FROM DATA
     CAMPAIGNS_DATA.forEach(c => {
@@ -2260,6 +2269,138 @@ export class MemStorage implements IStorage {
 
     return { success: true, created: createdCount };
   }
+
+  // Telemetry Operations (MemStorage)
+  async createTelemetryEvent(event: InsertTelemetryEvent): Promise<TelemetryEvent> {
+    const id = randomUUID();
+    const newEvent: TelemetryEvent = {
+      id,
+      userId: event.userId,
+      eventType: event.eventType,
+      eventName: event.eventName,
+      duration: event.duration ?? 0,
+      timestamp: new Date(),
+    };
+    this.telemetryEvents.set(id, newEvent);
+    return newEvent;
+  }
+
+  async getTelemetryStats(): Promise<any> {
+    const allUsers = Array.from(this.users.values());
+    const allEvents = Array.from(this.telemetryEvents.values());
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const todayEvents = allEvents.filter(e => new Date(e.timestamp).getTime() >= startOfToday.getTime());
+    const activeTodayUserIds = new Set(todayEvents.map(e => e.userId));
+
+    const activeTodayUsers = await Promise.all(
+      Array.from(activeTodayUserIds).map(async (userId) => {
+        const user = this.users.get(userId);
+        if (!user) return null;
+
+        const userTodayEvents = todayEvents.filter(e => e.userId === userId);
+        const totalDurationToday = userTodayEvents
+          .filter(e => e.eventType === "tab_usage")
+          .reduce((sum, e) => sum + e.duration, 0);
+
+        const activities = userTodayEvents.map(e => ({
+          eventName: e.eventName,
+          eventType: e.eventType,
+          timestamp: e.timestamp.toISOString(),
+          duration: e.duration,
+        }));
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          lastActive: user.lastActive ? user.lastActive.toISOString() : new Date().toISOString(),
+          totalDurationToday,
+          activities,
+        };
+      })
+    );
+
+    const filteredActiveTodayUsers = activeTodayUsers.filter((u): u is NonNullable<typeof u> => u !== null);
+
+    const tabDurations: Record<string, number> = {};
+    allEvents
+      .filter(e => e.eventType === "tab_usage")
+      .forEach(e => {
+        tabDurations[e.eventName] = (tabDurations[e.eventName] || 0) + e.duration;
+      });
+
+    let mostUsedTab = { name: "None", count: 0 };
+    Object.entries(tabDurations).forEach(([name, duration]) => {
+      if (duration > mostUsedTab.count) {
+        mostUsedTab = { name, count: duration };
+      }
+    });
+
+    const featureCounts: Record<string, number> = {};
+    allEvents
+      .filter(e => e.eventType === "feature_usage")
+      .forEach(e => {
+        featureCounts[e.eventName] = (featureCounts[e.eventName] || 0) + 1;
+      });
+
+    let mostUsedFeature = { name: "None", count: 0 };
+    Object.entries(featureCounts).forEach(([name, count]) => {
+      if (count > mostUsedFeature.count) {
+        mostUsedFeature = { name, count };
+      }
+    });
+
+    const tabGroups: Record<string, { totalTime: number; uniqueUsers: Set<string>; useCount: number }> = {};
+    allEvents
+      .filter(e => e.eventType === "tab_usage")
+      .forEach(e => {
+        if (!tabGroups[e.eventName]) {
+          tabGroups[e.eventName] = { totalTime: 0, uniqueUsers: new Set(), useCount: 0 };
+        }
+        tabGroups[e.eventName].totalTime += e.duration;
+        tabGroups[e.eventName].uniqueUsers.add(e.userId);
+        tabGroups[e.eventName].useCount += 1;
+      });
+
+    const tabUsageStats = Object.entries(tabGroups).map(([name, data]) => ({
+      name,
+      totalTime: data.totalTime,
+      avgTime: data.useCount > 0 ? Math.round(data.totalTime / data.useCount) : 0,
+      useCount: data.useCount,
+    }));
+
+    const featureGroups: Record<string, { totalTime: number; uniqueUsers: Set<string>; useCount: number }> = {};
+    allEvents
+      .filter(e => e.eventType === "feature_usage")
+      .forEach(e => {
+        if (!featureGroups[e.eventName]) {
+          featureGroups[e.eventName] = { totalTime: 0, uniqueUsers: new Set(), useCount: 0 };
+        }
+        featureGroups[e.eventName].totalTime += e.duration;
+        featureGroups[e.eventName].uniqueUsers.add(e.userId);
+        featureGroups[e.eventName].useCount += 1;
+      });
+
+    const featureUsageStats = Object.entries(featureGroups).map(([name, data]) => ({
+      name,
+      totalTime: data.totalTime,
+      avgTime: data.useCount > 0 ? Math.round(data.totalTime / data.useCount) : 0,
+      useCount: data.useCount,
+    }));
+
+    return {
+      totalUsers: allUsers.length,
+      activeTodayCount: filteredActiveTodayUsers.length,
+      activeTodayUsers: filteredActiveTodayUsers,
+      mostUsedTab,
+      mostUsedFeature,
+      tabUsageStats,
+      featureUsageStats,
+    };
+  }
 }
 
 
@@ -3767,6 +3908,148 @@ export class DatabaseStorage implements IStorage {
         await this.awardCoins(userId, 3000);
       }
     }
+  }
+
+  // Telemetry Operations (DatabaseStorage)
+  async createTelemetryEvent(event: InsertTelemetryEvent): Promise<TelemetryEvent> {
+    const [newEvent] = await db!
+      .insert(telemetryEvents)
+      .values({
+        userId: event.userId,
+        eventType: event.eventType,
+        eventName: event.eventName,
+        duration: event.duration ?? 0,
+        timestamp: new Date(),
+      })
+      .returning();
+    return newEvent;
+  }
+
+  async getTelemetryStats(): Promise<any> {
+    // 1. Total Registered Users
+    const allUsers = await db!.select().from(users);
+
+    // 2. Start of Today
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    // 3. Get all events today
+    const todayEvents = await db!
+      .select()
+      .from(telemetryEvents)
+      .where(gt(telemetryEvents.timestamp, startOfToday));
+
+    const activeTodayUserIds = Array.from(new Set(todayEvents.map(e => e.userId)));
+
+    // 4. Enrich active users
+    const activeTodayUsers = await Promise.all(
+      activeTodayUserIds.map(async (userId) => {
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) return null;
+
+        const userTodayEvents = todayEvents.filter(e => e.userId === userId);
+        const totalDurationToday = userTodayEvents
+          .filter(e => e.eventType === "tab_usage")
+          .reduce((sum, e) => sum + e.duration, 0);
+
+        const activities = userTodayEvents.map(e => ({
+          eventName: e.eventName,
+          eventType: e.eventType,
+          timestamp: e.timestamp.toISOString(),
+          duration: e.duration,
+        }));
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          lastActive: user.lastActive ? user.lastActive.toISOString() : new Date().toISOString(),
+          totalDurationToday,
+          activities,
+        };
+      })
+    );
+
+    const filteredActiveTodayUsers = activeTodayUsers.filter((u): u is NonNullable<typeof u> => u !== null);
+
+    // 5. Get all events to calculate overall statistics
+    const allEvents = await db!.select().from(telemetryEvents);
+
+    const tabDurations: Record<string, number> = {};
+    allEvents
+      .filter(e => e.eventType === "tab_usage")
+      .forEach(e => {
+        tabDurations[e.eventName] = (tabDurations[e.eventName] || 0) + e.duration;
+      });
+
+    let mostUsedTab = { name: "None", count: 0 };
+    Object.entries(tabDurations).forEach(([name, duration]) => {
+      if (duration > mostUsedTab.count) {
+        mostUsedTab = { name, count: duration };
+      }
+    });
+
+    const featureCounts: Record<string, number> = {};
+    allEvents
+      .filter(e => e.eventType === "feature_usage")
+      .forEach(e => {
+        featureCounts[e.eventName] = (featureCounts[e.eventName] || 0) + 1;
+      });
+
+    let mostUsedFeature = { name: "None", count: 0 };
+    Object.entries(featureCounts).forEach(([name, count]) => {
+      if (count > mostUsedFeature.count) {
+        mostUsedFeature = { name, count };
+      }
+    });
+
+    const tabGroups: Record<string, { totalTime: number; uniqueUsers: Set<string>; useCount: number }> = {};
+    allEvents
+      .filter(e => e.eventType === "tab_usage")
+      .forEach(e => {
+        if (!tabGroups[e.eventName]) {
+          tabGroups[e.eventName] = { totalTime: 0, uniqueUsers: new Set(), useCount: 0 };
+        }
+        tabGroups[e.eventName].totalTime += e.duration;
+        tabGroups[e.eventName].uniqueUsers.add(e.userId);
+        tabGroups[e.eventName].useCount += 1;
+      });
+
+    const tabUsageStats = Object.entries(tabGroups).map(([name, data]) => ({
+      name,
+      totalTime: data.totalTime,
+      avgTime: data.useCount > 0 ? Math.round(data.totalTime / data.useCount) : 0,
+      useCount: data.useCount,
+    }));
+
+    const featureGroups: Record<string, { totalTime: number; uniqueUsers: Set<string>; useCount: number }> = {};
+    allEvents
+      .filter(e => e.eventType === "feature_usage")
+      .forEach(e => {
+        if (!featureGroups[e.eventName]) {
+          featureGroups[e.eventName] = { totalTime: 0, uniqueUsers: new Set(), useCount: 0 };
+        }
+        featureGroups[e.eventName].totalTime += e.duration;
+        featureGroups[e.eventName].uniqueUsers.add(e.userId);
+        featureGroups[e.eventName].useCount += 1;
+      });
+
+    const featureUsageStats = Object.entries(featureGroups).map(([name, data]) => ({
+      name,
+      totalTime: data.totalTime,
+      avgTime: data.useCount > 0 ? Math.round(data.totalTime / data.useCount) : 0,
+      useCount: data.useCount,
+    }));
+
+    return {
+      totalUsers: allUsers.length,
+      activeTodayCount: filteredActiveTodayUsers.length,
+      activeTodayUsers: filteredActiveTodayUsers,
+      mostUsedTab,
+      mostUsedFeature,
+      tabUsageStats,
+      featureUsageStats,
+    };
   }
 }
 

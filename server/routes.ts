@@ -11,7 +11,8 @@ import {
   insertGuildQuestSchema,
   insertMessageSchema,
   insertTaskSchema,
-  insertHabitSchema
+  insertHabitSchema,
+  insertTelemetryEventSchema
 } from "@shared/schema";
 
 // Enable CORS for all routes (allow admin frontend to make DELETE with custom header)
@@ -1973,6 +1974,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     bridgeFeatures.push(feature);
     res.status(201).json(feature);
+  });
+
+  // --- Telemetry Routes ---
+  app.post("/api/telemetry", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+      const telemetryData = insertTelemetryEventSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+
+      const event = await storage.createTelemetryEvent(telemetryData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("[TELEMETRY] Failed to log event:", error);
+      res.status(400).json({ error: "Invalid telemetry data" });
+    }
+  });
+
+  // Get telemetry stats for admin panel
+  app.get("/api/admin/telemetry-stats", async (req, res) => {
+    try {
+      const adminPassword = req.headers["x-admin-password"] as string;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const stats = await storage.getTelemetryStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("[TELEMETRY] Failed to fetch stats:", error);
+      res.status(500).json({ error: "Failed to fetch telemetry stats" });
+    }
   });
 
   return httpServer;

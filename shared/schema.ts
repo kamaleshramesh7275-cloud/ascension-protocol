@@ -1090,3 +1090,30 @@ export const insertCitadelBuildingSchema = z.object({
 
 export type CitadelBuilding = typeof citadelBuildings.$inferSelect;
 export type InsertCitadelBuilding = z.infer<typeof insertCitadelBuildingSchema>;
+
+// Telemetry Events for tracking usage
+export const telemetryEvents = pgTable("telemetry_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  eventType: text("event_type").notNull(), // 'tab_usage', 'feature_usage'
+  eventName: text("event_name").notNull(), // e.g. 'Dashboard', 'Complete Quest'
+  duration: integer("duration").default(0).notNull(), // duration in seconds
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index("telemetry_events_user_id_idx").on(table.userId),
+    eventTypeIdx: index("telemetry_events_event_type_idx").on(table.eventType),
+    timestampIdx: index("telemetry_events_timestamp_idx").on(table.timestamp),
+  };
+});
+
+export const insertTelemetryEventSchema = z.object({
+  userId: z.string().min(1),
+  eventType: z.string().min(1),
+  eventName: z.string().min(1),
+  duration: z.number().int().optional(),
+});
+
+export type TelemetryEvent = typeof telemetryEvents.$inferSelect;
+export type InsertTelemetryEvent = z.infer<typeof insertTelemetryEventSchema>;
+
