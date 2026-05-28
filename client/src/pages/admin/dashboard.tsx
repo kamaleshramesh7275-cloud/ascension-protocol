@@ -667,6 +667,7 @@ export default function AdminDashboard() {
                     </header>
 
                     {activeTab === "overview" && (
+                        <>
                         <div
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
                         >
@@ -843,6 +844,7 @@ export default function AdminDashboard() {
                                 </CardContent>
                             </Card>
                         </div>
+                        </>
                     )}
 
                     {activeTab === "users" && (
