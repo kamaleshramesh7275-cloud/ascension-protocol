@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
-    Phone, 
+    
     Send, 
     Star, 
     Sparkles, 
@@ -42,7 +42,6 @@ export default function ContactPage() {
     const queryClient = useQueryClient();
     
     // Direct link states
-    const phoneNo = "6383525774";
     const whatsAppUrl = "https://wa.me/916383525774";
 
     // Review form state
@@ -263,26 +262,7 @@ export default function ContactPage() {
                                     Direct encryption channels to support operatives.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Phone card */}
-                                <motion.a
-                                    href={`tel:${phoneNo}`}
-                                    whileHover={{ scale: 1.03, y: -2 }}
-                                    className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-300 flex flex-col justify-between group shadow-lg cursor-pointer"
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 group-hover:bg-violet-500/20 group-hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.1)]">
-                                            <Phone className="w-5 h-5" />
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-violet-400 transition-colors" />
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] text-violet-400 font-bold uppercase tracking-wider font-exo">Vocal Uplink</span>
-                                        <h3 className="text-lg font-bold text-white group-hover:text-violet-300 transition-colors mb-1">{phoneNo}</h3>
-                                        <p className="text-xs text-zinc-400 font-inter">Establish instant voice alignment with headquarters.</p>
-                                    </div>
-                                </motion.a>
-
+                            <CardContent className="grid grid-cols-1 gap-4">
                                 {/* WhatsApp card */}
                                 <motion.a
                                     href={whatsAppUrl}
