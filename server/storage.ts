@@ -103,7 +103,7 @@ import {
   type TelemetryEvent,
   type InsertTelemetryEvent
 } from "@shared/schema";
-import { eq, and, desc, asc, lt, gt, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
+import { eq, and, desc, asc, lt, gt, gte, lte, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
@@ -312,7 +312,7 @@ export interface IStorage {
 
   // Telemetry operations
   createTelemetryEvent(event: InsertTelemetryEvent): Promise<TelemetryEvent>;
-  getTelemetryStats(): Promise<any>;
+  getTelemetryStats(date?: Date): Promise<any>;
 }
 
 // Shop Items
@@ -2285,14 +2285,24 @@ export class MemStorage implements IStorage {
     return newEvent;
   }
 
-  async getTelemetryStats(): Promise<any> {
+  async getTelemetryStats(date?: Date): Promise<any> {
     const allUsers = Array.from(this.users.values());
     const allEvents = Array.from(this.telemetryEvents.values());
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const targetDate = date ? new Date(date) : new Date();
+    
+    // Set to start of the given date (midnight)
+    const startOfTargetDay = new Date(targetDate);
+    startOfTargetDay.setHours(0, 0, 0, 0);
 
-    const todayEvents = allEvents.filter(e => new Date(e.timestamp).getTime() >= startOfToday.getTime());
+    // Set to end of the given date (23:59:59.999)
+    const endOfTargetDay = new Date(targetDate);
+    endOfTargetDay.setHours(23, 59, 59, 999);
+
+    const todayEvents = allEvents.filter(e => {
+        const eventTime = new Date(e.timestamp).getTime();
+        return eventTime >= startOfTargetDay.getTime() && eventTime <= endOfTargetDay.getTime();
+    });
     const activeTodayUserIds = new Set(todayEvents.map(e => e.userId));
 
     const activeTodayUsers = await Promise.all(
@@ -3925,19 +3935,30 @@ export class DatabaseStorage implements IStorage {
     return newEvent;
   }
 
-  async getTelemetryStats(): Promise<any> {
+  async getTelemetryStats(date?: Date): Promise<any> {
     // 1. Total Registered Users
     const allUsers = await db!.select().from(users);
 
-    // 2. Start of Today
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const targetDate = date ? new Date(date) : new Date();
+    
+    // Start of target day
+    const startOfTargetDay = new Date(targetDate);
+    startOfTargetDay.setHours(0, 0, 0, 0);
 
-    // 3. Get all events today
+    // End of target day
+    const endOfTargetDay = new Date(targetDate);
+    endOfTargetDay.setHours(23, 59, 59, 999);
+
+    // 3. Get all events for the target day
     const todayEvents = await db!
       .select()
       .from(telemetryEvents)
-      .where(gt(telemetryEvents.timestamp, startOfToday));
+      .where(
+        and(
+          gte(telemetryEvents.timestamp, startOfTargetDay),
+          lte(telemetryEvents.timestamp, endOfTargetDay)
+        )
+      );
 
     const activeTodayUserIds = Array.from(new Set(todayEvents.map(e => e.userId)));
 

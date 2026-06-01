@@ -2003,7 +2003,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      const stats = await storage.getTelemetryStats();
+      const dateParam = req.query.date as string;
+      const targetDate = dateParam ? new Date(dateParam) : undefined;
+
+      const stats = await storage.getTelemetryStats(targetDate);
       res.json(stats);
     } catch (error) {
       console.error("[TELEMETRY] Failed to fetch stats:", error);

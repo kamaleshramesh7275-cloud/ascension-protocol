@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
     Trash2, Users, TrendingUp, Award, RefreshCw, Shield, ShoppingBag,
     Plus, Search, LogOut, LayoutDashboard, Settings, Activity, MessageSquare, Edit, Bell, Clock, Database, Download, Loader2, Map, Ban,
-    ChevronUp, ChevronDown, Check, GitBranch
+    ChevronUp, ChevronDown, Check, GitBranch, ChevronLeft, ChevronRight, Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -44,6 +44,7 @@ interface User {
     charisma?: number;
     isTrial?: boolean;
     trialEndsAt?: string;
+    phone?: string;
 }
 
 interface PremiumRequest {
@@ -106,6 +107,9 @@ export default function AdminDashboard() {
 
     // New Item State
     const [newItem, setNewItem] = useState({ name: "", type: "avatar", cost: 100, rarity: "common", value: "", description: "" });
+
+    // Telemetry State
+    const [telemetryDate, setTelemetryDate] = useState<Date>(new Date());
 
     // User Edit State
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -241,10 +245,11 @@ export default function AdminDashboard() {
     });
 
     const { data: telemetryStats } = useQuery<any>({
-        queryKey: ["/api/admin/telemetry-stats"],
+        queryKey: ["/api/admin/telemetry-stats", telemetryDate.toISOString()],
         enabled: isAuthenticated && activeTab === "overview",
         queryFn: async () => {
-            const res = await apiRequest("GET", "/api/admin/telemetry-stats", undefined, getAdminHeaders());
+            const dateStr = telemetryDate.toISOString();
+            const res = await apiRequest("GET", `/api/admin/telemetry-stats?date=${encodeURIComponent(dateStr)}`, undefined, getAdminHeaders());
             return res.json();
         },
     });
@@ -707,7 +712,45 @@ export default function AdminDashboard() {
                         </div>
                         
                         <div className="mt-12 space-y-6">
-                            <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
+                                <div className="flex items-center gap-4 bg-zinc-900/50 p-2 rounded-lg border border-zinc-800">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const prev = new Date(telemetryDate);
+                                            prev.setDate(prev.getDate() - 1);
+                                            setTelemetryDate(prev);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <div className="flex items-center gap-2 min-w-[140px] justify-center">
+                                        <Calendar className="h-4 w-4 text-purple-400" />
+                                        <span className="font-medium text-sm">
+                                            {telemetryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            const next = new Date(telemetryDate);
+                                            next.setDate(next.getDate() + 1);
+                                            // Only allow up to today
+                                            if (next.toDateString() !== new Date(new Date().getTime() + 86400000).toDateString()) {
+                                                setTelemetryDate(next);
+                                            }
+                                        }}
+                                        disabled={telemetryDate.toDateString() === new Date().toDateString()}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <Card className="bg-zinc-900/50 border-zinc-800">
@@ -720,7 +763,7 @@ export default function AdminDashboard() {
                                 </Card>
                                 <Card className="bg-zinc-900/50 border-zinc-800">
                                     <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm text-zinc-400">Active Today</CardTitle>
+                                        <CardTitle className="text-sm text-zinc-400">Active Users</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-3xl font-bold text-green-500">{telemetryStats?.activeTodayCount || 0}</div>
@@ -749,7 +792,7 @@ export default function AdminDashboard() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <Card className="bg-zinc-900/50 border-zinc-800">
                                     <CardHeader>
-                                        <CardTitle>Tab Usage (Today)</CardTitle>
+                                        <CardTitle>Tab Usage</CardTitle>
                                         <CardDescription>Average time spent per tab</CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -781,7 +824,7 @@ export default function AdminDashboard() {
 
                                 <Card className="bg-zinc-900/50 border-zinc-800">
                                     <CardHeader>
-                                        <CardTitle>Feature Usage (Today)</CardTitle>
+                                        <CardTitle>Feature Usage</CardTitle>
                                         <CardDescription>Most frequently used features</CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -812,8 +855,8 @@ export default function AdminDashboard() {
 
                             <Card className="bg-zinc-900/50 border-zinc-800 mt-6">
                                 <CardHeader>
-                                    <CardTitle>Active Users Today</CardTitle>
-                                    <CardDescription>Users who logged in and their activity duration</CardDescription>
+                                    <CardTitle>Active Users</CardTitle>
+                                    <CardDescription>Users who logged in and their activity duration on {telemetryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
@@ -836,7 +879,7 @@ export default function AdminDashboard() {
                                             ))}
                                             {(!telemetryStats?.activeTodayUsers || telemetryStats.activeTodayUsers.length === 0) && (
                                                 <TableRow className="border-zinc-800">
-                                                    <TableCell colSpan={4} className="text-center text-zinc-500 py-4">No active users today</TableCell>
+                                                    <TableCell colSpan={4} className="text-center text-zinc-500 py-4">No active users on this date</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
