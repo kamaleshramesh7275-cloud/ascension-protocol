@@ -160,7 +160,7 @@ export function generateMilestoneQuests(user: User): InsertQuest[] {
 }
 
 // Enhanced Daily Quest Generator with all features
-export function generateDailyQuests(user: User, questHistory?: QuestHistory): InsertQuest[] {
+export function generateDailyQuests(user: User, questHistory?: QuestHistory, userHabits?: any[]): InsertQuest[] {
     const quests: InsertQuest[] = [];
     const goal = user.currentGoal || "fitness:General Health";
     const [category, specific] = goal.split(":");
@@ -301,9 +301,24 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory): In
     }
 
     // 2. Habit Quest (from habit tracking system)
-    const habitQuests = generateHabitQuests(user);
-    if (habitQuests.length > 0) {
-        quests.push(habitQuests[0]); // Add one habit quest per day
+    if (userHabits && userHabits.length > 0) {
+        for (const habit of userHabits) {
+            if (habit.frequency === 'daily') {
+                quests.push(createQuest(
+                    `🔄 Habit: ${habit.habitName}`,
+                    `Continue your daily habit: ${habit.habitName}. Current streak: ${habit.currentStreak} days.`,
+                    10 + Math.floor(habit.currentStreak * 0.5),
+                    2,
+                    { willpower: 1 },
+                    'easy'
+                ));
+            }
+        }
+    } else {
+        const habitQuests = generateHabitQuests(user);
+        if (habitQuests.length > 0) {
+            quests.push(habitQuests[0]); // Add one habit quest per day
+        }
     }
 
     // 3. Challenge Quest (scales with difficulty)

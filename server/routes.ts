@@ -112,7 +112,8 @@ async function assignDailyQuests(userId: string) {
 
   // Generate personalized quests based on user's goal
   const { generateDailyQuests } = await import("./services/quest-generator");
-  const personalizedQuests = generateDailyQuests(user);
+  const userHabits = await storage.getHabits(userId);
+  const personalizedQuests = generateDailyQuests(user, undefined, userHabits);
 
   // Create the quests in storage
   for (const questData of personalizedQuests) {
@@ -1276,16 +1277,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Check for Daily Bonus
+      let dailyBonusCoins = 0;
+      let dailyBonusXP = 0;
+      let claimedBonus = false;
+      
+      const updatedQuests = await storage.getUserQuests(user.id);
+      const activeDaily = updatedQuests.filter(q => q.type === "daily");
+      const uncompletedDaily = activeDaily.filter(q => !q.completed);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (activeDaily.length > 0 && uncompletedDaily.length === 0) {
+        // All daily quests completed
+        const lastClaimed = user.lastDailyBonusClaimedAt;
+        if (!lastClaimed || new Date(lastClaimed) < today) {
+          dailyBonusCoins = 50;
+          dailyBonusXP = 200;
+          claimedBonus = true;
+        }
+      }
+
+      const totalNewXP = newXP + dailyBonusXP;
+      const finalLevel = calculateLevel(totalNewXP);
+      const finalTier = calculateTier(totalNewXP);
+
       // Update streak (simplified - just increment for now)
       const newStreak = user.streak + 1;
 
       const updatedUser = await storage.updateUser(user.id, {
-        xp: newXP,
-        tier: newTier,
-        level: newLevel,
+        xp: totalNewXP,
+        tier: finalTier,
+        level: finalLevel,
         streak: newStreak,
-        coins: user.coins + coinsAwarded,
+        coins: user.coins + coinsAwarded + dailyBonusCoins,
         lastActive: new Date(),
+        ...(claimedBonus ? { lastDailyBonusClaimedAt: new Date() } : {}),
         ...statUpdates,
       });
 
@@ -1340,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.json({ quest, user: updatedUser });
+      res.json({ quest, user: updatedUser, dailyBonusClaimed: claimedBonus, dailyBonusCoins, dailyBonusXP });
     } catch (error) {
       console.error("Complete quest error:", error);
       res.status(500).json({ error: "Failed to complete quest" });

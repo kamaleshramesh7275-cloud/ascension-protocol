@@ -76,6 +76,7 @@ export const users = pgTable("users", {
   phone: text("phone"), // Mobile number collected during registration
   // Optimization: Track last time we checked for daily quests to avoid redundant DB queries
   lastDailyQuestCheck: timestamp("last_daily_quest_check"),
+  lastDailyBonusClaimedAt: timestamp("last_daily_bonus_claimed_at"),
 }, (table) => {
   return {
     firebaseUidIdx: index("idx_users_firebase_uid").on(table.firebaseUid),
@@ -128,6 +129,7 @@ export const quests = pgTable("quests", {
   rewardXP: integer("reward_xp").notNull(),
   rewardCoins: integer("reward_coins").default(0).notNull(),
   rewardStats: jsonb("reward_stats").$type<Record<string, number>>(), // e.g., {strength: 2, stamina: 1}
+  category: text("category").default("general").notNull(), // fitness, productivity, mindfulness, etc.
 
   // Advanced Quest System
   campaignId: varchar("campaign_id"), // For quest chains
@@ -458,6 +460,7 @@ export const insertQuestSchema = z.object({
   rewardXP: z.number().int(),
   rewardCoins: z.number().int().optional(),
   rewardStats: z.any().nullable().optional(),
+  category: z.string().optional(),
   campaignId: z.string().nullable().optional(),
   parentQuestId: z.string().nullable().optional(),
   isBoss: z.boolean().optional(),

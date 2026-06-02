@@ -13,9 +13,10 @@ import { Card } from "@/components/ui/card";
 import { DailyProtocol } from "@/components/daily-protocol";
 import { useAnimations } from "@/context/animation-context";
 import { Progress } from "@/components/ui/progress";
-
+import { CustomHabitDialog } from "@/components/custom-habit-dialog";
 export default function QuestsPage() {
     const [activeTab, setActiveTab] = useState<"active" | "browse" | "habits">("active");
+    const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const { toast } = useToast();
     const { showQuestCompleted } = useAnimations();
 
@@ -70,6 +71,13 @@ export default function QuestsPage() {
     // But we might want to filter out 'completed' from the 'Active' list visually if desired, or show them checked.
     const activeDailyQuests = quests?.filter(q => q.type === "daily" && !q.completed) || [];
     const completedDailyQuests = quests?.filter(q => q.type === "daily" && q.completed) || [];
+
+    const allCategories = ["All", ...Array.from(new Set(quests?.filter(q => q.type === "daily").map(q => q.category || "general")))];
+    const filteredActiveDailyQuests = activeDailyQuests.filter(q => selectedCategory === "All" || (q.category || "general") === selectedCategory);
+
+    const totalDailyCount = activeDailyQuests.length + completedDailyQuests.length;
+    const completedDailyCount = completedDailyQuests.length;
+    const dailyBonusProgress = totalDailyCount > 0 ? (completedDailyCount / totalDailyCount) * 100 : 0;
 
     // Countdown Timer Logic
     const [timeLeft, setTimeLeft] = useState("");
@@ -192,15 +200,44 @@ export default function QuestsPage() {
                                             </div>
                                         </div>
 
+                                        {/* Daily Bonus Progress */}
+                                        {totalDailyCount > 0 && (
+                                            <div className="bg-card/40 border border-border p-4 rounded-xl mt-6 space-y-3">
+                                                <div className="flex justify-between items-center text-sm font-bold">
+                                                    <span className="flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" /> Daily Bonus Chest</span>
+                                                    <span>{completedDailyCount} / {totalDailyCount} Quests</span>
+                                                </div>
+                                                <Progress value={dailyBonusProgress} className="h-2" />
+                                                {completedDailyCount === totalDailyCount && (
+                                                    <p className="text-xs text-green-400 font-medium">Daily bonus unlocked! Check your XP and Coins.</p>
+                                                )}
+                                            </div>
+                                        )}
+
                                         {/* Today's Quests */}
                                         <div className="space-y-4">
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Zap className="w-4 h-4" />
-                                                <span className="text-sm font-bold uppercase tracking-wider">Today's Objectives</span>
+                                            <div className="flex items-center justify-between text-muted-foreground">
+                                                <div className="flex items-center gap-2">
+                                                    <Zap className="w-4 h-4" />
+                                                    <span className="text-sm font-bold uppercase tracking-wider">Today's Objectives</span>
+                                                </div>
+                                                
+                                                {/* Category Filter */}
+                                                <div className="flex flex-wrap gap-2">
+                                                    {allCategories.map(cat => (
+                                                        <button 
+                                                            key={cat} 
+                                                            onClick={() => setSelectedCategory(cat)}
+                                                            className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === cat ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
+                                                        >
+                                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
 
                                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {activeDailyQuests.map((quest) => (
+                                                {filteredActiveDailyQuests.map((quest) => (
                                                     <QuestCard
                                                         key={quest.id}
                                                         quest={quest}
@@ -307,6 +344,9 @@ export default function QuestsPage() {
 
                             <TabsContent value="habits">
                                 <DailyProtocol />
+                                <div className="mt-8 max-w-md mx-auto">
+                                    <CustomHabitDialog />
+                                </div>
                             </TabsContent>
                         </motion.div>
                     </AnimatePresence>
