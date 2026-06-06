@@ -69,10 +69,24 @@ export function createReferralRouter(storage: IStorage): Router {
                 });
             }
 
+            // Fetch actual referrals
+            const userReferrals = await storage.getReferrals(userId);
+            const referralsWithNames = await Promise.all(
+                userReferrals.map(async (ref) => {
+                    const referredUser = await storage.getUser(ref.referredUserId);
+                    return {
+                        id: ref.id,
+                        status: ref.status,
+                        referredUserName: referredUser?.name || "Unknown User",
+                        createdAt: ref.createdAt
+                    };
+                })
+            );
+
             res.json({
                 referralCode: profile?.referralCode || null,
                 totalReferrals: profile?.totalReferrals || 0,
-                referrals: []
+                referrals: referralsWithNames
             });
         } catch (error) {
             console.error("Error fetching user referrals:", error);

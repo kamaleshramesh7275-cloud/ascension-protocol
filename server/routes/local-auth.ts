@@ -103,27 +103,38 @@ export function registerLocalAuthRoutes(app: Express) {
             });
 
             // Increment referrer's count & create event record if exists
-            if (referrerId) {
-                console.log(`[REGISTER] Incrementing referral count for referrer: ${referrerId}`);
-                await storage.incrementReferralCount(referrerId);
-                await storage.createReferral({
-                    referrerId: referrerId,
-                    referredUserId: user.id,
-                    status: "completed"
-                });
+            // SECURITY: Block self-referrals
+            if (referrerId && referrerId === user.id) {
+                console.warn(`[REGISTER] Self-referral blocked for user ${user.id}`);
+                referrerId = undefined;
+            }
 
-                // Reward referrer with +200 coins
-                const referrerUser = await storage.getUser(referrerId);
-                if (referrerUser) {
-                    await storage.updateUser(referrerId, { coins: (referrerUser.coins ?? 0) + 200 });
-                    // Send notification to referrer
-                    await storage.createNotification({
-                        userId: referrerId,
-                        type: "achievement",
-                        title: "Referral Bonus! 🎉",
-                        message: `${data.username} joined using your referral link! +200 coins awarded to your account.`,
+            if (referrerId) {
+                // SECURITY: Check for duplicate referral (prevent re-register abuse)
+                const existingReferrals = await storage.getReferrals(referrerId);
+                const alreadyReferred = existingReferrals.some(r => r.referredUserId === user.id);
+
+                if (alreadyReferred) {
+                    console.warn(`[REGISTER] Duplicate referral blocked: ${referrerId} -> ${user.id}`);
+                } else {
+                    // Create referral as PENDING — reward only when referred user completes first quest
+                    await storage.createReferral({
+                        referrerId: referrerId,
+                        referredUserId: user.id,
+                        status: "pending"
                     });
-                    console.log(`[REGISTER] Awarded +200 coins to referrer ${referrerUser.name}`);
+
+                    // Notify referrer that someone joined (but coins come later)
+                    const referrerUser = await storage.getUser(referrerId);
+                    if (referrerUser) {
+                        await storage.createNotification({
+                            userId: referrerId,
+                            type: "achievement",
+                            title: "New Referral! 🔗",
+                            message: `${data.username} joined using your referral link! You'll earn +200 coins when they complete their first quest.`,
+                        });
+                        console.log(`[REGISTER] Pending referral created: ${referrerUser.name} -> ${data.username}`);
+                    }
                 }
             }
 

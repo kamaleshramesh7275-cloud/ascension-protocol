@@ -146,6 +146,65 @@ router.post("/sync", async (req, res) => {
             }
         }
 
+        // 5. Check for Pending Referrals to Complete
+        if (completeQuests.length > 0) {
+            try {
+                // Find any pending referrals where this user is the referred user
+                // First get the user's referral profile to find the referrer
+                const userProfile = await storage.getReferralProfile(userId);
+                
+                if (userProfile && userProfile.referredById) {
+                    const referrerId = userProfile.referredById;
+                    const referrerReferrals = await storage.getReferrals(referrerId);
+                    
+                    // Find the pending referral for this user
+                    const pendingReferral = referrerReferrals.find(r => 
+                        r.referredUserId === userId && r.status === "pending"
+                    );
+
+                    if (pendingReferral) {
+                        // Mark referral as completed
+                        // Since we don't have a direct updateReferral method in storage yet, 
+                        // we can manually update the referral in the Map if possible, or 
+                        // just use incrementReferralCount which is built for this
+                        console.log(`[REFERRAL] Marking referral as complete: ${referrerId} -> ${userId}`);
+                        
+                        // Increment count (this also awards the 3000 coin bonus at 3 referrals)
+                        await storage.incrementReferralCount(referrerId);
+                        
+                        // We also need to manually update the status to "completed" in storage
+                        // Let's implement an inline update for the referral record
+                        const referralsMap = (storage as any).referrals;
+                        if (referralsMap && referralsMap.has(pendingReferral.id)) {
+                            const ref = referralsMap.get(pendingReferral.id);
+                            ref.status = "completed";
+                            referralsMap.set(pendingReferral.id, ref);
+                            if (typeof (storage as any).autoSave === 'function') {
+                                (storage as any).autoSave();
+                            }
+                        }
+
+                        // Reward referrer with +200 coins
+                        const referrerUser = await storage.getUser(referrerId);
+                        if (referrerUser) {
+                            await storage.updateUser(referrerId, { coins: (referrerUser.coins ?? 0) + 200 });
+                            
+                            // Send notification to referrer
+                            const completedUser = await storage.getUser(userId);
+                            await storage.createNotification({
+                                userId: referrerId,
+                                type: "achievement",
+                                title: "Referral Bonus! 🎉",
+                                message: `${completedUser?.name || "Your friend"} completed their first quest! +200 coins awarded to your account.`,
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[Sync] Error processing referral completion:", err);
+            }
+        }
+
         res.json({ success: true, processed: payload.events.length });
 
     } catch (e) {

@@ -26,7 +26,7 @@ const corsOptions = {
     const allowedOrigins = [
       /^http:\/\/localhost:\d+$/,
       /^https:\/\/.*\.vercel\.app$/,
-      "https://ascension-protocol.com" // Add your custom domain here
+      "https://ascensions.in" // Add your custom domain here
     ];
 
     const isAllowed = allowedOrigins.some(pattern =>
@@ -544,14 +544,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // 4. Increment referrer's count & create event record
+        // SECURITY: Block self-referrals
+        if (referrerId && referrerId === user.id) {
+          console.warn(`[REGISTER-GUEST] Self-referral blocked for user ${user.id}`);
+          referrerId = undefined;
+        }
+
         if (referrerId) {
-          console.log(`[REGISTER-GUEST] Incrementing referral count for referrer: ${referrerId}`);
-          await storage.incrementReferralCount(referrerId);
-          await storage.createReferral({
-            referrerId: referrerId,
-            referredUserId: user.id,
-            status: "completed"
-          });
+          // SECURITY: Check for duplicate referral (prevent re-register abuse)
+          const existingReferrals = await storage.getReferrals(referrerId);
+          const alreadyReferred = existingReferrals.some(r => r.referredUserId === user.id);
+
+          if (alreadyReferred) {
+            console.warn(`[REGISTER-GUEST] Duplicate referral blocked: ${referrerId} -> ${user.id}`);
+          } else {
+            // Create referral as PENDING — reward only when referred user completes first quest
+            await storage.createReferral({
+              referrerId: referrerId,
+              referredUserId: user.id,
+              status: "pending"
+            });
+
+            // Notify referrer that someone joined (but coins come later)
+            const referrerUser = await storage.getUser(referrerId);
+            if (referrerUser) {
+              await storage.createNotification({
+                userId: referrerId,
+                type: "achievement",
+                title: "New Referral! 🔗",
+                message: `${name} joined using your referral link! You'll earn +200 coins when they complete their first quest.`,
+              });
+              console.log(`[REGISTER-GUEST] Pending referral created: ${referrerUser.name} -> ${name}`);
+            }
+          }
         }
 
         // 5. Assign initial quests

@@ -421,7 +421,7 @@ export default function ProfilePage() {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-purple-400">
                                         <Gift className="h-5 w-5" />
-                                        Ascension Protocol: Referral Program
+                                        Ascensions Protocol: Referral Program
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -493,7 +493,7 @@ export default function ProfilePage() {
                                         Referral Progress
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="flex flex-col items-center justify-center pt-2">
+                                <CardContent className="flex flex-col items-center pt-2">
                                     <div className="relative h-24 w-24 mb-4">
                                         <svg className="h-full w-full" viewBox="0 0 36 36">
                                             <path
@@ -517,11 +517,33 @@ export default function ProfilePage() {
                                             <span className="text-[10px] text-muted-foreground uppercase">Referrals</span>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground text-center">
+                                    <p className="text-xs text-muted-foreground text-center mb-4">
                                         {referralStats?.totalReferrals || 0 < 3
                                             ? `${3 - (referralStats?.totalReferrals || 0)} more to reach 3,000 coins!`
                                             : "Reward goal reached!"}
                                     </p>
+
+                                    {/* Referrals List */}
+                                    <div className="w-full space-y-2 mt-2 pt-4 border-t border-white/10">
+                                        <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Your Recruits</p>
+                                        {referralStats?.referrals?.length === 0 ? (
+                                            <p className="text-xs text-muted-foreground text-center italic">No recruits yet</p>
+                                        ) : (
+                                            <div className="max-h-[120px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                                                {referralStats?.referrals?.map((ref: any) => (
+                                                    <div key={ref.id} className="flex items-center justify-between bg-black/40 p-2 rounded-md border border-white/5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`h-2 w-2 rounded-full ${ref.status === "completed" ? "bg-emerald-500" : "bg-yellow-500 animate-pulse"}`} />
+                                                            <span className="text-sm font-medium">{ref.referredUserName}</span>
+                                                        </div>
+                                                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${ref.status === "completed" ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10" : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"}`}>
+                                                            {ref.status === "completed" ? "Completed" : "Pending Quest"}
+                                                        </Badge>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
