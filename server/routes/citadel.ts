@@ -1,11 +1,18 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { db } from "../db";
+import { db as _db } from "../db";
 import { citadelBuildings } from "@shared/schema";
 import { eq, and, ne, inArray } from "drizzle-orm";
 import { getStorage } from "../storage";
 
 const router = Router();
+
+// Ensure DB is configured at module load to avoid repeating null-checks in routes
+if (!_db) {
+  throw new Error('DB not configured. Set DATABASE_URL or provide a database for the server.');
+}
+
+const db = _db;
 
 // ─── BUILDING DEFINITIONS ────────────────────────────────────────────────────
 export const BUILDING_DEFS: Record<string, {

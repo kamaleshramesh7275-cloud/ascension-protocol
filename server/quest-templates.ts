@@ -1,4 +1,4 @@
-// Curated quest templates for the Ascension Protocol
+// Curated quest templates for the Ascensions Protocol
 // These replace AI-generated quests for regions without API access
 
 export interface QuestTemplate {

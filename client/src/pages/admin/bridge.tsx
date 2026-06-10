@@ -285,7 +285,7 @@ export default function BridgePage() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h3 className="text-lg font-semibold text-white">Protocol Upgrade Proposals</h3>
-              <p className="text-sm text-zinc-500">Proposed changes to the Ascension Protocol system.</p>
+              <p className="text-sm text-zinc-500">Proposed changes to the Ascensions Protocol system.</p>
             </div>
             <Dialog open={proposalDialogOpen} onOpenChange={setProposalDialogOpen}>
               <DialogTrigger asChild>
@@ -410,7 +410,7 @@ export default function BridgePage() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h3 className="text-lg font-semibold text-white">Protocol Reviews</h3>
-              <p className="text-sm text-zinc-500">User and admin feedback on the Ascension Protocol.</p>
+              <p className="text-sm text-zinc-500">User and admin feedback on the Ascensions Protocol.</p>
             </div>
             <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
               <DialogTrigger asChild>

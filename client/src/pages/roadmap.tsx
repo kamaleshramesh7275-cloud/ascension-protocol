@@ -65,7 +65,7 @@ export default function RoadmapPage() {
                     <div className="space-y-4">
                         <h1 className="text-4xl font-bold font-heading text-foreground tracking-tight">Access Restricted</h1>
                         <p className="text-muted-foreground leading-relaxed">
-                            The <span className="text-primary font-bold">30-Day Ascension Protocol</span> is an elite training program reserved for premium initiates.
+                            The <span className="text-primary font-bold">30-Day Ascensions Protocol</span> is an elite training program reserved for premium initiates.
                         </p>
                     </div>
                     <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-left space-y-3">

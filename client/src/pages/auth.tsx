@@ -81,7 +81,7 @@ export default function AuthPage() {
               transition={{ delay: 0.2, duration: 0.6 }}
             >
               <Sparkles className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-300">Project Ascension v1.0</span>
+              <span className="text-sm font-medium text-gray-300">Project Ascensions v1.0</span>
             </motion.div>
 
             {/* Main Heading */}

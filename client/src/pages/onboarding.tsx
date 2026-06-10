@@ -286,7 +286,7 @@ export default function OnboardingPage() {
                             System Initialization
                         </CardTitle>
                         <CardDescription className="text-lg">
-                            Calibrating your baseline metrics for the Ascension Protocol.
+                            Calibrating your baseline metrics for the Ascensions Protocol.
                         </CardDescription>
                     </CardHeader>
 

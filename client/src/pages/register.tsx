@@ -178,6 +178,7 @@ export default function Register() {
             localStorage.setItem("userId", data.userId);
             // Store as guest_uid so the backend requireAuth middleware recognizes it
             localStorage.setItem("guest_uid", data.firebaseUid);
+            sessionStorage.setItem("isNewRegistration", "true");
 
             // Update auth state
             await loginLocal(username, data.userId, data.firebaseUid);

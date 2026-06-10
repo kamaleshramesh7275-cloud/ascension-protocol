@@ -86,7 +86,7 @@ export function PremiumBenefitsDialog({ open, onOpenChange }: PremiumBenefitsDia
                 <DialogHeader className="relative z-10">
                     <DialogTitle className="text-3xl font-bold text-center bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
                         <Sparkles className="h-8 w-8 text-yellow-500" />
-                        Premium Ascension
+                        Premium Ascensions
                     </DialogTitle>
                     <DialogDescription className="text-center text-zinc-400 text-lg mt-2">
                         Unlock your true potential with the Elite Protocol

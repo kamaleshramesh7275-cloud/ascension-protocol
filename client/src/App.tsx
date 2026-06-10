@@ -163,6 +163,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
   // Check for expired trial (Nuclear Option)
   const isExpired = user && !user.isPremium && !user.isTrial;
+  const isNewRegistration = sessionStorage.getItem("isNewRegistration") === "true";
   const currentPath = window.location.pathname;
 
   if (isExpired) {
@@ -170,12 +171,14 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
       return <Component />;
     }
 
-    return (
-      <div className="relative w-full h-full">
-        <Component />
-        <FeatureLockOverlay />
-      </div>
-    );
+    if (!isNewRegistration) {
+      return (
+        <div className="relative w-full h-full">
+          <Component />
+          <FeatureLockOverlay />
+        </div>
+      );
+    }
   }
 
   return <Component />;

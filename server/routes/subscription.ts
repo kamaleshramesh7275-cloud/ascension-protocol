@@ -32,7 +32,7 @@ router.post("/checkout", requireAuth, async (req, res) => {
                     price_data: {
                         currency: "inr",
                         product_data: {
-                            name: "Ascension Protocol Premium",
+                            name: "Ascensions Protocol Premium",
                             description: "3x Rewards, Legendary Access, and more",
                         },
                         unit_amount: 9900, // ₹99 in paise

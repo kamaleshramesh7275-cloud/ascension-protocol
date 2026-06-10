@@ -1278,6 +1278,8 @@ export class MemStorage implements IStorage {
     const quest: Quest = {
       id,
       ...insertQuest,
+      // Ensure required fields have defaults to satisfy strict types
+      category: insertQuest.category || "general",
       createdAt: new Date(),
       completed: false,
       completedAt: null,

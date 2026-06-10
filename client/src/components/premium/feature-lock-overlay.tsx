@@ -5,12 +5,27 @@ import { Lock, Crown, CheckCircle, Map, Brain, BarChart, Shield } from "lucide-r
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export function FeatureLockOverlay() {
     const [paymentSent, setPaymentSent] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(5);
+    const [isVisible, setIsVisible] = useState(true);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            setIsVisible(false);
+            return;
+        }
+        
+        const timer = setInterval(() => {
+            setTimeLeft(prev => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft]);
 
     // Determine UPI Link
     const upiLink = "upi://pay?pa=6383525774@ptaxis&pn=KamaleshkumarRameshkumar&am=100";
@@ -40,6 +55,8 @@ export function FeatureLockOverlay() {
         window.location.href = upiLink;
     };
 
+    if (!isVisible) return null;
+
     return (
         <div className="absolute inset-0 z-50 flex items-start justify-center pt-20 md:pt-24 bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300 overflow-y-auto">
             <motion.div
@@ -48,7 +65,12 @@ export function FeatureLockOverlay() {
                 transition={{ duration: 0.3 }}
                 className="relative w-full max-w-4xl"
             >
-                <Card className="border-yellow-500/30 bg-black/95 backdrop-blur-xl shadow-2xl shadow-yellow-900/20 overflow-hidden grid md:grid-cols-2">
+                <Card className="border-yellow-500/30 bg-black/95 backdrop-blur-xl shadow-2xl shadow-yellow-900/20 overflow-hidden grid md:grid-cols-2 relative">
+
+                    {/* Timer */}
+                    <div className="absolute top-4 right-4 z-50 bg-black/50 backdrop-blur border border-white/10 px-3 py-1 rounded-full text-xs text-zinc-400 flex items-center gap-2">
+                        Closing in <span className="font-mono text-yellow-500 font-bold">{timeLeft}s</span>
+                    </div>
 
                     {/* Left Side: Value Prop */}
                     <div className="p-8 md:p-10 border-b md:border-b-0 md:border-r border-white/10 relative overflow-hidden">
@@ -57,7 +79,7 @@ export function FeatureLockOverlay() {
                         <div className="absolute -top-20 -left-20 w-64 h-64 bg-yellow-500/10 rounded-full blur-[80px]" />
 
                         <div className="relative z-10">
-                            <h2 className="text-3xl font-bold text-white mb-2">Unlock Ascension</h2>
+                            <h2 className="text-3xl font-bold text-white mb-2">Unlock Ascensions</h2>
                             <p className="text-zinc-400 mb-8 text-lg">
                                 Access the full suite of tools designed to accelerate your personal evolution.
                             </p>

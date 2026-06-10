@@ -31,7 +31,7 @@ export function TrialExpiredOverlay() {
                         <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
                             <Lock className="w-8 h-8 text-red-500" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Ascension Paused</h2>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Ascensions Paused</h2>
                         <p className="text-red-200/60 text-sm font-medium uppercase tracking-widest mt-1">Trial Period Expired</p>
                     </div>
 

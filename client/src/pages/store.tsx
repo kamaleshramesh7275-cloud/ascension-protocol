@@ -221,7 +221,7 @@ export default function StorePage() {
         <div className="space-y-8 p-8 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Ascension Store</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Ascensions Store</h1>
                     <p className="text-muted-foreground mt-1">
                         Spend your hard-earned coins on exclusive titles, badges, and themes.
                     </p>
@@ -264,7 +264,7 @@ export default function StorePage() {
                                     <Crown className="w-8 h-8 text-yellow-500" />
                                 </div>
                                 <CardTitle className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-amber-600 bg-clip-text text-transparent">
-                                    Ascension Protocol Premium
+                                    Ascensions Protocol Premium
                                 </CardTitle>
                                 <CardDescription className="text-lg mt-2">
                                     Unlock the full potential of your evolution.
@@ -311,7 +311,7 @@ export default function StorePage() {
                                                 <span className="text-2xl font-bold uppercase tracking-tight">Premium Active</span>
                                             </div>
                                             <p className="text-muted-foreground">
-                                                You have full access to all Ascension Protocol features.
+                                                You have full access to all Ascensions Protocol features.
                                                 Enjoy your journey, Ascended.
                                             </p>
                                         </div>

@@ -68,7 +68,7 @@ export function usePushNotifications() {
 
             if (result === "granted") {
                 await registerToken();
-                toast({ title: "🔔 Notifications enabled!", description: "You'll receive push notifications from Ascension Protocol." });
+                toast({ title: "🔔 Notifications enabled!", description: "You'll receive push notifications from Ascensions Protocol." });
                 return true;
             } else {
                 toast({ title: "Notifications blocked", description: "You can enable them in your browser settings.", variant: "destructive" });
@@ -101,7 +101,7 @@ export function usePushNotifications() {
             if (!messaging) return;
             unsubFcm = onMessage(messaging, (payload) => {
                 const { title, body } = payload.notification || {};
-                toast({ title: title || "Ascension Protocol", description: body || "" });
+                toast({ title: title || "Ascensions Protocol", description: body || "" });
             });
         })();
 

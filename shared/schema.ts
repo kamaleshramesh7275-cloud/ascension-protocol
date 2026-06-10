@@ -439,6 +439,7 @@ export const insertUserSchema = z.object({
   premiumExpiry: z.date().nullable().optional(),
   role: z.string().optional(),
   hasSeenTutorial: z.boolean().optional(),
+  phone: z.string().nullable().optional(),
   // referralCode: z.string().nullable().optional(),
   // referredBy: z.string().nullable().optional(),
 }).partial();

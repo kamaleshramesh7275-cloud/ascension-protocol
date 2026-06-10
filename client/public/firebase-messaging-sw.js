@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
 
   const { title, body, icon, data } = payload.notification || {};
 
-  self.registration.showNotification(title || 'Ascension Protocol', {
+  self.registration.showNotification(title || 'Ascensions Protocol', {
     body: body || '',
     icon: icon || '/icon-192.png',
     badge: '/icon-72.png',

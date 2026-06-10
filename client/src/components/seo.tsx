@@ -13,7 +13,7 @@ export function Seo({
 }: SeoProps) {
   useEffect(() => {
     // Update title
-    const fullTitle = `${title} | Ascension Protocol`;
+    const fullTitle = `${title} | Ascensions Protocol`;
     document.title = fullTitle;
     document.querySelector('meta[property="og:title"]')?.setAttribute("content", fullTitle);
     document.querySelector('meta[property="twitter:title"]')?.setAttribute("content", fullTitle);
@@ -25,7 +25,7 @@ export function Seo({
 
     // Update URL if provided
     if (url) {
-      const fullUrl = `https://ascension-protocol.onrender.com${url}`;
+      const fullUrl = `https://ascensions.in${url}`;
       document.querySelector('link[rel="canonical"]')?.setAttribute("href", fullUrl);
       document.querySelector('meta[property="og:url"]')?.setAttribute("content", fullUrl);
       document.querySelector('meta[property="twitter:url"]')?.setAttribute("content", fullUrl);

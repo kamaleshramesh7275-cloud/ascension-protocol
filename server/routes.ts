@@ -535,6 +535,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timezone: "UTC",
         });
 
+        if (!user) {
+          console.error('[REGISTER-GUEST] User creation failed');
+          return res.status(500).json({ error: 'User creation failed' });
+        }
+
         // 3. Create Referral Profile for new user
         await storage.createReferralProfile({
           userId: user.id,
@@ -553,7 +558,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (referrerId) {
           // SECURITY: Check for duplicate referral (prevent re-register abuse)
           const existingReferrals = await storage.getReferrals(referrerId);
-          const alreadyReferred = existingReferrals.some(r => r.referredUserId === user.id);
+          const userIdForCheck = user?.id;
+          const alreadyReferred = userIdForCheck ? existingReferrals.some(r => r.referredUserId === userIdForCheck) : false;
 
           if (alreadyReferred) {
             console.warn(`[REGISTER-GUEST] Duplicate referral blocked: ${referrerId} -> ${user.id}`);

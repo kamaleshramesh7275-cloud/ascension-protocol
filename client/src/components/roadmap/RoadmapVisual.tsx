@@ -173,7 +173,7 @@ export function RoadmapVisual({ currentWeek, weeks }: RoadmapVisualProps) {
                         )}>
                             <div className="flex items-center gap-2 mb-1">
                                 <Trophy className="w-4 h-4" />
-                                <h3 className="font-bold text-sm font-mono">ASCENSION</h3>
+                                <h3 className="font-bold text-sm font-mono">ASCENSIONS</h3>
                             </div>
                             <p className="text-[10px] opacity-70 font-mono">Protocol Complete</p>
                         </div>
