@@ -14,6 +14,11 @@ export function FeatureLockOverlay() {
     const [isVisible, setIsVisible] = useState(true);
     const { toast } = useToast();
 
+    // Mark as seen immediately so it doesn't show again on navigation
+    useEffect(() => {
+        sessionStorage.setItem("hasSeenPaywallOverlay", "true");
+    }, []);
+
     useEffect(() => {
         if (timeLeft <= 0) {
             setIsVisible(false);

@@ -164,14 +164,15 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   // Check for expired trial (Nuclear Option)
   const isExpired = user && !user.isPremium && !user.isTrial;
   const isNewRegistration = sessionStorage.getItem("isNewRegistration") === "true";
-  const currentPath = window.location.pathname;
+  const hasSeenOverlay = sessionStorage.getItem("hasSeenPaywallOverlay") === "true";
 
   if (isExpired) {
     if (window.location.pathname === "/pay-redirect") {
       return <Component />;
     }
 
-    if (!isNewRegistration) {
+    // Only show overlay if: user is not new AND hasn't seen it yet this session
+    if (!isNewRegistration && !hasSeenOverlay) {
       return (
         <div className="relative w-full h-full">
           <Component />
