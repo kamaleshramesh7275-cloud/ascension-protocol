@@ -271,7 +271,7 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="space-y-6" data-testid="page-dashboard">
+    <div className="space-y-6 px-4 sm:px-0" data-testid="page-dashboard">
       {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -359,10 +359,10 @@ export default function Dashboard() {
       {/* Motivational Quote */}
       <Card className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/20 hover:shadow-lg transition-all hover:scale-[1.02]">
         <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <BookOpen className="h-6 w-6 text-purple-500 flex-shrink-0 mt-1" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-purple-500 flex-shrink-0 mt-1" />
             <div>
-              <p className="text-lg font-medium italic">&ldquo;{currentQuote}&rdquo;</p>
+              <p className="text-base sm:text-lg font-medium italic">&ldquo;{currentQuote}&rdquo;</p>
             </div>
           </div>
         </CardContent>
@@ -379,7 +379,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={150} className="sm:!h-[200px]">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="day" stroke="#888" />

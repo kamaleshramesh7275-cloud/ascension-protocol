@@ -147,21 +147,21 @@ export default function QuestsPage() {
 
             <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8" data-tour="quests-page">
                 {/* Header */}
-                <h1 className="text-5xl font-display font-bold mb-2 text-foreground drop-shadow-sm">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-2 text-foreground drop-shadow-sm">
                     Quest Board
                 </h1>
 
                 {/* Navigation Tabs */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-8">
-                    <TabsList className="bg-muted/50 border border-border p-1 h-12 rounded-full backdrop-blur-xl">
-                        <TabsTrigger value="active" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-                            Active Journey
+                    <TabsList className="bg-muted/50 border border-border p-1 h-12 rounded-full backdrop-blur-xl w-full sm:w-auto">
+                        <TabsTrigger value="active" className="rounded-full px-3 sm:px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all text-xs sm:text-sm">
+                            Active
                         </TabsTrigger>
-                        <TabsTrigger value="browse" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-                            Browse Quest Packs
+                        <TabsTrigger value="browse" className="rounded-full px-3 sm:px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all text-xs sm:text-sm">
+                            Browse
                         </TabsTrigger>
-                        <TabsTrigger value="habits" className="rounded-full px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
-                            Habit Tracker
+                        <TabsTrigger value="habits" className="rounded-full px-3 sm:px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all text-xs sm:text-sm">
+                            Habits
                         </TabsTrigger>
                     </TabsList>
 
@@ -179,7 +179,7 @@ export default function QuestsPage() {
                                         {/* Active Campaign Header */}
                                         <div className="bg-card/40 border border-border p-6 rounded-2xl relative overflow-hidden">
                                             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent" />
-                                            <div className="relative z-10 flex justify-between items-center">
+                                            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                                 <div>
                                                     <div className="flex items-center gap-3 mb-2">
                                                         <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20">
@@ -189,13 +189,12 @@ export default function QuestsPage() {
                                                             {activeCampaign.difficulty}
                                                         </span>
                                                     </div>
-                                                    <h2 className="text-3xl font-bold text-foreground mb-2">{activeCampaign.title}</h2>
-                                                    <p className="text-muted-foreground">{activeCampaign.description}</p>
+                                                    <h2 className="text-xl sm:text-3xl font-bold text-foreground mb-2">{activeCampaign.title}</h2>
+                                                    <p className="text-muted-foreground text-sm sm:text-base">{activeCampaign.description}</p>
                                                 </div>
-                                                <div className="text-right hidden md:block">
-                                                    <div className="text-sm text-muted-foreground uppercase tracking-widest mb-1">Time Remaining</div>
-                                                    {/* Mock timer for now */}
-                                                    <div className="text-2xl font-mono text-foreground tracking-widest">{timeLeft || "--:--:--"}</div>
+                                                <div className="text-left sm:text-right">
+                                                    <div className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Time Remaining</div>
+                                                    <div className="text-xl sm:text-2xl font-mono text-foreground tracking-widest">{timeLeft || "--:--:--"}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -216,19 +215,19 @@ export default function QuestsPage() {
 
                                         {/* Today's Quests */}
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between text-muted-foreground">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
                                                 <div className="flex items-center gap-2">
                                                     <Zap className="w-4 h-4" />
                                                     <span className="text-sm font-bold uppercase tracking-wider">Today's Objectives</span>
                                                 </div>
                                                 
-                                                {/* Category Filter */}
-                                                <div className="flex flex-wrap gap-2">
+                                                {/* Category Filter — horizontally scrollable on mobile */}
+                                                <div className="flex gap-2 overflow-x-auto pb-1 max-w-full scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
                                                     {allCategories.map(cat => (
                                                         <button 
                                                             key={cat} 
                                                             onClick={() => setSelectedCategory(cat)}
-                                                            className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === cat ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
+                                                            className={`text-xs px-3 py-1 rounded-full border transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === cat ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
                                                         >
                                                             {cat.charAt(0).toUpperCase() + cat.slice(1)}
                                                         </button>

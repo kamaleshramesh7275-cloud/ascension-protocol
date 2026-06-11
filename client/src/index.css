@@ -1279,3 +1279,77 @@ body::-webkit-scrollbar,
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
+
+/* ============================================
+   MOBILE NATIVE FEEL — iOS & Android Polish
+   ============================================ */
+
+/* iOS momentum scrolling for all scroll containers */
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto,
+[data-radix-scroll-area-viewport] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent overscroll bounce on the body (Android feels snappier) */
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Prevent double-tap zoom on interactive elements */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Safe area padding utility for bottom nav and fixed footers */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ensure the bottom nav safe area is respected */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-bottom-nav-wrapper {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile: tighten page padding to 16px on small screens */
+@media (max-width: 639px) {
+  /* Ensure pages have consistent horizontal padding */
+  .page-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Active nav item glow effect */
+@keyframes navGlow {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 16px hsl(var(--primary) / 0.7); }
+}
+
+.nav-item-active {
+  animation: navGlow 2s ease-in-out infinite;
+}
+
+/* Mobile card optimizations - prevent content overflow */
+@media (max-width: 480px) {
+  .truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+}
+
+/* Horizontal scroll snap for carousels on mobile */
+.mobile-scroll-snap {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-scroll-snap > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}

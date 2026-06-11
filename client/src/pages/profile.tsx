@@ -150,7 +150,7 @@ export default function ProfilePage() {
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="relative z-10 space-y-6 p-6"
+                className="relative z-10 space-y-6 p-4 sm:p-6"
                 data-testid="page-profile"
             >
                 <motion.div variants={item}>
@@ -258,9 +258,9 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-3">
                                     <RankBadge tier={user.tier as any} level={user.level} size="lg" />
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                             <Button
                                                 variant="outline"

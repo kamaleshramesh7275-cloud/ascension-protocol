@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Activity } from "lucide-react";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
@@ -297,9 +298,19 @@ function AppContent() {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-h-screen w-full relative">
               {/* Top Header Bar */}
-              <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-card/80 backdrop-blur-md border-b border-border">
-                <div className="flex items-center">
+              <header className="sticky top-0 z-50 flex items-center justify-between px-3 py-2 bg-card/80 backdrop-blur-md border-b border-border">
+                {/* Desktop: sidebar trigger | Mobile: app branding */}
+                <div className="flex items-center gap-2">
                   <SidebarTrigger className="hidden md:flex mr-2" />
+                  {/* Mobile-only branding */}
+                  <div className="flex md:hidden items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-violet-500/30">
+                      <Activity className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-base font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent tracking-tight">
+                      Ascension
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <NotificationCenter />
@@ -308,7 +319,7 @@ function AppContent() {
               </header>
 
               {/* Page Content */}
-              <div className="flex-1 overflow-y-auto pb-20 md:pb-4 scrollbar-hide">
+              <div className="flex-1 overflow-y-auto pb-20 md:pb-4 scrollbar-hide" style={{ paddingBottom: 'max(5rem, calc(5rem + env(safe-area-inset-bottom, 0px)))' }} >
                 <Router />
               </div>
 
