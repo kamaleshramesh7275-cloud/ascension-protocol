@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight } from "lucide-react";
+import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight, Dumbbell } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { useLocation } from "wouter";
 import {
@@ -65,6 +65,15 @@ export function AppSidebar() {
             activeBg: "bg-blue-600/10",
             activeBorder: "border-blue-600",
             gradient: "from-blue-600/20 to-transparent"
+        },
+        {
+            title: "Workout",
+            url: "/workout",
+            icon: Dumbbell,
+            color: "text-emerald-500",
+            activeBg: "bg-emerald-500/10",
+            activeBorder: "border-emerald-500",
+            gradient: "from-emerald-500/20 to-transparent"
         },
         {
             title: "Store",

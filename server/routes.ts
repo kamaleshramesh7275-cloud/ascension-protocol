@@ -55,6 +55,7 @@ import { createReferralRouter } from "./routes/referrals";
 import citadelRouter from "./routes/citadel";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import pushRouter from "./routes/push";
+import workoutsRouter from "./routes/workouts";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
 
@@ -188,6 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Push Notification Routes
   app.use("/api", pushRouter);
+  app.use("/api", workoutsRouter);
 
   // Shop Routes - Using dedicated shop router with seeding functionality
   app.use("/api/shop", shopRouter);

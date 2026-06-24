@@ -1122,3 +1122,152 @@ export const insertTelemetryEventSchema = z.object({
 export type TelemetryEvent = typeof telemetryEvents.$inferSelect;
 export type InsertTelemetryEvent = z.infer<typeof insertTelemetryEventSchema>;
 
+// ─── WORKOUT TRACKER ──────────────────────────────────────────────────────────
+
+// Global exercise library (admin-seeded + user custom)
+export const exercises = pgTable("exercises", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  category: text("category").notNull(),           // strength, cardio, flexibility, sports
+  muscleGroup: text("muscle_group").notNull(),     // chest, back, legs, shoulders, arms, core, full_body
+  equipment: text("equipment").default("bodyweight").notNull(), // barbell, dumbbell, machine, bodyweight, cable, kettlebell, band
+  instructions: text("instructions"),
+  isCustom: boolean("is_custom").default(false).notNull(),
+  createdByUserId: varchar("created_by_user_id"),  // null = global/system exercise
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  muscleGroupIdx: index("exercises_muscle_group_idx").on(table.muscleGroup),
+  categoryIdx: index("exercises_category_idx").on(table.category),
+}));
+
+// Workout templates (user-defined or system presets)
+export const workoutTemplates = pgTable("workout_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),  // null = system template
+  name: text("name").notNull(),
+  description: text("description"),
+  exerciseIds: jsonb("exercise_ids").$type<string[]>().default([]).notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("workout_templates_user_id_idx").on(table.userId),
+}));
+
+// Workout sessions (one session = one gym visit)
+export const workoutSessions = pgTable("workout_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),            // e.g., "Push Day", "Leg Day"
+  templateId: varchar("template_id"),      // optional, from which template
+  startedAt: timestamp("started_at").notNull(),
+  finishedAt: timestamp("finished_at"),
+  durationSeconds: integer("duration_seconds"),
+  totalVolume: integer("total_volume").default(0).notNull(), // total kg moved (weight × reps summed)
+  totalSets: integer("total_sets").default(0).notNull(),
+  xpEarned: integer("xp_earned").default(0).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("workout_sessions_user_id_idx").on(table.userId),
+  startedAtIdx: index("workout_sessions_started_at_idx").on(table.startedAt),
+}));
+
+// Individual sets logged within a session
+export const workoutSets = pgTable("workout_sets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => workoutSessions.id, { onDelete: "cascade" }),
+  exerciseId: varchar("exercise_id").notNull().references(() => exercises.id),
+  setNumber: integer("set_number").notNull(),
+  reps: integer("reps"),                       // null for timed exercises
+  weight: decimal("weight", { precision: 6, scale: 2 }), // kg, null for bodyweight
+  durationSeconds: integer("duration_seconds"),// for cardio/timed exercises
+  rpe: integer("rpe"),                         // rate of perceived exertion 1-10
+  isPersonalRecord: boolean("is_personal_record").default(false).notNull(),
+  setType: text("set_type").default("normal").notNull(), // normal, warmup, dropset, failure
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  sessionIdIdx: index("workout_sets_session_id_idx").on(table.sessionId),
+  exerciseIdIdx: index("workout_sets_exercise_id_idx").on(table.exerciseId),
+}));
+
+// Personal Records tracker
+export const personalRecords = pgTable("personal_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  exerciseId: varchar("exercise_id").notNull().references(() => exercises.id),
+  recordType: text("record_type").notNull(), // "1rm", "best_set_volume", "max_reps", "best_weight"
+  value: decimal("value", { precision: 8, scale: 2 }).notNull(),
+  setId: varchar("set_id").references(() => workoutSets.id),
+  achievedAt: timestamp("achieved_at").defaultNow().notNull(),
+}, (table) => ({
+  userExerciseIdx: index("prs_user_exercise_idx").on(table.userId, table.exerciseId),
+  userIdIdx: index("prs_user_id_idx").on(table.userId),
+}));
+
+// ─── Workout Zod Schemas ──────────────────────────────────────────────────────
+
+export const insertExerciseSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().min(1),
+  muscleGroup: z.string().min(1),
+  equipment: z.string().optional(),
+  instructions: z.string().nullable().optional(),
+  isCustom: z.boolean().optional(),
+  createdByUserId: z.string().nullable().optional(),
+});
+
+export const insertWorkoutTemplateSchema = z.object({
+  userId: z.string().nullable().optional(),
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  exerciseIds: z.array(z.string()).optional(),
+  isPublic: z.boolean().optional(),
+});
+
+export const insertWorkoutSessionSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().min(1),
+  templateId: z.string().nullable().optional(),
+  startedAt: z.date(),
+  notes: z.string().nullable().optional(),
+});
+
+export const insertWorkoutSetSchema = z.object({
+  sessionId: z.string().min(1),
+  exerciseId: z.string().min(1),
+  setNumber: z.number().int(),
+  reps: z.number().int().nullable().optional(),
+  weight: z.number().nullable().optional(),
+  durationSeconds: z.number().int().nullable().optional(),
+  rpe: z.number().int().min(1).max(10).nullable().optional(),
+  setType: z.enum(["normal", "warmup", "dropset", "failure"]).optional(),
+});
+
+export const insertPersonalRecordSchema = z.object({
+  userId: z.string().min(1),
+  exerciseId: z.string().min(1),
+  recordType: z.string().min(1),
+  value: z.number(),
+  setId: z.string().nullable().optional(),
+});
+
+// ─── Workout TypeScript Types ─────────────────────────────────────────────────
+
+export type Exercise = typeof exercises.$inferSelect;
+export type InsertExercise = z.infer<typeof insertExerciseSchema>;
+
+export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
+export type InsertWorkoutTemplate = z.infer<typeof insertWorkoutTemplateSchema>;
+
+export type WorkoutSession = typeof workoutSessions.$inferSelect;
+export type InsertWorkoutSession = z.infer<typeof insertWorkoutSessionSchema>;
+
+export type WorkoutSet = typeof workoutSets.$inferSelect;
+export type InsertWorkoutSet = z.infer<typeof insertWorkoutSetSchema>;
+
+export type PersonalRecord = typeof personalRecords.$inferSelect;
+export type InsertPersonalRecord = z.infer<typeof insertPersonalRecordSchema>;
+
+// Extended types for API responses
+export type WorkoutSetWithExercise = WorkoutSet & { exercise: Exercise };
+export type WorkoutSessionWithSets = WorkoutSession & { sets: WorkoutSetWithExercise[] };

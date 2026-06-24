@@ -101,15 +101,40 @@ import {
   type InsertReferralProfile,
   telemetryEvents,
   type TelemetryEvent,
-  type InsertTelemetryEvent
+  type InsertTelemetryEvent,
+  exercises,
+  type Exercise,
+  type InsertExercise,
+  workoutTemplates,
+  type WorkoutTemplate,
+  type InsertWorkoutTemplate,
+  workoutSessions,
+  type WorkoutSession,
+  type InsertWorkoutSession,
+  workoutSets,
+  type WorkoutSet,
+  type InsertWorkoutSet,
+  personalRecords,
+  type PersonalRecord,
+  type InsertPersonalRecord,
+  type WorkoutSessionWithSets,
+  type WorkoutSetWithExercise
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, gte, lte, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
+import { DEFAULT_EXERCISES } from "./data/exercises";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import fs from "node:fs/promises";
 import path from "node:path";
+
+// Helper function to calculate 1RM using Brzycki formula
+function calculateOneRepMax(weight: number, reps: number): number {
+  if (reps <= 0) return 0;
+  if (reps === 1) return weight;
+  return weight * (36 / (37 - reps));
+}
 
 const activities = activityHistory;
 
@@ -313,6 +338,17 @@ export interface IStorage {
   // Telemetry operations
   createTelemetryEvent(event: InsertTelemetryEvent): Promise<TelemetryEvent>;
   getTelemetryStats(date?: Date): Promise<any>;
+
+  // Workout operations
+  getExercises(query?: string): Promise<Exercise[]>;
+  getExercise(id: string): Promise<Exercise | undefined>;
+  createWorkoutSession(session: InsertWorkoutSession): Promise<WorkoutSession>;
+  finishWorkoutSession(id: string, sets: InsertWorkoutSet[], notes?: string): Promise<WorkoutSession>;
+  getUserWorkoutSessions(userId: string, limit?: number): Promise<WorkoutSession[]>;
+  getWorkoutSession(id: string): Promise<WorkoutSessionWithSets | undefined>;
+  getUserPersonalRecords(userId: string, exerciseId?: string): Promise<PersonalRecord[]>;
+  getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]>;
+  createWorkoutTemplate(template: InsertWorkoutTemplate): Promise<WorkoutTemplate>;
 }
 
 // Shop Items
@@ -416,6 +452,11 @@ export class MemStorage implements IStorage {
   private habitTracking: Map<string, HabitTracking>;
   private referrals: Map<string, Referral>;
   private telemetryEvents: Map<string, TelemetryEvent>;
+  private exercises: Map<string, Exercise>;
+  private workoutTemplates: Map<string, WorkoutTemplate>;
+  private workoutSessions: Map<string, WorkoutSession>;
+  private workoutSets: Map<string, WorkoutSet>;
+  private personalRecords: Map<string, PersonalRecord>;
 
   constructor() {
     this.guilds = new Map();
@@ -505,6 +546,11 @@ export class MemStorage implements IStorage {
     this.premiumRequests = new Map();
     this.habitTracking = new Map();
     this.referrals = new Map();
+    this.exercises = new Map();
+    this.workoutTemplates = new Map();
+    this.workoutSessions = new Map();
+    this.workoutSets = new Map();
+    this.personalRecords = new Map();
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -2413,6 +2459,184 @@ export class MemStorage implements IStorage {
       featureUsageStats,
     };
   }
+
+  // ─── Workout Tracker MemStorage Methods ───
+  async getExercises(query?: string): Promise<Exercise[]> {
+    const all = Array.from(this.exercises.values());
+    if (!query) return all;
+    return all.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
+  }
+
+  async getExercise(id: string): Promise<Exercise | undefined> {
+    return this.exercises.get(id);
+  }
+
+  async createWorkoutSession(session: InsertWorkoutSession): Promise<WorkoutSession> {
+    const id = randomUUID();
+    const newSession: WorkoutSession = {
+      ...session,
+      id,
+      finishedAt: null,
+      durationSeconds: null,
+      totalVolume: 0,
+      totalSets: 0,
+      xpEarned: 0,
+      templateId: session.templateId || null,
+      notes: session.notes || null,
+      createdAt: new Date(),
+    };
+    this.workoutSessions.set(id, newSession);
+    return newSession;
+  }
+
+  async finishWorkoutSession(id: string, sets: InsertWorkoutSet[], notes?: string): Promise<WorkoutSession> {
+    const session = this.workoutSessions.get(id);
+    if (!session) throw new Error("Session not found");
+
+    let totalVolume = 0;
+    const now = new Date();
+    const durationSeconds = Math.floor((now.getTime() - session.startedAt.getTime()) / 1000);
+
+    for (const set of sets) {
+      const setId = randomUUID();
+      let isPR = false;
+      
+      const weightNum = set.weight ? Number(set.weight) : 0;
+      const repsNum = set.reps || 0;
+      
+      // Calculate PR if strength exercise
+      if (weightNum > 0 && repsNum > 0) {
+        const estimated1RM = calculateOneRepMax(weightNum, repsNum);
+        const setVolume = weightNum * repsNum;
+        
+        // Get user PRs
+        const existingPRs = Array.from(this.personalRecords.values()).filter(pr => 
+          pr.userId === session.userId && pr.exerciseId === set.exerciseId
+        );
+        
+        // Check 1RM PR
+        const best1RM = existingPRs.find(pr => pr.recordType === "1rm")?.value || 0;
+        if (estimated1RM > Number(best1RM)) {
+          isPR = true;
+          const prId = randomUUID();
+          this.personalRecords.set(prId, {
+            id: prId,
+            userId: session.userId,
+            exerciseId: set.exerciseId,
+            recordType: "1rm",
+            value: estimated1RM.toString() as any, // Zod schema allows number, Drizzle decimal uses string in postgres
+            setId: setId,
+            achievedAt: now
+          });
+        }
+        
+        // Check Best Volume PR
+        const bestVolume = existingPRs.find(pr => pr.recordType === "best_set_volume")?.value || 0;
+        if (setVolume > Number(bestVolume)) {
+          isPR = true;
+          const prId = randomUUID();
+          this.personalRecords.set(prId, {
+            id: prId,
+            userId: session.userId,
+            exerciseId: set.exerciseId,
+            recordType: "best_set_volume",
+            value: setVolume.toString() as any,
+            setId: setId,
+            achievedAt: now
+          });
+        }
+      }
+
+      const newSet: WorkoutSet = {
+        ...set,
+        id: setId,
+        reps: set.reps || null,
+        weight: set.weight?.toString() || null,
+        durationSeconds: set.durationSeconds || null,
+        rpe: set.rpe || null,
+        setType: set.setType || "normal",
+        isPersonalRecord: isPR,
+        createdAt: new Date(),
+      };
+      this.workoutSets.set(setId, newSet);
+      if (set.reps && set.weight) {
+        totalVolume += set.reps * set.weight;
+      }
+    }
+
+    const xpEarned = Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5);
+
+    const updatedSession: WorkoutSession = {
+      ...session,
+      finishedAt: now,
+      durationSeconds,
+      totalVolume,
+      totalSets: sets.length,
+      xpEarned,
+      notes: notes || session.notes,
+    };
+    this.workoutSessions.set(id, updatedSession);
+
+    // Give user XP
+    const user = await this.getUser(session.userId);
+    if (user) {
+      await this.updateUser(user.id, {
+        xp: user.xp + xpEarned,
+        strength: user.strength + 1,
+        stamina: user.stamina + 1
+      });
+    }
+
+    return updatedSession;
+  }
+
+  async getUserWorkoutSessions(userId: string, limit = 10): Promise<WorkoutSession[]> {
+    return Array.from(this.workoutSessions.values())
+      .filter(s => s.userId === userId)
+      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getWorkoutSession(id: string): Promise<WorkoutSessionWithSets | undefined> {
+    const session = this.workoutSessions.get(id);
+    if (!session) return undefined;
+
+    const sessionSets = Array.from(this.workoutSets.values()).filter(s => s.sessionId === id);
+    const setsWithExercise: WorkoutSetWithExercise[] = sessionSets.map(set => ({
+      ...set,
+      exercise: this.exercises.get(set.exerciseId)!
+    }));
+
+    return {
+      ...session,
+      sets: setsWithExercise.sort((a, b) => a.setNumber - b.setNumber)
+    };
+  }
+
+  async getUserPersonalRecords(userId: string, exerciseId?: string): Promise<PersonalRecord[]> {
+    return Array.from(this.personalRecords.values()).filter(pr => 
+      pr.userId === userId && (!exerciseId || pr.exerciseId === exerciseId)
+    );
+  }
+
+  async getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]> {
+    return Array.from(this.workoutTemplates.values()).filter(t => t.userId === userId || t.isPublic);
+  }
+
+  async createWorkoutTemplate(template: InsertWorkoutTemplate): Promise<WorkoutTemplate> {
+    const id = randomUUID();
+    const newTemplate: WorkoutTemplate = {
+      ...template,
+      id,
+      userId: template.userId || null,
+      description: template.description || null,
+      exerciseIds: template.exerciseIds || [],
+      isPublic: template.isPublic || false,
+      createdAt: new Date(),
+    };
+    this.workoutTemplates.set(id, newTemplate);
+    return newTemplate;
+  }
 }
 
 
@@ -2424,6 +2648,20 @@ export class DatabaseStorage implements IStorage {
     console.log("🗄️ DatabaseStorage initialized");
     this.seedShopItems();
     this.seedCampaigns();
+    this.seedExercises();
+  }
+
+  private async seedExercises() {
+    console.log("🌱 Seeding exercises...");
+    for (const exercise of DEFAULT_EXERCISES) {
+      const existing = await db!.query.exercises.findFirst({
+        where: eq(exercises.name, exercise.name)
+      });
+
+      if (!existing) {
+        await db!.insert(exercises).values(exercise);
+      }
+    }
   }
 
   private async seedCampaigns() {
@@ -4073,6 +4311,178 @@ export class DatabaseStorage implements IStorage {
       tabUsageStats,
       featureUsageStats,
     };
+  }
+
+  // ─── Workout Tracker DatabaseStorage Methods ───
+  async getExercises(query?: string): Promise<Exercise[]> {
+    if (query) {
+      // Basic ilike-style search could be done using SQL, but for simplicity fetching all and filtering in memory if small
+      const all = await db!.select().from(exercises);
+      return all.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
+    }
+    return await db!.select().from(exercises);
+  }
+
+  async getExercise(id: string): Promise<Exercise | undefined> {
+    const [exercise] = await db!.select().from(exercises).where(eq(exercises.id, id));
+    return exercise;
+  }
+
+  async createWorkoutSession(session: InsertWorkoutSession): Promise<WorkoutSession> {
+    const [newSession] = await db!.insert(workoutSessions).values({
+      ...session,
+      totalVolume: 0,
+      totalSets: 0,
+      xpEarned: 0,
+    }).returning();
+    return newSession;
+  }
+
+  async finishWorkoutSession(id: string, sets: InsertWorkoutSet[], notes?: string): Promise<WorkoutSession> {
+    const [session] = await db!.select().from(workoutSessions).where(eq(workoutSessions.id, id));
+    if (!session) throw new Error("Session not found");
+
+    let totalVolume = 0;
+    const now = new Date();
+    const durationSeconds = Math.floor((now.getTime() - session.startedAt.getTime()) / 1000);
+
+    for (const set of sets) {
+      const setId = randomUUID();
+      let isPR = false;
+      
+      const weightNum = set.weight ? Number(set.weight) : 0;
+      const repsNum = set.reps || 0;
+      
+      // Calculate PR if strength exercise
+      if (weightNum > 0 && repsNum > 0) {
+        const estimated1RM = calculateOneRepMax(weightNum, repsNum);
+        const setVolume = weightNum * repsNum;
+        
+        // Get user PRs
+        const existingPRs = await db!.select().from(personalRecords).where(
+          and(eq(personalRecords.userId, session.userId), eq(personalRecords.exerciseId, set.exerciseId))
+        );
+        
+        // Check 1RM PR
+        const best1RM = existingPRs.find(pr => pr.recordType === "1rm");
+        if (!best1RM || estimated1RM > Number(best1RM.value)) {
+          isPR = true;
+          if (best1RM) {
+            await db!.update(personalRecords)
+              .set({ value: estimated1RM.toString() as any, setId, achievedAt: now })
+              .where(eq(personalRecords.id, best1RM.id));
+          } else {
+            await db!.insert(personalRecords).values({
+              userId: session.userId,
+              exerciseId: set.exerciseId,
+              recordType: "1rm",
+              value: estimated1RM,
+              setId
+            });
+          }
+        }
+        
+        // Check Best Volume PR
+        const bestVolume = existingPRs.find(pr => pr.recordType === "best_set_volume");
+        if (!bestVolume || setVolume > Number(bestVolume.value)) {
+          isPR = true;
+          if (bestVolume) {
+            await db!.update(personalRecords)
+              .set({ value: setVolume.toString() as any, setId, achievedAt: now })
+              .where(eq(personalRecords.id, bestVolume.id));
+          } else {
+            await db!.insert(personalRecords).values({
+              userId: session.userId,
+              exerciseId: set.exerciseId,
+              recordType: "best_set_volume",
+              value: setVolume,
+              setId
+            });
+          }
+        }
+      }
+
+      await db!.insert(workoutSets).values({
+        ...set,
+        id: setId,
+        isPersonalRecord: isPR,
+      });
+      if (set.reps && set.weight) {
+        totalVolume += set.reps * Number(set.weight);
+      }
+    }
+
+    const xpEarned = Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5);
+
+    const [updatedSession] = await db!.update(workoutSessions).set({
+      finishedAt: now,
+      durationSeconds,
+      totalVolume,
+      totalSets: sets.length,
+      xpEarned,
+      notes: notes || session.notes,
+    }).where(eq(workoutSessions.id, id)).returning();
+
+    // Give user XP
+    const user = await this.getUser(session.userId);
+    if (user) {
+      await this.updateUser(user.id, {
+        xp: user.xp + xpEarned,
+        strength: user.strength + 1,
+        stamina: user.stamina + 1
+      });
+    }
+
+    return updatedSession;
+  }
+
+  async getUserWorkoutSessions(userId: string, limit = 10): Promise<WorkoutSession[]> {
+    return await db!.select().from(workoutSessions)
+      .where(eq(workoutSessions.userId, userId))
+      .orderBy(desc(workoutSessions.startedAt))
+      .limit(limit);
+  }
+
+  async getWorkoutSession(id: string): Promise<WorkoutSessionWithSets | undefined> {
+    const [session] = await db!.select().from(workoutSessions).where(eq(workoutSessions.id, id));
+    if (!session) return undefined;
+
+    const sets = await db!.select().from(workoutSets).where(eq(workoutSets.sessionId, id));
+    
+    // Fetch associated exercises
+    const exerciseIds = [...new Set(sets.map(s => s.exerciseId))];
+    const relatedExercises = await db!.select().from(exercises).where(inArray(exercises.id, exerciseIds));
+    const exerciseMap = new Map(relatedExercises.map(e => [e.id, e]));
+
+    const setsWithExercise: WorkoutSetWithExercise[] = sets.map(set => ({
+      ...set,
+      exercise: exerciseMap.get(set.exerciseId)!
+    }));
+
+    return {
+      ...session,
+      sets: setsWithExercise.sort((a, b) => a.setNumber - b.setNumber)
+    };
+  }
+
+  async getUserPersonalRecords(userId: string, exerciseId?: string): Promise<PersonalRecord[]> {
+    if (exerciseId) {
+      return await db!.select().from(personalRecords).where(
+        and(eq(personalRecords.userId, userId), eq(personalRecords.exerciseId, exerciseId))
+      );
+    }
+    return await db!.select().from(personalRecords).where(eq(personalRecords.userId, userId));
+  }
+
+  async getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]> {
+    return await db!.select().from(workoutTemplates).where(
+      or(eq(workoutTemplates.userId, userId), eq(workoutTemplates.isPublic, true))
+    );
+  }
+
+  async createWorkoutTemplate(template: InsertWorkoutTemplate): Promise<WorkoutTemplate> {
+    const [newTemplate] = await db!.insert(workoutTemplates).values(template).returning();
+    return newTemplate;
   }
 }
 

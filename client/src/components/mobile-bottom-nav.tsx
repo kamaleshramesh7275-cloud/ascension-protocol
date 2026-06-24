@@ -1,7 +1,8 @@
-import { Home, Target, Brain, ShoppingBag, User } from "lucide-react";
+import { Home, Target, Brain, ShoppingBag, User, Dumbbell } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWorkout } from "@/context/workout-context";
 
 interface MobileBottomNavProps {
     className?: string;
@@ -10,13 +11,14 @@ interface MobileBottomNavProps {
 const navItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: Target, label: "Quests", path: "/quests" },
+    { icon: Dumbbell, label: "Workout", path: "/workout" },
     { icon: Brain, label: "Focus", path: "/focus" },
     { icon: ShoppingBag, label: "Store", path: "/store" },
-    { icon: User, label: "Profile", path: "/profile" },
 ];
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
     const [location, setLocation] = useLocation();
+    const { isWorkoutActive } = useWorkout();
 
     return (
         <nav
@@ -34,6 +36,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                     const Icon = item.icon;
                     const isActive = location === item.path ||
                         (item.path === "/profile" && location.startsWith("/profile"));
+                    const isWorkout = item.path === "/workout";
 
                     return (
                         <button
@@ -58,7 +61,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                                 )}
                             </AnimatePresence>
 
-                            {/* Icon */}
+                            {/* Icon + active workout pulsing indicator */}
                             <motion.div
                                 whileTap={{ scale: 0.82 }}
                                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
@@ -69,10 +72,21 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                                         "h-5 w-5 transition-all duration-200",
                                         isActive
                                             ? "text-primary drop-shadow-[0_0_6px_var(--tw-shadow-color)] shadow-primary"
-                                            : "text-muted-foreground group-hover:text-foreground"
+                                            : isWorkout && isWorkoutActive
+                                                ? "text-emerald-400"
+                                                : "text-muted-foreground group-hover:text-foreground"
                                     )}
-                                    style={isActive ? { filter: "drop-shadow(0 0 5px hsl(var(--primary) / 0.7))" } : {}}
+                                    style={isActive ? { filter: "drop-shadow(0 0 5px hsl(var(--primary) / 0.7))" } :
+                                           isWorkout && isWorkoutActive ? { filter: "drop-shadow(0 0 5px rgba(52,211,153,0.7))" } : {}}
                                 />
+                                {/* Pulsing dot when workout is active */}
+                                {isWorkout && isWorkoutActive && (
+                                    <motion.span
+                                        className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-black"
+                                        animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                    />
+                                )}
                             </motion.div>
 
                             {/* Label */}
@@ -81,7 +95,9 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                                     "relative z-10 text-[10px] font-semibold tracking-wide leading-none transition-colors duration-200",
                                     isActive
                                         ? "text-primary"
-                                        : "text-muted-foreground group-hover:text-foreground"
+                                        : isWorkout && isWorkoutActive
+                                            ? "text-emerald-400"
+                                            : "text-muted-foreground group-hover:text-foreground"
                                 )}
                             >
                                 {item.label}

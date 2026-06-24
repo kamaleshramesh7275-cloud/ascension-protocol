@@ -20,6 +20,7 @@ import { AnimationProvider, useAnimations } from "@/context/animation-context";
 import { useState, useEffect } from "react";
 import { TelemetryTracker } from "@/components/telemetry-tracker";
 import { Seo } from "@/components/seo";
+import { WorkoutProvider } from "@/context/workout-context";
 
 const withSeo = (Component: React.ComponentType<any>, seoProps: { title: string; description?: string; url?: string }) => {
   return (props: any) => (
@@ -55,6 +56,7 @@ import PaymentRedirect from "@/pages/pay-redirect";
 import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
 import ReferralRedirect from "@/pages/referral-redirect";
 import ContactPage from "@/pages/contact";
+import WorkoutPage from "@/pages/workout";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -225,6 +227,7 @@ function Router() {
         <Route path="/dashboard" component={() => <ProtectedRoute component={withSeo(Dashboard, { title: "Dashboard" })} />} />
         <Route path="/quests" component={() => <ProtectedRoute component={withSeo(QuestsPage, { title: "Quests" })} />} />
         <Route path="/roadmap" component={() => <ProtectedRoute component={withSeo(RoadmapPage, { title: "Roadmap" })} />} />
+        <Route path="/workout" component={() => <ProtectedRoute component={withSeo(WorkoutPage, { title: "Workout Tracker" })} />} />
         <Route path="/focus" component={() => <ProtectedRoute component={withSeo(FocusSanctum, { title: "Focus Sanctum" })} />} />
         <Route path="/stats" component={() => <ProtectedRoute component={withSeo(StatsPage, { title: "Stats" })} />} />
         <Route path="/leaderboard" component={() => <ProtectedRoute component={withSeo(LeaderboardPage, { title: "Leaderboard" })} />} />
@@ -348,11 +351,13 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <AnimationProvider>
-              <TelemetryTracker />
-              <TierWatcher />
-              <NotificationWatcher />
-              <AppContent />
-              <Toaster />
+              <WorkoutProvider>
+                <TelemetryTracker />
+                <TierWatcher />
+                <NotificationWatcher />
+                <AppContent />
+                <Toaster />
+              </WorkoutProvider>
             </AnimationProvider>
           </TooltipProvider>
         </ThemeProvider>
