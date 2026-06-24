@@ -3,6 +3,7 @@ import { generateDailyGuildQuest } from "./quest-generator";
 import { db } from "../db";
 import { citadelBuildings } from "@shared/schema";
 import { eq, and, lt } from "drizzle-orm";
+import { pushNotifications } from "../utils/push-notifications";
 
 const CRON_INTERVAL = 60 * 60 * 1000; // 1 hour
 const CONTAGION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
@@ -44,6 +45,60 @@ export function initCronJobs(storage: IStorage) {
             storage.deleteOldMessages(48);
         }, 24 * 60 * 60 * 1000);
     }, timeToMidnight);
+
+    // ── Streak Reminder Push Notifications ──────────────────────────────────
+    // Fire at 8 PM local time every day: remind users who haven't done a quest today
+    const schedule8PM = () => {
+        const t = new Date();
+        const next8PM = new Date(t);
+        next8PM.setHours(20, 0, 0, 0);
+        // If it's already past 8 PM today, schedule for tomorrow
+        if (next8PM.getTime() <= t.getTime()) {
+            next8PM.setDate(next8PM.getDate() + 1);
+        }
+        const delay = next8PM.getTime() - t.getTime();
+        console.log(`[Cron] Streak reminder push scheduled in ${Math.round(delay / 1000 / 60)} minutes (at 8 PM)`);
+
+        setTimeout(async () => {
+            await processStreakReminders(storage);
+            // Re-schedule for the next day
+            setInterval(() => processStreakReminders(storage), 24 * 60 * 60 * 1000);
+        }, delay);
+    };
+    schedule8PM();
+}
+
+async function processStreakReminders(storage: IStorage) {
+    console.log("[Cron] Sending streak reminder push notifications...");
+    try {
+        const users = await storage.getAllUsers();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const user of users) {
+            // Only remind users who have an active streak
+            if (!user.streak || user.streak < 1) continue;
+
+            // Check if they already completed a quest today
+            const lastCompleted = (user as any).lastQuestCompletedAt
+                ? new Date((user as any).lastQuestCompletedAt)
+                : null;
+
+            if (lastCompleted) {
+                lastCompleted.setHours(0, 0, 0, 0);
+                if (lastCompleted.getTime() >= today.getTime()) {
+                    // Already active today — no reminder needed
+                    continue;
+                }
+            }
+
+            // Fire the push notification
+            await pushNotifications.streakReminder(user.id, user.streak);
+        }
+        console.log("[Cron] Streak reminder push notifications sent.");
+    } catch (error) {
+        console.error("[Cron] Error sending streak reminders:", error);
+    }
 }
 
 async function processPremiumBonuses(storage: IStorage) {

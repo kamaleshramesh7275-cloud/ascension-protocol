@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { AdminNotificationComposer } from "@/components/admin-notification-composer";
 import { AdminNotificationHistory } from "@/components/admin-notification-history";
+import { NotificationsTab } from "@/components/admin-push-sender";
 import { apiRequest } from "@/lib/queryClient";
 import BridgePage from "./bridge";
 
@@ -2164,6 +2165,11 @@ export default function AdminDashboard() {
                                     </CardContent>
                                 </Card>
                             </div>
+                        )
+                    }
+                    {
+                        activeTab === "notifications" && (
+                            <NotificationsTab users={users} getAdminHeaders={getAdminHeaders} showNotification={showNotification} />
                         )
                     }
                     {

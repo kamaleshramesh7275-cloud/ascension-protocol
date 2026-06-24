@@ -4,7 +4,7 @@ import { getFCMMessaging } from "@/lib/firebase";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-const VAPID_KEY = "BFz9ob26ZXx7Gt-gWzw2E__SMXz67yJ1dx8lrxCMpp-oTodzkaFUNul88B7Mn77jZoku1nqZogtRxTZRwa1tj6g";
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "BFz9ob26ZXx7Gt-gWzw2E__SMXz67yJ1dx8lrxCMpp-oTodzkaFUNul88B7Mn77jZoku1nqZogtRxTZRwa1tj6g";
 const TOKEN_STORAGE_KEY = "fcm_token";
 
 export type PermissionState = "default" | "granted" | "denied";
