@@ -36,10 +36,14 @@ router.get("/workouts/exercises/:id", async (req, res) => {
 // Get all workout sessions for the user
 router.get("/workouts/sessions", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
 
     const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
+
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 90;
     const sessions = await storage.getUserWorkoutSessions(userId, limit);
     res.json(sessions);
@@ -52,16 +56,19 @@ router.get("/workouts/sessions", async (req, res) => {
 // Start a new workout session
 router.post("/workouts/sessions", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+
+    const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
 
     const sessionData = insertWorkoutSessionSchema.parse({
       ...req.body,
       userId,
       startedAt: new Date(req.body.startedAt || new Date()),
     });
-
-    const storage = getStorage();
     const session = await storage.createWorkoutSession(sessionData);
     res.status(201).json(session);
   } catch (error: any) {
@@ -73,10 +80,14 @@ router.post("/workouts/sessions", async (req, res) => {
 // Get a specific session with its sets
 router.get("/workouts/sessions/:id", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
 
     const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
+
     const session = await storage.getWorkoutSession(req.params.id);
     
     if (!session) return res.status(404).json({ message: "Session not found" });
@@ -92,8 +103,8 @@ router.get("/workouts/sessions/:id", async (req, res) => {
 // Finish a session and log all sets
 router.put("/workouts/sessions/:id/finish", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
 
     const { sets, notes } = z.object({
       sets: z.array(insertWorkoutSetSchema.omit({ sessionId: true })),
@@ -101,6 +112,9 @@ router.put("/workouts/sessions/:id/finish", async (req, res) => {
     }).parse(req.body);
 
     const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
     
     // Security check
     const existing = await storage.getWorkoutSession(req.params.id);
@@ -125,10 +139,14 @@ router.put("/workouts/sessions/:id/finish", async (req, res) => {
 // Get personal records for the user
 router.get("/workouts/prs", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
 
     const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
+
     const exerciseId = req.query.exerciseId as string | undefined;
     const prs = await storage.getUserPersonalRecords(userId, exerciseId);
     res.json(prs);
@@ -141,10 +159,14 @@ router.get("/workouts/prs", async (req, res) => {
 // Get user's templates and public templates
 router.get("/workouts/templates", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
 
     const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
+
     const templates = await storage.getWorkoutTemplates(userId);
     res.json(templates);
   } catch (error: any) {
@@ -156,15 +178,19 @@ router.get("/workouts/templates", async (req, res) => {
 // Create a new workout template
 router.post("/workouts/templates", async (req, res) => {
   try {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+
+    const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const userId = user.id;
 
     const templateData = insertWorkoutTemplateSchema.parse({
       ...req.body,
       userId,
     });
 
-    const storage = getStorage();
     const template = await storage.createWorkoutTemplate(templateData);
     res.status(201).json(template);
   } catch (error: any) {
