@@ -119,8 +119,6 @@ export default function GlobalChatPage() {
         }
         if (!user.id) {
             console.error("Cannot send message: User ID missing", user);
-            // Attempt to use uid as fallback if id is missing (though backend expects UUID)
-            // This is just for debugging
             alert("Error: User ID not found. Please refresh the page.");
             return;
         }

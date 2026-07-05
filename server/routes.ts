@@ -174,16 +174,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     initCronJobs(storage);
   }
 
-  // DEBUG: Endpoint to list users
-  app.get("/api/debug/users", async (req, res) => {
-    // No caching for debug
-    const users = await storage.getAllUsers();
-    res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
-  });
-
-  // DEBUG: Ping route
-  app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now(), location: "routes.ts" }));
-
   // Sync Router (Radical Optimization)
   app.use("/api", syncRouter);
 

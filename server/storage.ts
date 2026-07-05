@@ -4376,7 +4376,7 @@ export class DatabaseStorage implements IStorage {
               userId: session.userId,
               exerciseId: set.exerciseId,
               recordType: "1rm",
-              value: estimated1RM,
+              value: estimated1RM.toString(),
               setId
             });
           }
@@ -4395,7 +4395,7 @@ export class DatabaseStorage implements IStorage {
               userId: session.userId,
               exerciseId: set.exerciseId,
               recordType: "best_set_volume",
-              value: setVolume,
+              value: setVolume.toString(),
               setId
             });
           }
@@ -4404,6 +4404,7 @@ export class DatabaseStorage implements IStorage {
 
       await db!.insert(workoutSets).values({
         ...set,
+        weight: set.weight?.toString(),
         id: setId,
         isPersonalRecord: isPR,
       });
@@ -4450,7 +4451,7 @@ export class DatabaseStorage implements IStorage {
     const sets = await db!.select().from(workoutSets).where(eq(workoutSets.sessionId, id));
     
     // Fetch associated exercises
-    const exerciseIds = [...new Set(sets.map(s => s.exerciseId))];
+    const exerciseIds = Array.from(new Set(sets.map(s => s.exerciseId)));
     const relatedExercises = await db!.select().from(exercises).where(inArray(exercises.id, exerciseIds));
     const exerciseMap = new Map(relatedExercises.map(e => [e.id, e]));
 
