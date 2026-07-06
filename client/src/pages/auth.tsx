@@ -177,26 +177,25 @@ export default function AuthPage() {
               transition={{ delay: 0.6, duration: 0.5 }}
               className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center"
             >
-              <Button
-                onClick={() => setView('selection')}
-                size="lg"
-                className="bg-white text-black hover:bg-gray-200 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] w-full sm:w-auto"
-              >
-                Begin Journey <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-
-              {/* Install button — always visible, behaviour changes by platform */}
-              {!standalone && (
+              {standalone ? (
+                <Button
+                  onClick={() => setView('selection')}
+                  size="lg"
+                  className="bg-white text-black hover:bg-gray-200 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] w-full sm:w-auto"
+                >
+                  Begin Journey <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              ) : (
                 isInstallable ? (
                   // Android / Desktop Chrome — native prompt
                   <Button
                     onClick={promptInstall}
                     size="lg"
                     variant="outline"
-                    className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
+                    className="border-purple-500/50 bg-purple-500 text-white hover:bg-purple-600 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
                   >
                     <Download className="mr-2 w-5 h-5" />
-                    Install App
+                    Install App to Play
                   </Button>
                 ) : (
                   // iOS or browser that hasn't fired the event yet — show guide
@@ -204,10 +203,10 @@ export default function AuthPage() {
                     onClick={() => setShowIOSGuide(true)}
                     size="lg"
                     variant="outline"
-                    className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
+                    className="border-purple-500/50 bg-purple-500 text-white hover:bg-purple-600 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
                   >
                     <Smartphone className="mr-2 w-5 h-5" />
-                    Install App
+                    Install App to Play
                   </Button>
                 )
               )}
@@ -222,12 +221,46 @@ export default function AuthPage() {
                 transition={{ delay: 1 }}
               >
                 {isInstallable
-                  ? "Add to your home screen — no app store needed"
+                  ? "Add to your home screen — no app store needed. Required to begin your journey."
                   : ios
-                    ? "Safari → Share → Add to Home Screen"
-                    : "Works on Android, iOS & Desktop"}
+                    ? "Safari → Share → Add to Home Screen. Required to begin your journey."
+                    : "Works on Android, iOS & Desktop. Required to begin your journey."}
               </motion.p>
             )}
+
+            {/* Features Section */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 w-full max-w-5xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+            >
+              {[
+                {
+                  title: "Gamified Life",
+                  description: "Turn your daily tasks, habits, and goals into an immersive RPG experience.",
+                  icon: Sparkles
+                },
+                {
+                  title: "Epic Quests",
+                  description: "Complete real-world challenges, earn XP, and unlock new abilities and ranks.",
+                  icon: Shield
+                },
+                {
+                  title: "Focus Sanctum",
+                  description: "Deep work sessions with built-in timers, ambient sounds, and productivity tracking.",
+                  icon: Lock
+                }
+              ].map((feature, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/10 transition-colors text-left">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+                </div>
+              ))}
+            </motion.div>
           </motion.div>
         )}
 
