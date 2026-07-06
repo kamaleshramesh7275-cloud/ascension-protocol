@@ -143,9 +143,6 @@ export default function AuthPage() {
           >
             {/* Main Hero Container */}
             <div className="max-w-4xl mx-auto text-center flex flex-col items-center min-h-[80vh] justify-center mb-24">
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
             {/* Badge */}
             <motion.div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8"
@@ -433,6 +430,8 @@ export default function AuthPage() {
             </Card>
           </motion.div>
         )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {/* Footer */}
         <div className="absolute bottom-4 left-0 w-full text-center z-20">
