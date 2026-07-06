@@ -3,8 +3,9 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { AlertCircle, ArrowRight, Sparkles, User, Shield, Lock } from "lucide-react";
+import { AlertCircle, ArrowRight, Sparkles, User, Shield, Lock, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function AuthPage() {
   const { user, loading, loginAsGuest } = useAuth();
@@ -12,6 +13,7 @@ export default function AuthPage() {
   const [view, setView] = useState<'hero' | 'selection' | 'admin-login'>('hero');
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState("");
+  const { isInstallable, promptInstall } = usePWAInstall();
 
   // Navigate based on user type
   useEffect(() => {
@@ -62,6 +64,23 @@ export default function AuthPage() {
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-[20%] left-[50%] -translate-x-1/2 w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* PWA Install Button */}
+      {isInstallable && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-4 right-4 z-50"
+        >
+          <Button 
+            onClick={promptInstall}
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Install App
+          </Button>
+        </motion.div>
+      )}
 
       <AnimatePresence mode="wait">
         {view === 'hero' && (

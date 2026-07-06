@@ -21,6 +21,10 @@ import { useState, useEffect } from "react";
 import { TelemetryTracker } from "@/components/telemetry-tracker";
 import { Seo } from "@/components/seo";
 import { WorkoutProvider } from "@/context/workout-context";
+import { registerSW } from 'virtual:pwa-register';
+
+// Register service worker for PWA
+registerSW({ immediate: true });
 
 const withSeo = (Component: React.ComponentType<any>, seoProps: { title: string; description?: string; url?: string }) => {
   return (props: any) => (

@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Dumbbell, Plus, History, List, Play, Check, X, Search,
   Trophy, ChevronDown, ChevronUp, Zap, Clock, Weight,
-  BarChart3, Layers
+  BarChart3, Layers, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useWorkout } from "@/context/workout-context";
 import { useAuth } from "@/hooks/use-auth";
 import type { Exercise, WorkoutSession, WorkoutSessionWithSets, WorkoutTemplate, PersonalRecord } from "@shared/schema";
@@ -212,6 +213,7 @@ export default function WorkoutPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const filteredExercises = exercises.filter(e =>
     e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -328,41 +330,68 @@ export default function WorkoutPage() {
           </div>
         </AnimatePresence>
 
-        {/* Add exercise */}
-        <div className="pt-4 border-t border-white/10">
-          <h3 className="text-sm font-semibold mb-3 text-white/80">Add Exercise</h3>
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search exercises..."
-              className="pl-9 bg-white/5 border-white/10"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin">
-            {filteredExercises.map(exercise => (
-              <motion.button
-                key={exercise.id}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-3 text-left py-3 px-4 rounded-xl border border-white/5 bg-card/40 hover:border-primary/40 hover:bg-primary/5 transition-all"
-                onClick={() => {
-                  const existingSets = activeSets.filter(s => s.exerciseId === exercise.id);
-                  addSet(exercise.id, existingSets.length + 1);
-                  setSearchQuery("");
-                }}
-              >
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Dumbbell className="h-4 w-4 text-primary" />
+        {/* Add exercise Button */}
+        <div className="pt-4 mt-2">
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full h-12 text-blue-400 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 font-medium text-base rounded-xl">
+                <Plus className="w-5 h-5 mr-2" /> Add Exercise
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[96vh] bg-[#0a0a0a] border-t border-white/10 p-0 flex flex-col sm:max-w-md sm:mx-auto sm:rounded-t-2xl">
+              <div className="flex flex-row items-center justify-between border-b border-white/10 p-4 shrink-0">
+                <button onClick={() => setIsAddOpen(false)} className="text-blue-500 font-medium text-base hover:text-blue-400 transition-colors">Cancel</button>
+                <SheetTitle className="text-base font-semibold m-0 text-white">Add Exercise</SheetTitle>
+                <button className="text-blue-500 font-medium text-base hover:text-blue-400 transition-colors">Create</button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-hide">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search exercise"
+                    className="pl-10 bg-white/5 border-none h-10 text-base rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-white/20"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <div>
-                  <div className="text-sm font-medium">{exercise.name}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{exercise.muscleGroup} • {exercise.equipment}</div>
+                
+                <div className="flex gap-3">
+                  <Button variant="secondary" className="flex-1 bg-white/10 hover:bg-white/15 text-white border-none h-10 rounded-xl font-medium">All Equipment</Button>
+                  <Button variant="secondary" className="flex-1 bg-white/10 hover:bg-white/15 text-white border-none h-10 rounded-xl font-medium">All Muscles</Button>
                 </div>
-              </motion.button>
-            ))}
-          </div>
+                
+                <div className="mt-2">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2 px-1">Recent Exercises</h3>
+                  <div className="flex flex-col">
+                    {filteredExercises.map(exercise => (
+                      <div
+                        key={exercise.id}
+                        className="flex items-center gap-4 py-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors px-1"
+                        onClick={() => {
+                          const existingSets = activeSets.filter(s => s.exerciseId === exercise.id);
+                          addSet(exercise.id, existingSets.length + 1);
+                          setIsAddOpen(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center shrink-0">
+                          <Dumbbell className="h-7 w-7 text-neutral-800" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base font-medium text-white truncate">{exercise.name}</div>
+                          <div className="text-sm text-muted-foreground capitalize">{exercise.muscleGroup}</div>
+                        </div>
+                        <div className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center shrink-0">
+                          <Activity className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     );
