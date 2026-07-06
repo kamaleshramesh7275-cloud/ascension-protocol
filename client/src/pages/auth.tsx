@@ -105,8 +105,8 @@ export default function AuthPage() {
               <div className="space-y-4">
                 {[
                   { icon: Share, step: "1", text: "Tap the Share button", sub: "The square with an arrow, at the bottom of Safari" },
-                  { icon: MoreHorizontal, step: "2", text: "Scroll and tap "Add to Home Screen"", sub: "You may need to scroll down in the share sheet" },
-                  { icon: Plus, step: "3", text: "Tap "Add" to confirm", sub: "Ascensions will appear on your home screen" },
+                  { icon: MoreHorizontal, step: "2", text: "Scroll and tap 'Add to Home Screen'", sub: "You may need to scroll down in the share sheet" },
+                  { icon: Plus, step: "3", text: "Tap 'Add' to confirm", sub: "Ascensions will appear on your home screen" },
                 ].map(({ icon: Icon, step, text, sub }) => (
                   <div key={step} className="flex items-start gap-4 p-3 rounded-2xl bg-white/5">
                     <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
