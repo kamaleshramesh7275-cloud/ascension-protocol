@@ -72,7 +72,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden selection:bg-purple-500/30">
+    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-y-auto overflow-x-hidden selection:bg-purple-500/30 pb-12">
       {/* Background Glow Effects */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
@@ -135,9 +135,14 @@ export default function AuthPage() {
         {view === 'hero' && (
           <motion.div
             key="hero"
-            className="relative z-10 max-w-4xl mx-auto px-4 text-center flex flex-col items-center"
+            className="relative z-10 w-full px-4 flex flex-col items-center pt-20 pb-32"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Main Hero Container */}
+            <div className="max-w-4xl mx-auto text-center flex flex-col items-center min-h-[80vh] justify-center mb-24">
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
           >
@@ -230,7 +235,7 @@ export default function AuthPage() {
 
             {/* Features Section */}
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 w-full max-w-5xl"
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 w-full max-w-6xl mx-auto"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.6 }}
@@ -261,13 +266,56 @@ export default function AuthPage() {
                 </div>
               ))}
             </motion.div>
+            </div>
+
+            {/* How It Works Section */}
+            <div className="w-full max-w-6xl mx-auto mt-12 mb-32">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl md:text-5xl font-bold mb-4">The Ascension Protocol</h2>
+                <p className="text-gray-400 max-w-2xl mx-auto">Follow a proven system to level up across all domains of your life.</p>
+              </div>
+              
+              <div className="grid md:grid-cols-4 gap-8">
+                {[
+                  { step: "01", title: "Install the App", desc: "Keep it on your home screen for quick, frictionless access." },
+                  { step: "02", title: "Set Your Stats", desc: "Define your base metrics in health, wealth, intellect, and spirit." },
+                  { step: "03", title: "Complete Quests", desc: "Take on daily challenges and track your focus sessions." },
+                  { step: "04", title: "Ascend Tiers", desc: "Earn XP, rank up on the leaderboard, and unlock your true potential." }
+                ].map((item, i) => (
+                  <div key={i} className="relative p-6 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10">
+                    <span className="text-5xl font-black text-white/5 absolute -top-6 right-4">{item.step}</span>
+                    <h3 className="text-xl font-bold mt-4 mb-2">{item.title}</h3>
+                    <p className="text-sm text-gray-400">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Proof / Philosophy */}
+            <div className="w-full max-w-4xl mx-auto text-center bg-purple-900/10 border border-purple-500/20 rounded-3xl p-10 mb-32">
+              <h2 className="text-2xl md:text-4xl font-bold mb-6">Built for the Elite</h2>
+              <p className="text-gray-300 leading-relaxed mb-8">
+                Ascension is not just another habit tracker. It is a comprehensive protocol designed for those who refuse to settle for mediocrity. By combining proven behavioural psychology with RPG mechanics, you will find yourself addicted to your own self-improvement.
+              </p>
+              {!standalone && (
+                <Button
+                  onClick={isInstallable ? promptInstall : () => setShowIOSGuide(true)}
+                  size="lg"
+                  className="bg-white text-black hover:bg-gray-200 rounded-full px-8 py-6 font-bold"
+                >
+                  <Download className="mr-2 w-5 h-5" />
+                  Install Now
+                </Button>
+              )}
+            </div>
+
           </motion.div>
         )}
 
         {view === 'selection' && (
           <motion.div
             key="selection"
-            className="relative z-10 max-w-5xl mx-auto px-4 w-full flex flex-col items-center"
+            className="relative z-10 max-w-5xl mx-auto px-4 w-full flex flex-col items-center min-h-[80vh] justify-center pt-20"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -332,7 +380,7 @@ export default function AuthPage() {
         {view === 'admin-login' && (
           <motion.div
             key="admin-login"
-            className="relative z-10 max-w-md mx-auto px-4 w-full"
+            className="relative z-10 max-w-md mx-auto px-4 w-full min-h-[80vh] flex flex-col justify-center pt-20"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -385,10 +433,17 @@ export default function AuthPage() {
             </Card>
           </motion.div>
         )}
+      <AnimatePresence>
+        {/* Footer */}
+        <div className="absolute bottom-4 left-0 w-full text-center z-20">
+          <p className="text-xs text-zinc-500">
+            © {new Date().getFullYear()} All rights belong to Zingo Pvt Limited.
+          </p>
+        </div>
       </AnimatePresence>
 
       {/* Bottom Gradient Fade */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent pointer-events-none z-10" />
     </div>
   );
 }
