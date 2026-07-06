@@ -72,7 +72,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-y-auto overflow-x-hidden selection:bg-purple-500/30 pb-12">
+    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-y-auto overflow-x-hidden selection:bg-purple-500/30 pb-24 md:pb-12">
       {/* Background Glow Effects */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
@@ -142,7 +142,7 @@ export default function AuthPage() {
             transition={{ duration: 0.5 }}
           >
             {/* Main Hero Container */}
-            <div className="max-w-4xl mx-auto text-center flex flex-col items-center min-h-[80vh] justify-center mb-24">
+            <div className="max-w-4xl mx-auto text-center flex flex-col items-center min-h-[100dvh] md:min-h-[80vh] justify-center mb-12 md:mb-24">
             {/* Badge */}
             <motion.div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8"
@@ -177,7 +177,7 @@ export default function AuthPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, duration: 0.5 }}
-              className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center"
+              className="hidden md:flex flex-col sm:flex-row items-center gap-3 w-full justify-center"
             >
               {standalone ? (
                 <Button
@@ -232,7 +232,7 @@ export default function AuthPage() {
 
             {/* Features Section */}
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 w-full max-w-6xl mx-auto"
+              className="flex overflow-x-auto md:grid md:grid-cols-3 gap-4 md:gap-6 mt-12 md:mt-20 w-full max-w-6xl mx-auto snap-x snap-mandatory scrollbar-hide pb-4 md:pb-0 px-2"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.6 }}
@@ -254,7 +254,7 @@ export default function AuthPage() {
                   icon: Lock
                 }
               ].map((feature, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/10 transition-colors text-left">
+                <div key={i} className="min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/10 transition-colors text-left">
                   <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
                     <feature.icon className="w-6 h-6 text-purple-400" />
                   </div>
@@ -266,20 +266,20 @@ export default function AuthPage() {
             </div>
 
             {/* How It Works Section */}
-            <div className="w-full max-w-6xl mx-auto mt-12 mb-32">
-              <div className="text-center mb-16">
+            <div className="w-full max-w-6xl mx-auto mt-12 md:mt-24 mb-16 md:mb-32">
+              <div className="text-center mb-10 md:mb-16">
                 <h2 className="text-3xl md:text-5xl font-bold mb-4">The Ascension Protocol</h2>
-                <p className="text-gray-400 max-w-2xl mx-auto">Follow a proven system to level up across all domains of your life.</p>
+                <p className="text-gray-400 max-w-2xl mx-auto px-4">Follow a proven system to level up across all domains of your life.</p>
               </div>
               
-              <div className="grid md:grid-cols-4 gap-8">
+              <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-4 md:gap-8 snap-x snap-mandatory scrollbar-hide pb-4 px-2">
                 {[
                   { step: "01", title: "Install the App", desc: "Keep it on your home screen for quick, frictionless access." },
                   { step: "02", title: "Set Your Stats", desc: "Define your base metrics in health, wealth, intellect, and spirit." },
                   { step: "03", title: "Complete Quests", desc: "Take on daily challenges and track your focus sessions." },
                   { step: "04", title: "Ascend Tiers", desc: "Earn XP, rank up on the leaderboard, and unlock your true potential." }
                 ].map((item, i) => (
-                  <div key={i} className="relative p-6 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10">
+                  <div key={i} className="min-w-[75vw] md:min-w-0 snap-center flex-shrink-0 mt-4 md:mt-0 relative p-6 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/10">
                     <span className="text-5xl font-black text-white/5 absolute -top-6 right-4">{item.step}</span>
                     <h3 className="text-xl font-bold mt-4 mb-2">{item.title}</h3>
                     <p className="text-sm text-gray-400">{item.desc}</p>
@@ -289,7 +289,7 @@ export default function AuthPage() {
             </div>
 
             {/* Social Proof / Philosophy */}
-            <div className="w-full max-w-4xl mx-auto text-center bg-purple-900/10 border border-purple-500/20 rounded-3xl p-10 mb-32">
+            <div className="w-full max-w-4xl mx-auto text-center bg-purple-900/10 border border-purple-500/20 rounded-3xl p-8 md:p-10 mb-24 md:mb-32 mx-4 md:mx-auto">
               <h2 className="text-2xl md:text-4xl font-bold mb-6">Built for the Elite</h2>
               <p className="text-gray-300 leading-relaxed mb-8">
                 Ascension is not just another habit tracker. It is a comprehensive protocol designed for those who refuse to settle for mediocrity. By combining proven behavioural psychology with RPG mechanics, you will find yourself addicted to your own self-improvement.
@@ -439,6 +439,48 @@ export default function AuthPage() {
             © {new Date().getFullYear()} All rights belong to Zingo Pvt Limited.
           </p>
         </div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {/* Sticky Mobile Bottom CTA */}
+        {view === 'hero' && (
+          <motion.div 
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-lg border-t border-white/10 md:hidden z-50 flex gap-2"
+          >
+            {standalone ? (
+              <Button
+                onClick={() => setView('selection')}
+                size="lg"
+                className="bg-white text-black hover:bg-gray-200 transition-all duration-300 rounded-xl w-full text-base font-bold shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+              >
+                Begin Journey <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            ) : (
+              isInstallable ? (
+                <Button
+                  onClick={promptInstall}
+                  size="lg"
+                  className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 rounded-xl w-full text-base font-bold shadow-[0_0_15px_rgba(147,51,234,0.4)]"
+                >
+                  <Download className="mr-2 w-5 h-5" />
+                  Install App
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowIOSGuide(true)}
+                  size="lg"
+                  className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 rounded-xl w-full text-base font-bold shadow-[0_0_15px_rgba(147,51,234,0.4)]"
+                >
+                  <Smartphone className="mr-2 w-5 h-5" />
+                  Install App
+                </Button>
+              )
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Bottom Gradient Fade */}
