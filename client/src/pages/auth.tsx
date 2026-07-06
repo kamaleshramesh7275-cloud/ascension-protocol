@@ -3,9 +3,21 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { AlertCircle, ArrowRight, Sparkles, User, Shield, Lock, Download } from "lucide-react";
+import { AlertCircle, ArrowRight, Sparkles, User, Shield, Lock, Download, Share, MoreHorizontal, Plus, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+
+// Detect iOS device
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+}
+
+// Detect if already running as standalone PWA
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as any).standalone === true;
+}
 
 export default function AuthPage() {
   const { user, loading, loginAsGuest } = useAuth();
@@ -14,6 +26,10 @@ export default function AuthPage() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState("");
   const { isInstallable, promptInstall } = usePWAInstall();
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+
+  const ios = isIOS();
+  const standalone = isStandalone();
 
   // Navigate based on user type
   useEffect(() => {
@@ -21,9 +37,6 @@ export default function AuthPage() {
       if (user.isAnonymous) {
         setLocation("/account-selection");
       }
-      // Note: Admin users might not be "logged in" via useAuth if they use the password flow,
-      // but if they are logged in via Google and are admins, we could redirect them.
-      // For now, we rely on the password flow for admin access.
     }
   }, [user, loading, setLocation]);
 
@@ -65,22 +78,58 @@ export default function AuthPage() {
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-[20%] left-[50%] -translate-x-1/2 w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* PWA Install Button */}
-      {isInstallable && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-4 right-4 z-50"
-        >
-          <Button 
-            onClick={promptInstall}
-            className="bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Install App
-          </Button>
-        </motion.div>
-      )}
+      {/* iOS Install Guide Overlay */}
+      <AnimatePresence>
+        {showIOSGuide && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+              onClick={() => setShowIOSGuide(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 60, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 60, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900 border-t border-white/10 rounded-t-3xl p-6"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
+              <h3 className="text-xl font-bold text-white text-center mb-2">Install on iPhone / iPad</h3>
+              <p className="text-sm text-zinc-400 text-center mb-6">Follow these 3 steps in Safari:</p>
+
+              <div className="space-y-4">
+                {[
+                  { icon: Share, step: "1", text: "Tap the Share button", sub: "The square with an arrow, at the bottom of Safari" },
+                  { icon: MoreHorizontal, step: "2", text: "Scroll and tap "Add to Home Screen"", sub: "You may need to scroll down in the share sheet" },
+                  { icon: Plus, step: "3", text: "Tap "Add" to confirm", sub: "Ascensions will appear on your home screen" },
+                ].map(({ icon: Icon, step, text, sub }) => (
+                  <div key={step} className="flex items-start gap-4 p-3 rounded-2xl bg-white/5">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{text}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => setShowIOSGuide(false)}
+                className="w-full mt-6 rounded-2xl bg-white/10 hover:bg-white/20 text-white"
+              >
+                Got it
+              </Button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {view === 'hero' && (
@@ -113,7 +162,7 @@ export default function AuthPage() {
 
             {/* Subheading */}
             <motion.p
-              className="text-lg md:text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed"
+              className="text-lg md:text-xl text-gray-400 max-w-2xl mb-8 leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.8 }}
@@ -121,20 +170,64 @@ export default function AuthPage() {
               Gamify your self-improvement journey. Track your stats, complete quests, and ascend to new tiers of human potential.
             </motion.p>
 
-            {/* CTA Button */}
+            {/* CTA Buttons Row */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, duration: 0.5 }}
+              className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center"
             >
               <Button
                 onClick={() => setView('selection')}
                 size="lg"
-                className="bg-white text-black hover:bg-gray-200 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]"
+                className="bg-white text-black hover:bg-gray-200 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] w-full sm:w-auto"
               >
                 Begin Journey <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
+
+              {/* Install button — always visible, behaviour changes by platform */}
+              {!standalone && (
+                isInstallable ? (
+                  // Android / Desktop Chrome — native prompt
+                  <Button
+                    onClick={promptInstall}
+                    size="lg"
+                    variant="outline"
+                    className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
+                  >
+                    <Download className="mr-2 w-5 h-5" />
+                    Install App
+                  </Button>
+                ) : (
+                  // iOS or browser that hasn't fired the event yet — show guide
+                  <Button
+                    onClick={() => setShowIOSGuide(true)}
+                    size="lg"
+                    variant="outline"
+                    className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 hover:scale-105 transition-all duration-300 rounded-full px-8 py-6 text-lg font-semibold shadow-[0_0_15px_rgba(147,51,234,0.3)] w-full sm:w-auto"
+                  >
+                    <Smartphone className="mr-2 w-5 h-5" />
+                    Install App
+                  </Button>
+                )
+              )}
             </motion.div>
+
+            {/* Small install hint text */}
+            {!standalone && (
+              <motion.p
+                className="mt-4 text-xs text-zinc-600"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+              >
+                {isInstallable
+                  ? "Add to your home screen — no app store needed"
+                  : ios
+                    ? "Safari → Share → Add to Home Screen"
+                    : "Works on Android, iOS & Desktop"}
+              </motion.p>
+            )}
           </motion.div>
         )}
 
