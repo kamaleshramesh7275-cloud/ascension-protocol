@@ -66,6 +66,7 @@ import { FeatureLockOverlay } from "@/components/premium/feature-lock-overlay";
 import ReferralRedirect from "@/pages/referral-redirect";
 import ContactPage from "@/pages/contact";
 import WorkoutPage from "@/pages/workout";
+import GangsPage from "@/pages/gangs";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -247,6 +248,7 @@ function Router() {
         <Route path="/partners" component={() => <ProtectedRoute component={withSeo(PartnersPage, { title: "Partners", url: "/partners" })} />} />
         <Route path="/global-chat" component={() => <ProtectedRoute component={withSeo(GlobalChatPage, { title: "Global Chat" })} />} />
         <Route path="/store" component={() => <ProtectedRoute component={withSeo(StorePage, { title: "Store" })} />} />
+        <Route path="/gangs" component={() => <ProtectedRoute component={withSeo(GangsPage, { title: "Gangs" })} />} />
         <Route path="/contact" component={() => <ProtectedRoute component={withSeo(ContactPage, { title: "Contact", url: "/contact" })} />} />
         <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/ref/:code" component={ReferralRedirect} />

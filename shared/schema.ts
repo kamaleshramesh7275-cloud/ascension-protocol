@@ -1271,3 +1271,97 @@ export type InsertPersonalRecord = z.infer<typeof insertPersonalRecordSchema>;
 // Extended types for API responses
 export type WorkoutSetWithExercise = WorkoutSet & { exercise: Exercise };
 export type WorkoutSessionWithSets = WorkoutSession & { sets: WorkoutSetWithExercise[] };
+
+// ─── Gang System ──────────────────────────────────────────────────────────────
+
+// Gang Groups (The core gang entity)
+export const gangGroups = pgTable("gang_groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  icon: text("icon"), // Optional emoji or icon name
+  inviteCode: text("invite_code").notNull().unique(), // Short code for joining
+  leaderId: varchar("leader_id").notNull().references(() => users.id),
+  treasuryCoins: integer("treasury_coins").default(0).notNull(), // Pooled coins for hideout
+  hideoutLevel: integer("hideout_level").default(1).notNull(), // 1=Wooden, 2=Stone, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGangGroupSchema = z.object({
+  name: z.string().min(1),
+  icon: z.string().nullable().optional(),
+  inviteCode: z.string().min(1),
+  leaderId: z.string().min(1),
+});
+
+export type GangGroup = typeof gangGroups.$inferSelect;
+export type InsertGangGroup = z.infer<typeof insertGangGroupSchema>;
+
+// Gang Members
+export const gangMembers = pgTable("gang_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gangId: varchar("gang_id").notNull().references(() => gangGroups.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text("role").default("member").notNull(), // 'leader' or 'member'
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => ({
+  gangIdIdx: index("gang_members_gang_id_idx").on(table.gangId),
+  userIdIdx: index("gang_members_user_id_idx").on(table.userId),
+}));
+
+export const insertGangMemberSchema = z.object({
+  gangId: z.string().min(1),
+  userId: z.string().min(1),
+  role: z.string().optional(),
+});
+
+export type GangMember = typeof gangMembers.$inferSelect;
+export type InsertGangMember = z.infer<typeof insertGangMemberSchema>;
+
+// Gang Co-op Quests
+export const gangCoopQuests = pgTable("gang_coop_quests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gangId: varchar("gang_id").notNull().references(() => gangGroups.id, { onDelete: 'cascade' }),
+  objective: text("objective").notNull(),
+  targetValue: integer("target_value").notNull(),
+  currentValue: integer("current_value").default(0).notNull(),
+  rewardCoins: integer("reward_coins").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertGangCoopQuestSchema = z.object({
+  gangId: z.string().min(1),
+  objective: z.string().min(1),
+  targetValue: z.number().int(),
+  rewardCoins: z.number().int(),
+  expiresAt: z.date(),
+});
+
+export type GangCoopQuest = typeof gangCoopQuests.$inferSelect;
+export type InsertGangCoopQuest = z.infer<typeof insertGangCoopQuestSchema>;
+
+// Gang Duels
+export const gangDuels = pgTable("gang_duels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  challengerGangId: varchar("challenger_gang_id").notNull().references(() => gangGroups.id, { onDelete: 'cascade' }),
+  defenderGangId: varchar("defender_gang_id").notNull().references(() => gangGroups.id, { onDelete: 'cascade' }),
+  status: text("status").default("pending").notNull(), // 'pending', 'active', 'completed'
+  duelType: text("duel_type").notNull(), // 'xp', 'steps', etc.
+  challengerScore: integer("challenger_score").default(0).notNull(),
+  defenderScore: integer("defender_score").default(0).notNull(),
+  winnerId: varchar("winner_id").references(() => gangGroups.id),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGangDuelSchema = z.object({
+  challengerGangId: z.string().min(1),
+  defenderGangId: z.string().min(1),
+  duelType: z.string().min(1),
+  expiresAt: z.date(),
+  status: z.string().optional(),
+});
+
+export type GangDuel = typeof gangDuels.$inferSelect;
+export type InsertGangDuel = z.infer<typeof insertGangDuelSchema>;

@@ -56,6 +56,7 @@ import citadelRouter from "./routes/citadel";
 import { registerLocalAuthRoutes } from "./routes/local-auth";
 import pushRouter from "./routes/push";
 import workoutsRouter from "./routes/workouts";
+import gangsRouter from "./routes/gangs";
 import { initCronJobs } from "./services/cron";
 import { WebSocket, WebSocketServer } from "ws";
 
@@ -196,6 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/roadmap", roadmapRouter);
   app.use("/api/referrals", createReferralRouter(storage));
   app.use("/api/citadel", citadelRouter);
+  app.use("/api/gangs", gangsRouter);
 
   // --- Campaign Routes ---
   app.get("/api/campaigns", async (req, res) => {

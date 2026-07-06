@@ -118,7 +118,19 @@ import {
   type PersonalRecord,
   type InsertPersonalRecord,
   type WorkoutSessionWithSets,
-  type WorkoutSetWithExercise
+  type WorkoutSetWithExercise,
+  gangGroups,
+  type GangGroup,
+  type InsertGangGroup,
+  gangMembers,
+  type GangMember,
+  type InsertGangMember,
+  gangCoopQuests,
+  type GangCoopQuest,
+  type InsertGangCoopQuest,
+  gangDuels,
+  type GangDuel,
+  type InsertGangDuel
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, gte, lte, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -199,6 +211,22 @@ export interface IStorage {
   createGuild(guild: InsertGuild): Promise<Guild>;
   updateGuild(id: string, updates: Partial<Guild>): Promise<Guild>;
   deleteGuild(id: string): Promise<void>;
+
+  // Gang System operations
+  getGang(id: string): Promise<GangGroup | undefined>;
+  getGangByInviteCode(inviteCode: string): Promise<GangGroup | undefined>;
+  getUserGang(userId: string): Promise<GangGroup | undefined>;
+  getGangMembers(gangId: string): Promise<(GangMember & { user: User })[]>;
+  createGang(gang: InsertGangGroup): Promise<GangGroup>;
+  joinGang(gangId: string, userId: string, role?: string): Promise<GangMember>;
+  updateGang(id: string, updates: Partial<GangGroup>): Promise<GangGroup>;
+  createGangCoopQuest(quest: InsertGangCoopQuest): Promise<GangCoopQuest>;
+  getGangCoopQuest(gangId: string): Promise<GangCoopQuest | undefined>;
+  updateGangCoopQuest(id: string, updates: Partial<GangCoopQuest>): Promise<GangCoopQuest>;
+  createGangDuel(duel: InsertGangDuel): Promise<GangDuel>;
+  getGangDuels(gangId: string): Promise<GangDuel[]>;
+  updateGangDuel(id: string, updates: Partial<GangDuel>): Promise<GangDuel>;
+  matchmakeGangDuel(gangId: string): Promise<GangGroup | undefined>;
 
   // Guild Messages
   addGuildMessage(message: any): Promise<any>;
@@ -2637,7 +2665,85 @@ export class MemStorage implements IStorage {
     this.workoutTemplates.set(id, newTemplate);
     return newTemplate;
   }
+
+  // ─── Gang System ────────────────────────────────────────────────────
+  private gangGroups: Map<string, GangGroup> = new Map();
+  private gangMembersMap: Map<string, GangMember> = new Map();
+  private gangCoopQuests: Map<string, GangCoopQuest> = new Map();
+  private gangDuels: Map<string, GangDuel> = new Map();
+
+  async getGang(id: string): Promise<GangGroup | undefined> {
+    return this.gangGroups.get(id);
+  }
+  async getGangByInviteCode(inviteCode: string): Promise<GangGroup | undefined> {
+    return Array.from(this.gangGroups.values()).find(g => g.inviteCode === inviteCode);
+  }
+  async getUserGang(userId: string): Promise<GangGroup | undefined> {
+    const membership = Array.from(this.gangMembersMap.values()).find(m => m.userId === userId);
+    return membership ? this.gangGroups.get(membership.gangId) : undefined;
+  }
+  async getGangMembers(gangId: string): Promise<(GangMember & { user: User })[]> {
+    const members = Array.from(this.gangMembersMap.values()).filter(m => m.gangId === gangId);
+    return members.map(m => ({ ...m, user: this.users.get(m.userId)! })).filter(m => m.user);
+  }
+  async createGang(gang: InsertGangGroup): Promise<GangGroup> {
+    const id = randomUUID();
+    const newGang: GangGroup = { ...gang, id, icon: gang.icon || null, treasuryCoins: 0, hideoutLevel: 1, createdAt: new Date() };
+    this.gangGroups.set(id, newGang);
+    return newGang;
+  }
+  async joinGang(gangId: string, userId: string, role: string = "member"): Promise<GangMember> {
+    const id = randomUUID();
+    const member: GangMember = { id, gangId, userId, role, joinedAt: new Date() };
+    this.gangMembersMap.set(id, member);
+    return member;
+  }
+  async updateGang(id: string, updates: Partial<GangGroup>): Promise<GangGroup> {
+    const gang = this.gangGroups.get(id);
+    if (!gang) throw new Error("Gang not found");
+    const updated = { ...gang, ...updates };
+    this.gangGroups.set(id, updated);
+    return updated;
+  }
+  async createGangCoopQuest(quest: InsertGangCoopQuest): Promise<GangCoopQuest> {
+    const id = randomUUID();
+    const newQuest: GangCoopQuest = { ...quest, id, currentValue: 0, createdAt: new Date(), completedAt: null };
+    this.gangCoopQuests.set(id, newQuest);
+    return newQuest;
+  }
+  async getGangCoopQuest(gangId: string): Promise<GangCoopQuest | undefined> {
+    return Array.from(this.gangCoopQuests.values()).find(q => q.gangId === gangId && !q.completedAt);
+  }
+  async updateGangCoopQuest(id: string, updates: Partial<GangCoopQuest>): Promise<GangCoopQuest> {
+    const quest = this.gangCoopQuests.get(id);
+    if (!quest) throw new Error("Gang co-op quest not found");
+    const updated = { ...quest, ...updates };
+    this.gangCoopQuests.set(id, updated);
+    return updated;
+  }
+  async createGangDuel(duel: InsertGangDuel): Promise<GangDuel> {
+    const id = randomUUID();
+    const newDuel: GangDuel = { ...duel, id, status: duel.status || "pending", challengerScore: 0, defenderScore: 0, winnerId: null, createdAt: new Date() };
+    this.gangDuels.set(id, newDuel);
+    return newDuel;
+  }
+  async getGangDuels(gangId: string): Promise<GangDuel[]> {
+    return Array.from(this.gangDuels.values()).filter(d => d.challengerGangId === gangId || d.defenderGangId === gangId);
+  }
+  async updateGangDuel(id: string, updates: Partial<GangDuel>): Promise<GangDuel> {
+    const duel = this.gangDuels.get(id);
+    if (!duel) throw new Error("Gang duel not found");
+    const updated = { ...duel, ...updates };
+    this.gangDuels.set(id, updated);
+    return updated;
+  }
+  async matchmakeGangDuel(gangId: string): Promise<GangGroup | undefined> {
+    const allGangs = Array.from(this.gangGroups.values()).filter(g => g.id !== gangId);
+    if (allGangs.length === 0) return undefined;
+    return allGangs[Math.floor(Math.random() * allGangs.length)];
+  }
 }
+
 
 
 export class DatabaseStorage implements IStorage {
@@ -4484,7 +4590,103 @@ export class DatabaseStorage implements IStorage {
     const [newTemplate] = await db!.insert(workoutTemplates).values(template).returning();
     return newTemplate;
   }
+
+  // ─── Gang System (Database) ─────────────────────────────────────────
+
+  async getGang(id: string): Promise<GangGroup | undefined> {
+    const [gang] = await db!.select().from(gangGroups).where(eq(gangGroups.id, id));
+    return gang;
+  }
+
+  async getGangByInviteCode(inviteCode: string): Promise<GangGroup | undefined> {
+    const [gang] = await db!.select().from(gangGroups).where(eq(gangGroups.inviteCode, inviteCode));
+    return gang;
+  }
+
+  async getUserGang(userId: string): Promise<GangGroup | undefined> {
+    const [membership] = await db!.select().from(gangMembers).where(eq(gangMembers.userId, userId));
+    if (!membership) return undefined;
+    return this.getGang(membership.gangId);
+  }
+
+  async getGangMembers(gangId: string): Promise<(GangMember & { user: User })[]> {
+    const members = await db!.select().from(gangMembers).where(eq(gangMembers.gangId, gangId));
+    const enriched = await Promise.all(members.map(async (m) => {
+      const [user] = await db!.select().from(users).where(eq(users.id, m.userId));
+      return user ? { ...m, user: normalizeUser(user) } : null;
+    }));
+    return enriched.filter(Boolean) as (GangMember & { user: User })[];
+  }
+
+  async createGang(gang: InsertGangGroup): Promise<GangGroup> {
+    const [newGang] = await db!.insert(gangGroups).values(gang).returning();
+    return newGang;
+  }
+
+  async joinGang(gangId: string, userId: string, role: string = "member"): Promise<GangMember> {
+    const [member] = await db!.insert(gangMembers).values({ gangId, userId, role }).returning();
+    return member;
+  }
+
+  async updateGang(id: string, updates: Partial<GangGroup>): Promise<GangGroup> {
+    const [updated] = await db!.update(gangGroups).set(updates).where(eq(gangGroups.id, id)).returning();
+    return updated;
+  }
+
+  async createGangCoopQuest(quest: InsertGangCoopQuest): Promise<GangCoopQuest> {
+    const [newQuest] = await db!.insert(gangCoopQuests).values(quest).returning();
+    return newQuest;
+  }
+
+  async getGangCoopQuest(gangId: string): Promise<GangCoopQuest | undefined> {
+    const now = new Date();
+    const results = await db!.select().from(gangCoopQuests).where(
+      and(eq(gangCoopQuests.gangId, gangId), gt(gangCoopQuests.expiresAt, now))
+    ).orderBy(desc(gangCoopQuests.createdAt));
+    return results[0];
+  }
+
+  async updateGangCoopQuest(id: string, updates: Partial<GangCoopQuest>): Promise<GangCoopQuest> {
+    const [updated] = await db!.update(gangCoopQuests).set(updates).where(eq(gangCoopQuests.id, id)).returning();
+    return updated;
+  }
+
+  async createGangDuel(duel: InsertGangDuel): Promise<GangDuel> {
+    const [newDuel] = await db!.insert(gangDuels).values(duel).returning();
+    return newDuel;
+  }
+
+  async getGangDuels(gangId: string): Promise<GangDuel[]> {
+    return await db!.select().from(gangDuels).where(
+      or(eq(gangDuels.challengerGangId, gangId), eq(gangDuels.defenderGangId, gangId))
+    ).orderBy(desc(gangDuels.createdAt));
+  }
+
+  async updateGangDuel(id: string, updates: Partial<GangDuel>): Promise<GangDuel> {
+    const [updated] = await db!.update(gangDuels).set(updates).where(eq(gangDuels.id, id)).returning();
+    return updated;
+  }
+
+  async matchmakeGangDuel(gangId: string): Promise<GangGroup | undefined> {
+    // Find a gang of similar size that isn't currently in an active duel with us
+    const myMembers = await db!.select().from(gangMembers).where(eq(gangMembers.gangId, gangId));
+    const mySize = myMembers.length;
+
+    // Get all gangs except ours
+    const allGangs = await db!.select().from(gangGroups).where(ne(gangGroups.id, gangId));
+    if (allGangs.length === 0) return undefined;
+
+    // Score them by member count similarity
+    const scored = await Promise.all(allGangs.map(async (g) => {
+      const members = await db!.select().from(gangMembers).where(eq(gangMembers.gangId, g.id));
+      return { gang: g, sizeDiff: Math.abs(members.length - mySize) };
+    }));
+
+    scored.sort((a, b) => a.sizeDiff - b.sizeDiff);
+    return scored[0]?.gang;
+  }
 }
+
 
 let _storage: IStorage | null = null;
 export const getStorage = (): IStorage => {

@@ -8,9 +8,9 @@ import { getStorage } from "../storage";
 const router = Router();
 
 // Ensure DB is configured at module load to avoid repeating null-checks in routes
-if (!_db) {
-  throw new Error('DB not configured. Set DATABASE_URL or provide a database for the server.');
-}
+// if (!_db) {
+//   throw new Error('DB not configured. Set DATABASE_URL or provide a database for the server.');
+// }
 
 const db = _db;
 
