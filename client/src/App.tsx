@@ -21,10 +21,15 @@ import { useState, useEffect } from "react";
 import { TelemetryTracker } from "@/components/telemetry-tracker";
 import { Seo } from "@/components/seo";
 import { WorkoutProvider } from "@/context/workout-context";
-import { registerSW } from 'virtual:pwa-register';
 
-// Register service worker for PWA
-registerSW({ immediate: true });
+// Register service worker for PWA (manual, no external dependency)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // SW registration failed silently — app still works normally
+    });
+  });
+}
 
 const withSeo = (Component: React.ComponentType<any>, seoProps: { title: string; description?: string; url?: string }) => {
   return (props: any) => (
