@@ -50,6 +50,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
     );
 
     const handleMoreItemClick = (path: string) => {
+        if ('vibrate' in navigator) navigator.vibrate(10);
         setIsDrawerOpen(false);
         setLocation(path);
     };
@@ -167,7 +168,10 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                         return (
                             <button
                                 key={item.path}
-                                onClick={() => setLocation(item.path)}
+                                onClick={() => {
+                                    if ('vibrate' in navigator) navigator.vibrate(10);
+                                    setLocation(item.path);
+                                }}
                                 className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-xl transition-all duration-200 group focus:outline-none"
                                 style={{ minHeight: "52px", minWidth: "44px" }}
                                 aria-label={item.label}
@@ -232,7 +236,10 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
 
                     {/* More Button */}
                     <button
-                        onClick={() => setIsDrawerOpen(prev => !prev)}
+                        onClick={() => {
+                            if ('vibrate' in navigator) navigator.vibrate(10);
+                            setIsDrawerOpen(prev => !prev);
+                        }}
                         className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-xl transition-all duration-200 group focus:outline-none"
                         style={{ minHeight: "52px", minWidth: "44px" }}
                         aria-label="More navigation options"

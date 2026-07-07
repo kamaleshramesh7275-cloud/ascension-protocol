@@ -89,7 +89,7 @@ function TierWatcher() {
 function NotificationWatcher() {
   const { user } = useAuth();
   const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
-  const { toast } = useToast(); // Changed this line
+  const { toast } = useToast();
 
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
@@ -99,10 +99,20 @@ function NotificationWatcher() {
   });
 
   useEffect(() => {
-    if (!notifications || notifications.length === 0) return;
+    if (!notifications) return;
 
     // Get unread notifications
     const unreadNotifications = notifications.filter((n: any) => !n.read);
+    
+    // Web Badging API for unread notifications
+    if ('setAppBadge' in navigator) {
+      if (unreadNotifications.length > 0) {
+        navigator.setAppBadge(unreadNotifications.length).catch(console.error);
+      } else {
+        navigator.clearAppBadge().catch(console.error);
+      }
+    }
+
     if (unreadNotifications.length === 0) return;
 
     // Get the most recent notification
@@ -377,7 +387,18 @@ function AppContent() {
 
               {/* Page Content */}
               <div className="flex-1 overflow-y-auto pb-20 md:pb-4 scrollbar-hide" style={{ paddingBottom: 'max(5rem, calc(5rem + env(safe-area-inset-bottom, 0px)))' }} >
-                <Router />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={location}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="min-h-full"
+                  >
+                    <Router />
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Floating Focus Button (Desktop) */}

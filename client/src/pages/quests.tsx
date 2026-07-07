@@ -14,6 +14,7 @@ import { DailyProtocol } from "@/components/daily-protocol";
 import { useAnimations } from "@/context/animation-context";
 import { Progress } from "@/components/ui/progress";
 import { CustomHabitDialog } from "@/components/custom-habit-dialog";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 export default function QuestsPage() {
     const [activeTab, setActiveTab] = useState<"active" | "browse" | "habits">("active");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -40,6 +41,7 @@ export default function QuestsPage() {
             return apiRequest("POST", `/api/quests/${questId}/complete`, {});
         },
         onSuccess: (data, questId) => {
+            if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
             const quest = quests?.find(q => q.id === questId);
             if (quest) {
                 showQuestCompleted(quest.title, quest.rewardXP, quest.rewardCoins);
@@ -49,6 +51,7 @@ export default function QuestsPage() {
             toast({ title: "Quest Completed!", description: "You've earned XP and rewards!" });
         },
         onError: () => {
+            if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
             toast({ title: "Error", description: "Failed to complete quest.", variant: "destructive" });
         },
     });
@@ -134,7 +137,11 @@ export default function QuestsPage() {
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-background">
+        <PullToRefresh onRefresh={async () => {
+            await queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
+            await queryClient.invalidateQueries({ queryKey: ["/api/user/active-campaign"] });
+        }}>
+        <div className="relative min-h-screen bg-background">
             {/* Ambient Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/grid-pattern.svg')] opacity-[0.03]" />
@@ -352,5 +359,6 @@ export default function QuestsPage() {
                 </Tabs>
             </div>
         </div>
+        </PullToRefresh>
     );
 }

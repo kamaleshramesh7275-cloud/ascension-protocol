@@ -56,6 +56,7 @@ export default function Dashboard() {
       return { previousUser, previousQuests };
     },
     onSuccess: (data) => {
+      if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
       // Update user with actual rewards
       queryClient.setQueryData<User>(["/api/user"], (old) => {
         if (!old) return old;
@@ -80,6 +81,7 @@ export default function Dashboard() {
       // queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
     },
     onError: (error: Error) => {
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
       toast({
         title: "Failed to complete quest",
         description: error.message,

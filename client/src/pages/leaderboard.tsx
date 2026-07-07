@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Trophy, Medal, Crown, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { PullToRefresh } from "@/components/pull-to-refresh";
+import { queryClient } from "@/lib/queryClient";
 
 export default function LeaderboardPage() {
     const { user: currentUser } = useAuth();
@@ -38,6 +40,9 @@ export default function LeaderboardPage() {
     };
 
     return (
+        <PullToRefresh onRefresh={async () => {
+            await queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+        }}>
         <div className="p-4 md:p-8 min-h-screen bg-background/50" data-tour="leaderboard-page">
             <motion.div
                 variants={container}
@@ -112,5 +117,6 @@ export default function LeaderboardPage() {
                 </Card>
             </motion.div>
         </div>
+        </PullToRefresh>
     );
 }
