@@ -5,7 +5,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Activity } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
@@ -21,15 +21,12 @@ import { useState, useEffect } from "react";
 import { TelemetryTracker } from "@/components/telemetry-tracker";
 import { Seo } from "@/components/seo";
 import { WorkoutProvider } from "@/context/workout-context";
+import { NetworkStatus } from "@/components/network-status";
+import { useSwUpdate } from "@/hooks/use-sw-update";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Register service worker for PWA (manual, no external dependency)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed silently — app still works normally
-    });
-  });
-}
+// Service worker is now registered by vite-plugin-pwa (via use-sw-update hook)
 
 const withSeo = (Component: React.ComponentType<any>, seoProps: { title: string; description?: string; url?: string }) => {
   return (props: any) => (
@@ -275,6 +272,52 @@ function Router() {
   );
 }
 
+// Toast component for service worker updates
+function SwUpdateToast() {
+  const { needRefresh, applyUpdate, dismissUpdate } = useSwUpdate();
+
+  return (
+    <AnimatePresence>
+      {needRefresh && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="fixed bottom-24 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[380px] z-[100] bg-card/95 backdrop-blur-xl border border-border rounded-2xl p-4 shadow-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <RefreshCw className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">New version available</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Refresh to get the latest features</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={dismissUpdate}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Later
+              </Button>
+              <Button
+                size="sm"
+                onClick={applyUpdate}
+                className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-4"
+              >
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
@@ -366,6 +409,8 @@ function App() {
                 <TelemetryTracker />
                 <TierWatcher />
                 <NotificationWatcher />
+                <NetworkStatus />
+                <SwUpdateToast />
                 <AppContent />
                 <Toaster />
               </WorkoutProvider>

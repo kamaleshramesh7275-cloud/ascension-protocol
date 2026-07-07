@@ -9,6 +9,27 @@ const TOKEN_STORAGE_KEY = "fcm_token";
 
 export type PermissionState = "default" | "granted" | "denied";
 
+/**
+ * Retry a function with exponential backoff.
+ * Attempts: 2s, 4s, 8s (3 tries total).
+ */
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastError = err;
+            if (attempt < maxRetries - 1) {
+                const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+                console.log(`[Push] Retry ${attempt + 1}/${maxRetries} in ${delay}ms...`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+        }
+    }
+    throw lastError;
+}
+
 export function usePushNotifications() {
     const [permission, setPermission] = useState<PermissionState>("default");
     const [isSupported, setIsSupported] = useState(false);
@@ -33,24 +54,28 @@ export function usePushNotifications() {
             const messaging = await getFCMMessaging();
             if (!messaging) return null;
 
-            // Ensure service worker is registered
-            const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+            // Get the active SW registration (from vite-plugin-pwa or fallback)
+            const swReg = await navigator.serviceWorker.ready;
 
-            const token = await getToken(messaging, {
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: swReg,
+            const token = await withRetry(async () => {
+                return await getToken(messaging, {
+                    vapidKey: VAPID_KEY,
+                    serviceWorkerRegistration: swReg,
+                });
             });
 
             if (token) {
-                // Save to our server
-                await apiRequest("POST", "/api/push/register", { token });
+                // Save to our server (also with retry)
+                await withRetry(async () => {
+                    await apiRequest("POST", "/api/push/register", { token });
+                });
                 localStorage.setItem(TOKEN_STORAGE_KEY, token);
                 console.log("[Push] FCM token registered");
             }
 
             return token;
         } catch (err) {
-            console.error("[Push] Failed to get FCM token:", err);
+            console.error("[Push] Failed to get FCM token after retries:", err);
             return null;
         }
     }, []);

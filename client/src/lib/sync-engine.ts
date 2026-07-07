@@ -14,12 +14,14 @@ const STORAGE_KEY = 'ascension_sync_queue';
 
 class SyncEngine {
     private queue: SyncEvent[] = [];
-    private timer: NodeJS.Timeout | null = null;
+    private timer: ReturnType<typeof setInterval> | null = null;
+    private isFlushing = false;
 
     constructor() {
         this.loadQueue();
         this.startTimer();
         this.setupExitHandlers();
+        this.setupOnlineHandler();
     }
 
     // Add event to queue and persist
@@ -27,6 +29,11 @@ class SyncEngine {
         this.queue.push(event);
         this.saveQueue();
         console.log("[SyncEngine] Event Queued:", event.type, "(Total:", this.queue.length, ")");
+
+        // If online and not already flushing, try immediate flush for responsiveness
+        if (navigator.onLine && !this.isFlushing && this.queue.length >= 5) {
+            this.flush("AUTO_BATCH");
+        }
     }
 
     // Load from localStorage on boot
@@ -37,6 +44,10 @@ class SyncEngine {
                 this.queue = JSON.parse(stored);
                 if (this.queue.length > 0) {
                     console.log("[SyncEngine] Restored", this.queue.length, "events from disk.");
+                    // Auto-flush restored events if online
+                    if (navigator.onLine) {
+                        setTimeout(() => this.flush("BOOT_RESTORE"), 2000);
+                    }
                 }
             }
         } catch (e) {
@@ -52,16 +63,35 @@ class SyncEngine {
     // Start the background timer
     private startTimer() {
         this.timer = setInterval(() => {
-            if (this.queue.length > 0) {
+            if (this.queue.length > 0 && navigator.onLine) {
                 this.flush("TIMER");
             }
         }, SYNC_INTERVAL);
     }
 
+    // Auto-flush when connectivity resumes
+    private setupOnlineHandler() {
+        window.addEventListener("online", () => {
+            if (this.queue.length > 0) {
+                console.log("[SyncEngine] Back online — flushing queued events...");
+                // Small delay to let network stabilize
+                setTimeout(() => this.flush("RECONNECT"), 1000);
+            }
+        });
+    }
+
     // Send data to server
     public async flush(reason: string = "MANUAL") {
         if (this.queue.length === 0) return;
+        if (this.isFlushing) return; // Prevent concurrent flushes
 
+        // Skip flush if offline (events stay queued for later)
+        if (!navigator.onLine) {
+            console.log("[SyncEngine] Offline — skipping flush, events remain queued.");
+            return;
+        }
+
+        this.isFlushing = true;
         const batch = [...this.queue];
         console.log(`[SyncEngine] Flushing ${batch.length} events (${reason})...`);
 
@@ -84,6 +114,8 @@ class SyncEngine {
             // Restore queue on failure
             this.queue = [...batch, ...this.queue];
             this.saveQueue();
+        } finally {
+            this.isFlushing = false;
         }
     }
 
@@ -91,6 +123,8 @@ class SyncEngine {
     private setupExitHandlers() {
         const handleExit = () => {
             if (this.queue.length === 0) return;
+            // Only attempt network send if online
+            if (!navigator.onLine) return;
 
             const payload = JSON.stringify({ events: this.queue });
             const blob = new Blob([payload], { type: 'application/json' });

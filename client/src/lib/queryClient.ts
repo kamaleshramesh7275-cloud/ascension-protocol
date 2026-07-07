@@ -1,6 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { auth } from "@/lib/firebase";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { get, set, del } from "idb-keyval";
 
 async function throwIfResNotOk(res: Response) {
@@ -84,28 +83,16 @@ export const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes global stale time
       gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours (for persistence)
       retry: false,
+      networkMode: "offlineFirst", // Serve from cache when offline instead of throwing
     },
     mutations: {
       retry: false,
+      networkMode: "offlineFirst",
     },
   },
 });
 
-// Create IDB Persister for offline storage
-export const persister = {
-  persistClient: async (client: QueryClient) => {
-    // We can't use sync storage for IDB, so we implement a custom async persister structure
-    // But @tanstack/react-query-persist-client handles the async nature.
-    // However, createSyncStoragePersister is for localStorage/sessionStorage. 
-    // For IDB, we create a simple object adhering to Persister interface.
-    // wait, for simplicity let's use a wrapper.
-  },
-  restoreClient: async () => {
-    // ...
-  }
-} as any;
-
-// Simple custom persister using idb-keyval
+// Simple custom persister using idb-keyval for IndexedDB-backed offline cache
 export const idbPersister = {
   persistClient: async (client: any) => {
     await set('reactQueryClient', client);
@@ -133,3 +120,4 @@ export const persisterOptions = {
   },
   maxAge: 1000 * 60 * 60 * 24, // 24 hours
 };
+

@@ -2,6 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   PWA NATIVE-FEEL POLISH
+   Makes the installed app feel like a native app
+   ============================================ */
+
+/* Prevent pull-to-refresh from hijacking scroll (conflicts with in-app scroll) */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Safe area insets for notched devices (iPhone X+, Dynamic Island, etc.) */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Remove tap highlight flash (iOS blue/grey flash on tap) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Disable text selection on interactive elements (native feel) */
+button, a, nav, [role="button"], [role="tab"], [role="menuitem"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Disable long-press context menus on interactive elements */
+button, a, nav, [role="button"], img.no-context {
+  -webkit-touch-callout: none;
+}
+
+/* Smooth momentum scrolling everywhere (older iOS devices) */
+.scrollbar-hide,
+[data-scroll-area],
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Standalone PWA: hide scrollbars for cleaner look */
+@media (display-mode: standalone) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0, 0, 0, .10);
