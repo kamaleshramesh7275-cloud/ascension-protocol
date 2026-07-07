@@ -26,7 +26,22 @@ export default defineConfig({
         // Runtime caching rules
         runtimeCaching: [
           {
-            // API calls — network first, fall back to cache
+            // Static Catalogs — StaleWhileRevalidate to drastically save on DB compute
+            urlPattern: /^https?:\/\/.*\/api\/(?:shop\/inventory|content|roadmap|guilds\/perks\/catalog).*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "static-catalog-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            // Other API calls — network first, fall back to cache
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
             handler: "NetworkFirst",
             options: {

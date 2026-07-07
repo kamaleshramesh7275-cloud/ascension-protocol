@@ -45,9 +45,19 @@ export default function StorePage() {
             }
             return res.json();
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/shop/inventory"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        onSuccess: (data) => {
+            // Optimistically update inventory with the new item
+            queryClient.setQueryData<UserItem[]>(["/api/shop/inventory"], (old) => {
+                if (!old) return [data.item];
+                return [...old, data.item];
+            });
+
+            // Optimistically update user's coin balance
+            queryClient.setQueryData<any>(["/api/user"], (old: any) => {
+                if (!old) return old;
+                return { ...old, coins: data.newBalance };
+            });
+
             toast({
                 title: "Purchase Successful!",
                 description: "Item added to your inventory.",

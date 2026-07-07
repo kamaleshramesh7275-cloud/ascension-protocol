@@ -94,8 +94,8 @@ function NotificationWatcher() {
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
     enabled: !!user,
-    refetchInterval: 300000, // Increased to 5m for ultra-aggressive conservation
-    staleTime: 300000,
+    refetchInterval: 3600000, // Reduced to 60m (rely on Push Notifications)
+    staleTime: 3600000,
   });
 
   useEffect(() => {

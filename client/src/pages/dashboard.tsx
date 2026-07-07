@@ -35,16 +35,49 @@ export default function Dashboard() {
       const res = await apiRequest("POST", `/api/quests/${questId}/complete`);
       return res.json();
     },
+    onMutate: async (questId) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["/api/user"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/quests"] });
+
+      // Snapshot the previous values
+      const previousUser = queryClient.getQueryData<User>(["/api/user"]);
+      const previousQuests = queryClient.getQueryData<Quest[]>(["/api/quests"]);
+
+      // Optimistically update quests
+      if (previousQuests) {
+        queryClient.setQueryData<Quest[]>(
+          ["/api/quests"],
+          previousQuests.map((q) => (q.id === questId ? { ...q, completed: true } : q))
+        );
+      }
+
+      // We don't know the exact reward yet, but we'll update it when the server responds
+      return { previousUser, previousQuests };
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      // Update user with actual rewards
+      queryClient.setQueryData<User>(["/api/user"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          xp: old.xp + data.quest.rewardXP,
+          coins: old.coins + data.quest.rewardCoins,
+        };
+      });
+
+      // We let the service worker sync activities in the background eventually
+      // queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
 
       toast({
         title: "Quest Completed!",
         description: `You earned ${data.quest.rewardXP} XP and ${data.quest.rewardCoins} coins!`,
         variant: "default",
       });
+    },
+    onSettled: () => {
+      // Optionally sync in the background without blocking the UI
+      // queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
     },
     onError: (error: Error) => {
       toast({
@@ -101,8 +134,9 @@ export default function Dashboard() {
       });
     },
     onSettled: () => {
-      // Refetch to sync with server
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // We rely on the optimistic update to save DB reads. 
+      // The Service Worker or full page reload will sync eventual consistency.
+      // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       setNewTodo("");
     }
   });
@@ -130,7 +164,8 @@ export default function Dashboard() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // We rely on the optimistic update to save DB reads.
+      // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
     }
   });
 
@@ -160,7 +195,8 @@ export default function Dashboard() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // We rely on the optimistic update to save DB reads.
+      // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
     }
   });
 
