@@ -221,7 +221,7 @@ export default function WorkoutPage() {
   );
 
   const handleStartEmpty = () => {
-    startWorkout({ userId: user!.id, name: "Empty Workout", startedAt: new Date() });
+    startWorkout({ userId: user?.id || "", name: "Empty Workout", startedAt: new Date() });
   };
 
   // ── Active Workout View ─────────────────────────────────────────────
@@ -260,7 +260,7 @@ export default function WorkoutPage() {
             </div>
             <div className="flex flex-col gap-2">
               <motion.div whileTap={{ scale: 0.95 }}>
-                <Button size="sm" onClick={finishWorkout} className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30">
+                <Button size="sm" onClick={() => finishWorkout()} className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30">
                   <Check className="w-4 h-4 mr-2" /> Finish
                 </Button>
               </motion.div>

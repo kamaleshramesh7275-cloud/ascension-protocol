@@ -168,16 +168,14 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
   // Only enforce onboarding for guests. Registered users should have completed it.
   // If a registered user has onboardingCompleted=false, it's likely a data glitch, so we let them through.
-  if (user.isAnonymous && onboardingCompleted === false && window.location.pathname !== "/onboarding") {
+  const isOnboardingPath = window.location.pathname === "/onboarding";
+  const needsOnboarding = user.isAnonymous && onboardingCompleted === false;
+
+  if (needsOnboarding && !isOnboardingPath) {
     return <Redirect to="/onboarding" />;
   }
 
-  if (onboardingCompleted && window.location.pathname === "/onboarding") {
-    return <Redirect to="/dashboard" />;
-  }
-
-  // If user is registered (not anonymous) and on onboarding page, redirect to dashboard
-  if (!user.isAnonymous && window.location.pathname === "/onboarding") {
+  if (!needsOnboarding && isOnboardingPath) {
     return <Redirect to="/dashboard" />;
   }
 
