@@ -198,4 +198,22 @@ router.post("/workouts/templates", async (req, res) => {
   }
 });
 
+// GET /api/workouts/exercises/:id/last-sets
+// Get the sets from the most recent session that included this exercise (for auto-fill)
+router.get("/workouts/exercises/:id/last-sets", async (req, res) => {
+  try {
+    const firebaseUid = req.headers["x-firebase-uid"] as string;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+
+    const storage = getStorage();
+    const user = await storage.getUserByFirebaseUid(firebaseUid);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+    const sets = await storage.getLastSetsForExercise(user.id, req.params.id);
+    res.json(sets);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

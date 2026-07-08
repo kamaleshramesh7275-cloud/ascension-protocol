@@ -377,6 +377,7 @@ export interface IStorage {
   getUserPersonalRecords(userId: string, exerciseId?: string): Promise<PersonalRecord[]>;
   getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]>;
   createWorkoutTemplate(template: InsertWorkoutTemplate): Promise<WorkoutTemplate>;
+  getLastSetsForExercise(userId: string, exerciseId: string): Promise<WorkoutSet[]>;
 }
 
 // Shop Items
@@ -2625,6 +2626,21 @@ export class MemStorage implements IStorage {
       .slice(0, limit);
   }
 
+  async getLastSetsForExercise(userId: string, exerciseId: string): Promise<WorkoutSet[]> {
+    // Find the most recent finished session that contains this exercise
+    const userSessions = Array.from(this.workoutSessions.values())
+      .filter(s => s.userId === userId && s.finishedAt)
+      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+
+    for (const session of userSessions) {
+      const setsForExercise = Array.from(this.workoutSets.values())
+        .filter(s => s.sessionId === session.id && s.exerciseId === exerciseId)
+        .sort((a, b) => a.setNumber - b.setNumber);
+      if (setsForExercise.length > 0) return setsForExercise;
+    }
+    return [];
+  }
+
   async getWorkoutSession(id: string): Promise<WorkoutSessionWithSets | undefined> {
     const session = this.workoutSessions.get(id);
     if (!session) return undefined;
@@ -4547,6 +4563,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(workoutSessions.userId, userId))
       .orderBy(desc(workoutSessions.startedAt))
       .limit(limit);
+  }
+
+  async getLastSetsForExercise(userId: string, exerciseId: string): Promise<WorkoutSet[]> {
+    // Find the most recent finished session for this user that has sets for this exercise
+    const recentSessions = await db!.select().from(workoutSessions)
+      .where(and(eq(workoutSessions.userId, userId), isNotNull(workoutSessions.finishedAt)))
+      .orderBy(desc(workoutSessions.startedAt))
+      .limit(20);
+
+    for (const session of recentSessions) {
+      const sets = await db!.select().from(workoutSets)
+        .where(and(eq(workoutSets.sessionId, session.id), eq(workoutSets.exerciseId, exerciseId)))
+        .orderBy(asc(workoutSets.setNumber));
+      if (sets.length > 0) return sets;
+    }
+    return [];
   }
 
   async getWorkoutSession(id: string): Promise<WorkoutSessionWithSets | undefined> {
