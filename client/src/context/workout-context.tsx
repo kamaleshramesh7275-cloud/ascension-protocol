@@ -35,6 +35,12 @@ type WorkoutContextType = {
   activeSession: WorkoutSession | null;
   isWorkoutActive: boolean;
   startWorkout: (session: InsertWorkoutSession) => Promise<void>;
+  startWorkoutWithExercises: (
+    sessionName: string,
+    templateId: string | null,
+    userId: string,
+    exercisesToLoad: Array<{ exerciseId: string; sets: any[]; note?: string }>
+  ) => Promise<void>;
   finishWorkout: (notes?: string) => Promise<void>;
   cancelWorkout: () => void;
 
@@ -165,6 +171,40 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const startWorkout = async (session: InsertWorkoutSession) => {
     await startMutation.mutateAsync(session);
   };
+
+  const startWorkoutWithExercises = useCallback(async (
+    sessionName: string,
+    templateId: string | null,
+    userId: string,
+    exercisesToLoad: Array<{ exerciseId: string; sets: any[]; note?: string }>
+  ) => {
+    const res = await apiRequest("POST", "/api/workouts/sessions", {
+      userId,
+      name: sessionName,
+      templateId,
+      startedAt: new Date(),
+    });
+    const session = await res.json();
+    setActiveSession(session);
+
+    const newBlocks: ExerciseBlock[] = exercisesToLoad.map((item, idx) => ({
+      exerciseId: item.exerciseId,
+      order: idx,
+      note: item.note || "",
+      sets: item.sets.map((s, sIdx) => ({
+        exerciseId: item.exerciseId,
+        setNumber: sIdx + 1,
+        weight: s.weight ? Number(s.weight) : undefined,
+        reps: s.reps ?? undefined,
+        durationSeconds: s.durationSeconds ?? undefined,
+        rpe: s.rpe ?? undefined,
+        setType: s.setType || "normal",
+        isHistorical: false,
+      }))
+    }));
+    setExerciseBlocks(newBlocks);
+    toast({ title: "Workout Started", description: `Active routine: ${sessionName}` });
+  }, [toast]);
 
   const finishWorkout = async (notes?: string) => {
     if (!activeSession) return;
@@ -321,6 +361,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         activeSession,
         isWorkoutActive: !!activeSession,
         startWorkout,
+        startWorkoutWithExercises,
         finishWorkout,
         cancelWorkout,
         activeSets,

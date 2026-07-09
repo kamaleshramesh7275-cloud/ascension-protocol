@@ -16,8 +16,11 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useWorkout, type ExerciseBlock, type SetType } from "@/context/workout-context";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import type { Exercise, WorkoutSession, WorkoutSessionWithSets, WorkoutTemplate, PersonalRecord, WorkoutSet } from "@shared/schema";
 import { format } from "date-fns";
+import { OfficialTemplatesDialog } from "@/components/official-templates-dialog";
+import { Sparkles } from "lucide-react";
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 
@@ -695,8 +698,9 @@ function AddExerciseSheet({
 
 export default function WorkoutPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const {
-    activeSession, isWorkoutActive, startWorkout, finishWorkout,
+    activeSession, isWorkoutActive, startWorkout, startWorkoutWithExercises, finishWorkout,
     cancelWorkout, exerciseBlocks, reorderBlocks, activeSets,
     restTimerSeconds, clearRestTimer,
   } = useWorkout();
@@ -710,6 +714,7 @@ export default function WorkoutPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isOfficialOpen, setIsOfficialOpen] = useState(false);
   const [showFinishNotes, setShowFinishNotes] = useState(false);
   const [finishNotes, setFinishNotes] = useState("");
 
@@ -913,11 +918,34 @@ export default function WorkoutPage() {
 
         {/* Templates */}
         <TabsContent value="templates" className="mt-6">
+          {/* Explore Official Library CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 relative rounded-2xl overflow-hidden border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-base">Official Workout Library</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Explore professionally designed routines for hypertrophy, strength, splits, and specific goals.</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setIsOfficialOpen(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs h-9 px-4 rounded-xl shadow-md shadow-emerald-500/10 shrink-0"
+            >
+              Browse Routines
+            </Button>
+          </motion.div>
+
           {templates.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 bg-card/20 rounded-2xl border border-white/5">
               <List className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-              <h3 className="text-base font-semibold text-white/70 mb-2">No templates yet</h3>
-              <p className="text-muted-foreground text-sm max-w-xs mx-auto">Create templates for routines like "Push Day" or "Full Body".</p>
+              <h3 className="text-base font-semibold text-white/70 mb-2">No custom templates yet</h3>
+              <p className="text-muted-foreground text-sm max-w-xs mx-auto">Create custom templates for routines like "Push Day" or "Full Body".</p>
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -925,7 +953,29 @@ export default function WorkoutPage() {
                 <motion.div key={template.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Card className="bg-card/50 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all">
                     <CardHeader><CardTitle className="text-base">{template.name}</CardTitle>{template.description && <CardDescription>{template.description}</CardDescription>}</CardHeader>
-                    <CardContent><Button className="w-full" variant="secondary"><Play className="w-4 h-4 mr-2" /> Start Template</Button></CardContent>
+                    <CardContent>
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={() => {
+                          if (isWorkoutActive) {
+                            toast({
+                              title: "Active Workout In Progress",
+                              description: "Please finish or cancel your current workout session first.",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          const exercisesToLoad = template.exerciseIds.map(eid => ({
+                            exerciseId: eid,
+                            sets: [{ reps: 10, setType: "normal" as SetType }]
+                          }));
+                          startWorkoutWithExercises(template.name, template.id, user!.id, exercisesToLoad);
+                        }}
+                      >
+                        <Play className="w-4 h-4 mr-2" /> Start Template
+                      </Button>
+                    </CardContent>
                   </Card>
                 </motion.div>
               ))}
@@ -962,6 +1012,7 @@ export default function WorkoutPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <OfficialTemplatesDialog open={isOfficialOpen} onOpenChange={setIsOfficialOpen} exercises={exercises} />
     </div>
   );
 }
