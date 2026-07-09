@@ -49,6 +49,41 @@ function useElapsedTime(startedAt?: Date): string {
   return elapsed;
 }
 
+// ── Exercise Image Helper ────────────────────────────────────────────────────────
+
+function getExerciseImageUrl(name: string): string | null {
+  if (!name) return null;
+  const normalized = name
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^\w-]/g, "");
+  return `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${normalized}/0.jpg`;
+}
+
+function ExerciseImage({ name, className = "h-8 w-8 rounded-xl" }: { name: string; className?: string }) {
+  const [error, setError] = useState(false);
+  const imageUrl = name ? getExerciseImageUrl(name) : null;
+
+  if (error || !imageUrl) {
+    return (
+      <div className={`bg-primary/10 flex items-center justify-center shrink-0 ${className}`}>
+        <Dumbbell className="h-1/2 w-1/2 text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`bg-white flex items-center justify-center shrink-0 overflow-hidden ${className}`}>
+      <img
+        src={imageUrl}
+        alt={name}
+        className="h-full w-full object-cover"
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+}
+
 // ── History session card ──────────────────────────────────────────────────────────
 
 function SessionCard({ session, exercises }: { session: WorkoutSession; exercises: Exercise[] }) {
@@ -106,7 +141,7 @@ function SessionCard({ session, exercises }: { session: WorkoutSession; exercise
                       return (
                         <div key={exId} className="rounded-xl bg-white/3 border border-white/5 overflow-hidden">
                           <div className="px-4 py-2.5 bg-white/5 flex items-center gap-2">
-                            <div className="h-5 w-5 rounded-md bg-primary/20 flex items-center justify-center"><Dumbbell className="h-3 w-3 text-primary" /></div>
+                            <ExerciseImage name={exercise.name} className="h-5 w-5 rounded-md" />
                             <span className="text-sm font-semibold">{exercise.name}</span>
                             <span className="text-xs text-muted-foreground capitalize ml-auto">{exercise.muscleGroup}</span>
                           </div>
@@ -377,9 +412,7 @@ function ExerciseBlockCard({
       {/* Block header */}
       <CardHeader className="py-3 px-4 flex flex-row items-center justify-between bg-white/5 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Dumbbell className="h-4 w-4 text-primary" />
-          </div>
+          <ExerciseImage name={exercise?.name ?? ""} className="h-8 w-8 rounded-xl" />
           <div className="min-w-0">
             <h3 className="text-sm font-semibold truncate">{exercise?.name ?? "Unknown Exercise"}</h3>
             <p className="text-[10px] text-muted-foreground capitalize">{exercise?.muscleGroup} • {exercise?.equipment}</p>
@@ -607,9 +640,7 @@ function AddExerciseSheet({
                   onClick={() => !isInSession && toggleSelect(exercise.id)}
                   className={`flex items-center gap-4 py-3 border-b border-white/5 cursor-pointer transition-colors px-1 rounded-xl ${isSelected ? "bg-emerald-500/5" : isInSession ? "opacity-40" : "hover:bg-white/5"}`}
                 >
-                  <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shrink-0">
-                    <Dumbbell className="h-6 w-6 text-neutral-800" />
-                  </div>
+                  <ExerciseImage name={exercise.name} className="h-12 w-12 rounded-full" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-white truncate">{exercise.name}</div>
                     <div className="text-xs text-muted-foreground capitalize">{exercise.muscleGroup} • {exercise.equipment}</div>
@@ -917,7 +948,7 @@ export default function WorkoutPage() {
                   <Card className="bg-card/50 backdrop-blur-sm border-white/10 hover:border-primary/30 transition-all cursor-pointer relative overflow-hidden">
                     {hasPR && <div className="absolute top-0 right-0 bg-amber-500/15 text-amber-400 text-[10px] font-bold px-2 py-1 rounded-bl-lg flex items-center gap-1"><Trophy className="w-3 h-3" /> PR</div>}
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0"><Dumbbell className="h-5 w-5" /></div>
+                      <ExerciseImage name={exercise.name} className="h-10 w-10 rounded-full" />
                       <div className="min-w-0">
                         <h4 className="font-semibold text-sm truncate">{exercise.name}</h4>
                         <p className="text-xs text-muted-foreground capitalize">{exercise.muscleGroup} • {exercise.equipment}</p>
