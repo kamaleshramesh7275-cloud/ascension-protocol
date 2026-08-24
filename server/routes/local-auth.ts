@@ -31,7 +31,7 @@ const registerSchema = z.object({
     phone: z.string().min(10, "Phone number must be at least 10 digits").optional(),
 });
 
-const googleRegisterSchema = registerSchema.omit({ password: true }).extend({
+const googleRegisterSchema = registerSchema.extend({
     firebaseUid: z.string().min(1, "Firebase UID is required"),
     email: z.string().email().optional(),
 });
@@ -225,7 +225,7 @@ export function registerLocalAuthRoutes(app: Express) {
             }
 
             const credentials = await storage.getCredentialsByUsername(data.username);
-            if (!credentials) return res.status(401).json({ error: "Invalid username or password" });
+            if (!credentials) return res.status(404).json({ error: "User not found" });
 
             const isValid = await bcrypt.compare(data.password, credentials.passwordHash);
             if (!isValid) return res.status(401).json({ error: "Invalid username or password" });
@@ -341,14 +341,15 @@ export function registerLocalAuthRoutes(app: Express) {
                 }
             }
 
-            // 3. Create User
+            // 4. Create User
             const user = await storage.createUser({
                 firebaseUid: data.firebaseUid,
                 name: data.username,
-                email: data.email || `${data.username}@google.ascension`,
+                email: data.email || `${data.username}@local.ascension`,
                 avatarUrl: null,
                 timezone: "UTC",
                 onboardingCompleted: false,
+                // referredBy: referrerId,
                 assessmentData: {
                     age: data.age,
                     weight: data.weight,
@@ -362,6 +363,10 @@ export function registerLocalAuthRoutes(app: Express) {
                 },
                 phone: data.phone || null,
             });
+
+            // 4.5 Save local credentials for the user
+            const passwordHash = await bcrypt.hash(data.password, 10);
+            await storage.saveCredentials(data.username, passwordHash, data.password, user.id);
 
             // 4. Create Referral Profile
             await storage.createReferralProfile({

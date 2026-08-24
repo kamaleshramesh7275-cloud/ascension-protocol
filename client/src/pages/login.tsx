@@ -32,6 +32,12 @@ export default function Login() {
                 body: JSON.stringify({ username, password }),
             });
 
+            if (response.status === 404) {
+                toast({ title: "Account not found", description: "Redirecting to registration..." });
+                setLocation("/register");
+                return;
+            }
+
             if (!response.ok) {
                 let errorMessage = `Login failed (${response.status})`;
                 try {
