@@ -31,6 +31,11 @@ const registerSchema = z.object({
     phone: z.string().min(10, "Phone number must be at least 10 digits").optional(),
 });
 
+const googleRegisterSchema = registerSchema.omit({ password: true }).extend({
+    firebaseUid: z.string().min(1, "Firebase UID is required"),
+    email: z.string().email().optional(),
+});
+
 const loginSchema = z.object({
     username: z.string().min(1, "Username is required"),
     password: z.string().min(1, "Password is required"),
@@ -285,5 +290,150 @@ export function registerLocalAuthRoutes(app: Express) {
         const storage = getStorage();
         const exists = await storage.usernameExists(req.params.username);
         res.json({ exists });
+    });
+
+    // Google Auth Login
+    app.post("/api/auth/login-google", async (req, res) => {
+        try {
+            const { firebaseUid } = req.body;
+            if (!firebaseUid) return res.status(400).json({ error: "Missing Firebase UID" });
+
+            const storage = getStorage();
+            const user = await storage.getUserByFirebaseUid(firebaseUid);
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
+        } catch (error) {
+            console.error("Google Login Error:", error);
+            res.status(500).json({ error: "Google login failed" });
+        }
+    });
+
+    // Google Auth Registration
+    app.post("/api/auth/register-google", async (req, res) => {
+        try {
+            console.log("[REGISTER-GOOGLE] Starting Google registration process");
+
+            const data = googleRegisterSchema.parse(req.body);
+            const storage = getStorage();
+
+            // 1. Check Username Existence
+            const exists = await storage.usernameExists(data.username);
+            if (exists) {
+                return res.status(400).json({ error: "Username already taken" });
+            }
+
+            // 2. Validate Referral Code (if provided)
+            let referrerId: string | undefined;
+            if (data.referralCode) {
+                try {
+                    const referrerProfile = await storage.getReferralProfileByCode(data.referralCode);
+                    if (!referrerProfile) {
+                        return res.status(400).json({ error: "Invalid referral code" });
+                    }
+                    referrerId = referrerProfile.userId;
+                    console.log(`[REGISTER-GOOGLE] Valid referral code: ${referrerProfile.referralCode}`);
+                } catch (refError) {
+                    console.error("[REGISTER-GOOGLE] Referral validation error:", refError);
+                    return res.status(400).json({ error: "Invalid referral code" });
+                }
+            }
+
+            // 3. Create User
+            const user = await storage.createUser({
+                firebaseUid: data.firebaseUid,
+                name: data.username,
+                email: data.email || `${data.username}@google.ascension`,
+                avatarUrl: null,
+                timezone: "UTC",
+                onboardingCompleted: false,
+                assessmentData: {
+                    age: data.age,
+                    weight: data.weight,
+                    height: data.height,
+                    pushups: data.pushups,
+                    pullups: data.pullups,
+                    intelligence: data.intelligence,
+                    willpower: data.willpower,
+                    vitality: data.vitality,
+                    charisma: data.charisma
+                },
+                phone: data.phone || null,
+            });
+
+            // 4. Create Referral Profile
+            await storage.createReferralProfile({
+                userId: user.id,
+                referralCode: data.username.toUpperCase(),
+                referredById: referrerId,
+                totalReferrals: 0,
+            });
+
+            // Handle Referrals logic
+            if (referrerId && referrerId === user.id) {
+                referrerId = undefined;
+            }
+            if (referrerId) {
+                const existingReferrals = await storage.getReferrals(referrerId);
+                const alreadyReferred = existingReferrals.some(r => r.referredUserId === user.id);
+                if (!alreadyReferred) {
+                    await storage.createReferral({ referrerId, referredUserId: user.id, status: "pending" });
+                    const referrerUser = await storage.getUser(referrerId);
+                    if (referrerUser) {
+                        await storage.createNotification({
+                            userId: referrerId,
+                            type: "achievement",
+                            title: "New Referral! 🔗",
+                            message: `${data.username} joined via your link! You'll earn +200 coins when they complete their first quest.`,
+                        });
+                    }
+                }
+            }
+
+            // 5. Calculate Stats
+            let strength = 10, agility = 10, stamina = 10, calculatedVitality = 10;
+
+            if (data.pushups > 50) strength += 30;
+            else if (data.pushups > 30) strength += 20;
+            else if (data.pushups > 10) strength += 10;
+
+            if (data.pullups > 10) strength += 10;
+            if (data.pullups > 15) agility += 30;
+            else if (data.pullups > 8) agility += 20;
+
+            if (data.pushups > 60) stamina += 30;
+            else if (data.pushups > 40) stamina += 20;
+
+            const bmi = data.weight / ((data.height / 100) ** 2);
+            if (bmi >= 18.5 && bmi <= 25) calculatedVitality += 20;
+            else if (bmi > 25 && bmi < 30) calculatedVitality += 10;
+            calculatedVitality += data.vitality;
+
+            const cap = (val: number) => Math.min(100, Math.max(1, val));
+
+            await storage.updateUser(user.id, {
+                strength: cap(strength),
+                agility: cap(agility),
+                stamina: cap(stamina),
+                vitality: cap(calculatedVitality),
+                intelligence: cap(data.intelligence * 4),
+                willpower: cap(data.willpower * 4),
+                charisma: cap(data.charisma * 4),
+                onboardingCompleted: true,
+                coins: referrerId ? 150 : 100,
+            });
+
+            console.log("[REGISTER-GOOGLE] Success:", user.id);
+            res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
+
+        } catch (error: any) {
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors[0].message });
+            }
+            console.error("[REGISTER-GOOGLE] Error:", error);
+            res.status(500).json({ error: error?.message || "Registration failed" });
+        }
     });
 }

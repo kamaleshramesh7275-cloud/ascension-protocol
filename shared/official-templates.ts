@@ -2,6 +2,7 @@ export interface TemplateExercise {
   name: string;
   sets: Array<{
     reps?: number;
+    durationSeconds?: number;
     weightPlaceholder?: string;
     rpe?: number; // Target RPE
     restSeconds?: number;

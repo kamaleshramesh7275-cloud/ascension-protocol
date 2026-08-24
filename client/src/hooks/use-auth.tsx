@@ -25,6 +25,7 @@ interface AuthContextType {
   error: Error | null;
   loginAsGuest: (name?: string) => Promise<void>;
   loginLocal: (username: string, userId: string, firebaseUid: string) => Promise<void>;
+  loginGoogle: (userId: string, firebaseUid: string, username?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -189,6 +190,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginGoogle = async (userId: string, firebaseUid: string, username?: string) => {
+    try {
+      setLoading(true);
+      
+      if (username) localStorage.setItem("username", username);
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("guest_uid", firebaseUid);
+
+      const res = await apiRequest("GET", "/api/user");
+      if (res.ok) {
+        const userData = await res.json();
+        setUser({
+          id: userData.id,
+          uid: userData.firebaseUid,
+          email: userData.email,
+          displayName: userData.name,
+          photoURL: userData.avatarUrl,
+          isAnonymous: false,
+          coins: userData.coins,
+          activeTitle: userData.activeTitle,
+          activeBadgeId: userData.activeBadgeId,
+          tier: userData.tier,
+          theme: userData.theme,
+          isTrial: userData.isTrial,
+          trialEndsAt: userData.trialEndsAt,
+          isPremium: userData.isPremium,
+        });
+        localStorage.setItem("username", userData.name);
+      }
+    } catch (error) {
+      console.error("Google login context error:", error);
+      setError(error instanceof Error ? error : new Error("Google login failed"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
     try {
       localStorage.removeItem("guest_uid");
@@ -202,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, loginAsGuest, loginLocal, signOut }}>
+    <AuthContext.Provider value={{ user, loading, error, loginAsGuest, loginLocal, loginGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
