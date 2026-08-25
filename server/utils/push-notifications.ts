@@ -13,7 +13,7 @@ let messagingInstance: any = null;
 async function getMessaging() {
     if (messagingInstance) return messagingInstance;
 
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!serviceAccountJson) {
         console.warn("[Push] FIREBASE_SERVICE_ACCOUNT_JSON not set — push notifications disabled");
         return null;

@@ -567,5 +567,91 @@ export const OFFICIAL_TEMPLATES: OfficialTemplate[] = [
         ]
       }
     ]
+  },
+  // ── ELITE TIER ─────────────────────────────────────────────────────────────
+  {
+    id: "elite_spartan_fullbody",
+    name: "Elite Spartan Full Body",
+    description: "An incredibly demanding full-body conditioning and strength circuit designed for maximum intensity.",
+    category: "split",
+    splitType: "Full Body",
+    difficulty: "elite",
+    durationMinutes: 75,
+    daysPerWeek: 3,
+    targetMuscles: ["full_body", "core"],
+    equipment: ["barbell", "bodyweight"],
+    goal: "athletic",
+    notes: "Only for the advanced. Manage your breathing and push through the pain barrier.",
+    exercises: [
+      {
+        name: "Barbell Deadlift",
+        sets: [
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 180 },
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 180 },
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 180 }
+        ]
+      },
+      {
+        name: "Muscle-Up (or Heavy Weighted Pull-up)",
+        sets: [
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 120 },
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 120 },
+          { setType: "normal", reps: 5, rpe: 9, restSeconds: 120 }
+        ]
+      },
+      {
+        name: "Barbell Push Press",
+        sets: [
+          { setType: "normal", reps: 8, rpe: 8, restSeconds: 120 },
+          { setType: "normal", reps: 8, rpe: 9, restSeconds: 120 },
+          { setType: "normal", reps: 8, rpe: 9, restSeconds: 120 }
+        ]
+      },
+      {
+        name: "Burpee Broad Jumps",
+        sets: [
+          { setType: "normal", reps: 15, rpe: 10, restSeconds: 90 },
+          { setType: "normal", reps: 15, rpe: 10, restSeconds: 90 }
+        ]
+      }
+    ]
+  },
+  {
+    id: "elite_powerbuilding",
+    name: "Elite Powerbuilding Focus",
+    description: "A hybrid routine blending extreme heavy singles with high-volume hypertrophy work.",
+    category: "goal",
+    difficulty: "elite",
+    durationMinutes: 90,
+    daysPerWeek: 4,
+    targetMuscles: ["legs", "back"],
+    equipment: ["barbell", "machine", "dumbbell"],
+    goal: "build_muscle",
+    notes: "Requires a solid foundation in powerlifting techniques.",
+    exercises: [
+      {
+        name: "Barbell Squat",
+        sets: [
+          { setType: "normal", reps: 3, rpe: 9, restSeconds: 180 },
+          { setType: "normal", reps: 2, rpe: 9, restSeconds: 180 },
+          { setType: "normal", reps: 1, rpe: 10, restSeconds: 240 }
+        ]
+      },
+      {
+        name: "Leg Press",
+        sets: [
+          { setType: "normal", reps: 20, rpe: 9, restSeconds: 120 },
+          { setType: "dropset", reps: 20, rpe: 10, restSeconds: 120 }
+        ]
+      },
+      {
+        name: "Barbell Row",
+        sets: [
+          { setType: "normal", reps: 8, rpe: 9, restSeconds: 120 },
+          { setType: "normal", reps: 8, rpe: 9, restSeconds: 120 },
+          { setType: "normal", reps: 8, rpe: 10, restSeconds: 120 }
+        ]
+      }
+    ]
   }
 ];

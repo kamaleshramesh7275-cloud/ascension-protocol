@@ -154,7 +154,6 @@ router.get("/:id/leaderboard", requireAuth, async (req: Request, res: Response) 
       .map(m => ({
         userId: m.userId,
         name: m.user.name,
-        avatar: m.user.avatar,
         xp: m.user.xp,
         level: m.user.level,
         streak: m.user.streak,

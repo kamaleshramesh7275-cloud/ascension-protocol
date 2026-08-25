@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -310,6 +311,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 px-4 sm:px-0" data-testid="page-dashboard">
+      <PWAInstallPrompt />
       {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

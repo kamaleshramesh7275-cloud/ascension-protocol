@@ -12,7 +12,7 @@ const router = Router();
 //   throw new Error('DB not configured. Set DATABASE_URL or provide a database for the server.');
 // }
 
-const db = _db;
+const db = _db!;
 
 // ─── BUILDING DEFINITIONS ────────────────────────────────────────────────────
 export const BUILDING_DEFS: Record<string, {

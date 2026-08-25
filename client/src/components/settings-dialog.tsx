@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface SettingsDialogProps {
     open: boolean;
@@ -34,9 +35,9 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const { signOut } = useAuth();
     const { toast } = useToast();
+    const { permission, token, requestPermission } = useNotifications();
 
     // Settings state
-    const [notifications, setNotifications] = useState(true);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [soundEffects, setSoundEffects] = useState(true);
     const [darkMode, setDarkMode] = useState(true);
@@ -95,8 +96,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     id: "push-notifications",
                     label: "Push Notifications",
                     description: "Receive notifications about your progress",
-                    checked: notifications,
-                    onChange: setNotifications,
+                    checked: permission === "granted" || token !== null,
+                    onChange: (checked: boolean) => {
+                        if (checked && permission !== "granted") {
+                            requestPermission();
+                        } else if (!checked) {
+                            toast({ title: "Note", description: "To fully disable push notifications, please change your browser settings.", variant: "default" });
+                        }
+                    },
                 },
                 {
                     id: "email-notifications",

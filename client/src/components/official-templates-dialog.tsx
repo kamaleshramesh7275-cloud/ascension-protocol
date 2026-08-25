@@ -102,7 +102,7 @@ export function OfficialTemplatesDialog({ open, onOpenChange, exercises }: Offic
       await startWorkoutWithExercises(
         template.name,
         null, // It is an official template, not a custom user template in DB yet
-        user!.id,
+        user!.id as string,
         mapped
       );
       onOpenChange(false);
@@ -196,6 +196,7 @@ export function OfficialTemplatesDialog({ open, onOpenChange, exercises }: Offic
                       <option value="beginner" className="bg-[#0a0a0a]">Beginner</option>
                       <option value="intermediate" className="bg-[#0a0a0a]">Intermediate</option>
                       <option value="advanced" className="bg-[#0a0a0a]">Advanced</option>
+                      <option value="elite" className="bg-[#0a0a0a] text-purple-400">Elite (Boss)</option>
                     </select>
 
                     <select
@@ -231,22 +232,33 @@ export function OfficialTemplatesDialog({ open, onOpenChange, exercises }: Offic
 
                 {/* Templates List */}
                 <div className="flex flex-col gap-3">
-                  {filteredTemplates.map(template => (
+                  {filteredTemplates.map(template => {
+                    const isElite = template.difficulty === "elite";
+                    return (
                     <motion.div
                       key={template.id}
                       onClick={() => setSelectedTemplate(template)}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
-                      className="bg-card/40 border border-white/10 hover:border-emerald-500/30 rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-colors relative overflow-hidden"
+                      className={`bg-card/40 border rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-colors relative overflow-hidden ${
+                        isElite 
+                          ? "border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:border-purple-500 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]" 
+                          : "border-white/10 hover:border-emerald-500/30"
+                      }`}
                     >
+                      {isElite && (
+                        <div className="absolute top-0 right-0 p-1.5 bg-gradient-to-bl from-purple-600 to-transparent rounded-bl-xl opacity-80">
+                          <Trophy className="w-4 h-4 text-white" />
+                        </div>
+                      )}
                       <div className="flex items-start justify-between">
                         <div className="flex flex-col">
-                          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">
+                          <span className={`text-xs font-semibold uppercase tracking-widest ${isElite ? 'text-purple-400' : 'text-emerald-400'}`}>
                             {template.splitType || template.category.replace("_", " ")}
                           </span>
-                          <h3 className="text-base font-bold text-white mt-0.5">{template.name}</h3>
+                          <h3 className="text-base font-bold text-white mt-0.5 pr-6">{template.name}</h3>
                         </div>
-                        <Badge className="bg-white/5 border-white/10 text-white/80 capitalize text-[10px]">
+                        <Badge className={`capitalize text-[10px] ${isElite ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-white/5 border-white/10 text-white/80'}`}>
                           {template.difficulty}
                         </Badge>
                       </div>
@@ -268,7 +280,7 @@ export function OfficialTemplatesDialog({ open, onOpenChange, exercises }: Offic
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                  )})}
 
                   {filteredTemplates.length === 0 && (
                     <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center">

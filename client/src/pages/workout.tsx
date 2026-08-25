@@ -524,8 +524,8 @@ function AddExerciseSheet({
   const activeExerciseIds = new Set(exerciseBlocks.map(b => b.exerciseId));
 
   // Derive filter options from exercises
-  const muscleGroups = [...new Set(exercises.map(e => e.muscleGroup))].sort();
-  const equipmentTypes = [...new Set(exercises.map(e => e.equipment).filter(Boolean))].sort();
+  const muscleGroups = Array.from(new Set(exercises.map(e => e.muscleGroup))).sort();
+  const equipmentTypes = Array.from(new Set(exercises.map(e => e.equipment).filter(Boolean))).sort();
 
   const filteredExercises = exercises.filter(e => {
     const matchesSearch = !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.muscleGroup.toLowerCase().includes(searchQuery.toLowerCase());
@@ -724,7 +724,7 @@ export default function WorkoutPage() {
   );
 
   const handleStartEmpty = () => {
-    startWorkout({ userId: user!.id, name: "Empty Workout", startedAt: new Date() });
+    startWorkout({ userId: user!.id as string, name: "Empty Workout", startedAt: new Date() });
   };
 
   const handleFinish = () => {
@@ -970,7 +970,7 @@ export default function WorkoutPage() {
                             exerciseId: eid,
                             sets: [{ reps: 10, setType: "normal" as SetType }]
                           }));
-                          startWorkoutWithExercises(template.name, template.id, user!.id, exercisesToLoad);
+                          startWorkoutWithExercises(template.name, template.id, user!.id as string, exercisesToLoad);
                         }}
                       >
                         <Play className="w-4 h-4 mr-2" /> Start Template
