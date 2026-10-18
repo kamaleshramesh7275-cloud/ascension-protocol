@@ -26,10 +26,227 @@ function getTodayDateString(): string {
   return now.toISOString().split("T")[0];
 }
 
+// ─── Dynamic Roadmap Trajectory & AI Decomposition Engine ─────────────────────
+
+export function decomposeGoalIntoMilestones(
+  targetOutcome: string,
+  targetDeadline: string,
+  gapMatrix: Record<string, number>,
+  primaryDistractor: string,
+  dailyDeepWorkHours: number,
+  weeklyTargetHours: number
+) {
+  const deadlineDate = new Date(targetDeadline);
+  const now = Date.now();
+  const totalWeeks = Math.max(4, Math.min(24, Math.ceil((deadlineDate.getTime() - now) / (7 * 24 * 60 * 60 * 1000))));
+  const lowestDomain = Object.entries(gapMatrix || {}).sort(([, a], [, b]) => a - b)[0]?.[0] || "Deep Focus";
+  const outcomeLower = targetOutcome.toLowerCase();
+
+  let phase1Title = `Foundation & ${lowestDomain} Reconditioning`;
+  let phase1Deliverable = `Eliminate primary bottleneck in ${lowestDomain}. Lock daily ${dailyDeepWorkHours}h non-negotiable focus.`;
+
+  let phase2Title = "Execution Velocity & Defense Against Distraction";
+  let phase2Deliverable = `Neutralize attention parasite: ${primaryDistractor}. Produce first validated milestone artifact.`;
+
+  let phase3Title = "High-Leverage Breakthrough";
+  let phase3Deliverable = `Demonstrate technical mastery under pressure. Complete 85% of target outcome criteria.`;
+
+  let phase4Title = "Final Target Realization & Ascension";
+  let phase4Deliverable = `Execute full target outcome without compromise: ${targetOutcome}`;
+
+  // Software / Tech / Distributed Systems / Coding / AI
+  if (/code|coding|software|developer|engineer|system|distributed|react|rust|python|go|golang|aws|backend|frontend|fullstack|algorithm|leetcode|ai|machine learning/i.test(outcomeLower)) {
+    phase1Title = "Architecture Blueprint & Core Algorithmic Foundation";
+    phase1Deliverable = `Implement baseline system design, data schemas, and primary algorithms. Complete 100% of core dev environment setup.`;
+    phase2Title = "High-Throughput Module Build & Distraction Elimination";
+    phase2Deliverable = `Overcome ${primaryDistractor}. Ship core execution modules and write end-to-end integration tests.`;
+    phase3Title = "Production Hardening, Stress-Testing & Benchmarks";
+    phase3Deliverable = `Execute chaos/load testing under peak pressure. Optimize critical paths and complete 85% of production criteria.`;
+    phase4Title = "Production Deployment & Technical Mastery Defense";
+    phase4Deliverable = `Deploy fully hardened project to production and pass rigorous evaluation bar: ${targetOutcome}`;
+  } 
+  // Business / Startup / Revenue / Sales / Agency
+  else if (/business|startup|saas|agency|mrr|revenue|sales|client|market|launch|profit|funnel/i.test(outcomeLower)) {
+    phase1Title = "Value Proposition, ICP Validation & Acquisition Foundation";
+    phase1Deliverable = `Define non-negotiable ICP (Ideal Customer Profile), draft core offer, and launch outbound lead generation engine.`;
+    phase2Title = "Conversion Funnel Sprint & Distraction Defense";
+    phase2Deliverable = `Shield against ${primaryDistractor}. Secure first wave of discovery conversations and ship minimum viable offering.`;
+    phase3Title = "Pipeline Velocity, Offer Optimization & Scaling";
+    phase3Deliverable = `Deliver on active client promises, optimize sales economics, and hit 80% of revenue trajectory.`;
+    phase4Title = "Target Revenue Realization & Operational Flywheel";
+    phase4Deliverable = `Lock in recurring deals and achieve ultimate strategic revenue victory: ${targetOutcome}`;
+  }
+  // Fitness / Athletic / Weight / Health
+  else if (/weight|fitness|gym|muscle|marathon|run|lift|fat|workout|health|diet|body/i.test(outcomeLower)) {
+    phase1Title = "Neuromuscular Reconditioning & Nutrition Baseline Floor";
+    phase1Deliverable = `Eliminate missed sessions. Establish strict caloric/protein floor and log unbroken 14-day training attendance.`;
+    phase2Title = "Progressive Overload & Defense Against Sedentary Relapse";
+    phase2Deliverable = `Overcome fatigue excuses and ${primaryDistractor}. Hit 10% progressive overload or mileage increase.`;
+    phase3Title = "Threshold Capacity Surge & High-Intensity Hardening";
+    phase3Deliverable = `Surpass previous plateau marks. Reach 85% of peak benchmark strength/endurance metrics.`;
+    phase4Title = "Peak Benchmark Realization & Physical Transformation";
+    phase4Deliverable = `Execute final performance test and realize goal: ${targetOutcome}`;
+  }
+  // Academic / Exams / Certifications / Writing
+  else if (/exam|study|cfa|usmle|gmat|gre|bar|thesis|book|write|license|cert/i.test(outcomeLower)) {
+    phase1Title = "High-Yield Curriculum Ingestion & Core Knowledge Base";
+    phase1Deliverable = `Complete foundational syllabus review. Build active recall notes and establish daily ${dailyDeepWorkHours}h study lock.`;
+    phase2Title = "Spaced Retrieval Practice & Distraction Fortress";
+    phase2Deliverable = `Neutralize ${primaryDistractor}. Execute daily timed question sets and eliminate recurring error patterns.`;
+    phase3Title = "Full-Length Timed Simulations & Pressure Calibration";
+    phase3Deliverable = `Score in target percentile on consecutive full-length mocks under strict exam/deadline conditions.`;
+    phase4Title = "Final Objective Realization & High-Percentile Mastery";
+    phase4Deliverable = `Execute final exam or deliver complete manuscript: ${targetOutcome}`;
+  }
+
+  return [
+    {
+      id: "m-1",
+      weekNumber: 1,
+      title: phase1Title,
+      coreDeliverable: phase1Deliverable,
+      estimatedHours: weeklyTargetHours,
+      probabilityScore: 88,
+      completed: false,
+    },
+    {
+      id: "m-2",
+      weekNumber: Math.max(2, Math.ceil(totalWeeks * 0.35)),
+      title: phase2Title,
+      coreDeliverable: phase2Deliverable,
+      estimatedHours: weeklyTargetHours * 2,
+      probabilityScore: 79,
+      completed: false,
+    },
+    {
+      id: "m-3",
+      weekNumber: Math.max(3, Math.ceil(totalWeeks * 0.7)),
+      title: phase3Title,
+      coreDeliverable: phase3Deliverable,
+      estimatedHours: weeklyTargetHours * 3,
+      probabilityScore: 72,
+      completed: false,
+    },
+    {
+      id: "m-4",
+      weekNumber: totalWeeks,
+      title: phase4Title,
+      coreDeliverable: phase4Deliverable,
+      estimatedHours: weeklyTargetHours * 2,
+      probabilityScore: 68,
+      completed: false,
+    },
+  ];
+}
+
+async function getTodayFocusDensityPercent(userId: string): Promise<number> {
+  try {
+    const storage = getStorage();
+    const sessions = await storage.getFocusDensitySessions(userId, 10);
+    const today = getTodayDateString();
+    const todaySessions = sessions.filter(s => {
+      const sDate = s.startedAt ? new Date(s.startedAt).toISOString().split("T")[0] : "";
+      return sDate === today && s.status === "completed";
+    });
+    const totalMinutesToday = todaySessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
+    const avgQualityToday = todaySessions.length > 0
+      ? Math.round(todaySessions.reduce((acc, s) => acc + s.attentionQualityScore, 0) / todaySessions.length)
+      : 100;
+    const targetDailyMinutes = 180;
+    return Math.min(100, Math.round((totalMinutesToday / targetDailyMinutes) * (avgQualityToday / 100) * 100));
+  } catch (e) {
+    return 0;
+  }
+}
+
+export function computeRoadmapTrajectory(
+  profile: any,
+  disciplineScore: any,
+  todayDensityPercent: number = 0
+) {
+  const milestones = profile?.roadmapMilestones || [];
+  const currentIdx = profile?.currentMilestoneIndex || 0;
+  const score = disciplineScore?.score ?? 700;
+  const streak = disciplineScore?.currentStreak ?? 0;
+  const breaches = disciplineScore?.totalBreaches ?? 0;
+
+  // Calculate Velocity Factor
+  let velocityIndex = 1.0;
+  velocityIndex += (score - 700) / 750;
+  velocityIndex += Math.min(0.25, streak * 0.02);
+  velocityIndex -= Math.min(0.35, breaches * 0.06);
+  if (todayDensityPercent >= 70) {
+    velocityIndex += 0.08;
+  }
+  velocityIndex = Math.max(0.45, Math.min(1.85, Number(velocityIndex.toFixed(2))));
+
+  // Trajectory Status
+  let status: "AHEAD_OF_PACE" | "ON_TRACK" | "DRIFT_WARNING" | "CRITICAL_DRIFT" = "ON_TRACK";
+  let statusText = "On Track";
+  if (velocityIndex >= 1.15) {
+    status = "AHEAD_OF_PACE";
+    statusText = "Ahead of Schedule";
+  } else if (velocityIndex >= 0.90) {
+    status = "ON_TRACK";
+    statusText = "On Track";
+  } else if (velocityIndex >= 0.70) {
+    status = "DRIFT_WARNING";
+    statusText = "Execution Drift Detected";
+  } else {
+    status = "CRITICAL_DRIFT";
+    statusText = "Critical Trajectory Failure";
+  }
+
+  // Calculate dynamic projected target date
+  const deadlineDate = new Date(profile.targetDeadline);
+  const now = Date.now();
+  const totalDays = Math.max(7, Math.ceil((deadlineDate.getTime() - now) / (24 * 60 * 60 * 1000)));
+  const projectedDays = Math.max(1, Math.round(totalDays / velocityIndex));
+  const projectedDate = new Date(now + projectedDays * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const daysDelta = totalDays - projectedDays; // positive = ahead of schedule, negative = delayed
+
+  // Dynamic Probabilities for each milestone
+  const dynamicMilestones = milestones.map((m: any, idx: number) => {
+    const isCompleted = idx < currentIdx || m.completed;
+    if (isCompleted) {
+      return {
+        ...m,
+        completed: true,
+        probabilityScore: 100,
+        status: "COMPLETED",
+      };
+    }
+
+    const isCurrent = idx === currentIdx;
+    const baseProb = isCurrent ? 85 : Math.max(40, 75 - (idx - currentIdx) * 8);
+    const dynamicProb = Math.max(10, Math.min(99, Math.round(baseProb * (velocityIndex ** 0.8))));
+
+    return {
+      ...m,
+      completed: false,
+      probabilityScore: dynamicProb,
+      status: isCurrent ? "ACTIVE" : "UPCOMING",
+    };
+  });
+
+  return {
+    velocityIndex,
+    status,
+    statusText,
+    projectedDate,
+    targetDeadline: profile.targetDeadline,
+    daysDelta,
+    currentMilestoneIndex: currentIdx,
+    totalMilestones: milestones.length,
+    milestones: dynamicMilestones,
+    summary: `${statusText} (${velocityIndex}x Velocity) · ${daysDelta >= 0 ? `${daysDelta} days ahead` : `${Math.abs(daysDelta)} days delayed`}`,
+  };
+}
+
 // ─── 1. Execution Profile (Intelligence Intake Engine) ─────────────────────────
 
 // GET /api/execution-profile
-// Fetch user's 5-layer diagnostic profile & living roadmap
+// Fetch user's 5-layer diagnostic profile, living roadmap & dynamic trajectory
 router.get("/execution-profile", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
@@ -37,6 +254,8 @@ router.get("/execution-profile", requireAuth, async (req: Request, res: Response
 
     const profile = await storage.getExecutionProfile(user.id);
     const disciplineScore = await storage.getDisciplineScore(user.id);
+    const todayDensity = await getTodayFocusDensityPercent(user.id);
+    const trajectory = profile ? computeRoadmapTrajectory(profile, disciplineScore, todayDensity) : null;
 
     res.json({
       profile: profile || null,
@@ -51,6 +270,7 @@ router.get("/execution-profile", requireAuth, async (req: Request, res: Response
         highestScore: 700,
         focusDensityAverage: 0,
       },
+      trajectory,
     });
   } catch (error: any) {
     console.error("Error fetching execution profile:", error);
@@ -59,7 +279,7 @@ router.get("/execution-profile", requireAuth, async (req: Request, res: Response
 });
 
 // POST /api/execution-profile
-// Save or update 5-layer diagnostic intake
+// Save or update 5-layer diagnostic intake with smart dynamic milestone decomposition
 router.post("/execution-profile", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
@@ -70,51 +290,17 @@ router.post("/execution-profile", requireAuth, async (req: Request, res: Respons
       userId: user.id,
     });
 
-    // Auto-generate milestones if not supplied
+    // Auto-generate domain-tailored dynamic milestones if not supplied
     let milestones = parsed.roadmapMilestones;
     if (!milestones || milestones.length === 0) {
-      const deadlineDate = new Date(parsed.targetDeadline);
-      const totalWeeks = Math.max(4, Math.min(24, Math.ceil((deadlineDate.getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000))));
-      const lowestDomain = Object.entries(parsed.gapMatrix).sort(([, a], [, b]) => a - b)[0]?.[0] || "Core Foundation";
-
-      milestones = [
-        {
-          id: "m-1",
-          weekNumber: 1,
-          title: `Foundation & ${lowestDomain} Reconditioning`,
-          coreDeliverable: `Eliminate primary bottleneck in ${lowestDomain}. Lock daily ${parsed.commitmentCapacity.dailyDeepWorkHours}h non-negotiable focus.`,
-          estimatedHours: parsed.commitmentCapacity.weeklyTargetHours,
-          probabilityScore: 88,
-          completed: false,
-        },
-        {
-          id: "m-2",
-          weekNumber: Math.ceil(totalWeeks * 0.35),
-          title: "Execution Velocity & Defense Against Distraction",
-          coreDeliverable: `Overcome ${parsed.cognitiveFingerprint.primaryDistractor}. Produce first validated milestone artifact.`,
-          estimatedHours: parsed.commitmentCapacity.weeklyTargetHours * 2,
-          probabilityScore: 79,
-          completed: false,
-        },
-        {
-          id: "m-3",
-          weekNumber: Math.ceil(totalWeeks * 0.7),
-          title: "High-Leverage Breakthrough",
-          coreDeliverable: `Demonstrate mastery under pressure. Complete 85% of target outcome criteria: ${parsed.targetOutcome.substring(0, 50)}...`,
-          estimatedHours: parsed.commitmentCapacity.weeklyTargetHours * 3,
-          probabilityScore: 72,
-          completed: false,
-        },
-        {
-          id: "m-4",
-          weekNumber: totalWeeks,
-          title: "Final Target Realization & Ascension",
-          coreDeliverable: `Execute full target outcome without compromise: ${parsed.targetOutcome}`,
-          estimatedHours: parsed.commitmentCapacity.weeklyTargetHours * 2,
-          probabilityScore: 68,
-          completed: false,
-        },
-      ];
+      milestones = decomposeGoalIntoMilestones(
+        parsed.targetOutcome,
+        parsed.targetDeadline instanceof Date ? parsed.targetDeadline.toISOString() : String(parsed.targetDeadline),
+        parsed.gapMatrix,
+        parsed.cognitiveFingerprint.primaryDistractor,
+        parsed.commitmentCapacity.dailyDeepWorkHours,
+        parsed.commitmentCapacity.weeklyTargetHours
+      );
     }
 
     const savedProfile = await storage.upsertExecutionProfile({
@@ -123,7 +309,7 @@ router.post("/execution-profile", requireAuth, async (req: Request, res: Respons
     });
 
     // Ensure initial discipline score is established
-    await storage.getDisciplineScore(user.id);
+    const disciplineScore = await storage.getDisciplineScore(user.id);
 
     // Auto-generate today's single mission if user doesn't have one yet
     const today = getTodayDateString();
@@ -148,14 +334,171 @@ router.post("/execution-profile", requireAuth, async (req: Request, res: Respons
     // Mark onboarding complete on user record
     await storage.updateUser(user.id, { onboardingCompleted: true });
 
+    const todayDensity = await getTodayFocusDensityPercent(user.id);
+    const trajectory = computeRoadmapTrajectory(savedProfile, disciplineScore, todayDensity);
+
     res.json({
       success: true,
       profile: savedProfile,
       dailyMission: todayMission,
+      trajectory,
     });
   } catch (error: any) {
     console.error("Error saving execution profile:", error);
     res.status(400).json({ error: error.message || "Invalid execution profile data" });
+  }
+});
+
+// ─── Dynamic Roadmap API Endpoints ──────────────────────────────────────────
+
+// GET /api/protocol/roadmap/trajectory
+// Computes live velocity curve, drift status, and projected delivery date
+router.get("/protocol/roadmap/trajectory", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const storage = getStorage();
+
+    const profile = await storage.getExecutionProfile(user.id);
+    if (!profile) {
+      return res.status(404).json({ error: "Execution profile not calibrated yet" });
+    }
+
+    const disciplineScore = await storage.getDisciplineScore(user.id);
+    const todayDensity = await getTodayFocusDensityPercent(user.id);
+    const trajectory = computeRoadmapTrajectory(profile, disciplineScore, todayDensity);
+
+    res.json({ success: true, trajectory });
+  } catch (error: any) {
+    console.error("Error computing roadmap trajectory:", error);
+    res.status(500).json({ error: error.message || "Failed to compute roadmap trajectory" });
+  }
+});
+
+// POST /api/protocol/roadmap/recalibrate
+// Recalibrates milestone probabilities from live velocity and updates the stored profile
+router.post("/protocol/roadmap/recalibrate", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const storage = getStorage();
+
+    const profile = await storage.getExecutionProfile(user.id);
+    if (!profile) {
+      return res.status(404).json({ error: "Execution profile not calibrated yet" });
+    }
+
+    const disciplineScore = await storage.getDisciplineScore(user.id);
+    const todayDensity = await getTodayFocusDensityPercent(user.id);
+    const trajectory = computeRoadmapTrajectory(profile, disciplineScore, todayDensity);
+
+    // Persist dynamic probability scores into profile milestones
+    const updatedProfile = await storage.upsertExecutionProfile({
+      userId: user.id,
+      targetOutcome: profile.targetOutcome,
+      targetDeadline: profile.targetDeadline,
+      failureStatement: profile.failureStatement,
+      gapMatrix: profile.gapMatrix,
+      failureAutopsy: profile.failureAutopsy,
+      cognitiveFingerprint: profile.cognitiveFingerprint,
+      commitmentCapacity: profile.commitmentCapacity,
+      roadmapMilestones: trajectory.milestones,
+      currentMilestoneIndex: profile.currentMilestoneIndex,
+    });
+
+    res.json({
+      success: true,
+      message: "Roadmap trajectory recalibrated with live performance velocity",
+      profile: updatedProfile,
+      trajectory,
+    });
+  } catch (error: any) {
+    console.error("Error recalibrating roadmap:", error);
+    res.status(500).json({ error: error.message || "Failed to recalibrate roadmap" });
+  }
+});
+
+// POST /api/protocol/roadmap/advance
+// Marks active milestone completed and advances user to next phase
+router.post("/protocol/roadmap/advance", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const storage = getStorage();
+
+    const profile = await storage.getExecutionProfile(user.id);
+    if (!profile || !profile.roadmapMilestones || profile.roadmapMilestones.length === 0) {
+      return res.status(404).json({ error: "No roadmap milestones found to advance" });
+    }
+
+    const currentIdx = profile.currentMilestoneIndex || 0;
+    const nextIdx = Math.min(profile.roadmapMilestones.length - 1, currentIdx + 1);
+
+    // Update milestones marking completed up to currentIdx
+    const updatedMilestones = profile.roadmapMilestones.map((m: any, idx: number) => {
+      if (idx <= currentIdx) {
+        return { ...m, completed: true, probabilityScore: 100 };
+      }
+      return m;
+    });
+
+    // Reward discipline score for milestone conquest (+50 pts)
+    const currentScore = await storage.getDisciplineScore(user.id);
+    const newScore = Math.min(1000, (currentScore?.score ?? 700) + 50);
+    await storage.upsertDisciplineScore({
+      userId: user.id,
+      score: newScore,
+      highestScore: Math.max(currentScore?.highestScore ?? 700, newScore),
+    });
+
+    const updatedProfile = await storage.upsertExecutionProfile({
+      userId: user.id,
+      targetOutcome: profile.targetOutcome,
+      targetDeadline: profile.targetDeadline,
+      failureStatement: profile.failureStatement,
+      gapMatrix: profile.gapMatrix,
+      failureAutopsy: profile.failureAutopsy,
+      cognitiveFingerprint: profile.cognitiveFingerprint,
+      commitmentCapacity: profile.commitmentCapacity,
+      roadmapMilestones: updatedMilestones,
+      currentMilestoneIndex: nextIdx,
+    });
+
+    const disciplineScore = await storage.getDisciplineScore(user.id);
+    const todayDensity = await getTodayFocusDensityPercent(user.id);
+    const trajectory = computeRoadmapTrajectory(updatedProfile, disciplineScore, todayDensity);
+
+    res.json({
+      success: true,
+      message: `Milestone ${currentIdx + 1} locked as conquered. Advanced to Phase ${nextIdx + 1}.`,
+      profile: updatedProfile,
+      trajectory,
+    });
+  } catch (error: any) {
+    console.error("Error advancing roadmap milestone:", error);
+    res.status(500).json({ error: error.message || "Failed to advance milestone" });
+  }
+});
+
+// POST /api/protocol/roadmap/decompose
+// Domain-specific AI milestone decomposition preview endpoint
+router.post("/protocol/roadmap/decompose", async (req: Request, res: Response) => {
+  try {
+    const { targetOutcome, targetDeadline, gapMatrix, primaryDistractor, dailyDeepWorkHours, weeklyTargetHours } = req.body;
+    if (!targetOutcome) {
+      return res.status(400).json({ error: "targetOutcome is required" });
+    }
+
+    const milestones = decomposeGoalIntoMilestones(
+      targetOutcome,
+      targetDeadline || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      gapMatrix || {},
+      primaryDistractor || "Digital distractions",
+      dailyDeepWorkHours || 3,
+      weeklyTargetHours || 18
+    );
+
+    res.json({ success: true, milestones });
+  } catch (error: any) {
+    console.error("Error decomposing roadmap goal:", error);
+    res.status(500).json({ error: error.message || "Failed to decompose goal" });
   }
 });
 

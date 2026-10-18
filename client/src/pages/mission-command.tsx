@@ -34,7 +34,10 @@ import {
   FileCheck,
   RotateCcw,
   Compass,
-  Radio
+  Radio,
+  TrendingUp,
+  Trophy,
+  RefreshCw
 } from "lucide-react";
 
 export default function MissionCommand() {
@@ -48,10 +51,11 @@ export default function MissionCommand() {
   const [abortReason, setAbortReason] = useState<string>("");
   const [primingCompleted, setPrimingCompleted] = useState<boolean>(false);
 
-  // 1. Fetch Profile
+  // 1. Fetch Profile & Dynamic Trajectory
   const { data: profileData, isLoading: loadingProfile } = useQuery<{
     profile: any;
     disciplineScore: any;
+    trajectory?: any;
   }>({
     queryKey: ["/api/execution-profile"],
   });
@@ -135,10 +139,57 @@ export default function MissionCommand() {
     },
   });
 
+  // Dynamic Roadmap Mutations
+  const recalibrateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/protocol/roadmap/recalibrate");
+      return res.json();
+    },
+    onSuccess: (res: any) => {
+      audioEngine.playCommandLock();
+      queryClient.invalidateQueries({ queryKey: ["/api/execution-profile"] });
+      toast({
+        title: "TRAJECTORY RECALIBRATED",
+        description: res.trajectory?.summary || "Roadmap probabilities updated from live focus velocity.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Recalibration Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/protocol/roadmap/advance");
+      return res.json();
+    },
+    onSuccess: (res: any) => {
+      audioEngine.playCommandLock();
+      queryClient.invalidateQueries({ queryKey: ["/api/execution-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-mission"] });
+      toast({
+        title: "MILESTONE CONQUERED! 🏆",
+        description: res.message || "Phase advanced. Next level daily mission unlocked (+50 Discipline PTS).",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Advance Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const profile = profileData?.profile;
   const discipline = profileData?.disciplineScore || focusDensityData?.disciplineScore;
   const densityPercent = focusDensityData?.focusDensityPercent ?? 0;
   const totalMinutes = focusDensityData?.totalMinutesToday ?? 0;
+  const trajectory = profileData?.trajectory;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col p-4 sm:p-6 md:p-8 relative overflow-hidden">
@@ -434,45 +485,182 @@ export default function MissionCommand() {
           <PushEnforcerCard />
         </section>
 
-        {/* ─── LIVING ROADMAP PROGRESS ─── */}
+        {/* ─── DYNAMIC LIVING ROADMAP COMMAND ENCLAVE ─── */}
         {profile?.roadmapMilestones && profile.roadmapMilestones.length > 0 && (
-          <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Compass className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  LIVING ROADMAP & DEADLINE PROBABILITY
-                </h3>
+          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 backdrop-blur-md relative overflow-hidden">
+            {/* Ambient accent based on trajectory status */}
+            <div className={`absolute top-0 left-0 w-full h-1 ${
+              trajectory?.status === "AHEAD_OF_PACE"
+                ? "bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500"
+                : trajectory?.status === "ON_TRACK"
+                ? "bg-gradient-to-r from-cyan-500 via-amber-400 to-cyan-500"
+                : trajectory?.status === "DRIFT_WARNING"
+                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 animate-pulse"
+                : "bg-gradient-to-r from-red-600 via-rose-500 to-red-600 animate-pulse"
+            }`} />
+
+            {/* Header with Title, Status Pill & Recalibrate CTA */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                      LIVING ROADMAP & DYNAMIC TRAJECTORY
+                    </h3>
+                    {trajectory && (
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 ${
+                          trajectory.status === "AHEAD_OF_PACE"
+                            ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/40"
+                            : trajectory.status === "ON_TRACK"
+                            ? "border-cyan-500/40 text-cyan-400 bg-cyan-950/40"
+                            : trajectory.status === "DRIFT_WARNING"
+                            ? "border-amber-500/40 text-amber-400 bg-amber-950/40"
+                            : "border-red-500/50 text-red-400 bg-red-950/50"
+                        }`}
+                      >
+                        {trajectory.status === "AHEAD_OF_PACE" && "🟢 Ahead of Schedule"}
+                        {trajectory.status === "ON_TRACK" && "⚡ On Track"}
+                        {trajectory.status === "DRIFT_WARNING" && "⚠️ Velocity Drift"}
+                        {trajectory.status === "CRITICAL_DRIFT" && "🚨 Critical Drift"}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    Target: <span className="text-slate-200">{profile.targetOutcome}</span>
+                  </p>
+                </div>
               </div>
-              <Badge variant="outline" className="border-slate-800 text-slate-400 font-mono text-xs">
-                Milestone {profile.currentMilestoneIndex + 1} of {profile.roadmapMilestones.length}
-              </Badge>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => recalibrateMutation.mutate()}
+                  disabled={recalibrateMutation.isPending}
+                  className="border-slate-700 bg-slate-950 hover:bg-slate-800 text-xs font-mono text-slate-300 hover:text-white flex items-center gap-1.5 h-8"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${recalibrateMutation.isPending ? "animate-spin" : ""}`} />
+                  {recalibrateMutation.isPending ? "Recalibrating..." : "Recalibrate Trajectory"}
+                </Button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-              {profile.roadmapMilestones.map((m: any, idx: number) => {
+            {/* Dynamic Telemetry Velocity Bar */}
+            {trajectory && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 text-xs font-mono">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-500 uppercase">EXECUTION VELOCITY</div>
+                    <div className="text-sm font-bold text-white flex items-center gap-1">
+                      {trajectory.velocityIndex}x
+                      <span className={`text-[11px] ${trajectory.velocityIndex >= 1.0 ? "text-emerald-400" : "text-amber-400"}`}>
+                        {trajectory.velocityIndex >= 1.0 ? "Pacing High" : "Under Baseline"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-3">
+                  <div className="w-7 h-7 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-500 uppercase">PROJECTED COMPLETION</div>
+                    <div className="text-sm font-bold text-white">
+                      {trajectory.projectedDate}{" "}
+                      <span className={`text-[10px] font-semibold ${trajectory.daysDelta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        ({trajectory.daysDelta >= 0 ? `+${trajectory.daysDelta}d Ahead` : `${Math.abs(trajectory.daysDelta)}d Drift`})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-3">
+                  <div className="w-7 h-7 rounded-md bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                    <Trophy className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-500 uppercase">ACTIVE PHASE</div>
+                    <div className="text-sm font-bold text-purple-300">
+                      Phase {profile.currentMilestoneIndex + 1} of {profile.roadmapMilestones.length}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Dynamic Milestone Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-1">
+              {(trajectory?.milestones || profile.roadmapMilestones).map((m: any, idx: number) => {
                 const isCurrent = idx === profile.currentMilestoneIndex;
-                const isPast = idx < profile.currentMilestoneIndex;
+                const isPast = idx < profile.currentMilestoneIndex || m.completed;
 
                 return (
                   <div
                     key={m.id || idx}
-                    className={`p-3.5 rounded-xl border transition-all ${
+                    className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
                       isCurrent
-                        ? "bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10"
+                        ? "bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30"
                         : isPast
-                        ? "bg-slate-900 border-emerald-500/40 text-slate-400"
+                        ? "bg-emerald-950/20 border-emerald-500/40 text-slate-300"
                         : "bg-slate-950/50 border-slate-800/80 text-slate-500"
                     }`}
                   >
-                    <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
-                      <span className={isCurrent ? "text-amber-400 font-bold" : "text-slate-400"}>
-                        WEEK {m.weekNumber}
-                      </span>
-                      <span className="font-bold text-slate-300">{m.probabilityScore}%</span>
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] font-mono mb-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          isPast
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : isCurrent
+                            ? "bg-amber-500/20 text-amber-300"
+                            : "bg-slate-900 text-slate-500"
+                        }`}>
+                          {isPast ? "Conquered" : `Phase ${idx + 1}`}
+                        </span>
+                        <div className="flex items-center gap-1 font-bold">
+                          <span className={
+                            m.probabilityScore >= 80 ? "text-emerald-400" : m.probabilityScore >= 60 ? "text-amber-400" : "text-red-400"
+                          }>
+                            {m.probabilityScore}%
+                          </span>
+                          <span className="text-[9px] text-slate-500 font-normal">PROB</span>
+                        </div>
+                      </div>
+
+                      <div className="text-xs font-bold text-white leading-snug">{m.title}</div>
+                      <div className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                        {m.coreDeliverable}
+                      </div>
                     </div>
-                    <div className="text-xs font-semibold text-white line-clamp-1">{m.title}</div>
-                    <div className="text-[11px] text-slate-400 mt-1 line-clamp-2">{m.coreDeliverable}</div>
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-slate-500">Target: Week {m.weekNumber}</span>
+                      {isCurrent && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => advanceMutation.mutate()}
+                          disabled={advanceMutation.isPending}
+                          className="h-6 px-2 text-[10px] font-bold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 p-0"
+                        >
+                          {advanceMutation.isPending ? "Locking..." : "Advance Phase ➔"}
+                        </Button>
+                      )}
+                      {isPast && (
+                        <span className="text-emerald-400 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          VERIFIED
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
