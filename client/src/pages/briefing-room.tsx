@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,11 @@ import {
   ChevronRight,
   CheckCircle2,
   Activity,
-  Cpu
+  Cpu,
+  Sunrise,
+  Sun,
+  Quote,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -88,6 +92,15 @@ export default function BriefingRoom() {
   const [step, setStep] = useState<number>(1);
   const [data, setData] = useState<IntakeData>(DEFAULT_INTAKE);
   const [oathAccepted, setOathAccepted] = useState<boolean>(false);
+
+  // Pillar 1 Free Intelligence (Open-Meteo Chronobiology & Stoic Combat Doctrine)
+  const { data: intelData } = useQuery({
+    queryKey: ["/api/protocol/pillar-1-intelligence"],
+    staleTime: 1000 * 60 * 15,
+  });
+
+  const chronobiology = (intelData as any)?.chronobiology;
+  const doctrine = (intelData as any)?.doctrine;
 
   const totalSteps = 5;
   const progressPercent = Math.round((step / totalSteps) * 100);
@@ -442,6 +455,57 @@ export default function BriefingRoom() {
                 </div>
               </div>
 
+              {/* Chronobiology Telemetry & Auto-Calibration (Open-Meteo Free API) */}
+              {chronobiology && (
+                <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-950/40 to-slate-950 border border-cyan-500/40 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                        <Sunrise className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-cyan-300 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                          <Sun className="w-3.5 h-3.5 text-amber-400" />
+                          CHRONOBIOLOGY FOCUS RADAR
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono">
+                          Dawn: <span className="text-white font-bold">{chronobiology.sunrise}</span> • Phase: <span className="text-emerald-400 font-bold">{chronobiology.circadianPhase}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (chronobiology.peakFocusWindow) {
+                          const parts = chronobiology.peakFocusWindow.split(" - ");
+                          if (parts.length === 2) {
+                            setData((prev) => ({
+                              ...prev,
+                              peakFocusStart: parts[0].trim(),
+                              peakFocusEnd: parts[1].trim(),
+                            }));
+                            toast({
+                              title: "Peak Window Calibrated",
+                              description: `Synchronized with biological daylight peak: ${chronobiology.peakFocusWindow}`,
+                            });
+                          }
+                        }
+                      }}
+                      className="border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-mono text-xs flex items-center gap-1.5 shrink-0"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Auto-Calibrate Peak Window
+                    </Button>
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between border-t border-cyan-900/40 pt-2">
+                    <span>Algorithm Recommended Window:</span>
+                    <span className="text-amber-400 font-bold">{chronobiology.peakFocusWindow}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Peak Windows */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -560,6 +624,24 @@ export default function BriefingRoom() {
                   className="bg-slate-950/80 border-slate-700/80 text-white"
                 />
               </div>
+
+              {/* Daily Stoic Combat Doctrine (Free API) */}
+              {doctrine && (
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Quote className="w-3.5 h-3.5 text-cyan-400" />
+                      TACTICAL COMBAT DECREE // {doctrine.author.toUpperCase()}
+                    </span>
+                    <Badge variant="outline" className="border-slate-800 text-[9px] font-mono text-slate-400">
+                      {doctrine.tacticalCategory}
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 italic font-mono leading-relaxed">
+                    &ldquo;{doctrine.text}&rdquo;
+                  </p>
+                </div>
+              )}
 
               {/* The Iron Oath */}
               <div className="p-5 rounded-xl bg-gradient-to-br from-amber-500/10 via-slate-900 to-red-500/10 border border-amber-500/40 space-y-4">

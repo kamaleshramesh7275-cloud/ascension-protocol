@@ -216,6 +216,118 @@ router.get("/daily-mission", requireAuth, async (req: Request, res: Response) =>
   }
 });
 
+// ─── Free API Integration for Pillar 1 (Chronobiology & Stoic Combat Doctrine) ───
+
+const FALLBACK_DOCTRINES = [
+  { text: "You have power over your mind - not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius", tacticalCategory: "MENTAL FORTRESS // PROTOCOL ENFORCEMENT" },
+  { text: "There is nothing outside of yourself that can ever enable you to get better, stronger, richer, quicker, or smarter. Everything is within.", author: "Miyamoto Musashi", tacticalCategory: "INTERNAL LOCUS OF CONTROL" },
+  { text: "We suffer more often in imagination than in reality.", author: "Seneca", tacticalCategory: "COGNITIVE FRICTION ELIMINATION" },
+  { text: "No man is free who is not master of himself.", author: "Epictetus", tacticalCategory: "SOVEREIGN DISCIPLINE" },
+  { text: "In the midst of chaos, there is also opportunity.", author: "Sun Tzu", tacticalCategory: "PRESSURE MASTERY" },
+  { text: "First say to yourself what you would be; and then do what you have to do.", author: "Epictetus", tacticalCategory: "OATH REALIZATION" },
+  { text: "Waste no more time arguing about what a good man should be. Be one.", author: "Marcus Aurelius", tacticalCategory: "IRREVERSIBLE EXECUTION" },
+  { text: "If a man knows not to which port he sails, no wind is favorable.", author: "Seneca", tacticalCategory: "STRATEGIC CLARITY" }
+];
+
+// GET /api/protocol/pillar-1-intelligence
+// Free Hybrid API: Open-Meteo Chronobiology Engine + Stoic Combat Doctrine
+router.get("/protocol/pillar-1-intelligence", async (req: Request, res: Response) => {
+  try {
+    const lat = req.query.lat ? String(req.query.lat) : "13.08";
+    const lon = req.query.lon ? String(req.query.lon) : "80.27";
+
+    // 1. Fetch free Open-Meteo chronobiological daylight telemetry
+    let chronobiology = {
+      sunrise: "06:00",
+      sunset: "18:00",
+      peakFocusWindow: "08:15 - 11:30",
+      optimalDurationMinutes: 120,
+      temperature: 24,
+      isDay: true,
+      timezone: "auto",
+      circadianPhase: "Cortisol Awakening Peak (High Cognitive Readiness)"
+    };
+
+    try {
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&daily=sunrise,sunset&current=temperature_2m,is_day&timezone=auto`,
+        { signal: AbortSignal.timeout(3000) }
+      );
+      if (weatherRes.ok) {
+        const weatherData = await weatherRes.json();
+        const sunriseIso = weatherData.daily?.sunrise?.[0];
+        const sunsetIso = weatherData.daily?.sunset?.[0];
+        const sunriseTime = sunriseIso ? sunriseIso.split("T")[1] : "06:00";
+        const sunsetTime = sunsetIso ? sunsetIso.split("T")[1] : "18:00";
+
+        // Calculate peak window: 1.5h after sunrise to 4.5h after sunrise
+        const [sHour, sMin] = sunriseTime.split(":").map(Number);
+        const peakStartH = Math.min(23, sHour + 2);
+        const peakEndH = Math.min(23, sHour + 4);
+        const peakWindow = `${String(peakStartH).padStart(2, "0")}:15 - ${String(peakEndH).padStart(2, "0")}:30`;
+
+        chronobiology = {
+          sunrise: sunriseTime,
+          sunset: sunsetTime,
+          peakFocusWindow: peakWindow,
+          optimalDurationMinutes: 120,
+          temperature: weatherData.current?.temperature_2m ?? 24,
+          isDay: weatherData.current?.is_day === 1,
+          timezone: weatherData.timezone || "auto",
+          circadianPhase: weatherData.current?.is_day === 1 
+            ? "Cortisol Awakening Peak (High Cognitive Readiness)" 
+            : "Nocturnal Melatonin Phase (Restoration Protocol)"
+        };
+      }
+    } catch (e) {
+      console.warn("Open-Meteo free chronobiology API fallback applied:", e);
+    }
+
+    // 2. Fetch free Stoic Combat Doctrine API
+    let doctrine = FALLBACK_DOCTRINES[Math.floor(Math.random() * FALLBACK_DOCTRINES.length)];
+    try {
+      const quoteRes = await fetch("https://stoic-quotes.com/api/quote", {
+        signal: AbortSignal.timeout(2500)
+      });
+      if (quoteRes.ok) {
+        const quoteData = await quoteRes.json();
+        if (quoteData && quoteData.text) {
+          doctrine = {
+            text: quoteData.text,
+            author: quoteData.author || "Marcus Aurelius",
+            tacticalCategory: "MENTAL FORTRESS // PROTOCOL ENFORCEMENT"
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("Stoic Quotes API fallback to doctrine vault:", e);
+    }
+
+    res.setHeader("Cache-Control", "public, max-age=900"); // 15-minute cache
+    res.json({
+      success: true,
+      chronobiology,
+      doctrine
+    });
+  } catch (error: any) {
+    console.error("Error generating Pillar 1 intelligence:", error);
+    res.json({
+      success: true,
+      chronobiology: {
+        sunrise: "06:00",
+        sunset: "18:00",
+        peakFocusWindow: "08:30 - 11:30",
+        optimalDurationMinutes: 120,
+        temperature: 22,
+        isDay: true,
+        timezone: "auto",
+        circadianPhase: "Cortisol Awakening Peak (High Alertness)"
+      },
+      doctrine: FALLBACK_DOCTRINES[0]
+    });
+  }
+});
+
 // POST /api/daily-mission/:id/commit
 // Commit oath to today's single mission
 router.post("/daily-mission/:id/commit", requireAuth, async (req: Request, res: Response) => {
