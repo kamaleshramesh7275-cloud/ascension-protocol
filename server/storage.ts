@@ -130,7 +130,49 @@ import {
   type InsertGangCoopQuest,
   gangDuels,
   type GangDuel,
-  type InsertGangDuel
+  type InsertGangDuel,
+  executionProfiles,
+  type ExecutionProfile,
+  type InsertExecutionProfile,
+  dailyMissions,
+  type DailyMission,
+  type InsertDailyMission,
+  focusDensitySessions,
+  type FocusDensitySession,
+  type InsertFocusDensitySession,
+  disciplineBreaches,
+  type DisciplineBreach,
+  type InsertDisciplineBreach,
+  disciplineScores,
+  type DisciplineScore,
+  type InsertDisciplineScore,
+  commitmentContracts,
+  type CommitmentContract,
+  type InsertCommitmentContract,
+  eveningDebriefs,
+  type EveningDebrief,
+  type InsertEveningDebrief,
+  squadPacts,
+  type SquadPact,
+  type InsertSquadPact,
+  squadPactMembers,
+  type SquadPactMember,
+  type InsertSquadPactMember,
+  publicCommitments,
+  type PublicCommitment,
+  type InsertPublicCommitment,
+  performanceCourtAudits,
+  type PerformanceCourtAudit,
+  type InsertPerformanceCourtAudit,
+  midDayPulses,
+  type MidDayPulse,
+  type InsertMidDayPulse,
+  hallOfAscension,
+  type HallOfAscensionEntry,
+  type InsertHallOfAscensionEntry,
+  wallOfConsequence,
+  type WallOfConsequenceEntry,
+  type InsertWallOfConsequenceEntry
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, gte, lte, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -378,6 +420,65 @@ export interface IStorage {
   getWorkoutTemplates(userId: string): Promise<WorkoutTemplate[]>;
   createWorkoutTemplate(template: InsertWorkoutTemplate): Promise<WorkoutTemplate>;
   getLastSetsForExercise(userId: string, exerciseId: string): Promise<WorkoutSet[]>;
+
+  // ─── 4-Pillars Uncompromising Human Execution Engine Operations ───
+  // Execution Profile
+  getExecutionProfile(userId: string): Promise<ExecutionProfile | undefined>;
+  upsertExecutionProfile(profile: InsertExecutionProfile): Promise<ExecutionProfile>;
+
+  // Daily Missions
+  getDailyMission(userId: string, date: string): Promise<DailyMission | undefined>;
+  getDailyMissions(userId: string, limit?: number): Promise<DailyMission[]>;
+  createDailyMission(mission: InsertDailyMission): Promise<DailyMission>;
+  updateDailyMission(id: string, updates: Partial<DailyMission>): Promise<DailyMission>;
+
+  // Air-Gap Focus Density Sessions
+  getActiveFocusDensitySession(userId: string): Promise<FocusDensitySession | undefined>;
+  getFocusDensitySessions(userId: string, limit?: number): Promise<FocusDensitySession[]>;
+  createFocusDensitySession(session: InsertFocusDensitySession): Promise<FocusDensitySession>;
+  updateFocusDensitySession(id: string, updates: Partial<FocusDensitySession>): Promise<FocusDensitySession>;
+
+  // Discipline Breaches & Reputation Score
+  createDisciplineBreach(breach: InsertDisciplineBreach): Promise<DisciplineBreach>;
+  getDisciplineBreaches(userId: string, limit?: number): Promise<DisciplineBreach[]>;
+  getDisciplineScore(userId: string): Promise<DisciplineScore | undefined>;
+  upsertDisciplineScore(score: Partial<InsertDisciplineScore> & { userId: string }): Promise<DisciplineScore>;
+
+  // Commitment Contracts
+  getActiveCommitmentContract(userId: string): Promise<CommitmentContract | undefined>;
+  createCommitmentContract(contract: InsertCommitmentContract): Promise<CommitmentContract>;
+  updateCommitmentContract(id: string, updates: Partial<CommitmentContract>): Promise<CommitmentContract>;
+
+  // Evening Debriefs
+  getEveningDebrief(userId: string, date: string): Promise<EveningDebrief | undefined>;
+  createEveningDebrief(debrief: InsertEveningDebrief): Promise<EveningDebrief>;
+
+  // Phase 2: Squad Pacts Operations
+  getUserSquadPact(userId: string): Promise<{ pact: SquadPact; members: (SquadPactMember & { user: User })[] } | undefined>;
+  getSquadPactByInviteCode(code: string): Promise<SquadPact | undefined>;
+  createSquadPact(pact: InsertSquadPact): Promise<SquadPact>;
+  joinSquadPact(inviteCode: string, userId: string): Promise<SquadPactMember>;
+  updateSquadPactMemberLiveStatus(userId: string, status: string, sessionMinutes?: number): Promise<void>;
+  distributeSquadPactPool(pactId: string): Promise<any>;
+
+  // Phase 2: Public Commitments
+  getAllPublicCommitments(limit?: number): Promise<(PublicCommitment & { user: User })[]>;
+  getUserPublicCommitment(userId: string): Promise<PublicCommitment | undefined>;
+  createPublicCommitment(commitment: InsertPublicCommitment): Promise<PublicCommitment>;
+  addCommitmentWitness(commitmentId: string): Promise<PublicCommitment>;
+
+  // Phase 2: Performance Court
+  getPerformanceCourtAudits(userId: string): Promise<PerformanceCourtAudit[]>;
+  createPerformanceCourtAudit(audit: InsertPerformanceCourtAudit): Promise<PerformanceCourtAudit>;
+
+  // Apex Features: Mid-Day Pulse, Hall of Ascension, Wall of Consequence & Focus Leaderboard
+  getMidDayPulse(userId: string, date: string): Promise<MidDayPulse | undefined>;
+  createMidDayPulse(pulse: InsertMidDayPulse): Promise<MidDayPulse>;
+  getHallOfAscensionEntries(): Promise<HallOfAscensionEntry[]>;
+  createHallOfAscensionEntry(entry: InsertHallOfAscensionEntry): Promise<HallOfAscensionEntry>;
+  getWallOfConsequenceEntries(): Promise<WallOfConsequenceEntry[]>;
+  createWallOfConsequenceEntry(entry: InsertWallOfConsequenceEntry): Promise<WallOfConsequenceEntry>;
+  getFocusDensityLeaderboard(limit?: number): Promise<Array<{ user: User; focusDensityScore: number; verifiedMinutes: number; disciplineScore: number }>>;
 }
 
 // Shop Items
@@ -2758,6 +2859,631 @@ export class MemStorage implements IStorage {
     if (allGangs.length === 0) return undefined;
     return allGangs[Math.floor(Math.random() * allGangs.length)];
   }
+
+  // ─── 4-Pillars Uncompromising Human Execution Engine (MemStorage) ───
+  private executionProfilesMap: Map<string, ExecutionProfile> = new Map();
+  private dailyMissionsMap: Map<string, DailyMission> = new Map();
+  private focusDensitySessionsMap: Map<string, FocusDensitySession> = new Map();
+  private disciplineBreachesMap: Map<string, DisciplineBreach> = new Map();
+  private disciplineScoresMap: Map<string, DisciplineScore> = new Map();
+  private commitmentContractsMap: Map<string, CommitmentContract> = new Map();
+  private eveningDebriefsMap: Map<string, EveningDebrief> = new Map();
+
+  async getExecutionProfile(userId: string): Promise<ExecutionProfile | undefined> {
+    return Array.from(this.executionProfilesMap.values()).find(p => p.userId === userId);
+  }
+
+  async upsertExecutionProfile(profile: InsertExecutionProfile): Promise<ExecutionProfile> {
+    const existing = await this.getExecutionProfile(profile.userId);
+    const id = existing ? existing.id : randomUUID();
+    const targetDeadline = profile.targetDeadline instanceof Date ? profile.targetDeadline : new Date(profile.targetDeadline);
+    const newProfile: ExecutionProfile = {
+      id,
+      userId: profile.userId,
+      targetOutcome: profile.targetOutcome,
+      targetDeadline,
+      failureStatement: profile.failureStatement,
+      gapMatrix: profile.gapMatrix,
+      failureAutopsy: profile.failureAutopsy,
+      cognitiveFingerprint: profile.cognitiveFingerprint,
+      commitmentCapacity: profile.commitmentCapacity,
+      roadmapMilestones: profile.roadmapMilestones || existing?.roadmapMilestones || [],
+      currentMilestoneIndex: profile.currentMilestoneIndex ?? existing?.currentMilestoneIndex ?? 0,
+      createdAt: existing?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.executionProfilesMap.set(id, newProfile);
+    return newProfile;
+  }
+
+  async getDailyMission(userId: string, date: string): Promise<DailyMission | undefined> {
+    return Array.from(this.dailyMissionsMap.values()).find(m => m.userId === userId && m.date === date);
+  }
+
+  async getDailyMissions(userId: string, limit = 14): Promise<DailyMission[]> {
+    return Array.from(this.dailyMissionsMap.values())
+      .filter(m => m.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async createDailyMission(mission: InsertDailyMission): Promise<DailyMission> {
+    const id = randomUUID();
+    const newMission: DailyMission = {
+      id,
+      userId: mission.userId,
+      date: mission.date,
+      title: mission.title,
+      tacticalDeliverable: mission.tacticalDeliverable,
+      focusTier: mission.focusTier || "L1",
+      estimatedMinutes: mission.estimatedMinutes ?? 90,
+      executionWindow: mission.executionWindow,
+      primingRitual: mission.primingRitual,
+      failureCondition: mission.failureCondition,
+      proofTypeRequired: mission.proofTypeRequired || "structured_text",
+      status: mission.status || "pending",
+      committedAt: null,
+      startedAt: null,
+      completedAt: null,
+      abortedAt: null,
+      abortReason: mission.abortReason || null,
+      proofData: mission.proofData || null,
+      proofQualityScore: mission.proofQualityScore ?? null,
+      aiReviewFeedback: mission.aiReviewFeedback || null,
+      createdAt: new Date(),
+    };
+    this.dailyMissionsMap.set(id, newMission);
+    return newMission;
+  }
+
+  async updateDailyMission(id: string, updates: Partial<DailyMission>): Promise<DailyMission> {
+    const mission = this.dailyMissionsMap.get(id);
+    if (!mission) throw new Error("Daily mission not found");
+    const updated = { ...mission, ...updates };
+    this.dailyMissionsMap.set(id, updated);
+    return updated;
+  }
+
+  async getActiveFocusDensitySession(userId: string): Promise<FocusDensitySession | undefined> {
+    return Array.from(this.focusDensitySessionsMap.values())
+      .find(s => s.userId === userId && s.status === "active");
+  }
+
+  async getFocusDensitySessions(userId: string, limit = 20): Promise<FocusDensitySession[]> {
+    return Array.from(this.focusDensitySessionsMap.values())
+      .filter(s => s.userId === userId)
+      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())
+      .slice(0, limit);
+  }
+
+  async createFocusDensitySession(session: InsertFocusDensitySession): Promise<FocusDensitySession> {
+    const id = randomUUID();
+    const newSession: FocusDensitySession = {
+      id,
+      userId: session.userId,
+      missionId: session.missionId || null,
+      declarationOutput: session.declarationOutput,
+      obstaclePreMortem: session.obstaclePreMortem,
+      scheduledMinutes: session.scheduledMinutes,
+      actualMinutes: session.actualMinutes ?? 0,
+      status: session.status || "active",
+      oathAcknowledged: session.oathAcknowledged ?? true,
+      breachesCount: session.breachesCount ?? 0,
+      breachEvents: session.breachEvents || [],
+      attentionQualityScore: session.attentionQualityScore ?? 100,
+      proofSubmitted: session.proofSubmitted ?? false,
+      startedAt: new Date(),
+      endedAt: null,
+    };
+    this.focusDensitySessionsMap.set(id, newSession);
+    return newSession;
+  }
+
+  async updateFocusDensitySession(id: string, updates: Partial<FocusDensitySession>): Promise<FocusDensitySession> {
+    const session = this.focusDensitySessionsMap.get(id);
+    if (!session) throw new Error("Focus session not found");
+    const updated = { ...session, ...updates };
+    this.focusDensitySessionsMap.set(id, updated);
+    return updated;
+  }
+
+  async createDisciplineBreach(breach: InsertDisciplineBreach): Promise<DisciplineBreach> {
+    const id = randomUUID();
+    const newBreach: DisciplineBreach = {
+      id,
+      userId: breach.userId,
+      sessionId: breach.sessionId || null,
+      type: breach.type,
+      severity: breach.severity || "minor",
+      description: breach.description,
+      penaltyScore: breach.penaltyScore ?? 15,
+      createdAt: new Date(),
+    };
+    this.disciplineBreachesMap.set(id, newBreach);
+
+    // Apply penalty directly to user's discipline score
+    const currentScore = await this.getDisciplineScore(breach.userId);
+    const scoreVal = Math.max(0, (currentScore?.score ?? 700) - (breach.penaltyScore ?? 15));
+    await this.upsertDisciplineScore({
+      userId: breach.userId,
+      score: scoreVal,
+      totalBreaches: (currentScore?.totalBreaches ?? 0) + 1,
+    });
+
+    return newBreach;
+  }
+
+  async getDisciplineBreaches(userId: string, limit = 25): Promise<DisciplineBreach[]> {
+    return Array.from(this.disciplineBreachesMap.values())
+      .filter(b => b.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getDisciplineScore(userId: string): Promise<DisciplineScore | undefined> {
+    let score = Array.from(this.disciplineScoresMap.values()).find(s => s.userId === userId);
+    if (!score) {
+      score = {
+        id: randomUUID(),
+        userId,
+        score: 700,
+        tier: "Practitioner",
+        totalSessions: 0,
+        completedMissions: 0,
+        abortedMissions: 0,
+        totalBreaches: 0,
+        currentStreak: 0,
+        highestScore: 700,
+        focusDensityAverage: 0,
+        lastCalculatedAt: new Date(),
+      };
+      this.disciplineScoresMap.set(score.id, score);
+    }
+    return score;
+  }
+
+  async upsertDisciplineScore(score: Partial<InsertDisciplineScore> & { userId: string }): Promise<DisciplineScore> {
+    const existing = await this.getDisciplineScore(score.userId);
+    const id = existing ? existing.id : randomUUID();
+    const sVal = score.score ?? existing?.score ?? 700;
+    let tier = "Practitioner";
+    if (sVal < 500) tier = "Novice";
+    else if (sVal < 700) tier = "Apprentice";
+    else if (sVal < 850) tier = "Practitioner";
+    else if (sVal < 950) tier = "Ironclad";
+    else tier = "Ascended";
+
+    const updated: DisciplineScore = {
+      id,
+      userId: score.userId,
+      score: sVal,
+      tier,
+      totalSessions: score.totalSessions ?? existing?.totalSessions ?? 0,
+      completedMissions: score.completedMissions ?? existing?.completedMissions ?? 0,
+      abortedMissions: score.abortedMissions ?? existing?.abortedMissions ?? 0,
+      totalBreaches: score.totalBreaches ?? existing?.totalBreaches ?? 0,
+      currentStreak: score.currentStreak ?? existing?.currentStreak ?? 0,
+      highestScore: Math.max(sVal, existing?.highestScore ?? 700),
+      focusDensityAverage: score.focusDensityAverage ?? existing?.focusDensityAverage ?? 0,
+      lastCalculatedAt: new Date(),
+    };
+    this.disciplineScoresMap.set(id, updated);
+    return updated;
+  }
+
+  async getActiveCommitmentContract(userId: string): Promise<CommitmentContract | undefined> {
+    return Array.from(this.commitmentContractsMap.values())
+      .find(c => c.userId === userId && c.status === "active");
+  }
+
+  async createCommitmentContract(contract: InsertCommitmentContract): Promise<CommitmentContract> {
+    const id = randomUUID();
+    const newContract: CommitmentContract = {
+      id,
+      userId: contract.userId,
+      weekStartDate: contract.weekStartDate,
+      weekEndDate: contract.weekEndDate,
+      targetMissionsCount: contract.targetMissionsCount ?? 5,
+      targetFocusMinutes: contract.targetFocusMinutes ?? 600,
+      stakeAmountCents: contract.stakeAmountCents ?? 0,
+      antiCharityRecipient: contract.antiCharityRecipient || null,
+      status: contract.status || "active",
+      verifiedMissionsCount: 0,
+      verifiedFocusMinutes: 0,
+      outcomeVerdict: null,
+      createdAt: new Date(),
+    };
+    this.commitmentContractsMap.set(id, newContract);
+    return newContract;
+  }
+
+  async updateCommitmentContract(id: string, updates: Partial<CommitmentContract>): Promise<CommitmentContract> {
+    const contract = this.commitmentContractsMap.get(id);
+    if (!contract) throw new Error("Commitment contract not found");
+    const updated = { ...contract, ...updates };
+    this.commitmentContractsMap.set(id, updated);
+    return updated;
+  }
+
+  async getEveningDebrief(userId: string, date: string): Promise<EveningDebrief | undefined> {
+    return Array.from(this.eveningDebriefsMap.values()).find(d => d.userId === userId && d.date === date);
+  }
+
+  async createEveningDebrief(debrief: InsertEveningDebrief): Promise<EveningDebrief> {
+    const id = randomUUID();
+    const newDebrief: EveningDebrief = {
+      id,
+      userId: debrief.userId,
+      date: debrief.date,
+      missionId: debrief.missionId || null,
+      reflectionText: debrief.reflectionText,
+      aiFeedback: debrief.aiFeedback || null,
+      selfHonestyRating: debrief.selfHonestyRating ?? 8,
+      focusDensityScoreOfDay: debrief.focusDensityScoreOfDay ?? 0,
+      submittedAt: new Date(),
+    };
+    this.eveningDebriefsMap.set(id, newDebrief);
+    return newDebrief;
+  }
+
+  // ─── Phase 2: Squad Pacts, Public Commitments & Performance Court (MemStorage) ───
+  private squadPactsMap: Map<string, SquadPact> = new Map();
+  private squadPactMembersMap: Map<string, SquadPactMember> = new Map();
+  private publicCommitmentsMap: Map<string, PublicCommitment> = new Map();
+  private performanceCourtAuditsMap: Map<string, PerformanceCourtAudit> = new Map();
+
+  async getUserSquadPact(userId: string): Promise<{ pact: SquadPact; members: (SquadPactMember & { user: User })[] } | undefined> {
+    const member = Array.from(this.squadPactMembersMap.values()).find(m => m.userId === userId);
+    if (!member) return undefined;
+    const pact = this.squadPactsMap.get(member.pactId);
+    if (!pact) return undefined;
+
+    const allMembers = Array.from(this.squadPactMembersMap.values()).filter(m => m.pactId === pact.id);
+    const membersWithUsers = allMembers.map(m => ({
+      ...m,
+      user: this.users.get(m.userId)!,
+    })).filter(m => !!m.user);
+
+    return { pact, members: membersWithUsers };
+  }
+
+  async getSquadPactByInviteCode(code: string): Promise<SquadPact | undefined> {
+    return Array.from(this.squadPactsMap.values()).find(p => p.inviteCode === code);
+  }
+
+  async createSquadPact(pact: InsertSquadPact): Promise<SquadPact> {
+    const id = randomUUID();
+    const stake = pact.weeklyStakePoints ?? 50;
+    const newPact: SquadPact = {
+      id,
+      name: pact.name,
+      inviteCode: pact.inviteCode,
+      creatorId: pact.creatorId,
+      weeklyStakePoints: stake,
+      totalPool: stake, // Initial creator's stake
+      weekNumber: pact.weekNumber ?? 1,
+      status: pact.status || "active",
+      createdAt: new Date(),
+    };
+    this.squadPactsMap.set(id, newPact);
+
+    // Creator auto-joins
+    const memberId = randomUUID();
+    const member: SquadPactMember = {
+      id: memberId,
+      pactId: id,
+      userId: pact.creatorId,
+      stakedPoints: stake,
+      status: "active",
+      bonusReceived: 0,
+      currentLiveStatus: "idle",
+      activeSessionMinutes: 0,
+      joinedAt: new Date(),
+    };
+    this.squadPactMembersMap.set(memberId, member);
+
+    return newPact;
+  }
+
+  async joinSquadPact(inviteCode: string, userId: string): Promise<SquadPactMember> {
+    const pact = await this.getSquadPactByInviteCode(inviteCode);
+    if (!pact) throw new Error("Squad Pact not found with this invite code");
+
+    // Check if already a member
+    const existing = Array.from(this.squadPactMembersMap.values()).find(m => m.pactId === pact.id && m.userId === userId);
+    if (existing) return existing;
+
+    const id = randomUUID();
+    const member: SquadPactMember = {
+      id,
+      pactId: pact.id,
+      userId,
+      stakedPoints: pact.weeklyStakePoints,
+      status: "active",
+      bonusReceived: 0,
+      currentLiveStatus: "idle",
+      activeSessionMinutes: 0,
+      joinedAt: new Date(),
+    };
+    this.squadPactMembersMap.set(id, member);
+
+    // Add to pool
+    pact.totalPool += pact.weeklyStakePoints;
+    this.squadPactsMap.set(pact.id, pact);
+
+    return member;
+  }
+
+  async updateSquadPactMemberLiveStatus(userId: string, status: string, sessionMinutes = 0): Promise<void> {
+    const member = Array.from(this.squadPactMembersMap.values()).find(m => m.userId === userId);
+    if (member) {
+      member.currentLiveStatus = status;
+      if (sessionMinutes > 0) {
+        member.activeSessionMinutes += sessionMinutes;
+      }
+      this.squadPactMembersMap.set(member.id, member);
+    }
+  }
+
+  async distributeSquadPactPool(pactId: string): Promise<any> {
+    const pact = this.squadPactsMap.get(pactId);
+    if (!pact) throw new Error("Pact not found");
+
+    const members = Array.from(this.squadPactMembersMap.values()).filter(m => m.pactId === pactId);
+    const failedMembers = members.filter(m => m.status === "forfeited");
+    const passedMembers = members.filter(m => m.status === "passed" || m.status === "active");
+
+    const forfeitedTotal = failedMembers.reduce((acc, m) => acc + m.stakedPoints, 0);
+
+    // Distribute forfeited points equally among passed members
+    if (passedMembers.length > 0 && forfeitedTotal > 0) {
+      const share = Math.floor(forfeitedTotal / passedMembers.length);
+      for (const p of passedMembers) {
+        p.bonusReceived += share;
+        this.squadPactMembersMap.set(p.id, p);
+
+        // Credit to discipline score
+        const score = await this.getDisciplineScore(p.userId);
+        if (score) {
+          await this.upsertDisciplineScore({
+            userId: p.userId,
+            score: Math.min(1000, score.score + share),
+          });
+        }
+      }
+    }
+
+    pact.status = "evaluated";
+    this.squadPactsMap.set(pact.id, pact);
+    return { forfeitedTotal, passedCount: passedMembers.length };
+  }
+
+  async getAllPublicCommitments(limit = 20): Promise<(PublicCommitment & { user: User })[]> {
+    const all = Array.from(this.publicCommitmentsMap.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+
+    return all.map(c => ({
+      ...c,
+      user: this.users.get(c.userId)!,
+    })).filter(c => !!c.user);
+  }
+
+  async getUserPublicCommitment(userId: string): Promise<PublicCommitment | undefined> {
+    return Array.from(this.publicCommitmentsMap.values()).find(c => c.userId === userId);
+  }
+
+  async createPublicCommitment(commitment: InsertPublicCommitment): Promise<PublicCommitment> {
+    const id = randomUUID();
+    const deadline = commitment.targetDeadline instanceof Date ? commitment.targetDeadline : new Date(commitment.targetDeadline);
+    const userScore = (await this.getDisciplineScore(commitment.userId))?.score ?? 700;
+
+    const newCommitment: PublicCommitment = {
+      id,
+      userId: commitment.userId,
+      declaration: commitment.declaration,
+      targetDeadline: deadline,
+      currentDisciplineScore: userScore,
+      velocityPercent: commitment.velocityPercent ?? 70,
+      witnessesCount: 1,
+      weeklyUpdates: [],
+      createdAt: new Date(),
+    };
+    this.publicCommitmentsMap.set(id, newCommitment);
+    return newCommitment;
+  }
+
+  async addCommitmentWitness(commitmentId: string): Promise<PublicCommitment> {
+    const commitment = this.publicCommitmentsMap.get(commitmentId);
+    if (!commitment) throw new Error("Commitment not found");
+    commitment.witnessesCount += 1;
+    this.publicCommitmentsMap.set(commitmentId, commitment);
+    return commitment;
+  }
+
+  async getPerformanceCourtAudits(userId: string): Promise<PerformanceCourtAudit[]> {
+    return Array.from(this.performanceCourtAuditsMap.values())
+      .filter(a => a.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async createPerformanceCourtAudit(audit: InsertPerformanceCourtAudit): Promise<PerformanceCourtAudit> {
+    const id = randomUUID();
+    const newAudit: PerformanceCourtAudit = {
+      id,
+      userId: audit.userId,
+      weekNumber: audit.weekNumber,
+      year: audit.year,
+      missionsAssigned: audit.missionsAssigned ?? 7,
+      missionsCompleted: audit.missionsCompleted ?? 0,
+      targetFocusMinutes: audit.targetFocusMinutes ?? 900,
+      actualFocusMinutes: audit.actualFocusMinutes ?? 0,
+      focusDensityScore: audit.focusDensityScore ?? 0,
+      breachesCount: audit.breachesCount ?? 0,
+      aiVerdict: audit.aiVerdict,
+      roadmapImpact: audit.roadmapImpact,
+      sharedWithSquad: audit.sharedWithSquad ?? true,
+      createdAt: new Date(),
+    };
+    this.performanceCourtAuditsMap.set(id, newAudit);
+    return newAudit;
+  }
+
+  // ─── Apex Features (MemStorage) ───
+  private midDayPulsesMap: Map<string, MidDayPulse> = new Map();
+  private hallOfAscensionMap: Map<string, HallOfAscensionEntry> = new Map();
+  private wallOfConsequenceMap: Map<string, WallOfConsequenceEntry> = new Map();
+
+  async getMidDayPulse(userId: string, date: string): Promise<MidDayPulse | undefined> {
+    return Array.from(this.midDayPulsesMap.values()).find(p => p.userId === userId && p.date === date);
+  }
+
+  async createMidDayPulse(pulse: InsertMidDayPulse): Promise<MidDayPulse> {
+    const id = randomUUID();
+    const newPulse: MidDayPulse = {
+      id,
+      userId: pulse.userId,
+      date: pulse.date,
+      missionStatus: pulse.missionStatus,
+      committedAction: pulse.committedAction,
+      timeBlockMinutes: pulse.timeBlockMinutes ?? 30,
+      acknowledgedAt: new Date(),
+      executedSuccessfully: pulse.executedSuccessfully ?? null,
+    };
+    this.midDayPulsesMap.set(id, newPulse);
+    return newPulse;
+  }
+
+  async getHallOfAscensionEntries(): Promise<HallOfAscensionEntry[]> {
+    const entries = Array.from(this.hallOfAscensionMap.values());
+    if (entries.length > 0) {
+      return entries.sort((a, b) => b.disciplineScore - a.disciplineScore);
+    }
+    // Seed exemplary inductees if empty
+    return [
+      {
+        id: "hall-1",
+        userId: "user-ironclad",
+        userName: "Commander Sterling",
+        avatarUrl: null,
+        goalTitle: "Crack UPSC CSE 2026 Rank < 50",
+        disciplineScore: 985,
+        verifiedDeepWorkMinutes: 4820,
+        consecutiveDays: 42,
+        inductedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+        status: "active",
+      },
+      {
+        id: "hall-2",
+        userId: "user-ascended-2",
+        userName: "Valkyrie Dev",
+        avatarUrl: null,
+        goalTitle: "Build & Ship Rust Micro-Engine",
+        disciplineScore: 940,
+        verifiedDeepWorkMinutes: 3950,
+        consecutiveDays: 35,
+        inductedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
+        status: "active",
+      },
+      {
+        id: "hall-3",
+        userId: "user-zenith",
+        userName: "Aethelgard",
+        avatarUrl: null,
+        goalTitle: "USMLE Step 1 Preparation (260+ target)",
+        disciplineScore: 915,
+        verifiedDeepWorkMinutes: 3410,
+        consecutiveDays: 31,
+        inductedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        status: "active",
+      }
+    ];
+  }
+
+  async createHallOfAscensionEntry(entry: InsertHallOfAscensionEntry): Promise<HallOfAscensionEntry> {
+    const id = randomUUID();
+    const created: HallOfAscensionEntry = {
+      id,
+      userId: entry.userId,
+      userName: entry.userName,
+      avatarUrl: entry.avatarUrl || null,
+      goalTitle: entry.goalTitle,
+      disciplineScore: entry.disciplineScore,
+      verifiedDeepWorkMinutes: entry.verifiedDeepWorkMinutes,
+      consecutiveDays: entry.consecutiveDays,
+      inductedAt: new Date(),
+      status: entry.status || "active",
+    };
+    this.hallOfAscensionMap.set(id, created);
+    return created;
+  }
+
+  async getWallOfConsequenceEntries(): Promise<WallOfConsequenceEntry[]> {
+    const entries = Array.from(this.wallOfConsequenceMap.values());
+    if (entries.length > 0) {
+      return entries.sort((a, b) => b.failedDate.getTime() - a.failedDate.getTime());
+    }
+    // Seed living deterrence examples
+    return [
+      {
+        id: "wall-1",
+        userId: "defaulter-1",
+        userName: "Ex-Cadet Marcus",
+        contractTarget: "15 Hours Deep Work on Microeconomics",
+        failedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        stakeForfeited: "$150 Escrow to Opposing PAC",
+        dishonorReason: "Logged 0 verified hours between Friday and Sunday. Bypassed 3 mid-day pulses.",
+        breachType: "financial_escrow_liquidated",
+        avatarUrl: null,
+      },
+      {
+        id: "wall-2",
+        userId: "defaulter-2",
+        userName: "Dev Zero",
+        contractTarget: "Complete 10 LeetCode Hard Questions",
+        failedDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+        stakeForfeited: "-250 Reputation Dishonor Penalty",
+        dishonorReason: "4 attention breaches in a single Air-Gap session. Defaulted on Squad Pact Pool.",
+        breachType: "reputation_dishonor",
+        avatarUrl: null,
+      }
+    ];
+  }
+
+  async createWallOfConsequenceEntry(entry: InsertWallOfConsequenceEntry): Promise<WallOfConsequenceEntry> {
+    const id = randomUUID();
+    const created: WallOfConsequenceEntry = {
+      id,
+      userId: entry.userId,
+      userName: entry.userName,
+      contractTarget: entry.contractTarget,
+      failedDate: new Date(),
+      stakeForfeited: entry.stakeForfeited,
+      dishonorReason: entry.dishonorReason,
+      breachType: entry.breachType || "contract_default",
+      avatarUrl: entry.avatarUrl || null,
+    };
+    this.wallOfConsequenceMap.set(id, created);
+    return created;
+  }
+
+  async getFocusDensityLeaderboard(limit = 50): Promise<Array<{ user: User; focusDensityScore: number; verifiedMinutes: number; disciplineScore: number }>> {
+    const allUsers = Array.from(this.users.values());
+    const results = await Promise.all(allUsers.map(async (u) => {
+      const score = await this.getDisciplineScore(u.id);
+      const sessions = await this.getFocusDensitySessions(u.id, 30);
+      const totalMinutes = sessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
+      const densityScore = score?.focusDensityAverage ?? (sessions.length > 0 ? Math.min(100, Math.round((totalMinutes / 600) * 100)) : 45);
+      return {
+        user: u,
+        focusDensityScore: densityScore,
+        verifiedMinutes: totalMinutes,
+        disciplineScore: score?.score ?? 700,
+      };
+    }));
+
+    return results.sort((a, b) => b.disciplineScore - a.disciplineScore).slice(0, limit);
+  }
 }
 
 
@@ -4717,6 +5443,539 @@ export class DatabaseStorage implements IStorage {
 
     scored.sort((a, b) => a.sizeDiff - b.sizeDiff);
     return scored[0]?.gang;
+  }
+
+  // ─── 4-Pillars Uncompromising Human Execution Engine (DatabaseStorage) ───
+  async getExecutionProfile(userId: string): Promise<ExecutionProfile | undefined> {
+    if (!db) return undefined;
+    const [profile] = await db.select().from(executionProfiles).where(eq(executionProfiles.userId, userId));
+    return profile;
+  }
+
+  async upsertExecutionProfile(profile: InsertExecutionProfile): Promise<ExecutionProfile> {
+    if (!db) throw new Error("Database not connected");
+    const existing = await this.getExecutionProfile(profile.userId);
+    const targetDeadline = profile.targetDeadline instanceof Date ? profile.targetDeadline : new Date(profile.targetDeadline);
+    if (existing) {
+      const [updated] = await db.update(executionProfiles).set({
+        targetOutcome: profile.targetOutcome,
+        targetDeadline,
+        failureStatement: profile.failureStatement,
+        gapMatrix: profile.gapMatrix,
+        failureAutopsy: profile.failureAutopsy,
+        cognitiveFingerprint: profile.cognitiveFingerprint,
+        commitmentCapacity: profile.commitmentCapacity,
+        roadmapMilestones: profile.roadmapMilestones || existing.roadmapMilestones,
+        currentMilestoneIndex: profile.currentMilestoneIndex ?? existing.currentMilestoneIndex,
+        updatedAt: new Date(),
+      }).where(eq(executionProfiles.id, existing.id)).returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(executionProfiles).values({
+        userId: profile.userId,
+        targetOutcome: profile.targetOutcome,
+        targetDeadline,
+        failureStatement: profile.failureStatement,
+        gapMatrix: profile.gapMatrix,
+        failureAutopsy: profile.failureAutopsy,
+        cognitiveFingerprint: profile.cognitiveFingerprint,
+        commitmentCapacity: profile.commitmentCapacity,
+        roadmapMilestones: profile.roadmapMilestones || [],
+        currentMilestoneIndex: profile.currentMilestoneIndex ?? 0,
+      }).returning();
+      return created;
+    }
+  }
+
+  async getDailyMission(userId: string, date: string): Promise<DailyMission | undefined> {
+    if (!db) return undefined;
+    const [mission] = await db.select().from(dailyMissions).where(
+      and(eq(dailyMissions.userId, userId), eq(dailyMissions.date, date))
+    );
+    return mission;
+  }
+
+  async getDailyMissions(userId: string, limit = 14): Promise<DailyMission[]> {
+    if (!db) return [];
+    return await db.select().from(dailyMissions)
+      .where(eq(dailyMissions.userId, userId))
+      .orderBy(desc(dailyMissions.createdAt))
+      .limit(limit);
+  }
+
+  async createDailyMission(mission: InsertDailyMission): Promise<DailyMission> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(dailyMissions).values({
+      userId: mission.userId,
+      date: mission.date,
+      title: mission.title,
+      tacticalDeliverable: mission.tacticalDeliverable,
+      focusTier: mission.focusTier || "L1",
+      estimatedMinutes: mission.estimatedMinutes ?? 90,
+      executionWindow: mission.executionWindow,
+      primingRitual: mission.primingRitual,
+      failureCondition: mission.failureCondition,
+      proofTypeRequired: mission.proofTypeRequired || "structured_text",
+      status: mission.status || "pending",
+      abortReason: mission.abortReason || null,
+      proofData: mission.proofData || null,
+      proofQualityScore: mission.proofQualityScore ?? null,
+      aiReviewFeedback: mission.aiReviewFeedback || null,
+    }).returning();
+    return created;
+  }
+
+  async updateDailyMission(id: string, updates: Partial<DailyMission>): Promise<DailyMission> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(dailyMissions).set(updates).where(eq(dailyMissions.id, id)).returning();
+    return updated;
+  }
+
+  async getActiveFocusDensitySession(userId: string): Promise<FocusDensitySession | undefined> {
+    if (!db) return undefined;
+    const [session] = await db.select().from(focusDensitySessions).where(
+      and(eq(focusDensitySessions.userId, userId), eq(focusDensitySessions.status, "active"))
+    );
+    return session;
+  }
+
+  async getFocusDensitySessions(userId: string, limit = 20): Promise<FocusDensitySession[]> {
+    if (!db) return [];
+    return await db.select().from(focusDensitySessions)
+      .where(eq(focusDensitySessions.userId, userId))
+      .orderBy(desc(focusDensitySessions.startedAt))
+      .limit(limit);
+  }
+
+  async createFocusDensitySession(session: InsertFocusDensitySession): Promise<FocusDensitySession> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(focusDensitySessions).values({
+      userId: session.userId,
+      missionId: session.missionId || null,
+      declarationOutput: session.declarationOutput,
+      obstaclePreMortem: session.obstaclePreMortem,
+      scheduledMinutes: session.scheduledMinutes,
+      actualMinutes: session.actualMinutes ?? 0,
+      status: session.status || "active",
+      oathAcknowledged: session.oathAcknowledged ?? true,
+      breachesCount: session.breachesCount ?? 0,
+      breachEvents: session.breachEvents || [],
+      attentionQualityScore: session.attentionQualityScore ?? 100,
+      proofSubmitted: session.proofSubmitted ?? false,
+    }).returning();
+    return created;
+  }
+
+  async updateFocusDensitySession(id: string, updates: Partial<FocusDensitySession>): Promise<FocusDensitySession> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(focusDensitySessions).set(updates).where(eq(focusDensitySessions.id, id)).returning();
+    return updated;
+  }
+
+  async createDisciplineBreach(breach: InsertDisciplineBreach): Promise<DisciplineBreach> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(disciplineBreaches).values({
+      userId: breach.userId,
+      sessionId: breach.sessionId || null,
+      type: breach.type,
+      severity: breach.severity || "minor",
+      description: breach.description,
+      penaltyScore: breach.penaltyScore ?? 15,
+    }).returning();
+
+    // Deduct penalty from discipline score
+    const current = await this.getDisciplineScore(breach.userId);
+    const scoreVal = Math.max(0, (current?.score ?? 700) - (breach.penaltyScore ?? 15));
+    await this.upsertDisciplineScore({
+      userId: breach.userId,
+      score: scoreVal,
+      totalBreaches: (current?.totalBreaches ?? 0) + 1,
+    });
+
+    return created;
+  }
+
+  async getDisciplineBreaches(userId: string, limit = 25): Promise<DisciplineBreach[]> {
+    if (!db) return [];
+    return await db.select().from(disciplineBreaches)
+      .where(eq(disciplineBreaches.userId, userId))
+      .orderBy(desc(disciplineBreaches.createdAt))
+      .limit(limit);
+  }
+
+  async getDisciplineScore(userId: string): Promise<DisciplineScore | undefined> {
+    if (!db) return undefined;
+    let [score] = await db.select().from(disciplineScores).where(eq(disciplineScores.userId, userId));
+    if (!score) {
+      const [created] = await db.insert(disciplineScores).values({
+        userId,
+        score: 700,
+        tier: "Practitioner",
+        totalSessions: 0,
+        completedMissions: 0,
+        abortedMissions: 0,
+        totalBreaches: 0,
+        currentStreak: 0,
+        highestScore: 700,
+        focusDensityAverage: 0,
+      }).returning();
+      return created;
+    }
+    return score;
+  }
+
+  async upsertDisciplineScore(score: Partial<InsertDisciplineScore> & { userId: string }): Promise<DisciplineScore> {
+    if (!db) throw new Error("Database not connected");
+    const existing = await this.getDisciplineScore(score.userId);
+    const sVal = score.score ?? existing?.score ?? 700;
+    let tier = "Practitioner";
+    if (sVal < 500) tier = "Novice";
+    else if (sVal < 700) tier = "Apprentice";
+    else if (sVal < 850) tier = "Practitioner";
+    else if (sVal < 950) tier = "Ironclad";
+    else tier = "Ascended";
+
+    const [updated] = await db.update(disciplineScores).set({
+      score: sVal,
+      tier,
+      totalSessions: score.totalSessions ?? existing?.totalSessions ?? 0,
+      completedMissions: score.completedMissions ?? existing?.completedMissions ?? 0,
+      abortedMissions: score.abortedMissions ?? existing?.abortedMissions ?? 0,
+      totalBreaches: score.totalBreaches ?? existing?.totalBreaches ?? 0,
+      currentStreak: score.currentStreak ?? existing?.currentStreak ?? 0,
+      highestScore: Math.max(sVal, existing?.highestScore ?? 700),
+      focusDensityAverage: score.focusDensityAverage ?? existing?.focusDensityAverage ?? 0,
+      lastCalculatedAt: new Date(),
+    }).where(eq(disciplineScores.userId, score.userId)).returning();
+
+    return updated;
+  }
+
+  async getActiveCommitmentContract(userId: string): Promise<CommitmentContract | undefined> {
+    if (!db) return undefined;
+    const [contract] = await db.select().from(commitmentContracts).where(
+      and(eq(commitmentContracts.userId, userId), eq(commitmentContracts.status, "active"))
+    );
+    return contract;
+  }
+
+  async createCommitmentContract(contract: InsertCommitmentContract): Promise<CommitmentContract> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(commitmentContracts).values({
+      userId: contract.userId,
+      weekStartDate: contract.weekStartDate,
+      weekEndDate: contract.weekEndDate,
+      targetMissionsCount: contract.targetMissionsCount ?? 5,
+      targetFocusMinutes: contract.targetFocusMinutes ?? 600,
+      stakeAmountCents: contract.stakeAmountCents ?? 0,
+      antiCharityRecipient: contract.antiCharityRecipient || null,
+      status: contract.status || "active",
+      verifiedMissionsCount: 0,
+      verifiedFocusMinutes: 0,
+      outcomeVerdict: null,
+    }).returning();
+    return created;
+  }
+
+  async updateCommitmentContract(id: string, updates: Partial<CommitmentContract>): Promise<CommitmentContract> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(commitmentContracts).set(updates).where(eq(commitmentContracts.id, id)).returning();
+    return updated;
+  }
+
+  async getEveningDebrief(userId: string, date: string): Promise<EveningDebrief | undefined> {
+    if (!db) return undefined;
+    const [debrief] = await db.select().from(eveningDebriefs).where(
+      and(eq(eveningDebriefs.userId, userId), eq(eveningDebriefs.date, date))
+    );
+    return debrief;
+  }
+
+  async createEveningDebrief(debrief: InsertEveningDebrief): Promise<EveningDebrief> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(eveningDebriefs).values({
+      userId: debrief.userId,
+      date: debrief.date,
+      missionId: debrief.missionId || null,
+      reflectionText: debrief.reflectionText,
+      aiFeedback: debrief.aiFeedback || null,
+      selfHonestyRating: debrief.selfHonestyRating ?? 8,
+      focusDensityScoreOfDay: debrief.focusDensityScoreOfDay ?? 0,
+    }).returning();
+    return created;
+  }
+
+  // ─── Phase 2: Squad Pacts, Public Commitments & Performance Court (DatabaseStorage) ───
+  async getUserSquadPact(userId: string): Promise<{ pact: SquadPact; members: (SquadPactMember & { user: User })[] } | undefined> {
+    if (!db) return undefined;
+    const [membership] = await db.select().from(squadPactMembers).where(eq(squadPactMembers.userId, userId));
+    if (!membership) return undefined;
+    const [pact] = await db.select().from(squadPacts).where(eq(squadPacts.id, membership.pactId));
+    if (!pact) return undefined;
+
+    const members = await db.select().from(squadPactMembers).where(eq(squadPactMembers.pactId, pact.id));
+    const membersWithUsers = await Promise.all(members.map(async (m) => {
+      const [u] = await db!.select().from(users).where(eq(users.id, m.userId));
+      return { ...m, user: u };
+    }));
+
+    return { pact, members: membersWithUsers.filter(m => !!m.user) };
+  }
+
+  async getSquadPactByInviteCode(code: string): Promise<SquadPact | undefined> {
+    if (!db) return undefined;
+    const [pact] = await db.select().from(squadPacts).where(eq(squadPacts.inviteCode, code));
+    return pact;
+  }
+
+  async createSquadPact(pact: InsertSquadPact): Promise<SquadPact> {
+    if (!db) throw new Error("Database not connected");
+    const stake = pact.weeklyStakePoints ?? 50;
+    const [createdPact] = await db.insert(squadPacts).values({
+      name: pact.name,
+      inviteCode: pact.inviteCode,
+      creatorId: pact.creatorId,
+      weeklyStakePoints: stake,
+      totalPool: stake,
+      weekNumber: pact.weekNumber ?? 1,
+      status: pact.status || "active",
+    }).returning();
+
+    await db.insert(squadPactMembers).values({
+      pactId: createdPact.id,
+      userId: pact.creatorId,
+      stakedPoints: stake,
+      status: "active",
+      bonusReceived: 0,
+      currentLiveStatus: "idle",
+      activeSessionMinutes: 0,
+    });
+
+    return createdPact;
+  }
+
+  async joinSquadPact(inviteCode: string, userId: string): Promise<SquadPactMember> {
+    if (!db) throw new Error("Database not connected");
+    const pact = await this.getSquadPactByInviteCode(inviteCode);
+    if (!pact) throw new Error("Squad Pact not found");
+
+    const [existing] = await db.select().from(squadPactMembers).where(
+      and(eq(squadPactMembers.pactId, pact.id), eq(squadPactMembers.userId, userId))
+    );
+    if (existing) return existing;
+
+    const [created] = await db.insert(squadPactMembers).values({
+      pactId: pact.id,
+      userId,
+      stakedPoints: pact.weeklyStakePoints,
+      status: "active",
+      bonusReceived: 0,
+      currentLiveStatus: "idle",
+      activeSessionMinutes: 0,
+    }).returning();
+
+    await db.update(squadPacts).set({
+      totalPool: pact.totalPool + pact.weeklyStakePoints,
+    }).where(eq(squadPacts.id, pact.id));
+
+    return created;
+  }
+
+  async updateSquadPactMemberLiveStatus(userId: string, status: string, sessionMinutes = 0): Promise<void> {
+    if (!db) return;
+    const [member] = await db.select().from(squadPactMembers).where(eq(squadPactMembers.userId, userId));
+    if (member) {
+      const newMinutes = sessionMinutes > 0 ? member.activeSessionMinutes + sessionMinutes : member.activeSessionMinutes;
+      await db.update(squadPactMembers).set({
+        currentLiveStatus: status,
+        activeSessionMinutes: newMinutes,
+      }).where(eq(squadPactMembers.id, member.id));
+    }
+  }
+
+  async distributeSquadPactPool(pactId: string): Promise<any> {
+    if (!db) throw new Error("Database not connected");
+    const [pact] = await db.select().from(squadPacts).where(eq(squadPacts.id, pactId));
+    if (!pact) throw new Error("Pact not found");
+
+    const members = await db.select().from(squadPactMembers).where(eq(squadPactMembers.pactId, pactId));
+    const failedMembers = members.filter(m => m.status === "forfeited");
+    const passedMembers = members.filter(m => m.status === "passed" || m.status === "active");
+
+    const forfeitedTotal = failedMembers.reduce((acc, m) => acc + m.stakedPoints, 0);
+
+    if (passedMembers.length > 0 && forfeitedTotal > 0) {
+      const share = Math.floor(forfeitedTotal / passedMembers.length);
+      for (const p of passedMembers) {
+        await db.update(squadPactMembers).set({
+          bonusReceived: p.bonusReceived + share,
+        }).where(eq(squadPactMembers.id, p.id));
+
+        const score = await this.getDisciplineScore(p.userId);
+        if (score) {
+          await this.upsertDisciplineScore({
+            userId: p.userId,
+            score: Math.min(1000, score.score + share),
+          });
+        }
+      }
+    }
+
+    await db.update(squadPacts).set({ status: "evaluated" }).where(eq(squadPacts.id, pact.id));
+    return { forfeitedTotal, passedCount: passedMembers.length };
+  }
+
+  async getAllPublicCommitments(limit = 20): Promise<(PublicCommitment & { user: User })[]> {
+    if (!db) return [];
+    const commitments = await db.select().from(publicCommitments)
+      .orderBy(desc(publicCommitments.createdAt))
+      .limit(limit);
+
+    const withUsers = await Promise.all(commitments.map(async (c) => {
+      const [u] = await db!.select().from(users).where(eq(users.id, c.userId));
+      return { ...c, user: u };
+    }));
+
+    return withUsers.filter(c => !!c.user);
+  }
+
+  async getUserPublicCommitment(userId: string): Promise<PublicCommitment | undefined> {
+    if (!db) return undefined;
+    const [c] = await db.select().from(publicCommitments).where(eq(publicCommitments.userId, userId));
+    return c;
+  }
+
+  async createPublicCommitment(commitment: InsertPublicCommitment): Promise<PublicCommitment> {
+    if (!db) throw new Error("Database not connected");
+    const deadline = commitment.targetDeadline instanceof Date ? commitment.targetDeadline : new Date(commitment.targetDeadline);
+    const userScore = (await this.getDisciplineScore(commitment.userId))?.score ?? 700;
+
+    const [created] = await db.insert(publicCommitments).values({
+      userId: commitment.userId,
+      declaration: commitment.declaration,
+      targetDeadline: deadline,
+      currentDisciplineScore: userScore,
+      velocityPercent: commitment.velocityPercent ?? 70,
+      witnessesCount: 1,
+      weeklyUpdates: [],
+    }).returning();
+    return created;
+  }
+
+  async addCommitmentWitness(commitmentId: string): Promise<PublicCommitment> {
+    if (!db) throw new Error("Database not connected");
+    const [c] = await db.select().from(publicCommitments).where(eq(publicCommitments.id, commitmentId));
+    if (!c) throw new Error("Commitment not found");
+
+    const [updated] = await db.update(publicCommitments).set({
+      witnessesCount: c.witnessesCount + 1,
+    }).where(eq(publicCommitments.id, commitmentId)).returning();
+    return updated;
+  }
+
+  async getPerformanceCourtAudits(userId: string): Promise<PerformanceCourtAudit[]> {
+    if (!db) return [];
+    return await db.select().from(performanceCourtAudits)
+      .where(eq(performanceCourtAudits.userId, userId))
+      .orderBy(desc(performanceCourtAudits.createdAt));
+  }
+
+  async createPerformanceCourtAudit(audit: InsertPerformanceCourtAudit): Promise<PerformanceCourtAudit> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(performanceCourtAudits).values({
+      userId: audit.userId,
+      weekNumber: audit.weekNumber,
+      year: audit.year,
+      missionsAssigned: audit.missionsAssigned ?? 7,
+      missionsCompleted: audit.missionsCompleted ?? 0,
+      targetFocusMinutes: audit.targetFocusMinutes ?? 900,
+      actualFocusMinutes: audit.actualFocusMinutes ?? 0,
+      focusDensityScore: audit.focusDensityScore ?? 0,
+      breachesCount: audit.breachesCount ?? 0,
+      aiVerdict: audit.aiVerdict,
+      roadmapImpact: audit.roadmapImpact,
+      sharedWithSquad: audit.sharedWithSquad ?? true,
+    }).returning();
+    return created;
+  }
+
+  // ─── Apex Features (DatabaseStorage) ───
+  async getMidDayPulse(userId: string, date: string): Promise<MidDayPulse | undefined> {
+    if (!db) return undefined;
+    const [pulse] = await db.select().from(midDayPulses)
+      .where(and(eq(midDayPulses.userId, userId), eq(midDayPulses.date, date)));
+    return pulse;
+  }
+
+  async createMidDayPulse(pulse: InsertMidDayPulse): Promise<MidDayPulse> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(midDayPulses).values({
+      userId: pulse.userId,
+      date: pulse.date,
+      missionStatus: pulse.missionStatus,
+      committedAction: pulse.committedAction,
+      timeBlockMinutes: pulse.timeBlockMinutes ?? 30,
+      executedSuccessfully: pulse.executedSuccessfully ?? null,
+    }).returning();
+    return created;
+  }
+
+  async getHallOfAscensionEntries(): Promise<HallOfAscensionEntry[]> {
+    if (!db) return [];
+    return await db.select().from(hallOfAscension).orderBy(desc(hallOfAscension.disciplineScore));
+  }
+
+  async createHallOfAscensionEntry(entry: InsertHallOfAscensionEntry): Promise<HallOfAscensionEntry> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(hallOfAscension).values({
+      userId: entry.userId,
+      userName: entry.userName,
+      avatarUrl: entry.avatarUrl || null,
+      goalTitle: entry.goalTitle,
+      disciplineScore: entry.disciplineScore,
+      verifiedDeepWorkMinutes: entry.verifiedDeepWorkMinutes,
+      consecutiveDays: entry.consecutiveDays,
+      status: entry.status || "active",
+    }).returning();
+    return created;
+  }
+
+  async getWallOfConsequenceEntries(): Promise<WallOfConsequenceEntry[]> {
+    if (!db) return [];
+    return await db.select().from(wallOfConsequence).orderBy(desc(wallOfConsequence.failedDate));
+  }
+
+  async createWallOfConsequenceEntry(entry: InsertWallOfConsequenceEntry): Promise<WallOfConsequenceEntry> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(wallOfConsequence).values({
+      userId: entry.userId,
+      userName: entry.userName,
+      contractTarget: entry.contractTarget,
+      stakeForfeited: entry.stakeForfeited,
+      dishonorReason: entry.dishonorReason,
+      breachType: entry.breachType || "contract_default",
+      avatarUrl: entry.avatarUrl || null,
+    }).returning();
+    return created;
+  }
+
+  async getFocusDensityLeaderboard(limit = 50): Promise<Array<{ user: User; focusDensityScore: number; verifiedMinutes: number; disciplineScore: number }>> {
+    if (!db) return [];
+    const allUsers = await db.select().from(users).limit(limit * 2);
+    const results = await Promise.all(allUsers.map(async (u) => {
+      const score = await this.getDisciplineScore(u.id);
+      const sessions = await this.getFocusDensitySessions(u.id, 30);
+      const totalMinutes = sessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
+      const densityScore = score?.focusDensityAverage ?? (sessions.length > 0 ? Math.min(100, Math.round((totalMinutes / 600) * 100)) : 45);
+      return {
+        user: u,
+        focusDensityScore: densityScore,
+        verifiedMinutes: totalMinutes,
+        disciplineScore: score?.score ?? 700,
+      };
+    }));
+
+    return results.sort((a, b) => b.disciplineScore - a.disciplineScore).slice(0, limit);
   }
 }
 

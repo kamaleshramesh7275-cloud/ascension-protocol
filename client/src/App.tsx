@@ -5,7 +5,8 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Activity, RefreshCw } from "lucide-react";
+import { Activity, RefreshCw, Terminal } from "lucide-react";
+import { TacticalCommandPalette } from "@/components/tactical-command-palette";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
@@ -64,6 +65,15 @@ import ReferralRedirect from "@/pages/referral-redirect";
 import ContactPage from "@/pages/contact";
 import WorkoutPage from "@/pages/workout";
 import GangsPage from "@/pages/gangs";
+import BriefingRoom from "@/pages/briefing-room";
+import MissionCommand from "@/pages/mission-command";
+import AirGapFocus from "@/pages/air-gap-focus";
+import EveningDebrief from "@/pages/evening-debrief";
+import SquadPactPage from "@/pages/squad-pact";
+import CommitmentContractPage from "@/pages/commitment-contract";
+import PerformanceCourtPage from "@/pages/performance-court";
+import PublicCommitmentsPage from "@/pages/public-commitments";
+import HallOfAscensionPage from "@/pages/hall-of-ascension";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -225,14 +235,10 @@ function Router() {
       <Switch>
         <Route path="/" >
           {() => {
-            // If user is a guest (anonymous), redirect to onboarding if not completed
-            if (user.isAnonymous) {
-              if (backendUser?.onboardingCompleted === false) {
-                return <Redirect to="/onboarding" />;
-              }
-              return <Redirect to="/dashboard" />;
+            if (backendUser?.onboardingCompleted === false) {
+              return <Redirect to="/briefing-room" />;
             }
-            return <Redirect to="/dashboard" />;
+            return <Redirect to="/mission-command" />;
           }}
         </Route>
 
@@ -240,12 +246,25 @@ function Router() {
         <Route path="/register" component={withSeo(Register, { title: "Register", url: "/register" })} />
         <Route path="/login" component={withSeo(Login, { title: "Login", url: "/login" })} />
 
-        <Route path="/onboarding" component={() => <ProtectedRoute component={withSeo(OnboardingPage, { title: "Onboarding" })} />} />
-        <Route path="/dashboard" component={() => <ProtectedRoute component={withSeo(Dashboard, { title: "Dashboard" })} />} />
+        {/* 4 Pillars Execution Protocol Routes */}
+        <Route path="/briefing-room" component={() => <ProtectedRoute component={withSeo(BriefingRoom, { title: "The Briefing Room" })} />} />
+        <Route path="/mission-command" component={() => <ProtectedRoute component={withSeo(MissionCommand, { title: "Mission Command Center" })} />} />
+        <Route path="/air-gap-focus" component={() => <ProtectedRoute component={withSeo(AirGapFocus, { title: "Air-Gap Protocol" })} />} />
+        <Route path="/evening-debrief" component={() => <ProtectedRoute component={withSeo(EveningDebrief, { title: "The Evening Debrief" })} />} />
+        <Route path="/squad-pact" component={() => <ProtectedRoute component={withSeo(SquadPactPage, { title: "Squad Pact Pool" })} />} />
+        <Route path="/commitment-contract" component={() => <ProtectedRoute component={withSeo(CommitmentContractPage, { title: "Weekly Commitment Contract" })} />} />
+        <Route path="/performance-court" component={() => <ProtectedRoute component={withSeo(PerformanceCourtPage, { title: "Performance Court" })} />} />
+        <Route path="/public-commitments" component={() => <ProtectedRoute component={withSeo(PublicCommitmentsPage, { title: "Public Commitment Wall" })} />} />
+        <Route path="/hall-of-ascension" component={() => <ProtectedRoute component={withSeo(HallOfAscensionPage, { title: "Hall of Ascension & Wall of Consequence" })} />} />
+
+        {/* Core & Legacy Compatible Routes */}
+        <Route path="/onboarding" component={() => <ProtectedRoute component={withSeo(BriefingRoom, { title: "The Briefing Room" })} />} />
+        <Route path="/dashboard" component={() => <ProtectedRoute component={withSeo(MissionCommand, { title: "Mission Command Center" })} />} />
+        <Route path="/legacy-dashboard" component={() => <ProtectedRoute component={withSeo(Dashboard, { title: "Dashboard" })} />} />
         <Route path="/quests" component={() => <ProtectedRoute component={withSeo(QuestsPage, { title: "Quests" })} />} />
         <Route path="/roadmap" component={() => <ProtectedRoute component={withSeo(RoadmapPage, { title: "Roadmap" })} />} />
         <Route path="/workout" component={() => <ProtectedRoute component={withSeo(WorkoutPage, { title: "Workout Tracker" })} />} />
-        <Route path="/focus" component={() => <ProtectedRoute component={withSeo(FocusSanctum, { title: "Focus Sanctum" })} />} />
+        <Route path="/focus" component={() => <ProtectedRoute component={withSeo(AirGapFocus, { title: "Air-Gap Focus" })} />} />
         <Route path="/stats" component={() => <ProtectedRoute component={withSeo(StatsPage, { title: "Stats" })} />} />
         <Route path="/leaderboard" component={() => <ProtectedRoute component={withSeo(LeaderboardPage, { title: "Leaderboard" })} />} />
         <Route path="/profile/:id" component={() => <ProtectedRoute component={withSeo(ProfilePage, { title: "Profile" })} />} />
@@ -354,7 +373,7 @@ function AppContent() {
   return (
     <>
       <AppTour />
-      {location === "/onboarding" ? (
+      {location === "/onboarding" || location === "/briefing-room" || location === "/air-gap-focus" ? (
         <Router />
       ) : (
         <SidebarProvider>
@@ -380,6 +399,18 @@ function AppContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true });
+                      document.dispatchEvent(event);
+                    }}
+                    className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-lg border border-border bg-card/60 hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title="Tactical Command Palette (Ctrl+K)"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="hidden md:inline font-bold">CMD</span>
+                    <kbd className="px-1 py-0.2 rounded bg-muted text-[10px] text-muted-foreground border border-border">Ctrl+K</kbd>
+                  </button>
                   <NotificationCenter />
                   <ThemeToggle />
                 </div>
@@ -432,6 +463,7 @@ function App() {
                 <NotificationWatcher />
                 <NetworkStatus />
                 <SwUpdateToast />
+                <TacticalCommandPalette />
                 <AppContent />
                 <Toaster />
               </WorkoutProvider>

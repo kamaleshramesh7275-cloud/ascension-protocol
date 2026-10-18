@@ -142,4 +142,42 @@ export const pushNotifications = {
             body: `You've reached Tier ${newTier}. A new chapter begins!`,
             url: "/stats",
         }),
+
+    // ─── 4 Pillars Execution Protocol Push Notifications ───
+    morningBriefing: (userId: string, failureStatement?: string) =>
+        sendPushToUser(userId, {
+            title: "📋 MORNING BRIEFING LOCK",
+            body: failureStatement
+                ? `Orders locked: "${failureStatement.substring(0, 60)}..." Accept your mission now.`
+                : "Daily orders generated. Confirm your single mission before cognitive drift sets in.",
+            url: "/mission-command",
+        }),
+
+    midDayPulse: (userId: string, missionTitle?: string) =>
+        sendPushToUser(userId, {
+            title: "⚠️ 13:00 MID-DAY PULSE INTERCEPT",
+            body: `50% of today has elapsed. "${missionTitle || 'Primary mission'}" incomplete. Declare your 30-min action now.`,
+            url: "/mission-command",
+        }),
+
+    eveningDebrief: (userId: string) =>
+        sendPushToUser(userId, {
+            title: "📊 MANDATORY EVENING DEBRIEF",
+            body: "Day concluding. The AI Chief of Staff requires your written assessment before 23:59.",
+            url: "/evening-debrief",
+        }),
+
+    sundayPerformanceCourt: (userId: string, verdict: string = "Audit In Session") =>
+        sendPushToUser(userId, {
+            title: "⚖️ PERFORMANCE COURT CONVENED",
+            body: `Weekly judicial audit complete. Status: ${verdict}. Review your roadmap trajectory.`,
+            url: "/performance-court",
+        }),
+
+    squadDefectorAlert: (userId: string, defectorName: string, dividendPoints: number) =>
+        sendPushToUser(userId, {
+            title: "💀 SQUAD PACT LIQUIDATION",
+            body: `${defectorName} defaulted. Their stake was liquidated. +${dividendPoints} pts performance dividend credited to you.`,
+            url: "/squad-pact",
+        }),
 };

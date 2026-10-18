@@ -1365,3 +1365,494 @@ export const insertGangDuelSchema = z.object({
 
 export type GangDuel = typeof gangDuels.$inferSelect;
 export type InsertGangDuel = z.infer<typeof insertGangDuelSchema>;
+
+// ─── 4-Pillars Uncompromising Human Execution Engine ─────────────────────────
+
+// 1. Intelligence Intake & Execution Profiles
+export const executionProfiles = pgTable("execution_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  targetOutcome: text("target_outcome").notNull(), // Layer 1: Exact target statement
+  targetDeadline: timestamp("target_deadline").notNull(),
+  failureStatement: text("failure_statement").notNull(), // Exact painful consequence if failed
+  gapMatrix: jsonb("gap_matrix").$type<Record<string, number>>().notNull(), // Layer 2: Domain readiness heatmap
+  failureAutopsy: jsonb("failure_autopsy").$type<{
+    pastAttempts: string;
+    primaryFailureTrigger: string;
+    rationalizationPattern: string;
+    relapseSignature: string;
+  }>().notNull(), // Layer 3: Diagnostic of past failures
+  cognitiveFingerprint: jsonb("cognitive_fingerprint").$type<{
+    peakFocusStart: string;
+    peakFocusEnd: string;
+    primaryDistractor: string;
+    stressResponse: "freeze" | "flight" | "scatter";
+    environmentPreference: string;
+  }>().notNull(), // Layer 4: Biological & environmental profile
+  commitmentCapacity: jsonb("commitment_capacity").$type<{
+    dailyDeepWorkHours: number;
+    deadDays: string[];
+    nonNegotiableTimeThief: string;
+    weeklyTargetHours: number;
+  }>().notNull(), // Layer 5: Time reality
+  roadmapMilestones: jsonb("roadmap_milestones").$type<Array<{
+    id: string;
+    weekNumber: number;
+    title: string;
+    coreDeliverable: string;
+    estimatedHours: number;
+    probabilityScore: number;
+    completed: boolean;
+  }>>().default([]).notNull(),
+  currentMilestoneIndex: integer("current_milestone_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertExecutionProfileSchema = z.object({
+  userId: z.string().min(1),
+  targetOutcome: z.string().min(3),
+  targetDeadline: z.union([z.string(), z.date()]),
+  failureStatement: z.string().min(10),
+  gapMatrix: z.record(z.string(), z.number()),
+  failureAutopsy: z.object({
+    pastAttempts: z.string(),
+    primaryFailureTrigger: z.string(),
+    rationalizationPattern: z.string(),
+    relapseSignature: z.string(),
+  }),
+  cognitiveFingerprint: z.object({
+    peakFocusStart: z.string(),
+    peakFocusEnd: z.string(),
+    primaryDistractor: z.string(),
+    stressResponse: z.enum(["freeze", "flight", "scatter"]),
+    environmentPreference: z.string(),
+  }),
+  commitmentCapacity: z.object({
+    dailyDeepWorkHours: z.number().min(0.5).max(16),
+    deadDays: z.array(z.string()),
+    nonNegotiableTimeThief: z.string(),
+    weeklyTargetHours: z.number().min(1),
+  }),
+  roadmapMilestones: z.array(z.object({
+    id: z.string(),
+    weekNumber: z.number(),
+    title: z.string(),
+    coreDeliverable: z.string(),
+    estimatedHours: z.number(),
+    probabilityScore: z.number(),
+    completed: z.boolean(),
+  })).optional(),
+  currentMilestoneIndex: z.number().int().optional(),
+});
+
+export type ExecutionProfile = typeof executionProfiles.$inferSelect;
+export type InsertExecutionProfile = z.infer<typeof insertExecutionProfileSchema>;
+
+// 2. Single Mission Lock (Daily Missions)
+export const dailyMissions = pgTable("daily_missions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: text("date").notNull(), // YYYY-MM-DD
+  title: text("title").notNull(), // Strategic Objective
+  tacticalDeliverable: text("tactical_deliverable").notNull(), // Exact verifiable output required
+  focusTier: text("focus_tier").default("L1").notNull(), // L1, L2, L3, L4
+  estimatedMinutes: integer("estimated_minutes").default(90).notNull(),
+  executionWindow: text("execution_window").notNull(), // e.g. "09:00 - 11:30"
+  primingRitual: text("priming_ritual").notNull(), // 2-min starter action
+  failureCondition: text("failure_condition").notNull(), // Immediate disqualifier
+  proofTypeRequired: text("proof_type_required").default("structured_text").notNull(), // structured_text, artifact_url, mcq_recall, code_diff
+  status: text("status").default("pending").notNull(), // pending, committed, in_progress, completed, failed, aborted
+  committedAt: timestamp("committed_at"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  abortedAt: timestamp("aborted_at"),
+  abortReason: text("abort_reason"),
+  proofData: jsonb("proof_data").$type<{
+    content?: string;
+    url?: string;
+    metrics?: Record<string, any>;
+    mcqAnswers?: Record<string, string>;
+  }>(),
+  proofQualityScore: integer("proof_quality_score"), // 0 - 100
+  aiReviewFeedback: text("ai_review_feedback"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDailyMissionSchema = z.object({
+  userId: z.string().min(1),
+  date: z.string().min(1),
+  title: z.string().min(1),
+  tacticalDeliverable: z.string().min(1),
+  focusTier: z.string().optional(),
+  estimatedMinutes: z.number().int().optional(),
+  executionWindow: z.string().min(1),
+  primingRitual: z.string().min(1),
+  failureCondition: z.string().min(1),
+  proofTypeRequired: z.string().optional(),
+  status: z.string().optional(),
+  abortReason: z.string().optional(),
+  proofData: z.any().optional(),
+  proofQualityScore: z.number().int().optional(),
+  aiReviewFeedback: z.string().optional(),
+});
+
+export type DailyMission = typeof dailyMissions.$inferSelect;
+export type InsertDailyMission = z.infer<typeof insertDailyMissionSchema>;
+
+// 3. Air-Gap Focus Sessions
+export const focusDensitySessions = pgTable("focus_density_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  missionId: varchar("mission_id").references(() => dailyMissions.id, { onDelete: 'set null' }),
+  declarationOutput: text("declaration_output").notNull(), // What exact output will be produced
+  obstaclePreMortem: text("obstacle_pre_mortem").notNull(), // What will try to derail + countermove
+  scheduledMinutes: integer("scheduled_minutes").notNull(),
+  actualMinutes: integer("actual_minutes").default(0).notNull(),
+  status: text("status").default("active").notNull(), // active, completed, aborted, breached
+  oathAcknowledged: boolean("oath_acknowledged").default(true).notNull(),
+  breachesCount: integer("breaches_count").default(0).notNull(),
+  breachEvents: jsonb("breach_events").$type<Array<{
+    timestamp: string;
+    eventType: string;
+    details: string;
+  }>>().default([]).notNull(),
+  attentionQualityScore: integer("attention_quality_score").default(100).notNull(),
+  proofSubmitted: boolean("proof_submitted").default(false).notNull(),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  endedAt: timestamp("ended_at"),
+});
+
+export const insertFocusDensitySessionSchema = z.object({
+  userId: z.string().min(1),
+  missionId: z.string().nullable().optional(),
+  declarationOutput: z.string().min(3),
+  obstaclePreMortem: z.string().min(3),
+  scheduledMinutes: z.number().int().min(5),
+  actualMinutes: z.number().int().optional(),
+  status: z.string().optional(),
+  oathAcknowledged: z.boolean().optional(),
+  breachesCount: z.number().int().optional(),
+  breachEvents: z.array(z.any()).optional(),
+  attentionQualityScore: z.number().int().optional(),
+  proofSubmitted: z.boolean().optional(),
+});
+
+export type FocusDensitySession = typeof focusDensitySessions.$inferSelect;
+export type InsertFocusDensitySession = z.infer<typeof insertFocusDensitySessionSchema>;
+
+// 4. Discipline Breaches (Permanent Record)
+export const disciplineBreaches = pgTable("discipline_breaches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sessionId: varchar("session_id").references(() => focusDensitySessions.id, { onDelete: 'set null' }),
+  type: text("type").notNull(), // visibility_lost, window_blurred, session_abandoned, mission_aborted, oath_violated, morning_briefing_ignored
+  severity: text("severity").default("minor").notNull(), // warning, minor, major, critical
+  description: text("description").notNull(),
+  penaltyScore: integer("penalty_score").default(15).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDisciplineBreachSchema = z.object({
+  userId: z.string().min(1),
+  sessionId: z.string().nullable().optional(),
+  type: z.string().min(1),
+  severity: z.string().optional(),
+  description: z.string().min(1),
+  penaltyScore: z.number().int().optional(),
+});
+
+export type DisciplineBreach = typeof disciplineBreaches.$inferSelect;
+export type InsertDisciplineBreach = z.infer<typeof insertDisciplineBreachSchema>;
+
+// 5. Discipline Reputation Score (0 - 1000)
+export const disciplineScores = pgTable("discipline_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  score: integer("score").default(700).notNull(), // 0 - 1000
+  tier: text("tier").default("Practitioner").notNull(), // Novice, Apprentice, Practitioner, Ironclad, Ascended
+  totalSessions: integer("total_sessions").default(0).notNull(),
+  completedMissions: integer("completed_missions").default(0).notNull(),
+  abortedMissions: integer("aborted_missions").default(0).notNull(),
+  totalBreaches: integer("total_breaches").default(0).notNull(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  highestScore: integer("highest_score").default(700).notNull(),
+  focusDensityAverage: integer("focus_density_average").default(0).notNull(), // percentage 0-100
+  lastCalculatedAt: timestamp("last_calculated_at").defaultNow().notNull(),
+});
+
+export const insertDisciplineScoreSchema = z.object({
+  userId: z.string().min(1),
+  score: z.number().int().min(0).max(1000).optional(),
+  tier: z.string().optional(),
+  totalSessions: z.number().int().optional(),
+  completedMissions: z.number().int().optional(),
+  abortedMissions: z.number().int().optional(),
+  totalBreaches: z.number().int().optional(),
+  currentStreak: z.number().int().optional(),
+  highestScore: z.number().int().optional(),
+  focusDensityAverage: z.number().int().optional(),
+});
+
+export type DisciplineScore = typeof disciplineScores.$inferSelect;
+export type InsertDisciplineScore = z.infer<typeof insertDisciplineScoreSchema>;
+
+// 6. Commitment Contracts
+export const commitmentContracts = pgTable("commitment_contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  weekStartDate: text("week_start_date").notNull(), // YYYY-MM-DD
+  weekEndDate: text("week_end_date").notNull(), // YYYY-MM-DD
+  targetMissionsCount: integer("target_missions_count").default(5).notNull(),
+  targetFocusMinutes: integer("target_focus_minutes").default(600).notNull(),
+  stakeAmountCents: integer("stake_amount_cents").default(0).notNull(),
+  antiCharityRecipient: text("anti_charity_recipient"),
+  status: text("status").default("active").notNull(), // active, fulfilled, breached, forfeited
+  verifiedMissionsCount: integer("verified_missions_count").default(0).notNull(),
+  verifiedFocusMinutes: integer("verified_focus_minutes").default(0).notNull(),
+  outcomeVerdict: text("outcome_verdict"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCommitmentContractSchema = z.object({
+  userId: z.string().min(1),
+  weekStartDate: z.string().min(1),
+  weekEndDate: z.string().min(1),
+  targetMissionsCount: z.number().int().optional(),
+  targetFocusMinutes: z.number().int().optional(),
+  stakeAmountCents: z.number().int().optional(),
+  antiCharityRecipient: z.string().nullable().optional(),
+  status: z.string().optional(),
+  verifiedMissionsCount: z.number().int().optional(),
+  verifiedFocusMinutes: z.number().int().optional(),
+  outcomeVerdict: z.string().nullable().optional(),
+});
+
+export type CommitmentContract = typeof commitmentContracts.$inferSelect;
+export type InsertCommitmentContract = z.infer<typeof insertCommitmentContractSchema>;
+
+// 7. Evening Debrief Audit
+export const eveningDebriefs = pgTable("evening_debriefs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: text("date").notNull(), // YYYY-MM-DD
+  missionId: varchar("mission_id").references(() => dailyMissions.id, { onDelete: 'set null' }),
+  reflectionText: text("reflection_text").notNull(), // Min 50 words
+  aiFeedback: text("ai_feedback"),
+  selfHonestyRating: integer("self_honesty_rating").default(8).notNull(), // 1 - 10
+  focusDensityScoreOfDay: integer("focus_density_score_of_day").default(0).notNull(), // 0 - 100
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+});
+
+export const insertEveningDebriefSchema = z.object({
+  userId: z.string().min(1),
+  date: z.string().min(1),
+  missionId: z.string().nullable().optional(),
+  reflectionText: z.string().min(20),
+  aiFeedback: z.string().nullable().optional(),
+  selfHonestyRating: z.number().int().min(1).max(10).optional(),
+  focusDensityScoreOfDay: z.number().int().min(0).max(100).optional(),
+});
+
+export type EveningDebrief = typeof eveningDebriefs.$inferSelect;
+export type InsertEveningDebrief = z.infer<typeof insertEveningDebriefSchema>;
+
+// ─── Phase 2: High-Stakes Squad Pacts & Performance Court ───────────────────
+
+// 8. Squad Pacts (3-5 Member Discipline Stake Pool)
+export const squadPacts = pgTable("squad_pacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  inviteCode: text("invite_code").notNull().unique(),
+  creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  weeklyStakePoints: integer("weekly_stake_points").default(50).notNull(), // Discipline points staked per member
+  totalPool: integer("total_pool").default(0).notNull(),
+  weekNumber: integer("week_number").default(1).notNull(),
+  status: text("status").default("active").notNull(), // forming, active, evaluated
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSquadPactSchema = z.object({
+  name: z.string().min(2),
+  inviteCode: z.string().min(4),
+  creatorId: z.string().min(1),
+  weeklyStakePoints: z.number().int().min(10).max(200).optional(),
+  totalPool: z.number().int().optional(),
+  weekNumber: z.number().int().optional(),
+  status: z.string().optional(),
+});
+
+export type SquadPact = typeof squadPacts.$inferSelect;
+export type InsertSquadPact = z.infer<typeof insertSquadPactSchema>;
+
+// 9. Squad Pact Members & Live Ambient Intelligence
+export const squadPactMembers = pgTable("squad_pact_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pactId: varchar("pact_id").notNull().references(() => squadPacts.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  stakedPoints: integer("staked_points").default(50).notNull(),
+  status: text("status").default("active").notNull(), // active, passed, forfeited
+  bonusReceived: integer("bonus_received").default(0).notNull(),
+  currentLiveStatus: text("current_live_status").default("idle").notNull(), // idle, in_session, unresponsive, breached, completed_today
+  activeSessionMinutes: integer("active_session_minutes").default(0).notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+export const insertSquadPactMemberSchema = z.object({
+  pactId: z.string().min(1),
+  userId: z.string().min(1),
+  stakedPoints: z.number().int().optional(),
+  status: z.string().optional(),
+  currentLiveStatus: z.string().optional(),
+  activeSessionMinutes: z.number().int().optional(),
+});
+
+export type SquadPactMember = typeof squadPactMembers.$inferSelect;
+export type InsertSquadPactMember = z.infer<typeof insertSquadPactMemberSchema>;
+
+// 10. Public Commitment Wall (Major Life Declarations with Live Witnesses)
+export const publicCommitments = pgTable("public_commitments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  declaration: text("declaration").notNull(), // The Major Life Declaration
+  targetDeadline: timestamp("target_deadline").notNull(),
+  currentDisciplineScore: integer("current_discipline_score").default(700).notNull(),
+  velocityPercent: integer("velocity_percent").default(70).notNull(),
+  witnessesCount: integer("witnesses_count").default(1).notNull(),
+  weeklyUpdates: jsonb("weekly_updates").$type<Array<{
+    weekNumber: number;
+    velocity: number;
+    verdict: string;
+    date: string;
+  }>>().default([]).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPublicCommitmentSchema = z.object({
+  userId: z.string().min(1),
+  declaration: z.string().min(10),
+  targetDeadline: z.union([z.string(), z.date()]),
+  currentDisciplineScore: z.number().int().optional(),
+  velocityPercent: z.number().int().optional(),
+  witnessesCount: z.number().int().optional(),
+  weeklyUpdates: z.array(z.any()).optional(),
+});
+
+export type PublicCommitment = typeof publicCommitments.$inferSelect;
+export type InsertPublicCommitment = z.infer<typeof insertPublicCommitmentSchema>;
+
+// 11. Weekly Performance Court Audits
+export const performanceCourtAudits = pgTable("performance_court_audits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  weekNumber: integer("week_number").notNull(),
+  year: integer("year").notNull(),
+  missionsAssigned: integer("missions_assigned").default(7).notNull(),
+  missionsCompleted: integer("missions_completed").default(0).notNull(),
+  targetFocusMinutes: integer("target_focus_minutes").default(900).notNull(),
+  actualFocusMinutes: integer("actual_focus_minutes").default(0).notNull(),
+  focusDensityScore: integer("focus_density_score").default(0).notNull(), // 0 - 100
+  breachesCount: integer("breaches_count").default(0).notNull(),
+  aiVerdict: text("ai_verdict").notNull(), // Uncompromising analytical judgment
+  roadmapImpact: text("roadmap_impact").notNull(), // Days added/saved, revised deadline probability
+  sharedWithSquad: boolean("shared_with_squad").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPerformanceCourtAuditSchema = z.object({
+  userId: z.string().min(1),
+  weekNumber: z.number().int(),
+  year: z.number().int(),
+  missionsAssigned: z.number().int().optional(),
+  missionsCompleted: z.number().int().optional(),
+  targetFocusMinutes: z.number().int().optional(),
+  actualFocusMinutes: z.number().int().optional(),
+  focusDensityScore: z.number().int().optional(),
+  breachesCount: z.number().int().optional(),
+  aiVerdict: z.string().min(10),
+  roadmapImpact: z.string().min(5),
+  sharedWithSquad: z.boolean().optional(),
+});
+
+export type PerformanceCourtAudit = typeof performanceCourtAudits.$inferSelect;
+export type InsertPerformanceCourtAudit = z.infer<typeof insertPerformanceCourtAuditSchema>;
+
+// 12. Mid-Day Pulse Checks
+export const midDayPulses = pgTable("mid_day_pulses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: text("date").notNull(), // YYYY-MM-DD
+  missionStatus: text("mission_status").notNull(), // 'not_started' | 'in_progress' | 'completed'
+  committedAction: text("committed_action").notNull(), // The 30m micro-action
+  timeBlockMinutes: integer("time_block_minutes").default(30).notNull(),
+  acknowledgedAt: timestamp("acknowledged_at").defaultNow().notNull(),
+  executedSuccessfully: boolean("executed_successfully"),
+});
+
+export const insertMidDayPulseSchema = z.object({
+  userId: z.string().min(1),
+  date: z.string().min(1),
+  missionStatus: z.string().min(1),
+  committedAction: z.string().min(5),
+  timeBlockMinutes: z.number().int().optional(),
+  executedSuccessfully: z.boolean().optional(),
+});
+
+export type MidDayPulse = typeof midDayPulses.$inferSelect;
+export type InsertMidDayPulse = z.infer<typeof insertMidDayPulseSchema>;
+
+// 13. Hall of Ascension (30+ Day Elite Inductees with 90%+ Consistency)
+export const hallOfAscension = pgTable("hall_of_ascension", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userName: text("user_name").notNull(),
+  avatarUrl: text("avatar_url"),
+  goalTitle: text("goal_title").notNull(),
+  disciplineScore: integer("discipline_score").notNull(),
+  verifiedDeepWorkMinutes: integer("verified_deep_work_minutes").notNull(),
+  consecutiveDays: integer("consecutive_days").notNull(),
+  inductedAt: timestamp("inducted_at").defaultNow().notNull(),
+  status: text("status").default("active").notNull(),
+});
+
+export const insertHallOfAscensionSchema = z.object({
+  userId: z.string().min(1),
+  userName: z.string().min(1),
+  avatarUrl: z.string().optional(),
+  goalTitle: z.string().min(3),
+  disciplineScore: z.number().int(),
+  verifiedDeepWorkMinutes: z.number().int(),
+  consecutiveDays: z.number().int(),
+  status: z.string().optional(),
+});
+
+export type HallOfAscensionEntry = typeof hallOfAscension.$inferSelect;
+export type InsertHallOfAscensionEntry = z.infer<typeof insertHallOfAscensionSchema>;
+
+// 14. Wall of Consequence (High-Stakes Contract Defaulters)
+export const wallOfConsequence = pgTable("wall_of_consequence", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userName: text("user_name").notNull(),
+  contractTarget: text("contract_target").notNull(),
+  failedDate: timestamp("failed_date").defaultNow().notNull(),
+  stakeForfeited: text("stake_forfeited").notNull(),
+  dishonorReason: text("dishonor_reason").notNull(),
+  breachType: text("breach_type").default("contract_default").notNull(),
+  avatarUrl: text("avatar_url"),
+});
+
+export const insertWallOfConsequenceSchema = z.object({
+  userId: z.string().min(1),
+  userName: z.string().min(1),
+  contractTarget: z.string().min(3),
+  stakeForfeited: z.string().min(2),
+  dishonorReason: z.string().min(5),
+  breachType: z.string().optional(),
+  avatarUrl: z.string().optional(),
+});
+
+export type WallOfConsequenceEntry = typeof wallOfConsequence.$inferSelect;
+export type InsertWallOfConsequenceEntry = z.infer<typeof insertWallOfConsequenceSchema>;
+
+

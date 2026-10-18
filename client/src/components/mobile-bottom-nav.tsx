@@ -1,4 +1,4 @@
-import { Home, Target, Brain, ShoppingBag, Dumbbell, MoreHorizontal, Trophy, User, Activity, BookOpen, Users, MessageSquare, Map, Phone, X, ArrowRight, Lock } from "lucide-react";
+import { Home, Target, Brain, ShoppingBag, Dumbbell, MoreHorizontal, Trophy, User, Activity, BookOpen, Users, MessageSquare, Map, Phone, X, ArrowRight, Lock, Gavel, Scale, Flame, Eye } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,19 +12,25 @@ interface MobileBottomNavProps {
     className?: string;
 }
 
-// Primary 5 tabs always visible
+// Primary 5 tabs always visible (Ascension Protocol Pillars)
 const primaryNavItems = [
-    { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: Target, label: "Quests", path: "/quests" },
+    { icon: Home, label: "Command", path: "/mission-command" },
+    { icon: Brain, label: "Air-Gap", path: "/air-gap-focus" },
+    { icon: Flame, label: "Squad", path: "/squad-pact" },
+    { icon: Gavel, label: "Court", path: "/performance-court" },
     { icon: Dumbbell, label: "Workout", path: "/workout" },
-    { icon: Brain, label: "Focus", path: "/focus" },
-    { icon: ShoppingBag, label: "Store", path: "/store" },
 ];
 
 // All the extra pages accessible from the "More" drawer
 const moreNavItems = [
+    { icon: Activity, label: "Evening Debrief", path: "/evening-debrief", color: "text-purple-400", bg: "bg-purple-500/10" },
+    { icon: Gavel, label: "Performance Court", path: "/performance-court", color: "text-rose-400", bg: "bg-rose-500/10" },
+    { icon: Scale, label: "Commitment Contract", path: "/commitment-contract", color: "text-amber-400", bg: "bg-amber-500/10" },
+    { icon: Flame, label: "Squad Pact", path: "/squad-pact", color: "text-orange-400", bg: "bg-orange-500/10" },
+    { icon: Eye, label: "Public Wall", path: "/public-commitments", color: "text-blue-400", bg: "bg-blue-500/10" },
     { icon: Activity, label: "Stats", path: "/stats", color: "text-sky-400", bg: "bg-sky-500/10" },
     { icon: Trophy, label: "Leaderboard", path: "/leaderboard", color: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { icon: Trophy, label: "Hall of Immortals", path: "/hall-of-ascension", color: "text-amber-400", bg: "bg-amber-500/10" },
     { icon: User, label: "Profile", path: "/profile", color: "text-emerald-400", bg: "bg-emerald-500/10" },
     { icon: Map, label: "Roadmap", path: "/roadmap", color: "text-red-400", bg: "bg-red-500/10", premiumOnly: true },
     { icon: BookOpen, label: "Library", path: "/library", color: "text-purple-400", bg: "bg-purple-500/10" },

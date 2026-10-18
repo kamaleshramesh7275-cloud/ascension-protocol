@@ -66,6 +66,12 @@ export function initCronJobs(storage: IStorage) {
         }, delay);
     };
     schedule8PM();
+
+    // ── 4 Pillars Autonomous Execution Protocol Schedulers ──
+    scheduleDaily(6, 30, "Morning Briefing Dispatcher", () => processMorningBriefings(storage));
+    scheduleDaily(13, 0, "Mid-Day Pulse Intercept Dispatcher", () => processMidDayPulses(storage));
+    scheduleDaily(21, 0, "Evening Debrief Audit Dispatcher", () => processEveningDebriefs(storage));
+    scheduleWeekly(0, 20, 0, "Weekly Performance Court & Squad Liquidation", () => processWeeklyPerformanceCourts(storage));
 }
 
 async function processStreakReminders(storage: IStorage) {
@@ -138,6 +144,7 @@ async function processPremiumBonuses(storage: IStorage) {
 // ─── CITADEL CONTAGION ────────────────────────────────────────────────────────
 // If a ruin hasn't been cleared in 48h, it spreads to adjacent completed buildings
 async function processCitadelContagion(storage: IStorage) {
+    if (!db || !(db as any).query?.citadelBuildings) return;
     console.log("[Cron] Processing Citadel Contagion...");
     try {
         const CONTAGION_THRESHOLD_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -297,5 +304,204 @@ async function runDailyGuildQuests(storage: IStorage) {
         console.log("[Cron] Daily Guild Quest Generation Completed.");
     } catch (error) {
         console.error("[Cron] Error running daily guild quests:", error);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4 PILLARS AUTONOMOUS ENFORCER SCHEDULERS & EXECUTORS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function scheduleDaily(hour: number, minute: number, label: string, taskFn: () => Promise<void>) {
+    const computeDelay = () => {
+        const now = new Date();
+        const target = new Date(now);
+        target.setHours(hour, minute, 0, 0);
+        if (target.getTime() <= now.getTime()) {
+            target.setDate(target.getDate() + 1);
+        }
+        return target.getTime() - now.getTime();
+    };
+
+    const delay = computeDelay();
+    console.log(`[Cron] ${label} scheduled in ${Math.round(delay / 1000 / 60)} minutes (at ${hour}:${minute.toString().padStart(2, '0')})`);
+
+    setTimeout(async () => {
+        try {
+            await taskFn();
+        } catch (e) {
+            console.error(`[Cron] Error running ${label}:`, e);
+        }
+        setInterval(async () => {
+            try {
+                await taskFn();
+            } catch (e) {
+                console.error(`[Cron] Error running ${label}:`, e);
+            }
+        }, 24 * 60 * 60 * 1000);
+    }, delay);
+}
+
+function scheduleWeekly(dayOfWeek: number, hour: number, minute: number, label: string, taskFn: () => Promise<void>) {
+    const computeDelay = () => {
+        const now = new Date();
+        const target = new Date(now);
+        target.setHours(hour, minute, 0, 0);
+        const dayDiff = (dayOfWeek - now.getDay() + 7) % 7;
+        target.setDate(target.getDate() + dayDiff);
+        if (target.getTime() <= now.getTime()) {
+            target.setDate(target.getDate() + 7);
+        }
+        return target.getTime() - now.getTime();
+    };
+
+    const delay = computeDelay();
+    console.log(`[Cron] ${label} scheduled in ${Math.round(delay / 1000 / 60 / 60)} hours (Weekly Sunday at ${hour}:${minute.toString().padStart(2, '0')})`);
+
+    setTimeout(async () => {
+        try {
+            await taskFn();
+        } catch (e) {
+            console.error(`[Cron] Error running ${label}:`, e);
+        }
+        setInterval(async () => {
+            try {
+                await taskFn();
+            } catch (e) {
+                console.error(`[Cron] Error running ${label}:`, e);
+            }
+        }, 7 * 24 * 60 * 60 * 1000);
+    }, delay);
+}
+
+/**
+ * 06:30 AM — Dispatches Morning Briefing alert to all active operators.
+ */
+async function processMorningBriefings(storage: IStorage) {
+    console.log("[Cron] Executing 06:30 Morning Briefing Dispatcher...");
+    try {
+        const users = await storage.getAllUsers();
+        for (const user of users) {
+            const profile = await storage.getExecutionProfile(user.id);
+            if (profile) {
+                await pushNotifications.morningBriefing(user.id, profile.failureStatement);
+            }
+        }
+        console.log(`[Cron] Morning Briefings dispatched to ${users.length} operators.`);
+    } catch (error) {
+        console.error("[Cron] Error processing morning briefings:", error);
+    }
+}
+
+/**
+ * 13:00 PM — Mid-Day Pulse Intercept: Alerts operators whose primary mission is incomplete.
+ */
+async function processMidDayPulses(storage: IStorage) {
+    console.log("[Cron] Executing 13:00 Mid-Day Pulse Intercept Dispatcher...");
+    try {
+        const users = await storage.getAllUsers();
+        const todayStr = new Date().toISOString().split("T")[0];
+
+        for (const user of users) {
+            const mission = await storage.getDailyMission(user.id, todayStr);
+            const existingPulse = await storage.getMidDayPulse(user.id, todayStr);
+
+            // Trigger if mission is missing or incomplete, and not yet acknowledged
+            if ((!mission || mission.status !== "completed") && !existingPulse) {
+                await pushNotifications.midDayPulse(user.id, mission?.title);
+            }
+        }
+        console.log("[Cron] Mid-Day Pulse Intercept evaluation complete.");
+    } catch (error) {
+        console.error("[Cron] Error processing mid-day pulses:", error);
+    }
+}
+
+/**
+ * 21:00 PM — Mandatory Evening Debrief Audit summons.
+ */
+async function processEveningDebriefs(storage: IStorage) {
+    console.log("[Cron] Executing 21:00 Evening Debrief Audit Dispatcher...");
+    try {
+        const users = await storage.getAllUsers();
+        const todayStr = new Date().toISOString().split("T")[0];
+
+        for (const user of users) {
+            const debrief = await storage.getEveningDebrief(user.id, todayStr);
+            if (!debrief) {
+                await pushNotifications.eveningDebrief(user.id);
+            }
+        }
+        console.log("[Cron] Evening Debrief summons dispatched.");
+    } catch (error) {
+        console.error("[Cron] Error processing evening debriefs:", error);
+    }
+}
+
+/**
+ * Sunday 20:00 PM — Weekly Performance Court Convening & Squad Pact Pool Liquidation.
+ */
+async function processWeeklyPerformanceCourts(storage: IStorage) {
+    console.log("[Cron] Executing Sunday 20:00 Performance Court & Squad Liquidation...");
+    try {
+        const users = await storage.getAllUsers();
+        const now = new Date();
+        const weekNumber = Math.ceil((now.getDate() - now.getDay() + 1) / 7) || 1;
+
+        for (const user of users) {
+            const missions = await storage.getDailyMissions(user.id, 7);
+            const sessions = await storage.getFocusDensitySessions(user.id, 14);
+            const breaches = await storage.getDisciplineBreaches(user.id, 14);
+
+            const completedCount = missions.filter(m => m.status === "completed").length;
+            const actualMinutes = sessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
+            const targetMinutes = 900;
+            const focusDensity = Math.min(100, Math.round((actualMinutes / targetMinutes) * 100));
+
+            let verdict = "Violated";
+            let aiVerdict = "";
+            let roadmapImpact = "";
+
+            if (completedCount >= 5 && actualMinutes >= 700) {
+                verdict = "Distinction";
+                aiVerdict = `COURT VERDICT: High-velocity execution verified. Delivered ${completedCount}/7 missions with ${actualMinutes}m deep work.`;
+                roadmapImpact = `Trajectory on schedule. Days saved: +2.`;
+            } else if (completedCount >= 3) {
+                verdict = "Met";
+                aiVerdict = `COURT VERDICT: Compromised velocity. Completed ${completedCount}/7 missions. Behavioral logs reveal hesitation.`;
+                roadmapImpact = `Deadline slipped by 4 days. +30% focus minutes required next week.`;
+            } else {
+                verdict = "Violated";
+                aiVerdict = `COURT VERDICT: Severe execution failure. Completed ${completedCount}/7 missions with ${breaches.length} breaches.`;
+                roadmapImpact = `Roadmap recalculation recommended. Deadline probability degraded.`;
+            }
+
+            // Create court audit
+            await storage.createPerformanceCourtAudit({
+                userId: user.id,
+                weekNumber,
+                year: now.getFullYear(),
+                missionsAssigned: 7,
+                missionsCompleted: completedCount,
+                targetFocusMinutes: targetMinutes,
+                actualFocusMinutes: actualMinutes,
+                focusDensityScore: focusDensity,
+                breachesCount: breaches.length,
+                aiVerdict,
+                roadmapImpact,
+                sharedWithSquad: true,
+            });
+
+            // If user belongs to a squad pact, evaluate pool distribution
+            const squadData = await storage.getUserSquadPact(user.id);
+            if (squadData && squadData.pact.status === "active") {
+                await storage.distributeSquadPactPool(squadData.pact.id);
+            }
+
+            // Fire push notification
+            await pushNotifications.sundayPerformanceCourt(user.id, verdict);
+        }
+        console.log(`[Cron] Weekly Performance Court evaluations completed for ${users.length} operators.`);
+    } catch (error) {
+        console.error("[Cron] Error processing weekly performance courts:", error);
     }
 }

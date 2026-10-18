@@ -41,6 +41,22 @@ export default defineConfig({
             },
           },
           {
+            // Protocol Core Endpoints — NetworkFirst with offline cache fallback
+            urlPattern: /^https?:\/\/.*\/api\/(?:execution-profile|daily-mission|focus-density|squad-pact|hall-of-ascension|wall-of-consequence|performance-court).*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "protocol-core-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+              },
+              networkTimeoutSeconds: 3,
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
             // Other API calls — network first, fall back to cache
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
             handler: "NetworkFirst",

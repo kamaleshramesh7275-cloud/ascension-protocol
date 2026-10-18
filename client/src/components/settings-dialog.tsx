@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/use-notifications";
+import { PushEnforcerCard } from "@/components/push-enforcer-card";
 
 interface SettingsDialogProps {
     open: boolean;
@@ -203,6 +204,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                         />
                                     </div>
                                 ))}
+
+                                {section.title === "Notifications" && (
+                                    <div className="pt-2">
+                                        <PushEnforcerCard compact={true} />
+                                    </div>
+                                )}
                             </div>
 
                             {sectionIndex < settingsSections.length - 1 && (

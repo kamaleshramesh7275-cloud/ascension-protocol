@@ -1,18 +1,18 @@
 {
   "id": "/",
-  "name": "Ascensions Protocol",
-  "short_name": "Ascensions",
-  "description": "Gamify your goals. Complete quests. Ascend to greatness. Track your real-life stats and climb the ranks from D to S tier.",
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "name": "Ascension Protocol // Execution OS",
+  "short_name": "Ascension",
+  "description": "High-stakes execution operating system. Air-Gap focus enclaves, single daily mission locks, autonomous push directives, and squad escrow pacts.",
+  "theme_color": "#020617",
+  "background_color": "#020617",
   "display": "standalone",
-  "start_url": "/",
+  "start_url": "/mission-command",
   "scope": "/",
   "orientation": "portrait",
   "lang": "en",
   "dir": "ltr",
   "prefer_related_applications": false,
-  "categories": ["lifestyle", "productivity", "games"],
+  "categories": ["productivity", "business", "utilities"],
   "icons": [
     {
       "src": "/pwa-192x192.png",
@@ -41,31 +41,31 @@
   ],
   "shortcuts": [
     {
-      "name": "Dashboard",
-      "short_name": "Home",
-      "url": "/dashboard",
-      "description": "View your stats and progress",
+      "name": "Mission Command",
+      "short_name": "Command",
+      "url": "/mission-command",
+      "description": "Daily mission lock and verified execution",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Quests",
-      "short_name": "Quests",
-      "url": "/quests",
-      "description": "Complete daily quests and challenges",
+      "name": "Air-Gap Chamber",
+      "short_name": "Air-Gap",
+      "url": "/air-gap-focus",
+      "description": "Enter distraction-free neuro-entrained deep work",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Focus Sanctum",
-      "short_name": "Focus",
-      "url": "/focus",
-      "description": "Start a deep focus session",
+      "name": "Squad Pact Vault",
+      "short_name": "Squad",
+      "url": "/squad-pact",
+      "description": "Live accountability pool and tactical radio beacon",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Workout Tracker",
-      "short_name": "Workout",
-      "url": "/workout",
-      "description": "Track your workout sessions",
+      "name": "Performance Court",
+      "short_name": "Court",
+      "url": "/performance-court",
+      "description": "Weekly AI judicial audit & roadmap acceleration",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     }
   ]

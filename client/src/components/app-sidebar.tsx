@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight, Dumbbell } from "lucide-react";
+import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight, Dumbbell, Crosshair, FileCheck, Scale, Gavel, Flame, Eye } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { useLocation } from "wouter";
 import {
@@ -30,13 +30,76 @@ export function AppSidebar() {
 
     const items = [
         {
-            title: "Dashboard",
-            url: "/dashboard",
-            icon: LayoutDashboard,
-            color: "text-violet-500",
-            activeBg: "bg-violet-500/10",
-            activeBorder: "border-violet-500",
-            gradient: "from-violet-500/20 to-transparent"
+            title: "Mission Command",
+            url: "/mission-command",
+            icon: Crosshair,
+            color: "text-amber-500",
+            activeBg: "bg-amber-500/10",
+            activeBorder: "border-amber-500",
+            gradient: "from-amber-500/20 to-transparent"
+        },
+        {
+            title: "Air-Gap Focus",
+            url: "/air-gap-focus",
+            icon: Lock,
+            color: "text-cyan-500",
+            activeBg: "bg-cyan-500/10",
+            activeBorder: "border-cyan-500",
+            gradient: "from-cyan-500/20 to-transparent"
+        },
+        {
+            title: "Evening Debrief",
+            url: "/evening-debrief",
+            icon: FileCheck,
+            color: "text-purple-400",
+            activeBg: "bg-purple-500/10",
+            activeBorder: "border-purple-500",
+            gradient: "from-purple-500/20 to-transparent"
+        },
+        {
+            title: "Performance Court",
+            url: "/performance-court",
+            icon: Gavel,
+            color: "text-rose-500",
+            activeBg: "bg-rose-500/10",
+            activeBorder: "border-rose-500",
+            gradient: "from-rose-500/20 to-transparent"
+        },
+        {
+            title: "Commitment Contract",
+            url: "/commitment-contract",
+            icon: Scale,
+            color: "text-amber-400",
+            activeBg: "bg-amber-400/10",
+            activeBorder: "border-amber-400",
+            gradient: "from-amber-400/20 to-transparent"
+        },
+        {
+            title: "Squad Pact",
+            url: "/squad-pact",
+            icon: Flame,
+            color: "text-orange-500",
+            activeBg: "bg-orange-500/10",
+            activeBorder: "border-orange-500",
+            gradient: "from-orange-500/20 to-transparent"
+        },
+        {
+            title: "Public Wall",
+            url: "/public-commitments",
+            icon: Eye,
+            color: "text-blue-400",
+            activeBg: "bg-blue-400/10",
+            activeBorder: "border-blue-400",
+            gradient: "from-blue-400/20 to-transparent"
+        },
+        {
+            title: "Hall of Ascension",
+            url: "/hall-of-ascension",
+            icon: Trophy,
+            color: "text-yellow-400",
+            activeBg: "bg-yellow-400/10",
+            activeBorder: "border-yellow-400",
+            gradient: "from-yellow-400/20 to-transparent"
         },
         {
             title: "Quests",

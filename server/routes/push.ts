@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getStorage } from "../storage";
 import { sendPushToUser, pushNotifications } from "../utils/push-notifications";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
@@ -9,9 +10,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const isAdmin = (req: any) => req.headers["x-admin-password"] === ADMIN_PASSWORD;
 
 // POST /api/push/register — save FCM token for current user
-router.post("/push/register", async (req, res) => {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+router.post("/push/register", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
 
     const { token } = req.body;
     if (!token || typeof token !== "string") {
@@ -20,9 +21,6 @@ router.post("/push/register", async (req, res) => {
 
     try {
         const storage = getStorage();
-        const user = await storage.getUserByFirebaseUid(userId);
-        if (!user) return res.status(404).json({ error: "User not found" });
-
         // Store token in user's fcmTokens array (no duplicates)
         const existing: string[] = (user as any).fcmTokens || [];
         if (!existing.includes(token)) {
@@ -30,7 +28,7 @@ router.post("/push/register", async (req, res) => {
             await storage.updateUser(user.id, { fcmTokens: updated } as any);
         }
 
-        res.json({ success: true });
+        res.json({ success: true, count: ((user as any).fcmTokens?.length || 0) + 1 });
     } catch (err) {
         console.error("[Push] Register error:", err);
         res.status(500).json({ error: "Failed to register token" });
@@ -38,18 +36,15 @@ router.post("/push/register", async (req, res) => {
 });
 
 // DELETE /api/push/unregister — remove FCM token (logout)
-router.delete("/push/unregister", async (req, res) => {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+router.delete("/push/unregister", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
 
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     try {
         const storage = getStorage();
-        const user = await storage.getUserByFirebaseUid(userId);
-        if (!user) return res.status(404).json({ error: "User not found" });
-
         const existing: string[] = (user as any).fcmTokens || [];
         const updated = existing.filter((t) => t !== token);
         await storage.updateUser(user.id, { fcmTokens: updated } as any);
@@ -61,23 +56,33 @@ router.delete("/push/unregister", async (req, res) => {
     }
 });
 
-// POST /api/push/test — test notification (dev only)
-router.post("/push/test", async (req, res) => {
-    const userId = req.headers["x-firebase-uid"] as string;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+// POST /api/push/test — test notification (supports specific execution triggers)
+router.post("/push/test", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const { triggerType = "general" } = req.body;
 
     try {
-        const storage = getStorage();
-        const user = await storage.getUserByFirebaseUid(userId);
-        if (!user) return res.status(404).json({ error: "User not found" });
+        if (triggerType === "morning") {
+            await pushNotifications.morningBriefing(user.id);
+        } else if (triggerType === "pulse") {
+            await pushNotifications.midDayPulse(user.id);
+        } else if (triggerType === "debrief") {
+            await pushNotifications.eveningDebrief(user.id);
+        } else if (triggerType === "court") {
+            await pushNotifications.sundayPerformanceCourt(user.id, "Court Convened");
+        } else if (triggerType === "squad") {
+            await pushNotifications.squadDefectorAlert(user.id, "Operative-Viper", 100);
+        } else {
+            await sendPushToUser(user.id, {
+                title: "🔔 [ASCENSION PROTOCOL] Beacon Operational",
+                body: "Push enforcer channel verified. Real-time directive pipeline is active.",
+                url: "/mission-command",
+            });
+        }
 
-        await sendPushToUser(user.id, {
-            title: "🔔 Test Notification",
-            body: "Push notifications are working! Your Ascension journey continues.",
-            url: "/dashboard",
-        });
-
-        res.json({ success: true, message: "Test push sent" });
+        res.json({ success: true, message: `Test push sent (${triggerType})` });
     } catch (err) {
         console.error("[Push] Test error:", err);
         res.status(500).json({ error: "Failed to send test push" });
