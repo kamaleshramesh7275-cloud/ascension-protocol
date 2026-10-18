@@ -1,0 +1,16 @@
+[Unit]
+Description=Ascension Protocol 24/7 Autonomous Marketing Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ascension-marketing
+ExecStart=/usr/bin/python3 scheduler.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
