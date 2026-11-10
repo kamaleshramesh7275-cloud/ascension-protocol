@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { signInWithGoogle, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
+import { InAppBrowserBanner } from "@/components/auth/in-app-browser-banner";
 
 export default function AccountSelection() {
     const [, setLocation] = useLocation();
@@ -96,6 +97,10 @@ export default function AccountSelection() {
                         Welcome, Ascendant
                     </h1>
                     <p className="text-lg text-zinc-400">Choose your path or access instantly</p>
+                </div>
+
+                <div className="max-w-md mx-auto mb-4">
+                    <InAppBrowserBanner />
                 </div>
 
                 {/* Fast-Track Google Authentication Button */}

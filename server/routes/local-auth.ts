@@ -530,4 +530,168 @@ export function registerLocalAuthRoutes(app: Express) {
             res.status(500).json({ error: error?.message || "Registration failed" });
         }
     });
+
+    // Link Google Identity to Existing Session (with Merge Conflict Resolution)
+    app.post("/api/auth/link-google", async (req, res) => {
+        try {
+            const currentUid = (req.headers["x-firebase-uid"] as string) || (req as any).firebaseUid;
+            if (!currentUid) {
+                return res.status(401).json({ error: "No active session found to link" });
+            }
+
+            const { googleFirebaseUid, email, displayName, photoUrl, resolveChoice } = req.body;
+            if (!googleFirebaseUid) {
+                return res.status(400).json({ error: "Missing Google Firebase UID" });
+            }
+
+            const storage = getStorage();
+            const currentUser = await storage.getUserByFirebaseUid(currentUid);
+            if (!currentUser) {
+                return res.status(404).json({ error: "Current user profile not found" });
+            }
+
+            // Check if this Google account already belongs to another user
+            let existingGoogleUser = await storage.getUserByFirebaseUid(googleFirebaseUid);
+            if (!existingGoogleUser && email) {
+                existingGoogleUser = await storage.getUserByEmail(email);
+            }
+
+            // Case A: No collision — either no account exists or it already belongs to the current user
+            if (!existingGoogleUser || existingGoogleUser.id === currentUser.id) {
+                const updated = await storage.updateUser(currentUser.id, {
+                    firebaseUid: googleFirebaseUid,
+                    email: email || currentUser.email,
+                    avatarUrl: currentUser.avatarUrl || photoUrl || null,
+                });
+
+                return res.json({
+                    success: true,
+                    conflict: false,
+                    message: "Google account successfully linked!",
+                    userId: updated.id,
+                    firebaseUid: updated.firebaseUid,
+                    username: updated.name,
+                });
+            }
+
+            // Case B: Collision detected!
+            // If the user hasn't made a resolution decision yet, return 409 Conflict with profile previews
+            if (!resolveChoice) {
+                return res.status(409).json({
+                    conflict: true,
+                    message: "Account conflict detected. Please select which profile you want to keep.",
+                    currentProfile: {
+                        id: currentUser.id,
+                        name: currentUser.name,
+                        level: currentUser.level,
+                        xp: currentUser.xp,
+                        coins: currentUser.coins,
+                        tier: currentUser.tier,
+                        streak: currentUser.streak,
+                        isGuest: currentUser.firebaseUid.startsWith("guest_"),
+                    },
+                    googleProfile: {
+                        id: existingGoogleUser.id,
+                        name: existingGoogleUser.name,
+                        level: existingGoogleUser.level,
+                        xp: existingGoogleUser.xp,
+                        coins: existingGoogleUser.coins,
+                        tier: existingGoogleUser.tier,
+                        streak: existingGoogleUser.streak,
+                        email: existingGoogleUser.email,
+                    },
+                });
+            }
+
+            // User chose Option B: "current" profile
+            if (resolveChoice === "current") {
+                console.log(`[LINK-GOOGLE] User selected CURRENT profile (${currentUser.id}). Archiving old Google user (${existingGoogleUser.id})`);
+
+                // Detach Google UID from previous account
+                await storage.updateUser(existingGoogleUser.id, {
+                    firebaseUid: `archived_${randomUUID()}`,
+                });
+
+                // Attach Google UID and merge coins to current user
+                const mergedCoins = (currentUser.coins || 0) + Math.max(0, existingGoogleUser.coins || 0);
+                const updated = await storage.updateUser(currentUser.id, {
+                    firebaseUid: googleFirebaseUid,
+                    email: email || currentUser.email,
+                    avatarUrl: currentUser.avatarUrl || photoUrl || existingGoogleUser.avatarUrl || null,
+                    coins: mergedCoins,
+                });
+
+                return res.json({
+                    success: true,
+                    conflict: false,
+                    message: "Current profile linked to Google and coins merged!",
+                    userId: updated.id,
+                    firebaseUid: updated.firebaseUid,
+                    username: updated.name,
+                });
+            }
+
+            // User chose Option B: "google" profile
+            if (resolveChoice === "google") {
+                console.log(`[LINK-GOOGLE] User selected GOOGLE profile (${existingGoogleUser.id}). Switching active session.`);
+
+                return res.json({
+                    success: true,
+                    conflict: false,
+                    message: "Switched to your Google profile!",
+                    userId: existingGoogleUser.id,
+                    firebaseUid: existingGoogleUser.firebaseUid,
+                    username: existingGoogleUser.name,
+                });
+            }
+
+            return res.status(400).json({ error: "Invalid resolution choice. Expected 'current' or 'google'" });
+        } catch (error: any) {
+            console.error("Link Google Error:", error);
+            res.status(500).json({ error: error?.message || "Failed to link Google account" });
+        }
+    });
+
+    // Set Fallback Local Username & Password for Google-Authenticated Users
+    app.post("/api/auth/set-password", async (req, res) => {
+        try {
+            const currentUid = (req.headers["x-firebase-uid"] as string) || (req as any).firebaseUid;
+            if (!currentUid) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+
+            const { username, password } = req.body;
+            if (!username || username.length < 3) {
+                return res.status(400).json({ error: "Username must be at least 3 characters" });
+            }
+            if (!password || password.length < 8) {
+                return res.status(400).json({ error: "Password must be at least 8 characters" });
+            }
+
+            const storage = getStorage();
+            const currentUser = await storage.getUserByFirebaseUid(currentUid);
+            if (!currentUser) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            // Check if username is taken by someone else
+            const existingCred = await storage.getCredentialsByUsername(username);
+            if (existingCred && existingCred.userId !== currentUser.id) {
+                return res.status(400).json({ error: "Username already taken" });
+            }
+
+            const passwordHash = await bcrypt.hash(password, 10);
+            await storage.saveCredentials(username, passwordHash, password, currentUser.id);
+            await storage.updateUser(currentUser.id, { name: username });
+
+            res.json({
+                success: true,
+                message: "Local credentials set successfully. You can now log in with this username and password anywhere.",
+                username,
+            });
+        } catch (error: any) {
+            console.error("Set Password Error:", error);
+            res.status(500).json({ error: error?.message || "Failed to set credentials" });
+        }
+    });
 }

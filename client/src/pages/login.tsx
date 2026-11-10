@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
 import { signInWithGoogle, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
+import { InAppBrowserBanner } from "@/components/auth/in-app-browser-banner";
 
 export default function Login() {
     const [, setLocation] = useLocation();
@@ -168,6 +169,7 @@ export default function Login() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative z-10 w-full max-w-md"
             >
+                <InAppBrowserBanner className="mb-4" />
                 <Card className="bg-zinc-900/90 border-zinc-800 backdrop-blur-xl">
                     <CardHeader className="text-center">
                         <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">

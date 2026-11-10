@@ -25,6 +25,7 @@ import { CitadelViewer } from "@/components/citadel-viewer";
 import { HunterLicenseModal } from "@/components/avatar/hunter-license-modal";
 import { AscendantAvatar } from "@/components/avatar/ascendant-avatar";
 import { getHunterArchetype } from "@/lib/avatar-engine";
+import { AccountSecurityCard } from "@/components/auth/account-security-card";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
@@ -466,6 +467,13 @@ export default function ProfilePage() {
                                 )}
                             </CardContent>
                         </Card>
+                    </motion.div>
+                )}
+
+                {/* Account Security & Cloud Identity (Own Profile Only) */}
+                {isOwnProfile && (
+                    <motion.div variants={item}>
+                        <AccountSecurityCard />
                     </motion.div>
                 )}
 

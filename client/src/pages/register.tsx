@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
 import { signInWithGoogle, onAuthChange, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
+import { InAppBrowserBanner } from "@/components/auth/in-app-browser-banner";
 
 export default function Register() {
     const [, setLocation] = useLocation();
@@ -296,6 +297,7 @@ export default function Register() {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-md"
                 >
+                    <InAppBrowserBanner className="mb-4" />
                     <Card className="bg-zinc-900/50 border-zinc-800">
                         <CardHeader className="text-center">
                             <CardTitle className="text-2xl">Create Your Account</CardTitle>

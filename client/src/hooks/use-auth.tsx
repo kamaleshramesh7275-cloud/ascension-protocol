@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { get, set, del } from "idb-keyval";
 
 // Simplified User interface (no Firebase types)
 export interface User {
@@ -26,96 +27,157 @@ interface AuthContextType {
   loginAsGuest: (name?: string) => Promise<void>;
   loginLocal: (username: string, userId: string, firebaseUid: string) => Promise<void>;
   loginGoogle: (userId: string, firebaseUid: string, username?: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper for dual-layer storage (ITP & Partitioned Cookie Hardening)
+async function persistTokens(guestUid: string, userId?: string, username?: string) {
+  try {
+    localStorage.setItem("guest_uid", guestUid);
+    await set("guest_uid", guestUid);
+    if (userId) {
+      localStorage.setItem("userId", userId);
+      await set("userId", userId);
+    }
+    if (username) {
+      localStorage.setItem("username", username);
+      await set("username", username);
+    }
+  } catch (e) {
+    console.warn("[Auth Storage] Error persisting token mirror:", e);
+  }
+}
+
+async function clearPersistedTokens() {
+  try {
+    localStorage.removeItem("guest_uid");
+    localStorage.removeItem("username");
+    localStorage.removeItem("userId");
+    await del("guest_uid");
+    await del("userId");
+    await del("username");
+  } catch (e) {
+    console.warn("[Auth Storage] Error clearing token mirror:", e);
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check for local guest/local-auth user
-        const localUid = localStorage.getItem("guest_uid");
-        const username = localStorage.getItem("username");
-        const userId = localStorage.getItem("userId");
+  const checkAuth = useCallback(async () => {
+    try {
+      // 1. Check localStorage first
+      let localUid = localStorage.getItem("guest_uid");
+      let username = localStorage.getItem("username");
+      let userId = localStorage.getItem("userId");
 
-        if (localUid) {
-          // Optimistically set user from localStorage
-          const localUser: User = {
-            id: userId || undefined,
-            uid: localUid,
-            email: username ? `${username}@local.ascension` : `${localUid}@guest.com`,
-            displayName: username || "Guest Ascendant",
-            photoURL: null,
-            isAnonymous: !username,
-          };
-          setUser(localUser);
-
-          // Fetch full user details from backend to ensure we have the ID
-          try {
-            const res = await apiRequest("GET", "/api/user");
-            if (res.ok) {
-              const userData = await res.json();
-              setUser({
-                id: userData.id,
-                uid: userData.firebaseUid,
-                email: userData.email,
-                displayName: userData.name,
-                photoURL: userData.avatarUrl,
-                isAnonymous: !userData.name,
-                coins: userData.coins,
-                activeTitle: userData.activeTitle,
-                activeBadgeId: userData.activeBadgeId,
-                tier: userData.tier,
-                theme: userData.theme,
-                isTrial: userData.isTrial,
-                trialEndsAt: userData.trialEndsAt,
-                isPremium: userData.isPremium,
-              });
-              // Update localStorage with the correct ID
-              localStorage.setItem("userId", userData.id);
-            }
-          } catch (fetchErr: any) {
-            console.error("Failed to fetch user details:", fetchErr);
-            // If the user doesn't exist (404) or is unauthorized (401), clear the session
-            if (fetchErr.message && (fetchErr.message.includes("404") || fetchErr.message.includes("401"))) {
-              console.log("[Debug] User not found or unauthorized - clearing invalid session. Error:", fetchErr.message);
-              localStorage.removeItem("guest_uid");
-              localStorage.removeItem("username");
-              localStorage.removeItem("userId");
-              queryClient.clear();
-              setUser(null);
-            }
+      // 2. Safari ITP / Cookie partitioning fallback: Check IndexedDB mirror
+      if (!localUid) {
+        try {
+          localUid = (await get<string>("guest_uid")) || null;
+          username = username || (await get<string>("username")) || null;
+          userId = userId || (await get<string>("userId")) || null;
+          if (localUid) {
+            localStorage.setItem("guest_uid", localUid);
+            if (username) localStorage.setItem("username", username);
+            if (userId) localStorage.setItem("userId", userId);
           }
-        } else {
-          setUser(null);
+        } catch {
+          // non-critical idb lookup failure
         }
-      } catch (err) {
-        console.error("Auth initialization error:", err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setLoading(false);
+      }
+
+      if (localUid) {
+        // Optimistically set user from cached tokens
+        const localUser: User = {
+          id: userId || undefined,
+          uid: localUid,
+          email: username ? `${username}@local.ascension` : `${localUid}@guest.com`,
+          displayName: username || "Guest Ascendant",
+          photoURL: null,
+          isAnonymous: !username,
+        };
+        setUser(localUser);
+
+        // Fetch full user details from backend to ensure we have the ID and latest stats
+        try {
+          const res = await apiRequest("GET", "/api/user");
+          if (res.ok) {
+            const userData = await res.json();
+            setUser({
+              id: userData.id,
+              uid: userData.firebaseUid,
+              email: userData.email,
+              displayName: userData.name,
+              photoURL: userData.avatarUrl,
+              isAnonymous: !userData.name,
+              coins: userData.coins,
+              activeTitle: userData.activeTitle,
+              activeBadgeId: userData.activeBadgeId,
+              tier: userData.tier,
+              theme: userData.theme,
+              isTrial: userData.isTrial,
+              trialEndsAt: userData.trialEndsAt,
+              isPremium: userData.isPremium,
+            });
+            await persistTokens(userData.firebaseUid, userData.id, userData.name);
+          }
+        } catch (fetchErr: any) {
+          console.error("Failed to fetch user details:", fetchErr);
+          // If the user doesn't exist (404) or is unauthorized (401), clear the session
+          if (fetchErr.message && (fetchErr.message.includes("404") || fetchErr.message.includes("401"))) {
+            console.log("[Debug] User not found or unauthorized - clearing invalid session.");
+            await clearPersistedTokens();
+            queryClient.clear();
+            setUser(null);
+          }
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Auth initialization error:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  // Standalone PWA Window Isolation: revalidate auth when returning from external browser or background
+  useEffect(() => {
+    const handleRevalidation = async () => {
+      if (document.visibilityState === "visible") {
+        const uid = localStorage.getItem("guest_uid") || (await get<string>("guest_uid"));
+        if (uid && (!user || user.uid !== uid)) {
+          console.log("[PWA Focus] App foregrounded, re-verifying active session...");
+          await checkAuth();
+        }
       }
     };
 
-    checkAuth();
-  }, []);
+    document.addEventListener("visibilitychange", handleRevalidation);
+    window.addEventListener("pageshow", handleRevalidation);
+    return () => {
+      document.removeEventListener("visibilitychange", handleRevalidation);
+      window.removeEventListener("pageshow", handleRevalidation);
+    };
+  }, [user, checkAuth]);
 
-  // Safety timeout: If loading takes longer than 5 seconds, force sign out to prevent getting stuck
+  // Safety timeout: If loading takes longer than 5 seconds, clear session to prevent freeze
   useEffect(() => {
     const timer = setTimeout(() => {
       if (loading) {
         console.warn("Auth loading timed out. Resetting session.");
-        // We can't call signOut here because it's defined below. 
-        // We must manually clear storage and state.
-        localStorage.removeItem("guest_uid");
-        localStorage.removeItem("username");
-        localStorage.removeItem("userId");
+        clearPersistedTokens();
         queryClient.clear();
         setUser(null);
         setLoading(false);
@@ -127,7 +189,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginAsGuest = async (name?: string) => {
     try {
       setLoading(true);
-      // Create a mock guest user
       const guestId = `guest_${Math.random().toString(36).substring(2, 15)}`;
       const guestUser: User = {
         uid: guestId,
@@ -137,7 +198,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAnonymous: true,
       };
 
-      // Sync with backend (create user record)
       const res = await apiRequest("POST", "/api/auth/register", {
         firebaseUid: guestUser.uid,
         name: guestUser.displayName,
@@ -146,14 +206,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const registeredUser = await res.json();
 
-      // Store guest ID for API requests
-      localStorage.setItem("guest_uid", guestId);
+      await persistTokens(guestId, registeredUser.id);
       if (registeredUser.id) {
-        localStorage.setItem("userId", registeredUser.id);
         guestUser.id = registeredUser.id;
       }
 
-      // Set user state
       setUser(guestUser);
     } catch (error) {
       console.error("Guest login error:", error);
@@ -176,12 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       setUser(localUser);
-
-      // Update localStorage
-      localStorage.setItem("username", username);
-      localStorage.setItem("userId", userId);
-      localStorage.setItem("guest_uid", firebaseUid);
-
+      await persistTokens(firebaseUid, userId, username);
     } catch (error) {
       console.error("Local login error:", error);
       setError(error instanceof Error ? error : new Error("Local login failed"));
@@ -193,10 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginGoogle = async (userId: string, firebaseUid: string, username?: string) => {
     try {
       setLoading(true);
-      
-      if (username) localStorage.setItem("username", username);
-      localStorage.setItem("userId", userId);
-      localStorage.setItem("guest_uid", firebaseUid);
+      await persistTokens(firebaseUid, userId, username);
 
       const res = await apiRequest("GET", "/api/user");
       if (res.ok) {
@@ -217,7 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           trialEndsAt: userData.trialEndsAt,
           isPremium: userData.isPremium,
         });
-        localStorage.setItem("username", userData.name);
+        await persistTokens(userData.firebaseUid, userData.id, userData.name);
       }
     } catch (error) {
       console.error("Google login context error:", error);
@@ -227,11 +276,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await apiRequest("GET", "/api/user");
+      if (res.ok) {
+        const userData = await res.json();
+        setUser({
+          id: userData.id,
+          uid: userData.firebaseUid,
+          email: userData.email,
+          displayName: userData.name,
+          photoURL: userData.avatarUrl,
+          isAnonymous: !userData.name,
+          coins: userData.coins,
+          activeTitle: userData.activeTitle,
+          activeBadgeId: userData.activeBadgeId,
+          tier: userData.tier,
+          theme: userData.theme,
+          isTrial: userData.isTrial,
+          trialEndsAt: userData.trialEndsAt,
+          isPremium: userData.isPremium,
+        });
+        await persistTokens(userData.firebaseUid, userData.id, userData.name);
+      }
+    } catch (err) {
+      console.warn("refreshUser error:", err);
+    }
+  };
+
   const signOut = async () => {
     try {
-      localStorage.removeItem("guest_uid");
-      localStorage.removeItem("username");
-      localStorage.removeItem("userId");
+      await clearPersistedTokens();
       queryClient.clear();
       setUser(null);
     } catch (error) {
@@ -240,7 +315,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, loginAsGuest, loginLocal, loginGoogle, signOut }}>
+    <AuthContext.Provider
+      value={{ user, loading, error, loginAsGuest, loginLocal, loginGoogle, refreshUser, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

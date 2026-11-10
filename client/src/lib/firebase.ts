@@ -8,7 +8,10 @@ import {
   getRedirectResult, 
   signOut as firebaseSignOut, 
   onAuthStateChanged, 
-  User 
+  User,
+  setPersistence,
+  browserLocalPersistence,
+  indexedDBLocalPersistence
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getMessaging, isSupported } from "firebase/messaging";
@@ -25,6 +28,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enforce durable first-party storage to resist Safari ITP & Chrome cookie partitioning
+if (typeof window !== "undefined") {
+  setPersistence(auth, indexedDBLocalPersistence)
+    .catch(() => setPersistence(auth, browserLocalPersistence))
+    .catch((err) => console.warn("[Firebase Auth] Persistence initialization notice:", err));
+}
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
