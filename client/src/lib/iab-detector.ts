@@ -74,3 +74,4 @@ export function breakoutToNativeBrowser(): boolean {
   }
   return false;
 }
+

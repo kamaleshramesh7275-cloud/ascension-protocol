@@ -371,6 +371,18 @@ class AudioEngine {
       console.warn("Loot fanfare sound failed:", e);
     }
   }
+
+  public playLevelUp() {
+    this.playLootFanfare("legendary");
+  }
+
+  public playSuccess() {
+    this.playLootFanfare("rare");
+  }
+
+  public playChestUnlock() {
+    this.playCommandLock();
+  }
 }
 
 export const audioEngine = new AudioEngine();

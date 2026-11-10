@@ -545,7 +545,12 @@ function normalizeUser(user: any): User {
     lastActive: user.lastActive || new Date(),
     theme: user.theme || "default",
     role: user.role || "user",
-    timezone: user.timezone || "UTC"
+    timezone: user.timezone || "UTC",
+    hunterClass: user.hunterClass || "assassin",
+    equipmentProfile: user.equipmentProfile || "bodyweight",
+    streakShields: user.streakShields ?? 1,
+    activeRecoveryDay: user.activeRecoveryDay ?? false,
+    lastRestDayClaimedAt: user.lastRestDayClaimedAt || null,
   } as User;
 }
 
@@ -1663,6 +1668,11 @@ export class MemStorage implements IStorage {
       tier: "D", // Default tier as per schema
       xp: 0,
       level: 1,
+      hunterClass: (user as any).hunterClass || "assassin",
+      equipmentProfile: (user as any).equipmentProfile || "bodyweight",
+      streakShields: (user as any).streakShields ?? 1,
+      activeRecoveryDay: false,
+      lastRestDayClaimedAt: null,
       createdAt: new Date(),
       lastActive: new Date(),
       streak: 0,

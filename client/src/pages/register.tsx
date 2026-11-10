@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { signInWithGoogle, onAuthChange, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
 import { InAppBrowserBanner } from "@/components/auth/in-app-browser-banner";
+import { HunterClassPicker } from "@/components/hunter/hunter-class-picker";
 
 export default function Register() {
     const [, setLocation] = useLocation();
@@ -42,6 +43,8 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [referralCode, setReferralCode] = useState("");
     const [phone, setPhone] = useState("");
+    const [hunterClass, setHunterClass] = useState("assassin");
+    const [equipmentProfile, setEquipmentProfile] = useState("bodyweight");
     const [referralValid, setReferralValid] = useState<boolean | null>(null);
     const [referralReferrerName, setReferralReferrerName] = useState<string | null>(null);
     const [isValidatingReferral, setIsValidatingReferral] = useState(false);
@@ -219,6 +222,8 @@ export default function Register() {
                         email: googleEmail,
                         phone: phone || undefined,
                         referralCode: referralCode || undefined,
+                        hunterClass,
+                        equipmentProfile,
                         ...assessment,
                     }),
                 });
@@ -231,6 +236,8 @@ export default function Register() {
                         password,
                         phone: phone || undefined,
                         referralCode: referralCode || undefined,
+                        hunterClass,
+                        equipmentProfile,
                         ...assessment,
                     }),
                 });
@@ -488,6 +495,16 @@ export default function Register() {
                                             />
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* Hunter Archetype & Gear Profile */}
+                                <div className="pt-2 border-t border-zinc-800">
+                                    <HunterClassPicker
+                                        selectedClass={hunterClass}
+                                        selectedEquipment={equipmentProfile}
+                                        onClassChange={setHunterClass}
+                                        onEquipmentChange={setEquipmentProfile}
+                                    />
                                 </div>
 
                                 <div className="flex gap-4">

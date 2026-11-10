@@ -113,6 +113,35 @@ async function assignDailyQuests(userId: string) {
     return questDate >= today && questDate < tomorrow && q.type === "daily";
   });
 
+  // Streak preservation check for yesterday's quests
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayQuests = existingQuests.filter((q: any) => {
+    const d = new Date(q.createdAt);
+    return d >= yesterday && d < today && q.type === "daily";
+  });
+
+  if (yesterdayQuests.length > 0) {
+    const completedYesterday = yesterdayQuests.some((q: any) => q.completed);
+    if (!completedYesterday && (user.streak || 0) > 0) {
+      if ((user.streakShields || 0) > 0) {
+        // MANA SHIELD CONSUMPTION: Protect streak from reset!
+        const remainingShields = Math.max(0, (user.streakShields || 1) - 1);
+        await storage.updateUser(userId, { streakShields: remainingShields });
+        await storage.createActivity({
+          userId,
+          action: "system",
+          xpDelta: 0,
+          coinsDelta: 0,
+          description: "🛡️ Mana Shield auto-activated! Your streak was protected from reset.",
+        } as any);
+        console.log(`[Streak Shield] User ${userId} consumed 1 Mana Shield. Remaining: ${remainingShields}`);
+      } else {
+        await storage.updateUser(userId, { streak: 0 });
+      }
+    }
+  }
+
   if (todayQuests.length > 0) {
     return; // Already has quests for today
   }
@@ -700,6 +729,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(currentGoal !== undefined && { currentGoal }),
         ...(req.body.studySubject !== undefined && { studySubject: req.body.studySubject }),
         ...(req.body.studyAvailability !== undefined && { studyAvailability: req.body.studyAvailability }),
+        ...(req.body.hunterClass !== undefined && { hunterClass: req.body.hunterClass }),
+        ...(req.body.equipmentProfile !== undefined && { equipmentProfile: req.body.equipmentProfile }),
+        ...(req.body.streakShields !== undefined && { streakShields: req.body.streakShields }),
+        ...(req.body.activeRecoveryDay !== undefined && { activeRecoveryDay: req.body.activeRecoveryDay }),
         // Note: bio field doesn't exist in schema yet, but we're ready for it
       });
 
@@ -708,6 +741,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update user error:", error);
       res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // Declare / Activate Rest Day (Active Recovery Mode)
+  app.post("/api/user/recovery-day", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Check if already claimed today
+      if (user.lastRestDayClaimedAt && new Date(user.lastRestDayClaimedAt) >= today) {
+        return res.status(400).json({ error: "Rest Day Protocol is already active for today." });
+      }
+
+      // Check shield/potion count
+      if ((user.streakShields || 0) <= 0) {
+        return res.status(400).json({ error: "No Mana Shields available. You can obtain one in the Hunter Shop." });
+      }
+
+      const remainingShields = Math.max(0, (user.streakShields || 1) - 1);
+      const updatedUser = await storage.updateUser(user.id, {
+        activeRecoveryDay: true,
+        streakShields: remainingShields,
+        lastRestDayClaimedAt: new Date(),
+        streak: Math.max(1, (user.streak || 0) + 1), // Keeps streak active
+      });
+
+      // Generate 3 Calibrated Active Recovery Quests
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const recoveryQuests = [
+        {
+          userId: user.id,
+          title: "Cellular Hydration Protocol",
+          description: "Infuse your physical matrix with at least 2.5 Liters of water throughout the day.",
+          type: "daily",
+          statType: "vitality",
+          xpReward: 35,
+          coinReward: 20,
+          completed: false,
+          difficulty: "easy",
+          expiresAt,
+        },
+        {
+          userId: user.id,
+          title: "Myofascial Mobility & Light Stretch",
+          description: "Perform 15 minutes of joint mobility, gentle yoga, or foam rolling for tissue repair.",
+          type: "daily",
+          statType: "stamina",
+          xpReward: 40,
+          coinReward: 25,
+          completed: false,
+          difficulty: "easy",
+          expiresAt,
+        },
+        {
+          userId: user.id,
+          title: "Deep Parasympathetic Sleep",
+          description: "Prioritize neural recovery with 7.5+ hours of uninterrupted sleep tonight.",
+          type: "daily",
+          statType: "willpower",
+          xpReward: 45,
+          coinReward: 30,
+          completed: false,
+          difficulty: "easy",
+          expiresAt,
+        },
+      ];
+
+      for (const q of recoveryQuests) {
+        await storage.createQuest(q as any);
+      }
+
+      await storage.createActivity({
+        userId: user.id,
+        action: "system",
+        xpDelta: 0,
+        coinsDelta: 0,
+        description: "🧪 Activated Rest Day Protocol. Daily trials converted to Active Recovery.",
+      } as any);
+
+      res.json({
+        success: true,
+        message: "Rest Day Protocol activated! Your streak is preserved, and recovery quests are assigned.",
+        user: updatedUser,
+        remainingShields,
+      });
+    } catch (err: any) {
+      console.error("Recovery day error:", err);
+      res.status(500).json({ error: err.message || "Failed to activate recovery mode" });
     }
   });
 

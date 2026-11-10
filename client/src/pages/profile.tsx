@@ -26,6 +26,7 @@ import { HunterLicenseModal } from "@/components/avatar/hunter-license-modal";
 import { AscendantAvatar } from "@/components/avatar/ascendant-avatar";
 import { getHunterArchetype } from "@/lib/avatar-engine";
 import { AccountSecurityCard } from "@/components/auth/account-security-card";
+import { HunterClassPicker } from "@/components/hunter/hunter-class-picker";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
@@ -466,6 +467,15 @@ export default function ProfilePage() {
                                     </div>
                                 )}
                             </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+
+                {/* Hunter Archetype & Equipment Loadout (Own Profile Only) */}
+                {isOwnProfile && (
+                    <motion.div variants={item}>
+                        <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-black to-slate-950 backdrop-blur-xl p-6">
+                            <HunterClassPicker standaloneSave={true} />
                         </Card>
                     </motion.div>
                 )}

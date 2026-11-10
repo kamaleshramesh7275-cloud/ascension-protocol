@@ -6,7 +6,7 @@ import { QuestCard } from "@/components/quest-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Target, Trophy, Calendar, Sparkles, CheckCircle2, Crown, BookOpen, Dumbbell, Leaf, Zap, ArrowLeft } from "lucide-react";
+import { Target, Trophy, Calendar, Sparkles, CheckCircle2, Crown, BookOpen, Dumbbell, Leaf, Zap, ArrowLeft, Shield, HeartPulse, Flame } from "lucide-react";
 import { audioEngine } from "@/lib/audio-engine";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -20,6 +20,22 @@ import { PullToRefresh } from "@/components/pull-to-refresh";
 import { ShareTelemetryButton } from "@/components/share-telemetry-button";
 import { CofferOpeningModal } from "@/components/rewards/coffer-opening-modal";
 import { useAuth } from "@/hooks/use-auth";
+import { ManhwaSystemModal, type SystemModalType } from "@/components/system/manhwa-system-modal";
+import { hapticSuccess, hapticShield } from "@/lib/haptics";
+
+const CLASS_META: Record<string, { name: string; icon: string }> = {
+    assassin: { name: "Shadow Assassin", icon: "🗡️" },
+    tank: { name: "Iron Tank", icon: "🛡️" },
+    ranger: { name: "Phantom Ranger", icon: "🏹" },
+    mage: { name: "Void Scholar", icon: "🔮" },
+    monarch: { name: "Shadow Monarch", icon: "👑" },
+};
+
+const GEAR_META: Record<string, string> = {
+    bodyweight: "Bodyweight Only",
+    dumbbells: "Dumbbells / Home",
+    gym: "Commercial Gym",
+};
 
 export default function QuestsPage() {
     const [, setLocation] = useLocation();
@@ -27,6 +43,21 @@ export default function QuestsPage() {
     const [activeTab, setActiveTab] = useState<"active" | "browse" | "habits">("active");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const [showCofferModal, setShowCofferModal] = useState<boolean>(false);
+    const [isActivatingRecovery, setIsActivatingRecovery] = useState<boolean>(false);
+    const [systemModal, setSystemModal] = useState<{
+        isOpen: boolean;
+        type: SystemModalType;
+        title?: string;
+        subtitle?: string;
+        message: string;
+        flavorQuote?: string;
+        rewards?: Array<{ label: string; value: string | number; icon?: string }>;
+    }>({
+        isOpen: false,
+        type: "quest_complete",
+        message: "",
+    });
+
     const { toast } = useToast();
     const { showQuestCompleted } = useAnimations();
 
@@ -50,10 +81,23 @@ export default function QuestsPage() {
             return apiRequest("POST", `/api/quests/${questId}/complete`, {});
         },
         onSuccess: (data, questId) => {
-            if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
+            hapticSuccess();
             const quest = quests?.find(q => q.id === questId);
             if (quest) {
                 showQuestCompleted(quest.title, quest.rewardXP, quest.rewardCoins);
+                setSystemModal({
+                    isOpen: true,
+                    type: "quest_complete",
+                    title: "QUEST COMPLETED",
+                    subtitle: "[ SYSTEM RANK UPDATE ]",
+                    message: `Directive fulfilled: "${quest.title}". Your combat potential expands across the network.`,
+                    flavorQuote: "Power is not given. It is forged through relentless execution.",
+                    rewards: [
+                        { label: "EXP ACQUIRED", value: `+${quest.rewardXP} XP`, icon: "⚡" },
+                        { label: "HUNTER COINS", value: `+${quest.rewardCoins}`, icon: "🪙" },
+                        { label: "STATUS", value: "CLEARED", icon: "✓" },
+                    ],
+                });
             }
             queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
@@ -64,6 +108,46 @@ export default function QuestsPage() {
             toast({ title: "Error", description: "Failed to complete quest.", variant: "destructive" });
         },
     });
+
+    const handleActivateRecovery = async () => {
+        if ((user?.streakShields ?? 0) <= 0) {
+            toast({
+                title: "No Mana Shields Available",
+                description: "Acquire a Streak Shield in the Hunter Shop to protect your streak on rest days.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsActivatingRecovery(true);
+        try {
+            const res = await apiRequest("POST", "/api/user/recovery-day", {});
+            const data = await res.json();
+            hapticShield();
+            setSystemModal({
+                isOpen: true,
+                type: "recovery_day",
+                title: "REST DAY PROTOCOL ENGAGED",
+                subtitle: "[ MANA SHIELD ACTIVATED ]",
+                message: data.message || "Streak protected. Daily requirements recalibrated to cellular and neurological recovery.",
+                flavorQuote: "Even monarchs must let their shadow army mend in darkness.",
+                rewards: [
+                    { label: "MANA SHIELDS REMAINING", value: data.shieldsRemaining ?? 0, icon: "🛡️" },
+                    { label: "STREAK PRESERVED", value: `${data.streak ?? user?.streak ?? 1} Days`, icon: "🔥" },
+                    { label: "RECOVERY DIRECTIVES", value: "3 Calibrated", icon: "💧" },
+                ],
+            });
+            queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        } catch (err: any) {
+            toast({
+                title: "Recovery Activation Failed",
+                description: err?.message || "Could not engage Rest Day Protocol.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsActivatingRecovery(false);
+        }
+    };
 
     const joinCampaignMutation = useMutation({
         mutationFn: async (campaignId: string) => {
@@ -207,6 +291,56 @@ export default function QuestsPage() {
                             transition={{ duration: 0.3 }}
                         >
                             <TabsContent value="active" className="space-y-8">
+                                {/* Hunter Archetype & Anti-Burnout Recovery HUD */}
+                                <div className="bg-gradient-to-r from-zinc-950 via-blue-950/20 to-zinc-950 border border-blue-500/20 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-[0_0_20px_rgba(59,130,246,0.08)]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-xl shadow-[0_0_12px_rgba(59,130,246,0.25)]">
+                                            {CLASS_META[user?.hunterClass || "assassin"]?.icon || "🗡️"}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-xs uppercase tracking-wider text-blue-400 font-bold">
+                                                    {CLASS_META[user?.hunterClass || "assassin"]?.name || "Shadow Assassin"}
+                                                </span>
+                                                <span className="text-zinc-600">•</span>
+                                                <span className="text-xs text-zinc-400 font-mono">
+                                                    {GEAR_META[user?.equipmentProfile || "bodyweight"] || "Bodyweight"}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-zinc-500">
+                                                Daily protocol tailored to your combat loadout.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-blue-500/30 font-mono text-xs">
+                                            <Shield className="w-3.5 h-3.5 text-blue-400" />
+                                            <span className="text-zinc-300">MANA SHIELDS:</span>
+                                            <span className="text-blue-400 font-bold">{user?.streakShields ?? 1}</span>
+                                        </div>
+
+                                        {user?.activeRecoveryDay ? (
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 font-mono text-xs text-emerald-400">
+                                                <HeartPulse className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
+                                                <span>REST PROTOCOL ACTIVE</span>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={handleActivateRecovery}
+                                                disabled={isActivatingRecovery || (user?.streakShields ?? 0) <= 0}
+                                                className="border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 font-mono text-xs h-8 flex items-center gap-1.5"
+                                                title="Consumes 1 Mana Shield to maintain streak and issue active recovery quests"
+                                            >
+                                                <HeartPulse className="w-3.5 h-3.5 text-blue-400" />
+                                                <span>{isActivatingRecovery ? "ENGAGING..." : "ENGAGE REST DAY"}</span>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {activeCampaign ? (
                                     <>
                                         {/* Active Campaign Header */}
@@ -429,6 +563,17 @@ export default function QuestsPage() {
                 queryClient.invalidateQueries({ queryKey: ["/api/user"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
             }}
+        />
+
+        <ManhwaSystemModal
+            isOpen={systemModal.isOpen}
+            type={systemModal.type}
+            title={systemModal.title}
+            subtitle={systemModal.subtitle}
+            message={systemModal.message}
+            flavorQuote={systemModal.flavorQuote}
+            rewards={systemModal.rewards}
+            onClose={() => setSystemModal(prev => ({ ...prev, isOpen: false }))}
         />
         </PullToRefresh>
     );

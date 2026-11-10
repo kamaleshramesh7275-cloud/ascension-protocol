@@ -80,6 +80,15 @@ export const users = pgTable("users", {
   loginRewardDay: integer("login_reward_day").default(1).notNull(),
   lastLoginRewardClaimedAt: timestamp("last_login_reward_claimed_at"),
   lastResurrectionClaimedAt: timestamp("last_resurrection_claimed_at"),
+
+  // Hunter Archetype & Equipment Loadout
+  hunterClass: text("hunter_class").default("assassin").notNull(), // assassin, tank, ranger, mage, monarch
+  equipmentProfile: text("equipment_profile").default("bodyweight").notNull(), // bodyweight, dumbbells, gym
+
+  // Anti-Burnout Recovery System
+  streakShields: integer("streak_shields").default(1).notNull(), // Starts with 1 free Mana Shield
+  activeRecoveryDay: boolean("active_recovery_day").default(false).notNull(),
+  lastRestDayClaimedAt: timestamp("last_rest_day_claimed_at"),
 }, (table) => {
   return {
     firebaseUidIdx: index("idx_users_firebase_uid").on(table.firebaseUid),

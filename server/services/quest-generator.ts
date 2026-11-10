@@ -193,31 +193,124 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory, use
         dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
-    // 1. Primary Goal Quests (Multiple per category)
+    // 1. Primary Goal Quests (Multiple per category, tailored to Hunter Class & Equipment)
+    const hunterClass = (user as any).hunterClass || "assassin";
+    const equipment = (user as any).equipmentProfile || "bodyweight";
+
     if (category === "fitness") {
         const rawPushups = (user.assessmentData as any)?.pushups;
-        const pushups = rawPushups ? parseInt(String(rawPushups)) : 10; // Handle string "0" or number 0
-        const effectivePushups = Math.max(pushups, 5); // Minimum floor of 5 to avoid "0 pushups" quest
-
+        const pushups = rawPushups ? parseInt(String(rawPushups)) : 10;
+        const effectivePushups = Math.max(pushups, 5);
         const targetPushups = Math.ceil(effectivePushups * (1.1 + (difficultyMult - 1) * 0.1));
 
-        quests.push(createQuest(
-            `💪 Strength: ${targetPushups} Pushups`,
-            `Complete ${targetPushups} pushups in a single set. Baseline: ${effectivePushups}.`,
-            10, 2, { strength: Math.floor(2 * difficultyMult) }, 'normal'
-        ));
-
-        quests.push(createQuest(
-            `🏃 Cardio: 20 Min Run`,
-            `Go for a 20-minute run or brisk walk. Maintain a steady pace.`,
-            12, 2, { stamina: Math.floor(2 * difficultyMult), vitality: 1 }, 'normal'
-        ));
-
-        quests.push(createQuest(
-            `🥗 Nutrition: Clean Eating`,
-            `Eat 3 balanced meals today with no processed sugars.`,
-            8, 1, { vitality: Math.floor(2 * difficultyMult) }, 'easy'
-        ));
+        if (hunterClass === "tank") {
+            if (equipment === "gym") {
+                quests.push(createQuest(
+                    `🛡️ Iron Tank: Heavy Compound Press`,
+                    `Execute 4 heavy sets of 8-10 reps on Bench Press or Overhead Press. Focus on mechanical overload.`,
+                    18, 4, { strength: Math.floor(4 * difficultyMult), vitality: 2 }, 'hard'
+                ));
+                quests.push(createQuest(
+                    `🏋️ Compound Pull: Deadlift / Row`,
+                    `Complete 4 sets of 8 reps on Barbell Row or Romanian Deadlift for posterior chain armor.`,
+                    16, 3, { strength: 3, stamina: 2 }, 'normal'
+                ));
+            } else if (equipment === "dumbbells") {
+                quests.push(createQuest(
+                    `🛡️ Iron Tank: Dumbbell Floor Press`,
+                    `Complete 4 sets of 12 controlled reps with moderate-to-heavy dumbbells.`,
+                    16, 3, { strength: 3, vitality: 2 }, 'normal'
+                ));
+                quests.push(createQuest(
+                    `🦵 Goblet Squats: Hypertrophy Protocol`,
+                    `Complete 4 sets of 15 goblet squats with strict depth and pause at bottom.`,
+                    15, 3, { strength: 3, stamina: 2 }, 'normal'
+                ));
+            } else {
+                quests.push(createQuest(
+                    `🛡️ Iron Tank: Slow-Tempo Decline Pushups`,
+                    `Complete 4 sets of ${Math.ceil(targetPushups * 0.8)} decline pushups with 3-second lowering tempo.`,
+                    15, 3, { strength: 3, vitality: 2 }, 'normal'
+                ));
+                quests.push(createQuest(
+                    `🦵 Bulgarian Split Squats`,
+                    `Perform 3 sets of 12 reps per leg to build foundational lower-body armor.`,
+                    14, 3, { strength: 3, stamina: 2 }, 'normal'
+                ));
+            }
+            quests.push(createQuest(
+                `🥩 Hypertrophy Fuel: High Protein Matrix`,
+                `Hit your protein target today (~1.6g per kg of bodyweight) and hydrate with 3L water.`,
+                10, 2, { vitality: 2 }, 'easy'
+            ));
+        } else if (hunterClass === "ranger") {
+            const minutes = Math.floor(25 * difficultyMult);
+            quests.push(createQuest(
+                `🏹 Phantom Ranger: ${minutes} Min Aerobic Run`,
+                `Cover distance for ${minutes} minutes in Zone 2 aerobic threshold. Maintain steady nasal breathing.`,
+                18, 4, { stamina: Math.floor(4 * difficultyMult), agility: 2 }, 'hard'
+            ));
+            quests.push(createQuest(
+                `⚡ Agility & Interval Pacing`,
+                `Perform 6x 30-second high-intensity sprint intervals or 500 jump rope rotations.`,
+                15, 3, { agility: 3, stamina: 2 }, 'normal'
+            ));
+            quests.push(createQuest(
+                `💧 Electrolyte Replenishment`,
+                `Drink at least 2.5L water with electrolytes post-cardio to maximize cardiac recovery.`,
+                10, 2, { vitality: 2 }, 'easy'
+            ));
+        } else if (hunterClass === "mage") {
+            const minutes = Math.floor(45 * difficultyMult);
+            quests.push(createQuest(
+                `🔮 Void Scholar: 40Hz Deep Focus Chamber`,
+                `Complete a ${minutes}-minute uninterrupted focus session utilizing the 40Hz Gamma Flow soundscape.`,
+                20, 5, { intelligence: Math.floor(4 * difficultyMult), willpower: 3 }, 'hard'
+            ));
+            quests.push(createQuest(
+                `📖 Codex Synthesis: Research Block`,
+                `Read for 30 minutes in your technical discipline and document 3 actionable takeaways.`,
+                15, 3, { intelligence: 3 }, 'normal'
+            ));
+            quests.push(createQuest(
+                `🧘 Mental Clarity: Digital Fast`,
+                `Take a 30-minute screen-free walk or meditation to reset dopamine receptors.`,
+                10, 2, { willpower: 2, vitality: 1 }, 'easy'
+            ));
+        } else if (hunterClass === "monarch") {
+            quests.push(createQuest(
+                `👑 Shadow Monarch: Hybrid Overload`,
+                `Complete ${targetPushups} pushups and 50 bodyweight squats with minimal rest intervals.`,
+                20, 5, { strength: 3, agility: 3, stamina: 3 }, 'hard'
+            ));
+            quests.push(createQuest(
+                `🧠 Monarch Decree: 45 Min Deep Work`,
+                `Command your schedule with 45 minutes of elite focus on your #1 tactical objective.`,
+                18, 4, { intelligence: 3, willpower: 3 }, 'normal'
+            ));
+            quests.push(createQuest(
+                `🤝 Squad Rally & Discipline`,
+                `Check in with your squad, inspect world boss status, or maintain flawless daily streak.`,
+                12, 2, { charisma: 2, willpower: 2 }, 'easy'
+            ));
+        } else {
+            // Default Shadow Assassin (Calisthenics & Explosive Agility)
+            quests.push(createQuest(
+                `🗡️ Shadow Assassin: ${targetPushups} Diamond Pushups`,
+                `Complete ${targetPushups} pushups with precision hand placement. Baseline: ${effectivePushups}.`,
+                16, 3, { agility: Math.floor(3 * difficultyMult), strength: 2 }, 'normal'
+            ));
+            quests.push(createQuest(
+                `⚡ Explosive Plyometrics: Jump Lunges`,
+                `Perform 3 sets of 15 explosive jump lunges or high-knees for rapid kinetic power.`,
+                14, 3, { agility: 3, stamina: 2 }, 'normal'
+            ));
+            quests.push(createQuest(
+                `🏃 Silent Cadence: 20 Min Interval Run`,
+                `Complete a 20-minute run with 5 tempo accelerations.`,
+                12, 2, { stamina: 3, vitality: 1 }, 'easy'
+            ));
+        }
 
     } else if (category === "intellect") {
         const minutes = Math.floor(45 * difficultyMult);

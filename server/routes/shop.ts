@@ -325,8 +325,15 @@ router.post("/buy", requireAuth, async (req, res) => {
         return res.status(400).send("Insufficient funds");
     }
 
-    // Deduct coins
-    await storage.updateUser(dbUser.id, { coins: dbUser.coins - effectiveCost });
+    // Deduct coins & apply consumable effects
+    if (item.value === "streak_shield") {
+        await storage.updateUser(dbUser.id, { 
+            coins: dbUser.coins - effectiveCost,
+            streakShields: Math.min(5, (dbUser.streakShields || 0) + 1)
+        });
+    } else {
+        await storage.updateUser(dbUser.id, { coins: dbUser.coins - effectiveCost });
+    }
 
     // Add to inventory
     const userItem = await storage.createUserItem({

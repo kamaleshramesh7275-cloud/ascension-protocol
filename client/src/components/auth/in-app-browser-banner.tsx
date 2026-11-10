@@ -82,3 +82,4 @@ export function InAppBrowserBanner({ onDismiss, className = "" }: InAppBrowserBa
     </div>
   );
 }
+

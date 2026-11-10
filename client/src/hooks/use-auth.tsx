@@ -18,6 +18,11 @@ export interface User {
   isTrial?: boolean;
   trialEndsAt?: string;
   isPremium?: boolean;
+  streak?: number;
+  hunterClass?: string;
+  equipmentProfile?: string;
+  streakShields?: number;
+  activeRecoveryDay?: boolean;
 }
 
 interface AuthContextType {
@@ -124,6 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               isTrial: userData.isTrial,
               trialEndsAt: userData.trialEndsAt,
               isPremium: userData.isPremium,
+              hunterClass: userData.hunterClass,
+              equipmentProfile: userData.equipmentProfile,
+              streakShields: userData.streakShields,
+              activeRecoveryDay: userData.activeRecoveryDay,
             });
             await persistTokens(userData.firebaseUid, userData.id, userData.name);
           }
@@ -196,6 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: name || "Guest Ascendant",
         photoURL: null,
         isAnonymous: true,
+        streakShields: 1,
+        hunterClass: "assassin",
+        equipmentProfile: "bodyweight",
       };
 
       const res = await apiRequest("POST", "/api/auth/register", {
@@ -230,6 +242,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName: username,
         photoURL: null,
         isAnonymous: false,
+        streakShields: 1,
+        hunterClass: "assassin",
+        equipmentProfile: "bodyweight",
       };
 
       setUser(localUser);
@@ -265,6 +280,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isTrial: userData.isTrial,
           trialEndsAt: userData.trialEndsAt,
           isPremium: userData.isPremium,
+          hunterClass: userData.hunterClass,
+          equipmentProfile: userData.equipmentProfile,
+          streakShields: userData.streakShields,
+          activeRecoveryDay: userData.activeRecoveryDay,
         });
         await persistTokens(userData.firebaseUid, userData.id, userData.name);
       }
@@ -296,6 +315,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isTrial: userData.isTrial,
           trialEndsAt: userData.trialEndsAt,
           isPremium: userData.isPremium,
+          hunterClass: userData.hunterClass,
+          equipmentProfile: userData.equipmentProfile,
+          streakShields: userData.streakShields,
+          activeRecoveryDay: userData.activeRecoveryDay,
         });
         await persistTokens(userData.firebaseUid, userData.id, userData.name);
       }
