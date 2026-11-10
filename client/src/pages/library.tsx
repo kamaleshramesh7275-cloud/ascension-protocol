@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { BookOpen, Video, FileText, Clock, Eye, Heart, Lock, Unlock, Sparkles, Upload } from "lucide-react";
-import { Link } from "wouter";
+import { BookOpen, Video, FileText, Clock, Eye, Heart, Lock, Unlock, Sparkles, Upload, ArrowLeft } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { audioEngine } from "@/lib/audio-engine";
 import { useAuth } from "@/hooks/use-auth";
 import { User as BackendUser } from "@shared/schema";
 

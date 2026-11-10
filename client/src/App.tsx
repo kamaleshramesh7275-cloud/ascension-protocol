@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Activity, RefreshCw, Terminal } from "lucide-react";
+import { Activity, RefreshCw, Terminal, ArrowLeft } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import { TacticalCommandPalette } from "@/components/tactical-command-palette";
 import { FocusFloatingButton } from "@/components/focus-floating-button";
 import { NotificationCenter } from "@/components/notification-center";
@@ -14,6 +14,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { AppTour } from "@/components/AppTour";
 import { User } from "@shared/schema";
@@ -74,6 +75,8 @@ import CommitmentContractPage from "@/pages/commitment-contract";
 import PerformanceCourtPage from "@/pages/performance-court";
 import PublicCommitmentsPage from "@/pages/public-commitments";
 import HallOfAscensionPage from "@/pages/hall-of-ascension";
+import CovenantViewPage from "@/pages/covenant-view";
+import AchievementsPage from "@/pages/achievements";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -256,6 +259,7 @@ function Router() {
         <Route path="/performance-court" component={() => <ProtectedRoute component={withSeo(PerformanceCourtPage, { title: "Performance Court" })} />} />
         <Route path="/public-commitments" component={() => <ProtectedRoute component={withSeo(PublicCommitmentsPage, { title: "Public Commitment Wall" })} />} />
         <Route path="/hall-of-ascension" component={() => <ProtectedRoute component={withSeo(HallOfAscensionPage, { title: "Hall of Ascension & Wall of Consequence" })} />} />
+        <Route path="/achievements" component={() => <ProtectedRoute component={withSeo(AchievementsPage, { title: "Trophy & Milestone Cabinet" })} />} />
 
         {/* Core & Legacy Compatible Routes */}
         <Route path="/onboarding" component={() => <ProtectedRoute component={withSeo(BriefingRoom, { title: "The Briefing Room" })} />} />
@@ -279,6 +283,7 @@ function Router() {
         <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/ref/:code" component={ReferralRedirect} />
         <Route path="/session/:id" component={() => <ProtectedRoute component={withSeo(SessionPage, { title: "Session" })} />} />
+        <Route path="/covenant/:code" component={withSeo(CovenantViewPage, { title: "Bilateral Peer Covenant" })} />
         <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
         <Route component={withSeo(NotFound, { title: "404 Not Found" })} />
       </Switch>
@@ -293,6 +298,7 @@ function Router() {
       <Route path="/register" component={withSeo(Register, { title: "Register", url: "/register" })} />
       <Route path="/login" component={withSeo(Login, { title: "Login", url: "/login" })} />
       <Route path="/ref/:code" component={ReferralRedirect} />
+      <Route path="/covenant/:code" component={withSeo(CovenantViewPage, { title: "Bilateral Peer Covenant" })} />
       <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
 
       {/* Catch-all: Redirect to home */}
@@ -385,15 +391,37 @@ function AppContent() {
             <main className="flex-1 flex flex-col min-h-screen w-full relative">
               {/* Top Header Bar */}
               <header className="sticky top-0 z-50 flex items-center justify-between px-3 py-2 bg-card/80 backdrop-blur-md border-b border-border">
-                {/* Desktop: sidebar trigger | Mobile: app branding */}
+                {/* Desktop: sidebar trigger | Universal Back | Mobile: app branding */}
                 <div className="flex items-center gap-2">
-                  <SidebarTrigger className="hidden md:flex mr-2" />
+                  <SidebarTrigger className="hidden md:flex mr-1" />
+
+                  {/* Universal Back Button for non-root sub-pages */}
+                  {location !== "/mission-command" && location !== "/dashboard" && location !== "/" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        audioEngine.playTactileClick();
+                        if (window.history.length > 1) {
+                          window.history.back();
+                        } else {
+                          setLocation("/mission-command");
+                        }
+                      }}
+                      className="h-7 px-2.5 text-xs font-mono font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] border border-white/10 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Navigate Back"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="hidden sm:inline">BACK</span>
+                    </Button>
+                  )}
+
                   {/* Mobile-only branding */}
                   <div className="flex md:hidden items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-violet-500/30">
-                      <Activity className="w-4 h-4 text-white" />
+                    <div className="w-7 h-7 rounded-lg bg-[#141922] border border-white/10 flex items-center justify-center shadow-md shadow-cyan-500/10">
+                      <Activity className="w-4 h-4 text-cyan-400" />
                     </div>
-                    <span className="text-base font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent tracking-tight">
+                    <span className="text-base font-bold text-white tracking-tight font-display">
                       Ascension
                     </span>
                   </div>
@@ -433,7 +461,7 @@ function AppContent() {
               </div>
 
               {/* Floating Focus Button (Desktop) */}
-              <div className="fixed bottom-4 right-4 z-50 hidden md:block">
+              <div className="hidden md:block">
                 <FocusFloatingButton />
               </div>
 

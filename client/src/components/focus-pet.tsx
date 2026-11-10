@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { getHunterArchetype } from "@/lib/avatar-engine";
+import { useQuery } from "@tanstack/react-query";
+import { User } from "@shared/schema";
 
 const PET_EMOJIS: Record<PetType, Record<PetStage, string>> = {
     cat: {
@@ -30,6 +34,34 @@ const PET_EMOJIS: Record<PetType, Record<PetStage, string>> = {
     },
 };
 
+const ARCHETYPE_MUTATIONS: Record<string, Record<PetType, { adult: string; legendary: string; name: string; auraTitle: string }>> = {
+    chrono_sage: {
+        cat: { adult: '🔮😺', legendary: '🌌🐱✨', name: 'Sphinx of Chronos', auraTitle: '+15% Intellect Velocity' },
+        dragon: { adult: '⚡🐉', legendary: '💎🐉⚡', name: 'Aether Spellweaver', auraTitle: '+20% Deep Work Multiplier' },
+        wolf: { adult: '🔮🐺', legendary: '✨🐺🔮', name: 'Astral Void Stalker', auraTitle: '+15% Cognitive Flow' },
+    },
+    iron_vanguard: {
+        cat: { adult: '⚔️🐯', legendary: '⚔️🐅🔥', name: 'Iron Saber-Tiger', auraTitle: '+15% Kinetic Resilience' },
+        dragon: { adult: '🌋🐲', legendary: '🌋🐲💥', name: 'Magma Dread-Wyrm', auraTitle: '+20% Raw Power Output' },
+        wolf: { adult: '🛡️🐺', legendary: '🛡️🐺⚡', name: 'Titan Fenrir', auraTitle: '+15% Heavy Iron Will' },
+    },
+    void_reaver: {
+        cat: { adult: '🌑🐈‍⬛', legendary: '🌑🐈‍⬛💜', name: 'Shadow Chimera', auraTitle: '+15% Air-Gap Shielding' },
+        dragon: { adult: '👑🐉', legendary: '👑🐉🖤', name: 'Void Sovereign Wyrm', auraTitle: '+20% Zero-Breach Mastery' },
+        wolf: { adult: '🌙🐺', legendary: '🌙🐺🩸', name: 'Eclipse Nightstalker', auraTitle: '+15% Dopamine Armor' },
+    },
+    bio_aegis: {
+        cat: { adult: '🌿🐱', legendary: '🌿🐱💚', name: 'Celestial Neko-Sprout', auraTitle: '+15% Vitality Restoration' },
+        dragon: { adult: '🍃🐉', legendary: '🍃🐉✨', name: 'Verdant World-Dragon', auraTitle: '+20% Stamina Regeneration' },
+        wolf: { adult: '🌲🐺', legendary: '🌲🐺🌿', name: 'Forest Sentinel', auraTitle: '+15% Biological Recovery' },
+    },
+    omni_ascendant: {
+        cat: { adult: '🌟🐱', legendary: '☀️🐱✨', name: 'Solar Apex Feline', auraTitle: '+18% Balanced Equilibrium' },
+        dragon: { adult: '🌟🐉', legendary: '👑🐉☀️', name: 'Omni Celestial Dragon', auraTitle: '+25% Transcendent Surge' },
+        wolf: { adult: '🌟🐺', legendary: '☀️🐺✨', name: 'Golden Sol Wolf', auraTitle: '+18% Universal Harmony' },
+    },
+};
+
 const PET_NAMES: Record<PetType, string> = {
     cat: 'Cosmic Cat',
     dragon: 'Focus Dragon',
@@ -42,6 +74,14 @@ interface FocusPetProps {
 
 export function FocusPet({ className }: FocusPetProps) {
     const { pet, feedPet, evolvePet } = usePet();
+    const { user: authUser } = useAuth();
+    const { data: user } = useQuery<User>({
+        queryKey: ["/api/user"],
+        enabled: !!authUser
+    });
+    const archetype = getHunterArchetype(user);
+    const mutation = ARCHETYPE_MUTATIONS[archetype.id]?.[pet.type];
+
     const [showStats, setShowStats] = useState(false);
     const [isFeeding, setIsFeeding] = useState(false);
     const [showEvolution, setShowEvolution] = useState(false);
@@ -90,7 +130,16 @@ export function FocusPet({ className }: FocusPetProps) {
         }, 3000);
     };
 
-    const emoji = PET_EMOJIS[pet.type][pet.stage];
+    let emoji = PET_EMOJIS[pet.type][pet.stage];
+    let activePetName = PET_NAMES[pet.type];
+    let activeAura = "Focus Resonance (+5% XP)";
+
+    if (mutation && (pet.stage === "adult" || pet.stage === "legendary")) {
+        emoji = pet.stage === "legendary" ? mutation.legendary : mutation.adult;
+        activePetName = mutation.name;
+        activeAura = mutation.auraTitle;
+    }
+
     const nextStageMinutes = getNextStageMinutes(pet.stage);
     const progress = nextStageMinutes ? (pet.totalFocusMinutes / nextStageMinutes) * 100 : 100;
     const canEvolve = !pet.hasChosenPath && pet.level >= 5;
@@ -182,8 +231,13 @@ export function FocusPet({ className }: FocusPetProps) {
                                     {/* Name & Type */}
                                     <div>
                                         <h3 className="text-lg font-bold text-white">{pet.name}</h3>
-                                        <p className="text-sm text-yellow-400">{PET_NAMES[pet.type]}</p>
-                                        <p className="text-xs text-white/50 capitalize">Stage: {pet.stage}</p>
+                                        <p className="text-sm font-bold text-yellow-400">{activePetName}</p>
+                                        <div className="flex items-center justify-between mt-0.5">
+                                            <span className="text-xs text-white/50 capitalize">Stage: {pet.stage}</span>
+                                            <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-500/30">
+                                                {activeAura}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* Stats */}

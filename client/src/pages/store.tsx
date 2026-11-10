@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShopItem, UserItem, User } from "@shared/schema";
-import { Loader2, Coins, Check, Shield, Award, Palette, Crown, Timer } from "lucide-react";
+import { useLocation } from "wouter";
+import { Loader2, Coins, Check, Shield, Award, Palette, Crown, Timer, ArrowLeft } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 
 export default function StorePage() {
+    const [, setLocation] = useLocation();
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState("themes");
@@ -134,6 +137,7 @@ export default function StorePage() {
     const badges = items?.filter((i) => i.type === "badge") || [];
     const themes = items?.filter((i) => i.type === "theme") || [];
     const avatars = items?.filter((i) => i.type === "avatar") || [];
+    const consumables = items?.filter((i) => i.type === "consumable") || [];
 
     const ItemCard = ({ item }: { item: ShopItem }) => {
         const isOwned = ownedItemIds.has(item.id);
@@ -195,7 +199,29 @@ export default function StorePage() {
                         </div>
                     </CardContent>
                     <CardFooter>
-                        {isOwned ? (
+                        {item.type === "consumable" ? (
+                            <div className="w-full flex flex-col gap-2">
+                                <div className="flex justify-between items-center w-full text-xs font-mono text-zinc-400">
+                                    <span>INVENTORY CAPACITY:</span>
+                                    <span className="text-white font-bold">{inventory?.filter((i) => i.itemId === item.id).length || 0} / 2 ACTIVE</span>
+                                </div>
+                                <Button
+                                    className="w-full font-mono text-xs uppercase"
+                                    variant={(inventory?.filter((i) => i.itemId === item.id).length || 0) >= 2 ? "outline" : canAfford ? "default" : "secondary"}
+                                    disabled={(inventory?.filter((i) => i.itemId === item.id).length || 0) >= 2 || !canAfford || purchaseMutation.isPending}
+                                    onClick={() => purchaseMutation.mutate(item.id)}
+                                >
+                                    {(inventory?.filter((i) => i.itemId === item.id).length || 0) >= 2 ? (
+                                        "MAX CAPACITY (2/2)"
+                                    ) : (
+                                        <>
+                                            <Coins className="mr-2 h-4 w-4 text-yellow-500" />
+                                            {item.cost} COINS // ACQUIRE
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        ) : isOwned ? (
                             <Button
                                 className="w-full"
                                 variant={isEquipped ? "outline" : "default"}
@@ -228,7 +254,24 @@ export default function StorePage() {
     };
 
     return (
-        <div className="space-y-8 p-8 max-w-7xl mx-auto">
+        <div className="space-y-8 p-4 sm:p-8 max-w-7xl mx-auto pb-24 md:pb-8">
+            {/* Top Navigation */}
+            <div className="flex items-center justify-between">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        audioEngine.playTactileClick();
+                        setLocation("/mission-command");
+                    }}
+                    className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>MISSION COMMAND</span>
+                </Button>
+                <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">SUPPLY DEPOT</span>
+            </div>
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Ascensions Store</h1>
@@ -250,7 +293,8 @@ export default function StorePage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-tour="store-tabs">
-                <TabsList className="grid w-full grid-cols-5 max-w-[900px]">
+                <TabsList className="grid w-full grid-cols-6 max-w-[950px]">
+                    <TabsTrigger value="equipment">Equipment</TabsTrigger>
                     <TabsTrigger value="themes">Themes</TabsTrigger>
                     <TabsTrigger value="titles">Titles</TabsTrigger>
                     <TabsTrigger value="badges">Badges</TabsTrigger>
@@ -379,6 +423,14 @@ export default function StorePage() {
                             </CardContent>
                         </Card>
                     </motion.div>
+                </TabsContent>
+
+                <TabsContent value="equipment" className="mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {consumables.map((item) => (
+                            <ItemCard key={item.id} item={item} />
+                        ))}
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="titles" className="mt-6">

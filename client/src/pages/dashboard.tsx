@@ -6,6 +6,8 @@ import { XPProgress } from "@/components/xp-progress";
 import { StatBar } from "@/components/stat-bar";
 import { QuestCard } from "@/components/quest-card";
 import { DailyProtocol } from "@/components/daily-protocol";
+import { DailyCalibrationGrid } from "@/components/daily-calibration-grid";
+import { ShareTelemetryButton } from "@/components/share-telemetry-button";
 import { User, Quest, Task, STAT_NAMES } from "@shared/schema";
 import { Flame, Target, CheckSquare, Plus, Trash2, TrendingUp, Zap, Award, BookOpen, Calendar, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,9 +21,13 @@ import { Progress } from "@/components/ui/progress";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { ResurrectionModal } from "@/components/resurrection-modal";
+import { ExecutionLattice } from "@/components/execution-lattice";
+import { WeeklyRecapModal } from "@/components/weekly-recap-modal";
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const [showWeeklyRecap, setShowWeeklyRecap] = useState(false);
   const { data: user, isLoading: userLoading, error: userError } = useQuery<User>({
     queryKey: ["/api/user"],
     retry: 1,
@@ -30,6 +36,21 @@ export default function Dashboard() {
   const { data: quests, isLoading: questsLoading } = useQuery<Quest[]>({
     queryKey: ["/api/quests"],
   });
+
+  const { data: inventory = [] } = useQuery<any[]>({
+    queryKey: ["/api/shop/inventory"],
+  });
+  const streakShields = inventory.filter((i: any) => i.item?.value === "streak_shield").length;
+
+  const getMultiplierInfo = (streak: number) => {
+    if (streak >= 90) return { factor: "3.00x", label: "ASCENDED" };
+    if (streak >= 30) return { factor: "2.00x", label: "SOVEREIGN" };
+    if (streak >= 14) return { factor: "1.50x", label: "WARRIOR" };
+    if (streak >= 7) return { factor: "1.25x", label: "INITIATE" };
+    return { factor: "1.00x", label: "STANDARD" };
+  };
+
+  const multiplierInfo = getMultiplierInfo(user?.streak || 0);
 
   const completeQuestMutation = useMutation({
     mutationFn: async (questId: string) => {
@@ -63,19 +84,34 @@ export default function Dashboard() {
         if (!old) return old;
         return {
           ...old,
-          xp: old.xp + data.quest.rewardXP,
-          coins: old.coins + data.quest.rewardCoins,
+          ...(data.user || {}),
         };
       });
 
-      // We let the service worker sync activities in the background eventually
-      // queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/inventory"] });
 
-      toast({
-        title: "Quest Completed!",
-        description: `You earned ${data.quest.rewardXP} XP and ${data.quest.rewardCoins} coins!`,
-        variant: "default",
-      });
+      if (data.shieldSavedStreak) {
+        toast({
+          title: "PROTOCOL DEFENSE DEPLOYED",
+          description: "Your Streak Shield prevented protocol collapse. Active streak preserved.",
+          variant: "default",
+        });
+      }
+
+      if (data.milestoneNotification) {
+        toast({
+          title: data.milestoneNotification.title,
+          description: data.milestoneNotification.message,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Protocol Verified",
+          description: `Telemetry yield: +${data.xpAwarded || data.quest.rewardXP} XP (${data.multiplier || 1}x) and +${data.coinsAwarded || data.quest.rewardCoins} coins`,
+          variant: "default",
+        });
+      }
     },
     onSettled: () => {
       // Optionally sync in the background without blocking the UI
@@ -312,6 +348,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 px-4 sm:px-0" data-testid="page-dashboard">
       <PWAInstallPrompt />
+      <ResurrectionModal />
+      <WeeklyRecapModal open={showWeeklyRecap} onOpenChange={setShowWeeklyRecap} />
       {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -324,17 +362,70 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-6 flex-wrap">
-          <div className="flex items-center gap-2 px-3 py-2 md:px-4 bg-card rounded-lg border border-card-border">
-            <Flame className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Streak</p>
-              <p className="text-base md:text-lg font-bold" data-tour="streak-value">{user.streak} days</p>
+          <div className="flex items-center gap-3 px-3.5 py-2 md:px-4 bg-[#0D0F12] rounded-md border border-white/10 shadow-sm" data-tour="streak-value">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] tracking-wider uppercase font-mono text-zinc-400">
+                  PROTOCOL SEQUENCE
+                </span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-semibold">
+                  {multiplierInfo.factor} XP
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-lg md:text-xl font-bold font-mono tracking-tight text-white">
+                  DAY {String(user.streak || 0).padStart(3, '0')}
+                </p>
+                <span className="text-[10px] font-mono text-zinc-500 uppercase">
+                  // {multiplierInfo.label}
+                </span>
+                {streakShields > 0 ? (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                    SHIELD [{streakShields}]
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-800/80 border border-white/5 text-zinc-500">
+                    NO SHIELD
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           <div data-tour="rank-badge">
             <RankBadge tier={user.tier as any} level={user.level} />
           </div>
+
+          <ShareTelemetryButton
+            data={{
+              type: "streak",
+              title: "PROTOCOL CONTINUUM",
+              headlineMetric: `${String(user.streak || 0).padStart(3, "0")} DAYS`,
+              subheadline: "ZERO DISCIPLINE DEFICIT",
+              userName: user.name || "OPERATIVE",
+              userTier: `TIER ${user.tier} // LVL ${user.level}`,
+              referralCode: user.name ? user.name.toUpperCase() : undefined,
+              stats: [
+                { label: "STREAK", value: `${user.streak || 0} DAYS` },
+                { label: "TELEMETRY", value: multiplierInfo.factor },
+                { label: "EXP EARNED", value: `${user.xp || 0} XP` },
+                { label: "RESERVES", value: `${user.coins || 0} COINS` },
+              ],
+            }}
+            label="SHARE AUDIT"
+            variant="outline"
+            className="border-white/10 hover:bg-zinc-800 text-zinc-300 h-9 px-3"
+          />
+
+          <Button
+            variant="outline"
+            onClick={() => setShowWeeklyRecap(true)}
+            className="border-white/10 hover:bg-zinc-800 text-zinc-300 font-mono text-xs uppercase h-9 px-3"
+          >
+            <Award className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+            Weekly Recap
+          </Button>
         </div>
       </div>
 
@@ -344,6 +435,9 @@ export default function Dashboard() {
           <XPProgress xp={user.xp} tier={user.tier as any} />
         </CardContent>
       </Card>
+
+      {/* 30-Day Protocol Calibration Matrix */}
+      <DailyCalibrationGrid />
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4" data-tour="quick-stats">
@@ -462,7 +556,7 @@ export default function Dashboard() {
               <Progress value={goalProgress} className="h-3" />
             </div>
             {goalProgress >= 100 ? (
-              <p className="text-center text-green-500 font-semibold">🎉 Goal achieved!</p>
+              <p className="text-center text-emerald-400 font-mono text-xs uppercase font-semibold">Goal Objective Cleared</p>
             ) : (
               <p className="text-center text-muted-foreground text-sm">
                 {dailyGoal - todayXP} XP to go
@@ -504,6 +598,9 @@ export default function Dashboard() {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* 90-Day Execution Lattice */}
+      <ExecutionLattice />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">

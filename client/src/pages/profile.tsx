@@ -8,7 +8,8 @@ import { RankBadge } from "@/components/rank-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle, Users, Copy, CheckCircle2, Gift, Castle } from "lucide-react";
+import { Calendar, Flame, Trophy, TrendingUp, Edit, Settings, Sparkles, Shield, Award, ChevronLeft, PlayCircle, Users, Copy, CheckCircle2, Gift, Castle, ArrowLeft } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -21,6 +22,9 @@ import { PremiumSuccessAnim } from "@/components/premium-success-anim";
 import { useLocation } from "wouter";
 import { useAppTour } from "@/components/AppTour";
 import { CitadelViewer } from "@/components/citadel-viewer";
+import { HunterLicenseModal } from "@/components/avatar/hunter-license-modal";
+import { AscendantAvatar } from "@/components/avatar/ascendant-avatar";
+import { getHunterArchetype } from "@/lib/avatar-engine";
 
 export default function ProfilePage() {
     const { user: firebaseUser } = useAuth();
@@ -28,6 +32,7 @@ export default function ProfilePage() {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
     const [citadelViewerOpen, setCitadelViewerOpen] = useState(false);
+    const [hunterLicenseOpen, setHunterLicenseOpen] = useState(false);
     const { triggerTour } = useAppTour();
     const params = useParams<{ id?: string }>(); // Get ID from params
     const viewUserId = params.id;
@@ -323,6 +328,60 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                 </motion.div>
+
+                {/* Hunter License & Ascendant Avatar Flex Banner */}
+                {(() => {
+                    const archetype = getHunterArchetype(user);
+                    return (
+                        <motion.div variants={item}>
+                            <Card 
+                                className="border border-cyan-500/30 bg-gradient-to-r from-black/80 via-[#0a101d]/90 to-black/80 backdrop-blur-xl relative overflow-hidden group cursor-pointer hover:border-cyan-400/60 transition-all duration-300"
+                                onClick={() => {
+                                    audioEngine.playTactileClick();
+                                    setHunterLicenseOpen(true);
+                                }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <CardContent className="p-4 sm:p-6 relative flex flex-col sm:flex-row items-center justify-between gap-5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-20 h-24 flex items-center justify-center bg-black/60 rounded-xl border border-white/10 p-1 group-hover:scale-105 transition-transform overflow-hidden flex-shrink-0">
+                                            <AscendantAvatar user={user} size={90} animate={false} />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span 
+                                                    className="font-mono text-[10px] uppercase tracking-widest font-bold"
+                                                    style={{ color: archetype.primaryColor }}
+                                                >
+                                                    AWAKENED OPERATOR // {archetype.name}
+                                                </span>
+                                                <Badge className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-mono">
+                                                    {user.tier}-TIER
+                                                </Badge>
+                                            </div>
+                                            <h3 className="text-xl font-display font-black text-white group-hover:text-cyan-300 transition-colors">
+                                                Ascendant Avatar & Hunter License
+                                            </h3>
+                                            <p className="text-xs text-zinc-400 max-w-md mt-0.5">
+                                                Your character evolves as you level up real stats. Tilt 3D holographic seal, inspect weapon implement, and export 9:16 Story brag card.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <Button
+                                            size="sm"
+                                            className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-mono text-xs font-black h-9 px-4 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+                                        >
+                                            <Sparkles className="w-4 h-4 text-black" />
+                                            <span>INSPECT & BRAG</span>
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    );
+                })()}
 
                 {/* Premium Membership Card (Visible to self or if admin is viewing another) */}
                 {(isOwnProfile || (firebaseUser && (user as any).role === "admin")) && (
@@ -675,6 +734,12 @@ export default function ProfilePage() {
                 onClose={() => setCitadelViewerOpen(false)} 
                 userId={user.id} 
                 username={user.name} 
+            />
+            <HunterLicenseModal
+                isOpen={hunterLicenseOpen}
+                onClose={() => setHunterLicenseOpen(false)}
+                user={user}
+                referralCode={referralStats?.referralCode}
             />
             <AnimatePresence>
                 {showPremiumAnim && (

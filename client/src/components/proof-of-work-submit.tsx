@@ -18,8 +18,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { ShareTelemetryButton } from "@/components/share-telemetry-button";
 
 interface ProofOfWorkSubmitProps {
   missionId: string;
@@ -34,6 +36,7 @@ export function ProofOfWorkSubmit({
   onSuccess,
   onCancel,
 }: ProofOfWorkSubmitProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [content, setContent] = useState<string>("");
@@ -130,12 +133,31 @@ export function ProofOfWorkSubmit({
           <p className="text-xs text-slate-300 italic max-w-md mx-auto">
             &ldquo;{result.feedback}&rdquo;
           </p>
-          <Button
-            onClick={onCancel}
-            className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-6"
-          >
-            Return to Mission Command
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              className="border-white/10 hover:bg-zinc-800 text-white font-mono text-xs uppercase h-9 px-4"
+            >
+              Return to Command
+            </Button>
+            <ShareTelemetryButton
+              label="TRANSMIT VERIFIED PROOF"
+              data={{
+                type: "quest",
+                title: "PROOF OF WORK VERIFIED",
+                headlineMetric: `${result.proofQualityScore} / 100`,
+                subheadline: "Verified Deliverable Quality",
+                userName: (user as any)?.name || "Operative",
+                userTier: (user as any)?.tier || "INITIATE",
+                referralCode: (user as any)?.referralCode,
+                stats: [
+                  { label: "XP Yield", value: `+${result.xpEarned} XP` },
+                  { label: "Verification", value: "AI Chief of Staff" },
+                ],
+              }}
+            />
+          </div>
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">

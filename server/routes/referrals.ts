@@ -83,9 +83,21 @@ export function createReferralRouter(storage: IStorage): Router {
                 })
             );
 
+            const total = profile?.totalReferrals || 0;
+            const tiers = [
+                { threshold: 1, reward: "COHORT RECRUITER ACCREDITATION", bonusCoins: 100, achieved: total >= 1 },
+                { threshold: 3, reward: "OBSIDIAN AVATAR EMBOSSING", bonusCoins: 250, achieved: total >= 3 },
+                { threshold: 5, reward: "PRO TELEMETRY ACCESS (1 MO)", bonusCoins: 500, achieved: total >= 5 },
+                { threshold: 10, reward: "FOUNDING CIRCLE RING", bonusCoins: 1500, achieved: total >= 10 },
+            ];
+
+            const nextTier = tiers.find(t => !t.achieved) || null;
+
             res.json({
                 referralCode: profile?.referralCode || null,
-                totalReferrals: profile?.totalReferrals || 0,
+                totalReferrals: total,
+                tiers,
+                nextTier,
                 referrals: referralsWithNames
             });
         } catch (error) {

@@ -237,7 +237,7 @@ export default function SessionPage() {
                                             {formatTime(timeLeft)}
                                         </motion.div>
                                         <p className="text-zinc-400 mt-4 text-lg">
-                                            {isActive ? "Stay Focused 🎯" : "Ready to Start?"}
+                                            {isActive ? "Stay Focused" : "Ready to Start?"}
                                         </p>
                                     </div>
                                 </div>

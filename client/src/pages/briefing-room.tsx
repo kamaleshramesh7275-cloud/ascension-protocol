@@ -30,9 +30,10 @@ import {
   Sunrise,
   Sun,
   Quote,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { audioEngine } from "@/lib/audio-engine";
 
 interface IntakeData {
   // Layer 1: Target Acquisition
@@ -194,36 +195,55 @@ export default function BriefingRoom() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start p-4 sm:p-6 md:p-10 relative overflow-hidden selection:bg-amber-500 selection:text-black">
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col items-center justify-start p-4 sm:p-6 md:p-10 relative overflow-y-auto selection:bg-amber-500 selection:text-black select-none">
       {/* Background ambient lighting */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-amber-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-red-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-amber-500/5 via-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
 
       {/* Top Header */}
       <header className="w-full max-w-3xl flex flex-col items-center text-center mb-8 relative z-10">
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-500/10 px-3 py-1 font-mono tracking-wider text-xs uppercase flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5" /> Intelligence Intake Engine
-          </Badge>
-          <Badge variant="outline" className="border-slate-800 text-slate-400 bg-slate-900/60 font-mono text-xs">
-            Step {step} of {totalSteps}
-          </Badge>
+        <div className="w-full flex items-center justify-between mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              audioEngine.playTactileClick();
+              setLocation("/mission-command");
+            }}
+            className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+            <span>MISSION COMMAND</span>
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono tracking-wider text-[10px] uppercase flex items-center gap-1.5 font-semibold">
+              <Lock className="w-3.5 h-3.5" /> INTAKE ENGINE
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#141922] border border-white/[0.08] text-zinc-400 font-mono text-[10px]">
+              STEP {step}/{totalSteps}
+            </span>
+          </div>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-100 mb-2 swiss-display">
           THE BRIEFING ROOM
         </h1>
-        <p className="text-sm text-slate-400 max-w-xl">
-          Ascension Protocol does not manage tasks. It calibrates an uncompromising execution machine. Complete the 5-layer diagnostic intake.
+        <p className="text-xs sm:text-sm text-zinc-400 max-w-xl font-mono">
+          Ascension Protocol calibrates an uncompromising human execution machine. Complete the 5-layer diagnostic intake.
         </p>
 
         {/* Progress bar */}
         <div className="w-full max-w-xl mt-6 space-y-1.5">
-          <div className="flex justify-between text-xs font-mono text-slate-400">
+          <div className="flex justify-between text-xs font-mono text-zinc-400">
             <span>CALIBRATION PROGRESS</span>
-            <span className="text-amber-400 font-bold">{progressPercent}%</span>
+            <span className="text-amber-400 font-bold tabular-telemetry">{progressPercent}%</span>
           </div>
-          <Progress value={progressPercent} className="h-2 bg-slate-900 border border-slate-800" />
+          <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-400 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
       </header>
 
@@ -234,20 +254,20 @@ export default function BriefingRoom() {
           {step === 1 && (
             <motion.div
               key="step-1"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-md shadow-2xl shadow-black/80 space-y-6"
+              exit={{ opacity: 0, y: -10 }}
+              className="obsidian-card p-6 sm:p-8 razor-border space-y-6"
             >
-              <div className="flex items-start gap-4 pb-4 border-b border-slate-800">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
-                  <Target className="w-6 h-6" />
+              <div className="flex items-start gap-4 pb-4 border-b border-white/[0.08]">
+                <div className="w-10 h-10 rounded bg-[#141922] border border-white/10 flex items-center justify-center shrink-0 text-amber-400">
+                  <Target className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2 swiss-display">
                     Layer 1: Target Acquisition
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-zinc-400 mt-1 font-mono">
                     Define the singular objective and the absolute cost of failure. Vague goals produce zero cognitive leverage.
                   </p>
                 </div>
@@ -255,38 +275,38 @@ export default function BriefingRoom() {
 
               {/* Exact Target Outcome */}
               <div className="space-y-2">
-                <Label htmlFor="targetOutcome" className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                  <Crosshair className="w-4 h-4 text-amber-400" /> Strategic Target Objective
+                <Label htmlFor="targetOutcome" className="text-xs font-mono font-semibold text-zinc-300 flex items-center gap-2">
+                  <Crosshair className="w-3.5 h-3.5 text-amber-400" /> STRATEGIC TARGET OBJECTIVE
                 </Label>
                 <Input
                   id="targetOutcome"
                   placeholder="e.g. Master High-Level Distributed Systems & pass Staff Engineer bar"
                   value={data.targetOutcome}
                   onChange={(e) => setData({ ...data, targetOutcome: e.target.value })}
-                  className="bg-slate-950/80 border-slate-700/80 focus:border-amber-500 text-white placeholder:text-slate-600 h-12"
+                  className="bg-[#090C10] border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 h-11 text-sm font-mono"
                 />
-                <p className="text-xs text-slate-500">What specific, measurable victory are you commanding?</p>
+                <p className="text-[11px] text-zinc-500 font-mono">What specific, measurable victory are you commanding?</p>
               </div>
 
               {/* Target Deadline */}
               <div className="space-y-2">
-                <Label htmlFor="targetDeadline" className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-cyan-400" /> Non-Negotiable Deadline
+                <Label htmlFor="targetDeadline" className="text-xs font-mono font-semibold text-zinc-300 flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" /> NON-NEGOTIABLE DEADLINE
                 </Label>
                 <Input
                   id="targetDeadline"
                   type="date"
                   value={data.targetDeadline}
                   onChange={(e) => setData({ ...data, targetDeadline: e.target.value })}
-                  className="bg-slate-950/80 border-slate-700/80 focus:border-cyan-500 text-white h-12"
+                  className="bg-[#090C10] border-white/[0.08] text-zinc-100 h-11 text-sm font-mono"
                 />
-                <p className="text-xs text-slate-500">Our living roadmap will calculate daily probability curves based on this date.</p>
+                <p className="text-[11px] text-zinc-500 font-mono">Our living roadmap will calculate daily probability curves based on this date.</p>
               </div>
 
               {/* Failure Statement */}
               <div className="space-y-2 pt-2">
-                <Label htmlFor="failureStatement" className="text-sm font-semibold text-red-400 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-400" /> The Cost of Surrender (Failure Mirror)
+                <Label htmlFor="failureStatement" className="text-xs font-mono font-semibold text-red-400 flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> THE COST OF SURRENDER (FAILURE MIRROR)
                 </Label>
                 <Textarea
                   id="failureStatement"
@@ -294,10 +314,10 @@ export default function BriefingRoom() {
                   placeholder="If I fail to execute this, the consequence is: 6 more months wasted in stagnation, losing competitive edge, and proving my own excuses right."
                   value={data.failureStatement}
                   onChange={(e) => setData({ ...data, failureStatement: e.target.value })}
-                  className="bg-slate-950/80 border-red-500/30 focus:border-red-500 text-white placeholder:text-slate-600 resize-none"
+                  className="bg-red-950/10 border-red-500/20 text-zinc-100 placeholder:text-zinc-600 resize-none font-mono text-xs"
                 />
-                <p className="text-xs text-red-400/80 font-mono">
-                  ⚠ This statement will appear every single morning during your mandatory briefing. Make it hurt.
+                <p className="text-[11px] text-red-400/90 font-mono">
+                  CRITICAL: This statement will appear every single morning during your mandatory briefing. Make it hurt.
                 </p>
               </div>
             </motion.div>
@@ -655,19 +675,22 @@ export default function BriefingRoom() {
                 </p>
 
                 <div
-                  onClick={() => setOathAccepted(!oathAccepted)}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    setOathAccepted(!oathAccepted);
+                  }}
+                  className={`flex items-center gap-3 p-3 rounded border cursor-pointer transition-all ${
                     oathAccepted
-                      ? "bg-amber-500/20 border-amber-500 text-white"
-                      : "bg-slate-950/80 border-slate-700 text-slate-400 hover:border-slate-500"
+                      ? "bg-amber-500/20 border-amber-400 text-zinc-100"
+                      : "bg-[#090C10] border-white/[0.08] text-zinc-400 hover:border-white/20"
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded flex items-center justify-center border ${
-                    oathAccepted ? "bg-amber-500 border-amber-500 text-black" : "border-slate-600"
+                  <div className={`w-4 h-4 rounded flex items-center justify-center border ${
+                    oathAccepted ? "bg-amber-400 border-amber-400 text-black" : "border-zinc-700 bg-zinc-900"
                   }`}>
-                    {oathAccepted && <CheckCircle2 className="w-4 h-4 text-black" />}
+                    {oathAccepted && <CheckCircle2 className="w-3.5 h-3.5 text-black" />}
                   </div>
-                  <span className="text-xs font-semibold select-none">
+                  <span className="text-xs font-mono font-semibold select-none">
                     I BIND MYSELF TO THIS PROTOCOL (LOCK SYSTEM)
                   </span>
                 </div>
@@ -681,10 +704,14 @@ export default function BriefingRoom() {
           {step > 1 ? (
             <Button
               variant="outline"
-              onClick={handlePrev}
-              className="border-slate-800 text-slate-300 hover:bg-slate-900 flex items-center gap-2"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                handlePrev();
+              }}
+              className="border-white/[0.08] bg-[#0E1218] text-zinc-300 hover:text-white flex items-center gap-2 font-mono text-xs h-9"
             >
-              <ArrowLeft className="w-4 h-4" /> Previous Layer
+              <ArrowLeft className="w-3.5 h-3.5" /> PREVIOUS LAYER
             </Button>
           ) : (
             <div />
@@ -692,16 +719,24 @@ export default function BriefingRoom() {
 
           {step < totalSteps ? (
             <Button
-              onClick={handleNext}
-              className="bg-amber-500 hover:bg-amber-400 text-black font-bold flex items-center gap-2 px-6"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                handleNext();
+              }}
+              className="bg-amber-400 hover:bg-amber-300 text-black font-extrabold flex items-center gap-2 px-6 font-mono text-xs h-9 tracking-wider"
             >
-              Next Layer <ArrowRight className="w-4 h-4" />
+              NEXT LAYER <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           ) : (
             <Button
-              onClick={handleSubmit}
+              size="sm"
+              onClick={() => {
+                audioEngine.playCommandLock();
+                handleSubmit();
+              }}
               disabled={saveMutation.isPending || !oathAccepted}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold flex items-center gap-2 px-8 shadow-lg shadow-amber-500/20"
+              className="bg-amber-400 hover:bg-amber-300 text-black font-extrabold flex items-center gap-2 px-8 h-10 font-mono text-xs tracking-wider shadow-lg shadow-amber-500/10"
             >
               {saveMutation.isPending ? "INITIALIZING ENGINE..." : "LOCK PROTOCOL & COMMENCE"}
               <Cpu className="w-4 h-4" />

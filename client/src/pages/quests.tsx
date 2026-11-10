@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Quest, QuestType } from "@shared/schema";
 import { QuestCard } from "@/components/quest-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Target, Trophy, Calendar, Sparkles, CheckCircle2, Crown, BookOpen, Dumbbell, Leaf, Zap } from "lucide-react";
+import { Target, Trophy, Calendar, Sparkles, CheckCircle2, Crown, BookOpen, Dumbbell, Leaf, Zap, ArrowLeft } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,9 +17,16 @@ import { useAnimations } from "@/context/animation-context";
 import { Progress } from "@/components/ui/progress";
 import { CustomHabitDialog } from "@/components/custom-habit-dialog";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import { ShareTelemetryButton } from "@/components/share-telemetry-button";
+import { CofferOpeningModal } from "@/components/rewards/coffer-opening-modal";
+import { useAuth } from "@/hooks/use-auth";
+
 export default function QuestsPage() {
+    const [, setLocation] = useLocation();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<"active" | "browse" | "habits">("active");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
+    const [showCofferModal, setShowCofferModal] = useState<boolean>(false);
     const { toast } = useToast();
     const { showQuestCompleted } = useAnimations();
 
@@ -152,7 +161,24 @@ export default function QuestsPage() {
                 />
             </div>
 
-            <div className="relative z-10 p-6 max-w-7xl mx-auto space-y-8" data-tour="quests-page">
+            <div className="relative z-10 p-4 sm:p-6 max-w-7xl mx-auto space-y-8 pb-24 md:pb-8" data-tour="quests-page">
+                {/* Top Navigation */}
+                <div className="flex items-center justify-between">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            audioEngine.playTactileClick();
+                            setLocation("/mission-command");
+                        }}
+                        className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+                    >
+                        <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>MISSION COMMAND</span>
+                    </Button>
+                    <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">TACTICAL QUESTS</span>
+                </div>
+
                 {/* Header */}
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-2 text-foreground drop-shadow-sm">
                     Quest Board
@@ -215,7 +241,38 @@ export default function QuestsPage() {
                                                 </div>
                                                 <Progress value={dailyBonusProgress} className="h-2" />
                                                 {completedDailyCount === totalDailyCount && (
-                                                    <p className="text-xs text-green-400 font-medium">Daily bonus unlocked! Check your XP and Coins.</p>
+                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-border/50">
+                                                        <p className="text-xs text-emerald-400 font-mono font-medium">ALL DAILY PROTOCOLS EXECUTED WITH ZERO DEVIATION.</p>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    audioEngine.playCommandLock();
+                                                                    setShowCofferModal(true);
+                                                                }}
+                                                                className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-black font-mono text-xs font-black shadow-lg flex items-center gap-1.5 h-8 px-3"
+                                                            >
+                                                                <Trophy className="w-3.5 h-3.5 text-black" />
+                                                                <span>BREACH SCOUT COFFER</span>
+                                                            </Button>
+                                                            <ShareTelemetryButton
+                                                                label="TRANSMIT STATUS"
+                                                                data={{
+                                                                    type: "quest",
+                                                                    title: "DAILY PROTOCOL EXECUTED",
+                                                                    headlineMetric: `${completedDailyCount}/${totalDailyCount}`,
+                                                                    subheadline: "Daily Quests Completed",
+                                                                    userName: (user as any)?.name || "Operative",
+                                                                    userTier: (user as any)?.tier || "INITIATE",
+                                                                    referralCode: (user as any)?.referralCode,
+                                                                    stats: [
+                                                                        { label: "Status", value: "100% Zero Deviation" },
+                                                                        { label: "Mission", value: activeCampaign?.title || "Daily Mission" },
+                                                                    ],
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -359,6 +416,20 @@ export default function QuestsPage() {
                 </Tabs>
             </div>
         </div>
+
+        <CofferOpeningModal
+            isOpen={showCofferModal}
+            cofferType="enclave_scout"
+            onClose={() => setShowCofferModal(false)}
+            onClaim={(loot) => {
+                toast({
+                    title: "SCOUT COFFER REWARDS CLAIMED! 🎁",
+                    description: `Gained +${loot.totalXp} XP and +${loot.totalCoins} Coins!`,
+                });
+                queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/quests"] });
+            }}
+        />
         </PullToRefresh>
     );
 }

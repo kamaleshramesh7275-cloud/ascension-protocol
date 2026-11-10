@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LiveTelemetryTicker } from "@/components/live-telemetry-ticker";
 import { motion } from "framer-motion";
 import { User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,8 +113,10 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-black via-blue-950/20 to-black flex items-center justify-center p-6">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover opacity-10" />
+        <div className="min-h-screen bg-gradient-to-br from-black via-blue-950/20 to-black flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover opacity-10 pointer-events-none" />
+
+            <div className="flex-1 flex items-center justify-center p-6">
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -239,6 +242,9 @@ export default function Login() {
                     </CardContent>
                 </Card>
             </motion.div>
+            </div>
+
+            <LiveTelemetryTicker />
         </div>
     );
 }

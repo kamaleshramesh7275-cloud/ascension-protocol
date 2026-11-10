@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User as BackendUser, WorkoutSession } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
+import { ExecutionLattice } from "@/components/execution-lattice";
+import { WeeklyRecapModal } from "@/components/weekly-recap-modal";
 import { format, subDays, eachDayOfInterval } from "date-fns";
+import { useLocation } from "wouter";
 import {
     Dumbbell,
     Brain,
@@ -17,7 +22,10 @@ import {
     Calendar,
     TrendingUp,
     Clock,
+    Trophy,
+    ArrowLeft,
 } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import {
     AreaChart,
     Area,
@@ -47,7 +55,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function StatsPage() {
+    const [, setLocation] = useLocation();
     const { user: firebaseUser } = useAuth();
+    const [showWeeklyRecap, setShowWeeklyRecap] = useState(false);
     const { data: user } = useQuery<BackendUser>({
         queryKey: ["/api/user"],
         enabled: !!firebaseUser,
@@ -108,15 +118,32 @@ export default function StatsPage() {
     };
 
     return (
-        <div className="p-4 md:p-8 min-h-screen bg-background/50 mb-24" data-tour="stats-page">
+        <div className="p-4 md:p-8 min-h-screen bg-background/50 pb-24 md:pb-8" data-tour="stats-page">
             <motion.div
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="max-w-4xl mx-auto space-y-10"
+                className="max-w-4xl mx-auto space-y-8"
             >
+                {/* Top Navigation */}
+                <div className="flex items-center justify-between">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            audioEngine.playTactileClick();
+                            setLocation("/mission-command");
+                        }}
+                        className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+                    >
+                        <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>MISSION COMMAND</span>
+                    </Button>
+                    <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">DIAGNOSTIC TELEMETRY</span>
+                </div>
+
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                     <motion.h1
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -132,7 +159,24 @@ export default function StatsPage() {
                     >
                         Detailed breakdown of your current capabilities and potential.
                     </motion.p>
+                    <div className="pt-4 flex justify-center">
+                        <Button
+                            onClick={() => setShowWeeklyRecap(true)}
+                            variant="outline"
+                            className="border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-mono text-xs uppercase tracking-wider"
+                        >
+                            <Trophy className="w-3.5 h-3.5 mr-2 text-amber-400" />
+                            View Weekly Audit Recap
+                        </Button>
+                    </div>
                 </div>
+
+                <WeeklyRecapModal open={showWeeklyRecap} onOpenChange={setShowWeeklyRecap} />
+
+                {/* ── 90-Day Execution Lattice ── */}
+                <motion.div variants={item}>
+                    <ExecutionLattice />
+                </motion.div>
 
                 {/* ── Workout Analytics Section ── */}
                 {totalWorkouts > 0 && (

@@ -64,6 +64,12 @@ export function TelemetryTracker() {
 
   useEffect(() => {
     locationRef.current = location;
+    // Track SPA route navigation in Google Analytics 4
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("config", "G-0LC30PK0JL", {
+        page_path: location,
+      });
+    }
   }, [location]);
 
   useEffect(() => {

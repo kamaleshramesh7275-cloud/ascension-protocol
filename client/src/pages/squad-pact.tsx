@@ -27,9 +27,11 @@ import {
   Terminal,
   Send,
   RadioTower,
-  Activity
+  Activity,
+  ArrowLeft,
 } from "lucide-react";
 import { audioEngine } from "@/lib/audio-engine";
+import { WorldBossRaidCard } from "@/components/squad/world-boss-raid-card";
 
 export default function SquadPactPage() {
   const [, setLocation] = useLocation();
@@ -75,6 +77,7 @@ export default function SquadPactPage() {
   // Tactical Beacon Broadcast Mutation
   const pingMutation = useMutation({
     mutationFn: async ({ pingType, note }: { pingType: string; note?: string }) => {
+      audioEngine.playTactileClick();
       const res = await apiRequest("POST", "/api/squad-pact/ping", { pingType, note });
       return res.json();
     },
@@ -82,7 +85,7 @@ export default function SquadPactPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/squad-pact/feed"] });
       audioEngine.playCommandLock();
       toast({
-        title: "📡 BEACON TRANSMITTED",
+        title: "BEACON TRANSMITTED",
         description: data.message || "Squad channel notified.",
       });
       setCustomPingNote("");
@@ -95,6 +98,7 @@ export default function SquadPactPage() {
   // Create Pact Mutation
   const createMutation = useMutation({
     mutationFn: async () => {
+      audioEngine.playTactileClick();
       const res = await apiRequest("POST", "/api/squad-pact", {
         name: pactName,
         weeklyStakePoints: stakePoints,
@@ -119,6 +123,7 @@ export default function SquadPactPage() {
   // Join Pact Mutation
   const joinMutation = useMutation({
     mutationFn: async () => {
+      audioEngine.playTactileClick();
       const res = await apiRequest("POST", "/api/squad-pact/join", {
         inviteCode: inviteCodeInput.trim(),
       });
@@ -140,43 +145,62 @@ export default function SquadPactPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col p-4 sm:p-6 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col p-4 sm:p-6 md:p-8 relative overflow-hidden font-sans">
       {/* Ambient background glow */}
       <div className="absolute top-0 right-1/3 w-96 h-96 bg-amber-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 right-10 w-96 h-96 bg-cyan-500/5 blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-5xl mx-auto space-y-8 relative z-10">
+      <div className="w-full max-w-5xl mx-auto space-y-6 relative z-10">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/10">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-500/10 font-mono text-[11px] uppercase tracking-wider">
-                <Users className="w-3.5 h-3.5 mr-1 inline" /> PILLAR 4: SQUAD PACT SYSTEM
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10 font-mono text-[10px] uppercase tracking-wider px-2 py-0.5">
+                <Users className="w-3 h-3 mr-1 inline" /> SECTOR 07 // SQUAD PACT
               </Badge>
-              <Badge variant="outline" className="border-slate-800 text-slate-400 font-mono text-[11px]">
-                Collective Accountability
+              <Badge variant="outline" className="border-white/10 text-zinc-400 font-mono text-[10px] uppercase tracking-wider px-2 py-0.5">
+                COLLECTIVE STAKES
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase font-mono">
               SQUAD PACT COMMAND
             </h1>
+            <p className="text-xs text-zinc-400 font-sans mt-0.5">
+              Peer accountability architecture with pooled discipline stakes and real-time operational telemetry.
+            </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setLocation("/mission-command");
+              }}
+              className="border-white/10 bg-[#090C10] hover:bg-[#141922] text-zinc-300 hover:text-white text-xs font-mono h-8 px-3 rounded"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 mr-1 inline" /> MISSION COMMAND
+            </Button>
             {!pact && (
               <>
                 <Button
                   variant="outline"
-                  onClick={() => setShowJoinModal(true)}
-                  className="border-slate-800 text-slate-300 hover:bg-slate-900 text-xs font-mono"
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    setShowJoinModal(true);
+                  }}
+                  className="border-white/10 bg-[#090C10] hover:bg-[#141922] text-zinc-300 hover:text-white text-xs font-mono h-8 px-3 rounded"
                 >
-                  Join via Code
+                  JOIN VIA CODE
                 </Button>
                 <Button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs flex items-center gap-1.5 px-4"
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    setShowCreateModal(true);
+                  }}
+                  className="bg-amber-400 hover:bg-amber-300 text-black font-mono font-bold text-xs uppercase tracking-wider h-8 px-3.5 rounded shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5"
                 >
-                  <UserPlus className="w-3.5 h-3.5" /> Forge New Pact
+                  <UserPlus className="w-3.5 h-3.5" /> FORGE NEW PACT
                 </Button>
               </>
             )}
@@ -185,6 +209,7 @@ export default function SquadPactPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
+                  audioEngine.playTactileClick();
                   const inviteUrl = `${window.location.origin}/squad-pact?invite=${encodeURIComponent(pact.inviteCode)}`;
                   if (navigator.share) {
                     navigator.share({
@@ -200,7 +225,7 @@ export default function SquadPactPage() {
                     });
                   }
                 }}
-                className="border-cyan-500/40 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 font-mono text-xs px-3 py-1 flex items-center gap-1.5"
+                className="border-cyan-500/30 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 font-mono text-xs h-8 px-3 rounded flex items-center gap-1.5"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 INVITE CODE: {pact.inviteCode}
@@ -211,49 +236,55 @@ export default function SquadPactPage() {
 
         {/* ─── IF NO SQUAD PACT ACTIVE ─── */}
         {!pact && !isLoading && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 text-center space-y-6 max-w-2xl mx-auto my-8">
-            <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
-              <Lock className="w-8 h-8" />
+          <div className="obsidian-card bg-[#090C10] border-white/5 rounded-xl p-8 text-center space-y-6 max-w-2xl mx-auto my-8">
+            <div className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center mx-auto text-amber-400">
+              <Lock className="w-7 h-7" />
             </div>
 
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">
+            <div className="space-y-1.5">
+              <h2 className="text-xl font-bold text-white uppercase font-mono">
                 NO ACTIVE SQUAD PACT
               </h2>
-              <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-                Solo discipline is fragile. Form or join a 3–5 member Squad Pact.
-                Each member stakes Discipline Points into a shared weekly pot. If you fail, your stake redistributes to your peers.
+              <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed font-sans">
+                Solo discipline is susceptible to rationalization. Form or join an elite 3–5 member Squad Pact.
+                Each member stakes Discipline Points into a shared weekly pot. If you default, your stake redistributes to peers.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80">
-                <div className="text-amber-400 font-bold text-xs uppercase font-mono mb-1">1. Stake Points</div>
-                <div className="text-xs text-slate-400">Lock 50–200 Discipline Points into the squad pot every week.</div>
+              <div className="bg-[#07080B] p-3.5 rounded-lg border border-white/5">
+                <div className="text-amber-400 font-bold text-[11px] uppercase font-mono mb-1">1. STAKE POINTS</div>
+                <div className="text-xs text-zinc-400 font-sans">Lock 50–200 Discipline Points into the squad pot weekly.</div>
               </div>
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80">
-                <div className="text-cyan-400 font-bold text-xs uppercase font-mono mb-1">2. Live Intelligence</div>
-                <div className="text-xs text-slate-400">Ambient social pressure shows when peers are in active focus sessions.</div>
+              <div className="bg-[#07080B] p-3.5 rounded-lg border border-white/5">
+                <div className="text-cyan-400 font-bold text-[11px] uppercase font-mono mb-1">2. LIVE TELEMETRY</div>
+                <div className="text-xs text-zinc-400 font-sans">Real-time peer pressure displays when operatives enter deep focus chambers.</div>
               </div>
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80">
-                <div className="text-emerald-400 font-bold text-xs uppercase font-mono mb-1">3. Collective Stakes</div>
-                <div className="text-xs text-slate-400">Fail your contract = forfeit your stake to peers. All pass = +20% bonus.</div>
+              <div className="bg-[#07080B] p-3.5 rounded-lg border border-white/5">
+                <div className="text-emerald-400 font-bold text-[11px] uppercase font-mono mb-1">3. MUTUAL YIELD</div>
+                <div className="text-xs text-zinc-400 font-sans">Default = forfeit stake to peers. Full squad compliance = +20% bonus pool.</div>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-4 pt-4">
+            <div className="flex items-center justify-center gap-3 pt-2">
               <Button
                 variant="outline"
-                onClick={() => setShowJoinModal(true)}
-                className="border-slate-800 text-slate-300 hover:bg-slate-900 px-6"
+                onClick={() => {
+                  audioEngine.playTactileClick();
+                  setShowJoinModal(true);
+                }}
+                className="border-white/10 bg-[#07080B] text-zinc-300 hover:text-white px-5 text-xs font-mono h-8 rounded"
               >
-                Enter Squad Code
+                ENTER SQUAD CODE
               </Button>
               <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-6"
+                onClick={() => {
+                  audioEngine.playTactileClick();
+                  setShowCreateModal(true);
+                }}
+                className="bg-amber-400 hover:bg-amber-300 text-black font-mono font-bold text-xs uppercase tracking-wider px-5 h-8 rounded shadow-sm"
               >
-                Forge Squad Pact
+                FORGE SQUAD PACT
               </Button>
             </div>
           </div>
@@ -263,52 +294,59 @@ export default function SquadPactPage() {
         {pact && (
           <>
             {/* Squad Hero Banner */}
-            <section className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border-2 border-amber-500/30 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+            <section className="obsidian-card border-amber-500/25 bg-gradient-to-r from-[#0E1218] to-[#090C10] rounded-xl p-5 sm:p-6 relative overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Badge variant="outline" className="border-amber-500 text-amber-400 bg-amber-500/10 font-mono text-xs uppercase">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-500/10 font-mono text-[10px] uppercase tracking-wider">
                       ACTIVE SQUAD PACT
                     </Badge>
-                    <span className="text-xs font-mono text-slate-400">WEEK #{pact.weekNumber}</span>
+                    <span className="text-[10px] font-mono text-zinc-400 tabular-telemetry">WEEK #{pact.weekNumber}</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white">{pact.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white uppercase font-mono">{pact.name}</h2>
                 </div>
 
-                <div className="flex items-center gap-6 bg-slate-950/80 border border-slate-800 px-6 py-3.5 rounded-xl">
+                <div className="flex items-center gap-5 bg-[#07080B] border border-white/10 px-5 py-3 rounded-lg">
                   <div>
-                    <div className="text-[11px] font-mono text-slate-400 uppercase">SHARED POT</div>
-                    <div className="text-2xl font-black text-amber-400 font-mono flex items-center gap-1.5">
-                      <Coins className="w-5 h-5 text-amber-400" /> {pact.totalPool}
-                      <span className="text-xs text-slate-500 font-normal">PTS</span>
+                    <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">SHARED POT</div>
+                    <div className="text-xl sm:text-2xl font-bold text-amber-400 font-mono flex items-center gap-1.5 tabular-telemetry">
+                      <Coins className="w-4 h-4 text-amber-400" /> {pact.totalPool}
+                      <span className="text-xs text-zinc-500 font-normal">PTS</span>
                     </div>
                   </div>
-                  <div className="h-8 w-px bg-slate-800" />
+                  <div className="h-8 w-px bg-white/10" />
                   <div>
-                    <div className="text-[11px] font-mono text-slate-400 uppercase">MEMBER STAKE</div>
-                    <div className="text-2xl font-black text-white font-mono">
-                      {pact.weeklyStakePoints} <span className="text-xs text-slate-500 font-normal">PTS</span>
+                    <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">MEMBER STAKE</div>
+                    <div className="text-xl sm:text-2xl font-bold text-white font-mono tabular-telemetry">
+                      {pact.weeklyStakePoints} <span className="text-xs text-zinc-500 font-normal">PTS</span>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
+            {/* ─── SQUAD WORLD BOSS RAID ─── */}
+            <WorldBossRaidCard
+              squadMembers={members}
+              squadName={pact.name}
+              onSendPing={(note) => pingMutation.mutate({ pingType: "warning", note })}
+            />
+
             {/* ─── LIVE AMBIENT INTELLIGENCE FEED ─── */}
-            <section className="space-y-4">
+            <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                    LIVE AMBIENT INTELLIGENCE FEED
+                  <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-mono">
+                    LIVE OPERATIONAL TELEMETRY
                   </h3>
                 </div>
-                <span className="text-xs font-mono text-slate-500">
-                  {members.length} BINDING MEMBERS
+                <span className="text-[10px] font-mono text-zinc-500 tabular-telemetry">
+                  {members.length} BINDING OPERATIVES
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {members.map((m: any) => {
                   const isSession = m.currentLiveStatus === "in_session";
                   const isCompleted = m.currentLiveStatus === "completed_today";
@@ -318,43 +356,43 @@ export default function SquadPactPage() {
                   return (
                     <div
                       key={m.id}
-                      className={`p-5 rounded-2xl border transition-all ${
+                      className={`obsidian-card p-4 rounded-lg border transition-all ${
                         isSession
-                          ? "bg-cyan-950/20 border-cyan-500/50 shadow-lg shadow-cyan-500/10"
+                          ? "bg-[#090C10] border-cyan-500/40 shadow-md shadow-cyan-500/5"
                           : isBreached
-                          ? "bg-red-950/20 border-red-500/40"
+                          ? "bg-[#090C10] border-red-500/40"
                           : isCompleted
-                          ? "bg-emerald-950/20 border-emerald-500/40"
-                          : "bg-slate-900/80 border-slate-800"
+                          ? "bg-[#090C10] border-emerald-500/30"
+                          : "bg-[#090C10] border-white/5"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-sm">
+                          <div className="w-8 h-8 rounded-md bg-[#141922] border border-white/10 flex items-center justify-center font-mono font-bold text-white text-xs">
                             {m.user?.name?.[0]?.toUpperCase() || "A"}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-sm truncate max-w-[120px]">
-                              {m.user?.name || "Ascendant"}
+                            <div className="font-semibold text-xs text-white truncate max-w-[120px] font-mono">
+                              {m.user?.name || "Operative"}
                             </div>
-                            <div className="text-[11px] font-mono text-slate-400">
-                              Tier {m.user?.tier || "D"}
+                            <div className="text-[10px] font-mono text-zinc-500">
+                              TIER {m.user?.tier || "D"}
                             </div>
                           </div>
                         </div>
 
                         {/* Status Badge */}
                         <Badge
-                          className={`font-mono text-[10px] uppercase ${
+                          className={`font-mono text-[9px] uppercase px-1.5 py-0 tracking-wider ${
                             isSession
-                              ? "bg-cyan-500 text-black animate-pulse"
+                              ? "bg-cyan-400 text-black animate-pulse"
                               : isCompleted
-                              ? "bg-emerald-500 text-black"
+                              ? "bg-emerald-400 text-black"
                               : isBreached
                               ? "bg-red-500 text-white"
                               : isUnresponsive
-                              ? "bg-amber-500 text-black"
-                              : "bg-slate-800 text-slate-400"
+                              ? "bg-amber-400 text-black"
+                              : "bg-[#141922] text-zinc-400 border-white/10"
                           }`}
                         >
                           {m.currentLiveStatus?.replace("_", " ") || "IDLE"}
@@ -362,19 +400,19 @@ export default function SquadPactPage() {
                       </div>
 
                       {/* Real-time stats */}
-                      <div className="space-y-1 pt-2 border-t border-slate-800/80 text-xs font-mono">
-                        <div className="flex justify-between text-slate-400">
+                      <div className="space-y-1 pt-2 border-t border-white/5 text-[11px] font-mono">
+                        <div className="flex justify-between text-zinc-400">
                           <span>STAKE LOCKED:</span>
-                          <span className="text-white font-bold">{m.stakedPoints} PTS</span>
+                          <span className="text-white font-semibold tabular-telemetry">{m.stakedPoints} PTS</span>
                         </div>
-                        <div className="flex justify-between text-slate-400">
+                        <div className="flex justify-between text-zinc-400">
                           <span>FOCUS MINUTES:</span>
-                          <span className="text-cyan-400 font-bold">{m.activeSessionMinutes}m</span>
+                          <span className="text-cyan-400 font-semibold tabular-telemetry">{m.activeSessionMinutes}m</span>
                         </div>
                         {m.bonusReceived > 0 && (
                           <div className="flex justify-between text-emerald-400">
                             <span>BONUS SHARE:</span>
-                            <span className="font-bold">+{m.bonusReceived} PTS</span>
+                            <span className="font-semibold tabular-telemetry">+{m.bonusReceived} PTS</span>
                           </div>
                         )}
                       </div>
@@ -385,30 +423,30 @@ export default function SquadPactPage() {
             </section>
 
             {/* ─── TACTICAL RADIO BEACON (PULSE COMMS) ─── */}
-            <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <section className="obsidian-panel rounded-xl p-4 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <RadioTower className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                  <RadioTower className="w-3.5 h-3.5 text-cyan-400" />
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-mono">
                     TACTICAL RADIO BEACON // TRANSMITTER
                   </h3>
                 </div>
-                <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 bg-cyan-500/10 text-[10px] font-mono">
-                  SQUAD FREQUENCY ARMED
+                <Badge variant="outline" className="border-cyan-500/25 text-cyan-400 bg-cyan-500/10 text-[9px] font-mono uppercase tracking-wider">
+                  FREQUENCY ARMED
                 </Badge>
               </div>
 
               {/* Quick Ping Actions */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={pingMutation.isPending}
                   onClick={() => pingMutation.mutate({ pingType: "pushing_focus" })}
-                  className="h-9 border-slate-800 hover:border-cyan-500/50 hover:bg-cyan-500/10 text-xs font-mono justify-start px-3"
+                  className="h-8 border-white/10 bg-[#07080B] hover:border-cyan-500/40 hover:bg-cyan-500/10 text-xs font-mono justify-start px-2.5 rounded"
                 >
-                  <Zap className="w-3.5 h-3.5 text-cyan-400 mr-2 shrink-0" />
-                  ⚡ Deep Block
+                  <Zap className="w-3 h-3 text-cyan-400 mr-2 shrink-0" />
+                  DEEP BLOCK
                 </Button>
 
                 <Button
@@ -416,10 +454,10 @@ export default function SquadPactPage() {
                   variant="outline"
                   disabled={pingMutation.isPending}
                   onClick={() => pingMutation.mutate({ pingType: "holding_line" })}
-                  className="h-9 border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-xs font-mono justify-start px-3"
+                  className="h-8 border-white/10 bg-[#07080B] hover:border-emerald-500/40 hover:bg-emerald-500/10 text-xs font-mono justify-start px-2.5 rounded"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-2 shrink-0" />
-                  🛡️ Holding Line
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400 mr-2 shrink-0" />
+                  HOLDING LINE
                 </Button>
 
                 <Button
@@ -427,10 +465,10 @@ export default function SquadPactPage() {
                   variant="outline"
                   disabled={pingMutation.isPending}
                   onClick={() => pingMutation.mutate({ pingType: "friction_warning" })}
-                  className="h-9 border-slate-800 hover:border-amber-500/50 hover:bg-amber-500/10 text-xs font-mono justify-start px-3"
+                  className="h-8 border-white/10 bg-[#07080B] hover:border-amber-500/40 hover:bg-amber-500/10 text-xs font-mono justify-start px-2.5 rounded"
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mr-2 shrink-0" />
-                  ⚠️ Friction Risk
+                  <AlertTriangle className="w-3 h-3 text-amber-400 mr-2 shrink-0" />
+                  FRICTION RISK
                 </Button>
 
                 <Button
@@ -438,10 +476,10 @@ export default function SquadPactPage() {
                   variant="outline"
                   disabled={pingMutation.isPending}
                   onClick={() => pingMutation.mutate({ pingType: "mission_complete" })}
-                  className="h-9 border-slate-800 hover:border-purple-500/50 hover:bg-purple-500/10 text-xs font-mono justify-start px-3"
+                  className="h-8 border-white/10 bg-[#07080B] hover:border-purple-500/40 hover:bg-purple-500/10 text-xs font-mono justify-start px-2.5 rounded"
                 >
-                  <Flame className="w-3.5 h-3.5 text-purple-400 mr-2 shrink-0" />
-                  🎯 Conquered
+                  <Flame className="w-3 h-3 text-purple-400 mr-2 shrink-0" />
+                  CONQUERED
                 </Button>
               </div>
 
@@ -457,72 +495,71 @@ export default function SquadPactPage() {
                 <Input
                   value={customPingNote}
                   onChange={(e) => setCustomPingNote(e.target.value)}
-                  placeholder="Transmit tactical squad message or mission status update..."
-                  className="bg-slate-950 border-slate-800 text-xs text-white placeholder:text-slate-600 font-mono h-9"
+                  placeholder="Transmit tactical status or objective update..."
+                  className="bg-[#07080B] border-white/10 text-xs text-white placeholder:text-zinc-600 font-mono h-8 rounded"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={pingMutation.isPending || !customPingNote.trim()}
-                  className="h-9 bg-cyan-600 hover:bg-cyan-500 text-black font-bold px-4 shrink-0 text-xs font-mono flex items-center gap-1.5"
+                  className="h-8 bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold px-3.5 shrink-0 text-xs uppercase tracking-wider rounded"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  Transmit
+                  <Send className="w-3 h-3 mr-1" />
+                  TRANSMIT
                 </Button>
               </form>
             </section>
 
             {/* ─── LIVE AMBIENT SQUAD ACTIVITY FEED (WAR ROOM TERMINAL) ─── */}
-            <section className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">
+            <section className="obsidian-panel rounded-xl p-4 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                    LIVE AMBIENT ACTIVITY FEED // AUDIT LOG
+                  <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider font-mono">
+                    OPERATIONAL ACTIVITY STREAM // AUDIT LOG
                   </h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-[11px] font-mono text-emerald-400">PULSING (3s)</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">ACTIVE (3S)</span>
                 </div>
               </div>
 
               {/* Feed Stream */}
-              <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-3 max-h-64 overflow-y-auto space-y-2 font-mono text-xs divide-y divide-slate-800/40">
+              <div className="bg-[#07080B] border border-white/5 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2 font-mono text-xs divide-y divide-white/5">
                 {feedEvents.length === 0 ? (
-                  <div className="text-center py-6 text-slate-500 text-xs">
-                    No activity recorded yet. Transmit a beacon above.
+                  <div className="text-center py-6 text-zinc-500 text-xs uppercase tracking-wider">
+                    NO ACTIVITY LOGGED. TRANSMIT A TACTICAL BEACON ABOVE.
                   </div>
                 ) : (
                   feedEvents.map((ev: any) => {
-                    const isPing = ev.type === "ping";
                     const isFinished = ev.type === "focus_finished";
                     const isStarted = ev.type === "focus_started";
                     const isBreach = ev.type === "breach";
 
                     return (
                       <div key={ev.id} className="pt-2 first:pt-0 flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-2.5">
-                          <span className="text-[11px] text-slate-500 shrink-0 mt-0.5">
+                        <div className="flex items-start gap-2">
+                          <span className="text-[10px] text-zinc-500 shrink-0 mt-0.5 tabular-telemetry">
                             [{ev.timestamp}]
                           </span>
-                          <span className={`font-bold shrink-0 ${isBreach ? "text-red-400" : isFinished ? "text-emerald-400" : isStarted ? "text-cyan-400" : "text-amber-400"}`}>
+                          <span className={`font-semibold text-xs shrink-0 ${isBreach ? "text-red-400" : isFinished ? "text-emerald-400" : isStarted ? "text-cyan-400" : "text-amber-400"}`}>
                             {ev.userName}:
                           </span>
-                          <span className="text-slate-300 leading-snug">
+                          <span className="text-zinc-300 leading-snug text-xs font-sans">
                             {ev.message}
                           </span>
                         </div>
                         <Badge
                           variant="outline"
-                          className={`text-[9px] uppercase font-mono shrink-0 ${
+                          className={`text-[9px] uppercase font-mono shrink-0 px-1.5 py-0 ${
                             isBreach
-                              ? "border-red-500/40 text-red-400 bg-red-500/10"
+                              ? "border-red-500/30 text-red-400 bg-red-500/10"
                               : isFinished
-                              ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/10"
+                              ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
                               : isStarted
-                              ? "border-cyan-500/40 text-cyan-400 bg-cyan-500/10"
-                              : "border-slate-800 text-slate-400"
+                              ? "border-cyan-500/30 text-cyan-400 bg-cyan-500/10"
+                              : "border-white/10 text-zinc-400"
                           }`}
                         >
                           {ev.type.replace("_", " ")}
@@ -539,35 +576,35 @@ export default function SquadPactPage() {
 
       {/* ─── CREATE PACT MODAL ─── */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md bg-slate-950 border border-slate-800 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-[#0E1218] border border-white/10 text-white p-6 space-y-4 rounded-xl shadow-2xl backdrop-blur-2xl font-sans">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-amber-400" />
+            <DialogTitle className="text-base font-bold font-mono tracking-tight text-white flex items-center gap-2 uppercase">
+              <Users className="w-4 h-4 text-amber-400" />
               FORGE NEW SQUAD PACT
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
-              Form an elite 3–5 person accountability unit. You will establish the initial weekly stake.
+            <DialogDescription className="text-xs text-zinc-400 leading-relaxed">
+              Establish a 3–5 operative mutual commitment covenant. Set the required weekly discipline stake.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="pactName" className="text-xs font-semibold text-slate-300">
-                Squad Name
+          <div className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="pactName" className="text-xs font-mono text-zinc-300 uppercase tracking-wider">
+                SQUAD IDENTIFIER:
               </Label>
               <Input
                 id="pactName"
                 placeholder="e.g. Ironclad Vanguard, Protocol Alpha"
                 value={pactName}
                 onChange={(e) => setPactName(e.target.value)}
-                className="bg-slate-900 border-slate-700 text-white"
+                className="bg-[#07080B] border-white/10 text-white text-xs h-9 font-sans"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-mono">
-                <span className="text-slate-300 font-semibold">WEEKLY STAKE PER MEMBER:</span>
-                <span className="text-amber-400 font-bold">{stakePoints} PTS</span>
+                <span className="text-zinc-300 uppercase tracking-wider">WEEKLY STAKE PER MEMBER:</span>
+                <span className="text-amber-400 font-bold tabular-telemetry">{stakePoints} PTS</span>
               </div>
               <Input
                 type="number"
@@ -576,22 +613,29 @@ export default function SquadPactPage() {
                 step={10}
                 value={stakePoints}
                 onChange={(e) => setStakePoints(parseInt(e.target.value) || 50)}
-                className="bg-slate-900 border-slate-700 text-white"
+                className="bg-[#07080B] border-white/10 text-white text-xs h-9 font-mono"
               />
-              <p className="text-[11px] text-slate-500">
-                Staked directly from your Discipline Score into the collective pot.
+              <p className="text-[10px] text-zinc-500 font-sans">
+                Staked directly from verified discipline balance into the mutual escrow pool.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-slate-800 text-slate-400">
-              Cancel
+          <div className="flex items-center justify-end gap-2.5 pt-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setShowCreateModal(false);
+              }}
+              className="border-white/10 bg-[#07080B] text-zinc-400 hover:text-white text-xs font-mono h-8 rounded"
+            >
+              CANCEL
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
               disabled={createMutation.isPending || !pactName.trim()}
-              className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold"
+              className="bg-amber-400 hover:bg-amber-300 text-black font-mono font-bold text-xs uppercase tracking-wider h-8 px-4 rounded shadow-sm"
             >
               {createMutation.isPending ? "FORGING..." : "ACTIVATE PACT"}
             </Button>
@@ -601,38 +645,45 @@ export default function SquadPactPage() {
 
       {/* ─── JOIN PACT MODAL ─── */}
       <Dialog open={showJoinModal} onOpenChange={setShowJoinModal}>
-        <DialogContent className="max-w-md bg-slate-950 border border-slate-800 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-[#0E1218] border border-white/10 text-white p-6 space-y-4 rounded-xl shadow-2xl backdrop-blur-2xl font-sans">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-cyan-400" />
+            <DialogTitle className="text-base font-bold font-mono tracking-tight text-white flex items-center gap-2 uppercase">
+              <UserPlus className="w-4 h-4 text-cyan-400" />
               JOIN SQUAD PACT
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400">
-              Enter the unique 6-character squad invite code provided by your squad leader.
+            <DialogDescription className="text-xs text-zinc-400 leading-relaxed">
+              Enter the unique squad invite code provided by your covenant lead.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 pt-2">
-            <Label htmlFor="inviteCode" className="text-xs font-semibold text-slate-300">
-              Squad Invite Code
+          <div className="space-y-2 pt-1">
+            <Label htmlFor="inviteCode" className="text-xs font-mono text-zinc-300 uppercase tracking-wider">
+              SQUAD INVITE CODE:
             </Label>
             <Input
               id="inviteCode"
               placeholder="e.g. 7X9K2P"
               value={inviteCodeInput}
               onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
-              className="bg-slate-900 border-slate-700 text-white font-mono uppercase tracking-widest text-center text-lg h-12"
+              className="bg-[#07080B] border-white/10 text-white font-mono uppercase tracking-widest text-center text-base h-10 rounded"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3">
-            <Button variant="outline" onClick={() => setShowJoinModal(false)} className="border-slate-800 text-slate-400">
-              Cancel
+          <div className="flex items-center justify-end gap-2.5 pt-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setShowJoinModal(false);
+              }}
+              className="border-white/10 bg-[#07080B] text-zinc-400 hover:text-white text-xs font-mono h-8 rounded"
+            >
+              CANCEL
             </Button>
             <Button
               onClick={() => joinMutation.mutate()}
               disabled={joinMutation.isPending || inviteCodeInput.trim().length < 4}
-              className="bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold"
+              className="bg-cyan-400 hover:bg-cyan-300 text-black font-mono font-bold text-xs uppercase tracking-wider h-8 px-4 rounded shadow-sm"
             >
               {joinMutation.isPending ? "CONNECTING..." : "BIND TO PACT"}
             </Button>

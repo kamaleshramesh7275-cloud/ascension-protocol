@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LiveTelemetryTicker } from "@/components/live-telemetry-ticker";
 import { motion } from "framer-motion";
 import { User, Lock, Eye, EyeOff, Check, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -222,7 +223,7 @@ export default function Register() {
                 await loginLocal(username, data.userId, data.firebaseUid);
             }
 
-            toast({ title: "Account created successfully! 🎉", description: referralCode ? "+50 bonus coins awarded!" : undefined });
+            toast({ title: "Account created successfully.", description: referralCode ? "+50 bonus coins awarded." : undefined });
             localStorage.removeItem("referral_code");
             setLocation("/dashboard");
         } catch (error: any) {
@@ -247,7 +248,8 @@ export default function Register() {
 
     if (step === "identity") {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-black via-purple-950/20 to-black flex items-center justify-center p-6">
+            <div className="min-h-screen bg-gradient-to-br from-black via-purple-950/20 to-black flex flex-col justify-between relative overflow-hidden">
+                <div className="flex-1 flex items-center justify-center p-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -283,6 +285,9 @@ export default function Register() {
                         </CardContent>
                     </Card>
                 </motion.div>
+                </div>
+
+                <LiveTelemetryTicker />
             </div>
         );
     }

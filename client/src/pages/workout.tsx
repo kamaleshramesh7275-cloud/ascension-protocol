@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
   Dumbbell, Plus, History, List, Play, Check, X, Search,
   Trophy, ChevronDown, ChevronUp, Clock,
   Layers, Activity, Timer, GripVertical,
   StickyNote, FlameKindling, AlarmClock, RotateCcw,
-  Minus, MessageSquare,
+  Minus, MessageSquare, ArrowLeft,
 } from "lucide-react";
+import { audioEngine } from "@/lib/audio-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +23,7 @@ import type { Exercise, WorkoutSession, WorkoutSessionWithSets, WorkoutTemplate,
 import { format } from "date-fns";
 import { OfficialTemplatesDialog } from "@/components/official-templates-dialog";
 import { Sparkles } from "lucide-react";
+import { ShareTelemetryButton } from "@/components/share-telemetry-button";
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 
@@ -90,6 +93,7 @@ function ExerciseImage({ name, className = "h-8 w-8 rounded-xl" }: { name: strin
 // ── History session card ──────────────────────────────────────────────────────────
 
 function SessionCard({ session, exercises }: { session: WorkoutSession; exercises: Exercise[] }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const { data: detail } = useQuery<WorkoutSessionWithSets>({
     queryKey: [`/api/workouts/sessions/${session.id}`],
@@ -169,7 +173,34 @@ function SessionCard({ session, exercises }: { session: WorkoutSession; exercise
                         </div>
                       );
                     })}
-                    {session.notes && <p className="text-xs text-muted-foreground italic border-t border-white/5 pt-3">📝 {session.notes}</p>}
+                    {session.notes && (
+                      <p className="text-xs text-muted-foreground italic border-t border-white/5 pt-3 flex items-center gap-1.5">
+                        <StickyNote className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        <span>{session.notes}</span>
+                      </p>
+                    )}
+                    <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                        PERFORMANCE TELEMETRY
+                      </span>
+                      <ShareTelemetryButton
+                        label="TRANSMIT WORKOUT"
+                        data={{
+                          type: "workout",
+                          title: "WORKOUT PROTOCOL RECORDED",
+                          headlineMetric: `${(session.totalVolume || 0).toLocaleString()} KG`,
+                          subheadline: "Total Volume Moved",
+                          userName: (user as any)?.name || "Operative",
+                          userTier: (user as any)?.tier || "INITIATE",
+                          referralCode: (user as any)?.referralCode,
+                          stats: [
+                            { label: "Sets Completed", value: `${session.totalSets || 0}` },
+                            { label: "Active Window", value: `${duration}m` },
+                            { label: "Program", value: session.name || "Physical Conditioning" },
+                          ],
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -697,6 +728,7 @@ function AddExerciseSheet({
 // ── Main Page ────────────────────────────────────────────────────────────────────────
 
 export default function WorkoutPage() {
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const {
@@ -738,6 +770,23 @@ export default function WorkoutPage() {
   if (isWorkoutActive && activeSession) {
     return (
       <div className="p-4 md:p-6 max-w-4xl mx-auto mb-28 space-y-5">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              audioEngine.playTactileClick();
+              setLocation("/mission-command");
+            }}
+            className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+            <span>MISSION COMMAND</span>
+          </Button>
+          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">BIOMETRIC TRACKING ACTIVE</span>
+        </div>
+
         {/* Pulsing header banner */}
         <motion.div className="relative rounded-2xl overflow-hidden" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20" />
@@ -878,6 +927,23 @@ export default function WorkoutPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto mb-24 space-y-6">
+      {/* Top Navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            audioEngine.playTactileClick();
+            setLocation("/mission-command");
+          }}
+          className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+          <span>MISSION COMMAND</span>
+        </Button>
+        <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">STRENGTH LEDGER</span>
+      </div>
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

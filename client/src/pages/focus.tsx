@@ -254,7 +254,7 @@ export default function FocusSanctum() {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev === totalTime - 1) toast({ title: "Session Started 🚀", description: "Let's focus!" });
+          if (prev === totalTime - 1) toast({ title: "Session Started", description: "Deep focus engaged." });
           if (prev <= 1) {
             handleComplete();
             return 0;
@@ -338,8 +338,8 @@ export default function FocusSanctum() {
     // queryClient.invalidateQueries({ queryKey: ["/api/focus/stats"] });
 
     toast({
-      title: completed ? "Session Complete! 🎉" : "Session Stopped",
-      description: `+${xp} XP earned!`,
+      title: completed ? "Session Complete" : "Session Stopped",
+      description: `+${xp} XP recorded.`,
     });
   };
 

@@ -18,9 +18,10 @@ async function seedShop() {
     
     // Check which types are missing (allows adding new types to existing DB)
     const existingTypes = new Set(items.map(i => i.type));
-    const missingTypes = ['avatar', 'badge', 'title', 'theme'].filter(t => !existingTypes.has(t));
+    const missingTypes = ['avatar', 'badge', 'title', 'theme', 'consumable'].filter(t => !existingTypes.has(t));
+    const hasStreakShield = items.some(i => i.value === "streak_shield");
     
-    if (missingTypes.length === 0) {
+    if (missingTypes.length === 0 && hasStreakShield) {
         hasSeeded = true;
         return;
     }
@@ -212,12 +213,24 @@ async function seedShop() {
             cost: 500,
             rarity: "rare",
             isPremium: false,
+        },
+
+        // --- Consumables & Operational Equipment ---
+        {
+            name: "Streak Shield",
+            description: "Automated protocol preservation. Deploys if a day is missed to safeguard active streak.",
+            type: "consumable",
+            value: "streak_shield",
+            cost: 75,
+            rarity: "rare",
+            isPremium: false,
         }
     ];
 
     for (const seed of seeds) {
-        // Only insert seeds for types that are missing from DB
-        if (missingTypes.includes(seed.type)) {
+        // Insert seeds if their type is missing, or if specific critical consumable is missing
+        const alreadyExists = items.some(i => i.value === seed.value);
+        if (!alreadyExists && (missingTypes.includes(seed.type) || seed.value === "streak_shield")) {
             await storage.createShopItem(seed);
         }
     }
@@ -293,9 +306,15 @@ router.post("/buy", requireAuth, async (req, res) => {
 
     console.log(`User coins: ${dbUser.coins}, Item effective cost: ${effectiveCost}`);
 
-    // Check if already owned
+    // Check if already owned / capacity reached
     const inventory = await storage.getUserItems(dbUser.id);
-    if (inventory.some(i => i.itemId === itemId)) {
+    if (item.type === "consumable") {
+        const ownedCount = inventory.filter(i => i.itemId === itemId).length;
+        if (ownedCount >= 2) {
+            console.log("Consumable capacity reached (max 2)");
+            return res.status(400).send("Maximum capacity reached for this item (limit: 2)");
+        }
+    } else if (inventory.some(i => i.itemId === itemId)) {
         console.log("Item already owned");
         return res.status(400).send("Item already owned");
     }

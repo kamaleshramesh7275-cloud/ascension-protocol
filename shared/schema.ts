@@ -77,6 +77,9 @@ export const users = pgTable("users", {
   // Optimization: Track last time we checked for daily quests to avoid redundant DB queries
   lastDailyQuestCheck: timestamp("last_daily_quest_check"),
   lastDailyBonusClaimedAt: timestamp("last_daily_bonus_claimed_at"),
+  loginRewardDay: integer("login_reward_day").default(1).notNull(),
+  lastLoginRewardClaimedAt: timestamp("last_login_reward_claimed_at"),
+  lastResurrectionClaimedAt: timestamp("last_resurrection_claimed_at"),
 }, (table) => {
   return {
     firebaseUidIdx: index("idx_users_firebase_uid").on(table.firebaseUid),
@@ -422,6 +425,36 @@ export const partnerships = pgTable("partnerships", {
     user2Idx: index("partnerships_user2_idx").on(table.user2Id),
   };
 });
+
+// Bilateral Discipline Covenants (Peer Challenges)
+export const peerCovenants = pgTable("peer_covenants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  covenantCode: text("covenant_code").notNull().unique(),
+  initiatorId: varchar("initiator_id").notNull().references(() => users.id),
+  initiatorName: text("initiator_name").notNull(),
+  initiatorStreak: integer("initiator_streak").default(0).notNull(),
+  termsDays: integer("terms_days").default(7).notNull(),
+  stakeCoins: integer("stake_coins").default(250).notNull(),
+  protocolObjective: text("protocol_objective").default("Daily Protocol Execution").notNull(),
+  counterpartyId: varchar("counterparty_id").references(() => users.id),
+  counterpartyName: text("counterparty_name"),
+  counterpartyStreak: integer("counterparty_streak").default(0),
+  status: text("status").default("pending").notNull(), // pending, active, completed, breached
+  winnerId: varchar("winner_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  expiresAt: timestamp("expires_at"),
+}, (table) => {
+  return {
+    covenantCodeIdx: index("idx_peer_covenants_code").on(table.covenantCode),
+    initiatorIdx: index("idx_peer_covenants_initiator").on(table.initiatorId),
+    counterpartyIdx: index("idx_peer_covenants_counterparty").on(table.counterpartyId),
+  };
+});
+
+export type PeerCovenant = typeof peerCovenants.$inferSelect;
+export const insertPeerCovenantSchema = createInsertSchema(peerCovenants);
+export type InsertPeerCovenant = z.infer<typeof insertPeerCovenantSchema>;
 
 // Zod schemas for validation
 export const insertUserSchema = z.object({

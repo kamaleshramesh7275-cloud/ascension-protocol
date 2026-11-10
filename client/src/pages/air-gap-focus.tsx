@@ -24,6 +24,7 @@ import {
   Minimize2,
   Zap,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Radio,
   AlertCircle,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import { audioEngine } from "@/lib/audio-engine";
 import { useOnlineStatus } from "@/components/network-status";
+import { CofferOpeningModal } from "@/components/rewards/coffer-opening-modal";
 
 type Phase = "declaration" | "pre_mortem" | "oath" | "active" | "completed";
 
@@ -41,10 +43,11 @@ export default function AirGapFocus() {
   const queryClient = useQueryClient();
 
   const searchParams = new URLSearchParams(window.location.search);
-  const missionId = searchParams.get("missionId") || undefined;
+  const missionId = searchParams.get("missionId") || "air_gap_focus_session";
 
   // Session state
   const [phase, setPhase] = useState<Phase>("declaration");
+  const [showCofferModal, setShowCofferModal] = useState<boolean>(false);
   const [declarationOutput, setDeclarationOutput] = useState<string>("");
   const [obstaclePreMortem, setObstaclePreMortem] = useState<string>("");
   const [scheduledMinutes, setScheduledMinutes] = useState<number>(45);
@@ -385,7 +388,7 @@ export default function AirGapFocus() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col items-center justify-start p-4 sm:p-6 relative overflow-y-auto select-none">
       {/* ─── FULLSCREEN BREACH WARNING OVERLAY ─── */}
       <AnimatePresence>
         {isBreached && (
@@ -395,18 +398,18 @@ export default function AirGapFocus() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-red-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center"
           >
-            <div className="w-20 h-20 rounded-full bg-red-600/30 border-2 border-red-500 flex items-center justify-center text-red-500 mb-6 animate-pulse">
+            <div className="w-20 h-20 rounded-full bg-red-600/20 border-2 border-red-500 flex items-center justify-center text-red-500 mb-6 animate-pulse">
               <ShieldAlert className="w-12 h-12" />
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-widest uppercase mb-2">
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-widest uppercase mb-2 swiss-display">
               ATTENTION BREACH DETECTED
             </h1>
-            <p className="text-sm sm:text-base text-red-300 max-w-lg mb-6">
+            <p className="text-sm sm:text-base text-red-300 max-w-lg mb-6 font-mono">
               You navigated away from the active Air-Gap environment. Return focus to this window immediately.
             </p>
 
-            <div className="text-6xl sm:text-7xl font-mono font-black text-red-400 mb-6 animate-bounce">
+            <div className="text-6xl sm:text-7xl font-mono font-black text-red-400 mb-6 tabular-telemetry animate-bounce">
               00:{String(breachCountdown).padStart(2, "0")}
             </div>
 
@@ -417,72 +420,95 @@ export default function AirGapFocus() {
         )}
       </AnimatePresence>
 
-      {/* Top Protocol Status */}
-      <div className="absolute top-6 left-6 flex items-center gap-2 z-10 flex-wrap">
-        <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-500/10 font-mono text-xs uppercase px-3 py-1 flex items-center gap-1.5">
-          <Lock className="w-3.5 h-3.5" /> AIR-GAP PROTOCOL
-        </Badge>
-        {isOnline ? (
-          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 font-mono text-xs flex items-center gap-1.5">
-            <Wifi className="w-3.5 h-3.5" /> SECURE LINK
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-red-500/50 text-red-400 bg-red-500/15 font-mono text-xs flex items-center gap-1.5 animate-pulse">
-            <WifiOff className="w-3.5 h-3.5" /> OFFLINE ENCLAVE ACTIVE
-          </Badge>
-        )}
-        {phase === "active" && (
-          <Badge variant="outline" className="border-cyan-500/40 text-cyan-400 bg-cyan-500/10 font-mono text-xs flex items-center gap-1.5">
-            <Radio className="w-3 h-3 text-cyan-400 animate-pulse" /> SESSION LOCKED
-          </Badge>
-        )}
-      </div>
+      {/* ─── TOP PROTOCOL HEADER & NAVIGATION BAR ─── */}
+      <header className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3 mb-6 pt-2 z-10 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {phase !== "active" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setLocation("/mission-command");
+              }}
+              className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white hover:border-white/20 h-8 font-mono text-xs flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+              <span>COMMAND</span>
+            </Button>
+          )}
+          <span className="px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10px] uppercase font-semibold tracking-wider flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5" /> AIR-GAP PROTOCOL
+          </span>
+          {isOnline ? (
+            <span className="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] flex items-center gap-1.5">
+              <Wifi className="w-3.5 h-3.5" /> SECURE LINK
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded bg-red-500/15 border border-red-500/40 text-red-400 font-mono text-[10px] flex items-center gap-1.5 animate-pulse">
+              <WifiOff className="w-3.5 h-3.5" /> OFFLINE ENCLAVE
+            </span>
+          )}
+          {phase === "active" && (
+            <span className="px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[10px] flex items-center gap-1.5">
+              <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> SESSION LOCKED
+            </span>
+          )}
+        </div>
 
-      <div className="absolute top-6 right-6 flex items-center gap-2 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleFullscreen}
-          className="border-slate-800 text-slate-400 hover:text-white"
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              audioEngine.playTactileClick();
+              toggleFullscreen();
+            }}
+            className="border-white/[0.08] bg-[#0E1218] text-zinc-400 hover:text-white h-8"
+            title="Toggle Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+        </div>
+      </header>
+
+      {/* ─── MAIN ENCLAVE CONTENT CONTAINER (PREVENTS COLLISION) ─── */}
+      <div className="w-full flex-1 flex flex-col items-center justify-center my-auto pb-10">
 
       {/* ─── PHASE 1: OUTPUT DECLARATION ─── */}
       {phase === "declaration" && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl backdrop-blur-md"
+          className="w-full max-w-xl obsidian-card p-6 sm:p-8 space-y-6 razor-border"
         >
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Crosshair className="w-6 h-6" />
+          <div className="flex items-center gap-3 pb-4 border-b border-white/[0.08]">
+            <div className="w-10 h-10 rounded bg-[#141922] border border-white/10 flex items-center justify-center text-amber-400">
+              <Crosshair className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Declaration of Output</h2>
-              <p className="text-xs text-slate-400">What exact tangible artifact will exist when this session ends?</p>
+              <h2 className="text-lg font-bold text-zinc-100 swiss-display">Declaration of Output</h2>
+              <p className="text-xs text-zinc-400 font-mono">What exact tangible artifact will exist when this session ends?</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="output" className="text-xs font-semibold text-slate-300">
-              Specific Deliverable (No abstract goals):
+            <Label htmlFor="output" className="text-xs font-mono font-semibold text-zinc-300">
+              SPECIFIC DELIVERABLE (NO ABSTRACT GOALS):
             </Label>
             <Input
               id="output"
               placeholder="e.g. 500 words of research draft, or completed authentication middleware code"
               value={declarationOutput}
               onChange={(e) => setDeclarationOutput(e.target.value)}
-              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 h-12"
+              className="bg-[#090C10] border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 h-11 text-sm font-mono"
             />
           </div>
 
-          <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+          <div className="space-y-3 bg-[#090C10] p-4 rounded border border-white/[0.08]">
             <div className="flex justify-between items-center text-xs font-mono">
-              <span className="text-slate-300 font-semibold">SESSION DURATION:</span>
-              <span className="text-amber-400 font-bold text-sm">{scheduledMinutes} MINUTES</span>
+              <span className="text-zinc-400 font-semibold uppercase">SESSION DURATION:</span>
+              <span className="text-amber-400 font-bold tabular-telemetry text-sm">{scheduledMinutes} MINUTES</span>
             </div>
             <Slider
               value={[scheduledMinutes]}
@@ -495,15 +521,16 @@ export default function AirGapFocus() {
 
           <Button
             onClick={() => {
+              audioEngine.playTactileClick();
               if (!declarationOutput.trim()) {
                 toast({ title: "Declaration Required", description: "State the tangible output you will produce.", variant: "destructive" });
                 return;
               }
               setPhase("pre_mortem");
             }}
-            className="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold h-12 flex items-center justify-center gap-2"
+            className="w-full bg-amber-400 hover:bg-amber-300 text-black font-extrabold h-11 flex items-center justify-center gap-2 font-mono text-xs tracking-wider"
           >
-            Proceed to Obstacle Pre-Mortem <ArrowRight className="w-4 h-4" />
+            PROCEED TO OBSTACLE PRE-MORTEM <ArrowRight className="w-4 h-4" />
           </Button>
         </motion.div>
       )}
@@ -511,52 +538,56 @@ export default function AirGapFocus() {
       {/* ─── PHASE 2: OBSTACLE PRE-MORTEM ─── */}
       {phase === "pre_mortem" && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl backdrop-blur-md"
+          className="w-full max-w-xl obsidian-card p-6 sm:p-8 space-y-6 razor-border"
         >
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-              <ShieldAlert className="w-6 h-6" />
+          <div className="flex items-center gap-3 pb-4 border-b border-white/[0.08]">
+            <div className="w-10 h-10 rounded bg-[#141922] border border-white/10 flex items-center justify-center text-cyan-400">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Obstacle Pre-Mortem</h2>
-              <p className="text-xs text-slate-400">What temptation or distraction will try to break you during these {scheduledMinutes} minutes?</p>
+              <h2 className="text-lg font-bold text-zinc-100 swiss-display">Obstacle Pre-Mortem</h2>
+              <p className="text-xs text-zinc-400 font-mono">What temptation or distraction will try to break you during these {scheduledMinutes} minutes?</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="obstacle" className="text-xs font-semibold text-slate-300">
-              Anticipated Derailment & Countermove:
+            <Label htmlFor="obstacle" className="text-xs font-mono font-semibold text-zinc-300">
+              ANTICIPATED DERAILMENT & COUNTERMOVE:
             </Label>
             <Input
               id="obstacle"
               placeholder="e.g. Urge to check WhatsApp -> I will physically leave phone in another room."
               value={obstaclePreMortem}
               onChange={(e) => setObstaclePreMortem(e.target.value)}
-              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 h-12"
+              className="bg-[#090C10] border-white/[0.08] text-zinc-100 placeholder:text-zinc-600 h-11 text-sm font-mono"
             />
           </div>
 
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => setPhase("declaration")}
-              className="border-slate-800 text-slate-400"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setPhase("declaration");
+              }}
+              className="border-white/[0.08] bg-[#0E1218] text-zinc-400 hover:text-white h-11 font-mono text-xs"
             >
-              Back
+              BACK
             </Button>
             <Button
               onClick={() => {
+                audioEngine.playTactileClick();
                 if (!obstaclePreMortem.trim()) {
                   toast({ title: "Pre-Mortem Required", description: "Anticipate your distraction countermeasure.", variant: "destructive" });
                   return;
                 }
                 setPhase("oath");
               }}
-              className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold h-12 flex items-center justify-center gap-2"
+              className="flex-1 bg-cyan-400 hover:bg-cyan-300 text-black font-extrabold h-11 flex items-center justify-center gap-2 font-mono text-xs tracking-wider"
             >
-              Take the Session Oath <ArrowRight className="w-4 h-4" />
+              TAKE THE SESSION OATH <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         </motion.div>
@@ -565,43 +596,46 @@ export default function AirGapFocus() {
       {/* ─── PHASE 3: NON-SKIPPABLE OATH ─── */}
       {phase === "oath" && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-xl bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl text-center"
+          className="w-full max-w-xl obsidian-card p-6 sm:p-8 space-y-6 razor-border text-center"
         >
-          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
-            <Lock className="w-7 h-7" />
+          <div className="w-12 h-12 rounded bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+            <Lock className="w-6 h-6" />
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white uppercase tracking-wider">
+          <div className="space-y-1">
+            <h2 className="text-xl font-black text-zinc-100 uppercase tracking-wider swiss-display">
               THE AIR-GAP COMMITMENT
             </h2>
-            <p className="text-xs font-mono text-slate-400">
-              5-SECOND NON-SKIPPABLE CALIBRATION
+            <p className="text-xs font-mono text-zinc-500">
+              5-SECOND NON-SKIPPABLE PROTOCOL CALIBRATION
             </p>
           </div>
 
-          <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 text-xs sm:text-sm text-slate-300 leading-relaxed italic">
-            &ldquo;I bind myself to this unbroken session. I will produce: <strong className="text-white">{declarationOutput}</strong>.
+          <div className="bg-[#090C10] p-4 rounded border border-white/[0.08] text-xs sm:text-sm text-zinc-300 leading-relaxed italic font-mono">
+            &ldquo;I bind myself to this unbroken session. I will produce: <strong className="text-zinc-100">{declarationOutput}</strong>.
             I will not switch tabs, minimize this screen, or seek comfort in distraction until the clock reaches zero.&rdquo;
           </div>
 
           <Button
-            onClick={handleStartSession}
+            onClick={() => {
+              audioEngine.playCommandLock();
+              handleStartSession();
+            }}
             disabled={!oathReady || startSessionMutation.isPending}
-            className={`w-full h-14 text-sm sm:text-base font-extrabold uppercase tracking-wider ${
+            className={`w-full h-12 text-xs sm:text-sm font-mono font-extrabold uppercase tracking-wider ${
               oathReady
-                ? "bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/20"
-                : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                ? "bg-amber-400 hover:bg-amber-300 text-black shadow-lg shadow-amber-500/10"
+                : "bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed"
             }`}
           >
             {oathReady ? (
               <span className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-black" /> ENGAGE AIR-GAP PROTOCOL
+                <Zap className="w-4 h-4 text-black" /> ENGAGE AIR-GAP PROTOCOL
               </span>
             ) : (
-              <span>LOCKING PROTOCOL ({oathCountdown}s)...</span>
+              <span>CALIBRATING PROTOCOL ({oathCountdown}s)...</span>
             )}
           </Button>
         </motion.div>
@@ -611,9 +645,9 @@ export default function AirGapFocus() {
       {phase === "active" && (
         <div className="w-full max-w-3xl flex flex-col items-center justify-center space-y-8 z-10 text-center">
           {/* Prominent Promised Deliverable */}
-          <div className="bg-slate-900/60 border border-slate-800/80 px-6 py-2.5 rounded-full text-xs sm:text-sm text-slate-300 flex items-center gap-2">
-            <span className="text-amber-400 font-mono font-semibold uppercase">PROMISED ARTIFACT:</span>
-            <span className="font-medium text-white truncate max-w-md">{declarationOutput}</span>
+          <div className="bg-[#0E1218] border border-white/[0.08] px-5 py-2 rounded-full text-xs text-zinc-300 flex items-center gap-2 shadow-lg">
+            <span className="text-amber-400 font-mono font-semibold uppercase text-[10px] tracking-wider">PROMISED ARTIFACT:</span>
+            <span className="font-medium text-zinc-100 truncate max-w-md font-mono">{declarationOutput}</span>
           </div>
 
           {/* Neuro-Entrainment Soundscape Control */}
@@ -622,6 +656,7 @@ export default function AirGapFocus() {
               variant="outline"
               size="sm"
               onClick={() => {
+                audioEngine.playTactileClick();
                 if (isSoundscapeOn) {
                   audioEngine.stop40HzGammaFlow();
                   setIsSoundscapeOn(false);
@@ -632,8 +667,8 @@ export default function AirGapFocus() {
               }}
               className={`rounded-full px-4 py-1.5 text-xs font-mono transition-all border ${
                 isSoundscapeOn
-                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-lg shadow-cyan-500/20"
-                  : "bg-black/40 text-slate-400 border-white/10 hover:text-white hover:border-white/20"
+                  ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/50 shadow-lg shadow-cyan-500/10"
+                  : "bg-[#0E1218] text-zinc-400 border-white/[0.08] hover:text-zinc-200 hover:border-white/20"
               }`}
             >
               {isSoundscapeOn ? (
@@ -643,7 +678,7 @@ export default function AirGapFocus() {
                 </>
               ) : (
                 <>
-                  <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+                  <VolumeX className="w-3.5 h-3.5 text-zinc-500" />
                   <span>Enable 40Hz Gamma Flow Wave</span>
                 </>
               )}
@@ -652,16 +687,16 @@ export default function AirGapFocus() {
 
           {/* Giant Timer Display */}
           <div className="relative flex flex-col items-center justify-center my-6">
-            <div className="text-7xl sm:text-9xl font-mono font-black text-white tracking-tighter drop-shadow-[0_0_40px_rgba(245,158,11,0.15)]">
+            <div className="text-7xl sm:text-9xl font-mono font-black text-zinc-100 tracking-tighter tabular-telemetry drop-shadow-[0_0_50px_rgba(6,182,212,0.15)]">
               {formatTime(secondsRemaining)}
             </div>
 
             {/* Quality & Breach indicators */}
             <div className="flex items-center gap-4 mt-4 font-mono text-xs">
-              <span className="text-emerald-400 flex items-center gap-1.5">
+              <span className="text-emerald-400 flex items-center gap-1.5 tabular-telemetry">
                 <ShieldCheck className="w-4 h-4" /> QUALITY: {attentionScore}%
               </span>
-              <span className={`flex items-center gap-1.5 ${breachesCount > 0 ? "text-red-400 font-bold" : "text-slate-500"}`}>
+              <span className={`flex items-center gap-1.5 tabular-telemetry ${breachesCount > 0 ? "text-red-400 font-bold" : "text-zinc-500"}`}>
                 <AlertCircle className="w-4 h-4" /> BREACHES: {breachesCount}
               </span>
             </div>
@@ -671,19 +706,24 @@ export default function AirGapFocus() {
           <div className="flex items-center gap-4 pt-4">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => {
+                audioEngine.playTactileClick();
                 if (window.confirm("Aborting will apply a penalty to your Discipline Score. Confirm surrender?")) {
                   handleFinishSession("aborted");
                 }
               }}
-              className="border-red-900/40 text-red-400 hover:bg-red-950/60 hover:text-red-300 text-xs font-mono"
+              className="border-red-900/40 text-red-400 hover:bg-red-950/60 hover:text-red-300 text-xs font-mono h-9"
             >
               Abort Session
             </Button>
 
             <Button
-              onClick={() => handleFinishSession("completed")}
-              className="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold px-8 flex items-center gap-2"
+              onClick={() => {
+                audioEngine.playCommandLock();
+                handleFinishSession("completed");
+              }}
+              className="bg-emerald-400 hover:bg-emerald-300 text-black font-extrabold px-8 h-10 flex items-center gap-2 font-mono text-xs tracking-wider"
             >
               <CheckCircle2 className="w-4 h-4" /> COMPLETE & VERIFY PROOF
             </Button>
@@ -693,15 +733,55 @@ export default function AirGapFocus() {
 
       {/* ─── PHASE 5: COMPLETED → PROOF OF WORK ─── */}
       {phase === "completed" && (
-        <div className="w-full max-w-2xl">
-          <ProofOfWorkSubmit
-            missionId={missionId || ""}
-            tacticalDeliverable={declarationOutput}
-            onCancel={() => setLocation("/mission-command")}
-            onSuccess={() => setLocation("/mission-command")}
-          />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-2xl obsidian-card p-6 sm:p-8 space-y-6 razor-border text-center"
+        >
+          <div className="w-14 h-14 rounded bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 mb-2">
+            <CheckCircle2 className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-zinc-100 uppercase tracking-tight swiss-display">
+              AIR-GAP SESSION ACCOMPLISHED
+            </h2>
+            <p className="text-xs font-mono text-zinc-400">
+              {actualMinutesElapsed} UNBROKEN MINUTES LOGGED // ATTENTION QUALITY: {attentionScore}%
+            </p>
+          </div>
+
+          <div className="pt-2 text-left">
+            <ProofOfWorkSubmit
+              missionId={missionId}
+              tacticalDeliverable={declarationOutput}
+              onCancel={() => setLocation("/mission-command")}
+              onSuccess={() => {
+                audioEngine.playCommandLock();
+                setShowCofferModal(true);
+              }}
+            />
+          </div>
+        </motion.div>
       )}
+      </div>
+
+      <CofferOpeningModal
+        isOpen={showCofferModal}
+        cofferType="vault_of_will"
+        onClose={() => {
+          setShowCofferModal(false);
+          setLocation("/mission-command");
+        }}
+        onClaim={(loot) => {
+          toast({
+            title: "VAULT OF WILL LOOT CLAIMED! ⚡",
+            description: `Earned +${loot.totalXp} XP & +${loot.totalCoins} Coins!`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          setLocation("/mission-command");
+        }}
+      />
     </div>
   );
 }

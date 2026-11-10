@@ -15,8 +15,15 @@ import { MidDayPulseModal } from "@/components/mid-day-pulse-modal";
 import { PushEnforcerCard } from "@/components/push-enforcer-card";
 import { TacticalScenarioInjector } from "@/components/tactical-scenario-injector";
 import { PWAEnclaveBanner } from "@/components/pwa-enclave-banner";
+import { ResurrectionModal } from "@/components/resurrection-modal";
+import { WeeklyRecapModal } from "@/components/weekly-recap-modal";
+import { SocialTelemetryFeed } from "@/components/social-telemetry-feed";
+import { TacticalCacheModal } from "@/components/tactical-cache-modal";
+import { SpireAscentWidget } from "@/components/spire/spire-ascent-widget";
+import { SystemHologramBanner } from "@/components/notifications/system-hologram-banner";
 import { audioEngine } from "@/lib/audio-engine";
 import { useToast } from "@/hooks/use-toast";
+import { usePet } from "@/hooks/use-pet";
 import {
   Crosshair,
   ShieldAlert,
@@ -48,8 +55,10 @@ export default function MissionCommand() {
   const [showBriefing, setShowBriefing] = useState<boolean>(false);
   const [showProofModal, setShowProofModal] = useState<boolean>(false);
   const [showAbortModal, setShowAbortModal] = useState<boolean>(false);
+  const [showWeeklyRecap, setShowWeeklyRecap] = useState<boolean>(false);
   const [abortReason, setAbortReason] = useState<string>("");
   const [primingCompleted, setPrimingCompleted] = useState<boolean>(false);
+  const { pet } = usePet();
 
   // 1. Fetch Profile & Dynamic Trajectory
   const { data: profileData, isLoading: loadingProfile } = useQuery<{
@@ -172,7 +181,7 @@ export default function MissionCommand() {
       queryClient.invalidateQueries({ queryKey: ["/api/execution-profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/daily-mission"] });
       toast({
-        title: "MILESTONE CONQUERED! 🏆",
+        title: "MILESTONE CONQUERED",
         description: res.message || "Phase advanced. Next level daily mission unlocked (+50 Discipline PTS).",
       });
     },
@@ -192,9 +201,9 @@ export default function MissionCommand() {
   const trajectory = profileData?.trajectory;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col p-4 sm:p-6 md:p-8 relative overflow-hidden">
-      {/* Background ambient grid & lighting */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0a_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col p-4 sm:p-6 md:p-8 relative overflow-hidden select-none">
+      {/* Background ambient razor grid & lighting */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-10 w-96 h-96 bg-cyan-500/5 blur-3xl pointer-events-none" />
 
@@ -212,192 +221,262 @@ export default function MissionCommand() {
       {/* Main Content Area */}
       <div className="w-full max-w-5xl mx-auto space-y-8 relative z-10">
         {/* Top Command Bar */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10 text-[11px] font-mono tracking-widest uppercase">
-                <Radio className="w-3 h-3 animate-pulse text-amber-400" /> MISSION COMMAND CENTER
-              </Badge>
-              <Badge variant="outline" className="border-slate-800 text-slate-400 font-mono text-[11px]">
-                {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-              </Badge>
+              <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-mono tracking-widest uppercase flex items-center gap-1.5">
+                <Radio className="w-3 h-3 animate-pulse text-amber-400" /> MISSION COMMAND CENTER // OS
+              </span>
+              <span className="px-2 py-0.5 rounded bg-[#141922] border border-white/[0.08] text-zinc-400 font-mono text-[10px]">
+                {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 swiss-display flex items-center gap-2">
               ASCENSION PROTOCOL
             </h1>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
             <TacticalScenarioInjector />
             <Button
               variant="outline"
-              onClick={() => setLocation("/evening-debrief")}
-              className="border-slate-800 text-slate-300 hover:bg-slate-900 text-xs font-semibold flex items-center gap-1.5"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setLocation("/evening-debrief");
+              }}
+              className="border-white/[0.08] bg-[#0E1218] text-zinc-300 hover:text-white hover:bg-[#141922] text-xs font-mono h-8"
             >
-              <FileCheck className="w-3.5 h-3.5 text-cyan-400" />
-              Evening Debrief
+              <FileCheck className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
+              DEBRIEF
             </Button>
             <Button
               variant="outline"
-              onClick={() => setLocation("/briefing-room")}
-              className="border-slate-800 text-slate-400 hover:text-white text-xs font-mono"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setShowWeeklyRecap(true);
+              }}
+              className="border-white/[0.08] bg-[#0E1218] text-zinc-300 hover:text-white hover:bg-[#141922] text-xs font-mono h-8"
             >
-              Diagnostic
+              <Trophy className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+              WEEKLY AUDIT
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setLocation("/briefing-room");
+              }}
+              className="border-white/[0.08] bg-[#0E1218] text-zinc-400 hover:text-zinc-200 text-xs font-mono h-8"
+            >
+              DIAGNOSTIC
+            </Button>
+            {/* Companion Beast Chip */}
+            <div 
+              onClick={() => {
+                audioEngine.playTactileClick();
+                setLocation("/focus");
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0E1218] border border-white/[0.08] hover:border-amber-400/30 cursor-pointer transition-all h-8 select-none group"
+              title="Focus Companion Beast. Tap to enter Focus Sanctum."
+            >
+              <span className="text-sm group-hover:scale-125 transition-transform">
+                {pet.type === "dragon" ? "🐉" : pet.type === "wolf" ? "🐺" : "🐱"}
+              </span>
+              <span className="text-[10px] font-mono text-zinc-300 font-bold uppercase hidden sm:inline">
+                {pet.name}
+              </span>
+              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[9px] font-mono px-1 py-0 h-4">
+                LVL {pet.level}
+              </Badge>
+            </div>
           </div>
         </header>
 
         {/* Cybernetic Native PWA Mobile Enclave Banner */}
         <PWAEnclaveBanner />
 
-        {/* ─── HERO METRIC: FOCUS DENSITY & DISCIPLINE REPUTATION ─── */}
+        {/* Floating Solo Leveling System Mandate Hologram */}
+        <SystemHologramBanner
+          title="SYSTEM MANDATE // PROTOCOL DIRECTIVE"
+          message="Daily Spire has refreshed. Complete your Floor 1 Gate of Intent to maintain unbroken rank status."
+          actionUrl="/air-gap-focus"
+          actionLabel="BREACH AIR-GAP"
+          severity="normal"
+        />
+
+        {/* ─── HERO TELEMETRY: FOCUS DENSITY, DISCIPLINE SCORE, EXECUTED STREAK ─── */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Focus Density Score Widget */}
-          <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+          {/* Card 1: Focus Density Telemetry */}
+          <div className="obsidian-card p-5 relative overflow-hidden flex flex-col justify-between razor-border-hover group">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" /> FOCUS DENSITY SCORE
+              <span className="text-[11px] font-mono text-zinc-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> FOCUS DENSITY RATIO
               </span>
-              <span className="text-xs font-mono text-amber-400 font-bold">{densityPercent}%</span>
+              <span className="text-xs font-mono text-amber-400 font-bold tabular-telemetry">{densityPercent}%</span>
             </div>
 
             <div className="my-2">
-              <div className="text-4xl font-black text-white font-mono tracking-tight">
+              <div className="text-4xl font-extrabold text-zinc-100 tabular-telemetry tracking-tight">
                 {densityPercent}%
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {totalMinutes} Verified Deep Work Minutes Today
+              <p className="text-xs text-zinc-400 mt-1 font-mono">
+                {totalMinutes} Verified Minutes Today
               </p>
             </div>
 
-            <Progress value={densityPercent} className="h-1.5 bg-slate-950 mt-2" />
+            <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden mt-3">
+              <div
+                className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, densityPercent)}%` }}
+              />
+            </div>
           </div>
 
-          {/* Discipline Reputation Score */}
-          <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+          {/* Card 2: Clinical Discipline Score */}
+          <div className="obsidian-card p-5 relative overflow-hidden flex flex-col justify-between razor-border-hover group">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-mono text-zinc-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Crosshair className="w-3.5 h-3.5 text-cyan-400" /> DISCIPLINE SCORE
               </span>
-              <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 bg-cyan-500/10 text-[10px] font-mono">
+              <span className="px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono uppercase tracking-wider">
                 {discipline?.tier || "Practitioner"}
-              </Badge>
+              </span>
             </div>
 
             <div className="my-2">
-              <div className="text-4xl font-black text-white font-mono tracking-tight">
+              <div className="text-4xl font-extrabold text-zinc-100 tabular-telemetry tracking-tight">
                 {discipline?.score ?? 700}
-                <span className="text-base text-slate-500 font-normal"> / 1000</span>
+                <span className="text-base text-zinc-500 font-normal"> / 1000</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Non-purchasable metric • {discipline?.completedMissions ?? 0} Completed Missions
+              <p className="text-xs text-zinc-400 mt-1 font-mono">
+                {discipline?.completedMissions ?? 0} Completed Objectives Logged
               </p>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 mt-2 pt-2 border-t border-slate-800/60">
-              <span>BREACHES: {discipline?.totalBreaches ?? 0}</span>
-              <span>PEAK: {discipline?.highestScore ?? 700}</span>
+            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 mt-3 pt-2.5 border-t border-white/[0.06]">
+              <span>BREACHES: <strong className="text-red-400">{discipline?.totalBreaches ?? 0}</strong></span>
+              <span>PEAK: <strong className="text-zinc-300">{discipline?.highestScore ?? 700}</strong></span>
             </div>
           </div>
 
-          {/* Current Execution Streak */}
-          <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden flex flex-col justify-between">
+          {/* Card 3: Execution Streak & Defiance Multiplier */}
+          <div className="obsidian-card p-5 relative overflow-hidden flex flex-col justify-between razor-border-hover group">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-mono text-zinc-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-orange-400" /> EXECUTION STREAK
               </span>
-              <Badge variant="outline" className="border-orange-500/30 text-orange-400 bg-orange-500/10 text-[10px] font-mono">
-                Unbroken
-              </Badge>
+              <span className="px-2 py-0.5 rounded bg-orange-950/40 border border-orange-500/30 text-orange-400 text-[10px] font-mono uppercase tracking-wider">
+                UNBROKEN
+              </span>
             </div>
 
             <div className="my-2">
-              <div className="text-4xl font-black text-white font-mono tracking-tight flex items-baseline gap-2">
+              <div className="text-4xl font-extrabold text-zinc-100 tabular-telemetry tracking-tight flex items-baseline gap-2">
                 {discipline?.currentStreak ?? 0}
-                <span className="text-lg text-orange-400 font-semibold">DAYS</span>
+                <span className="text-sm font-mono text-orange-400 tracking-wider">DAYS</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-zinc-400 mt-1 font-mono">
                 Zero missed days authorized. Reset to zero on abort.
               </p>
             </div>
 
-            <div className="text-[11px] font-mono text-slate-500 mt-2 pt-2 border-t border-slate-800/60 flex items-center gap-1.5 text-emerald-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <div className="text-[11px] font-mono mt-3 pt-2.5 border-t border-white/[0.06] flex items-center gap-1.5 text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>Target: 30 consecutive days for Ironclad tier</span>
             </div>
           </div>
         </section>
 
+        {/* ─── ROGUELIKE SPIRE OF ASCENSION (DAILY 5-FLOOR CYCLE) ─── */}
+        {(() => {
+          const today = new Date().toISOString().split("T")[0];
+          const hasBriefedToday = typeof window !== "undefined" && localStorage.getItem("ascension_briefing_date") === today;
+          return (
+            <SpireAscentWidget
+              currentStreak={discipline?.currentStreak ?? 0}
+              completedMinutes={totalMinutes}
+              hasBriefed={hasBriefedToday}
+              hasDebriefed={false}
+            />
+          );
+        })()}
+
         {/* ─── TODAY'S SINGLE MISSION CARD (7-FIELDS) ─── */}
-        <section className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-2 border-amber-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
-          {/* Subtle amber top edge glow */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        <section className="obsidian-card p-6 sm:p-8 relative overflow-hidden space-y-6 razor-border">
+          {/* Subtle amber top edge hairline */}
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
 
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" className="border-amber-500 text-amber-400 bg-amber-500/10 font-mono text-xs uppercase px-2.5 py-0.5">
-                  SINGLE MISSION LOCK
-                </Badge>
-                <Badge className={`font-mono text-xs uppercase ${
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-2.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-mono tracking-widest uppercase font-semibold">
+                  SINGLE MISSION LOCK // DELIVERABLE
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-semibold ${
                   dailyMission?.status === "completed"
-                    ? "bg-emerald-500 text-black"
+                    ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
                     : dailyMission?.status === "committed"
-                    ? "bg-cyan-500 text-black"
+                    ? "bg-cyan-500/15 border border-cyan-500/30 text-cyan-400"
                     : dailyMission?.status === "aborted"
-                    ? "bg-red-500 text-white"
-                    : "bg-amber-500 text-black"
+                    ? "bg-red-500/15 border border-red-500/30 text-red-400"
+                    : "bg-amber-500/15 border border-amber-500/30 text-amber-400"
                 }`}>
                   {dailyMission?.status || "PENDING"}
-                </Badge>
+                </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
+              <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight swiss-display">
                 {dailyMission?.title || "Strategic Objective Loading..."}
               </h2>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
               <Clock className="w-4 h-4 text-cyan-400" />
               <span>WINDOW: {dailyMission?.executionWindow || "09:00 - 11:30"}</span>
             </div>
           </div>
 
-          {/* 7-Field Mission Anatomy */}
+          {/* 4-Field Mission Telemetry Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Field 1: Tactical Deliverable */}
-            <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-1">
-              <div className="text-xs font-mono text-amber-400 font-semibold uppercase flex items-center gap-1.5">
+            <div className="bg-[#090C10] p-4 rounded border border-white/[0.08] space-y-1">
+              <div className="text-[11px] font-mono text-amber-400 font-semibold uppercase flex items-center gap-1.5">
                 <Crosshair className="w-3.5 h-3.5" /> 1. Tactical Deliverable (Verifiable Output)
               </div>
-              <p className="text-sm text-slate-200 font-medium">
+              <p className="text-sm text-zinc-200 font-medium">
                 {dailyMission?.tacticalDeliverable || "Generate and submit proof of tangible progress."}
               </p>
             </div>
 
             {/* Field 2: Focus Tier & Duration */}
-            <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-1">
-              <div className="text-xs font-mono text-cyan-400 font-semibold uppercase flex items-center gap-1.5">
+            <div className="bg-[#090C10] p-4 rounded border border-white/[0.08] space-y-1">
+              <div className="text-[11px] font-mono text-cyan-400 font-semibold uppercase flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5" /> 2. Focus Tier & Standard
               </div>
-              <p className="text-sm text-slate-200">
-                <span className="font-bold text-white font-mono">{dailyMission?.focusTier || "L1 Platinum"}</span> • {dailyMission?.estimatedMinutes || 90} Minutes Unbroken Air-Gap
+              <p className="text-sm text-zinc-200">
+                <span className="font-bold text-zinc-100 font-mono">{dailyMission?.focusTier || "L1 Platinum"}</span> • {dailyMission?.estimatedMinutes || 90} Minutes Unbroken Air-Gap
               </p>
             </div>
 
             {/* Field 3: Priming Ritual (Interactive) */}
-            <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-2">
-              <div className="text-xs font-mono text-purple-400 font-semibold uppercase flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> 3. Priming Ritual (Break Cold-Start Paralysis)
+            <div className="bg-[#090C10] p-4 rounded border border-white/[0.08] space-y-2">
+              <div className="text-[11px] font-mono text-zinc-400 font-semibold uppercase flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> 3. Priming Ritual (Cold-Start Breaker)
               </div>
               <div
-                onClick={() => setPrimingCompleted(!primingCompleted)}
-                className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                  primingCompleted ? "bg-purple-500/10 border-purple-500/40 text-white" : "border-slate-800 text-slate-300 hover:border-slate-700"
+                onClick={() => {
+                  audioEngine.playTactileClick();
+                  setPrimingCompleted(!primingCompleted);
+                }}
+                className={`flex items-start gap-2.5 p-2.5 rounded border cursor-pointer transition-all ${
+                  primingCompleted ? "bg-cyan-950/20 border-cyan-500/40 text-zinc-100" : "border-white/[0.08] text-zinc-400 hover:border-white/20"
                 }`}
               >
                 <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border ${
-                  primingCompleted ? "bg-purple-500 border-purple-500 text-black" : "border-slate-600"
+                  primingCompleted ? "bg-cyan-400 border-cyan-400 text-black" : "border-zinc-700 bg-zinc-900"
                 }`}>
                   {primingCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-black" />}
                 </div>
@@ -408,8 +487,8 @@ export default function MissionCommand() {
             </div>
 
             {/* Field 4: Failure Condition */}
-            <div className="bg-red-950/20 p-4 rounded-xl border border-red-500/30 space-y-1">
-              <div className="text-xs font-mono text-red-400 font-semibold uppercase flex items-center gap-1.5">
+            <div className="bg-red-950/10 p-4 rounded border border-red-500/20 space-y-1">
+              <div className="text-[11px] font-mono text-red-400 font-semibold uppercase flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> 4. Strict Failure Trigger
               </div>
               <p className="text-xs text-red-200/90 leading-relaxed">
@@ -420,13 +499,13 @@ export default function MissionCommand() {
 
           {/* Verification Status Banner if completed */}
           {dailyMission?.status === "completed" && (
-            <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40 flex items-center justify-between">
+            <div className="p-4 rounded bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="w-9 h-9 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-white">MISSION DELIVERABLE VERIFIED</div>
+                  <div className="text-sm font-bold text-zinc-100 font-mono">MISSION DELIVERABLE VERIFIED</div>
                   <div className="text-xs text-emerald-400/90 font-mono">
                     Quality Score: {dailyMission.proofQualityScore}/100 • &ldquo;{dailyMission.aiReviewFeedback}&rdquo;
                   </div>
@@ -436,13 +515,17 @@ export default function MissionCommand() {
           )}
 
           {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2">
               {dailyMission?.status !== "aborted" && dailyMission?.status !== "completed" && (
                 <Button
                   variant="outline"
-                  onClick={() => setShowAbortModal(true)}
-                  className="border-red-900/40 text-red-400 hover:bg-red-950/50 hover:text-red-300 text-xs font-mono"
+                  size="sm"
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    setShowAbortModal(true);
+                  }}
+                  className="border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300 text-xs font-mono h-8"
                 >
                   Abort Protocol
                 </Button>
@@ -452,9 +535,12 @@ export default function MissionCommand() {
             <div className="flex items-center gap-3">
               {dailyMission?.status === "pending" && (
                 <Button
-                  onClick={() => commitMutation.mutate(dailyMission.id)}
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    commitMutation.mutate(dailyMission.id);
+                  }}
                   disabled={commitMutation.isPending}
-                  className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-6"
+                  className="bg-amber-400 hover:bg-amber-300 text-black font-extrabold px-6 h-9 font-mono text-xs tracking-wider"
                 >
                   {commitMutation.isPending ? "LOCKING..." : "COMMIT TO TODAY'S MISSION"}
                 </Button>
@@ -463,14 +549,20 @@ export default function MissionCommand() {
               {dailyMission?.status === "committed" && (
                 <>
                   <Button
-                    onClick={() => setLocation(`/air-gap-focus?missionId=${dailyMission.id}`)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold flex items-center gap-2 px-6"
+                    onClick={() => {
+                      audioEngine.playTactileClick();
+                      setLocation(`/air-gap-focus?missionId=${dailyMission.id}`);
+                    }}
+                    className="bg-cyan-400 hover:bg-cyan-300 text-black font-extrabold flex items-center gap-2 px-6 h-9 font-mono text-xs tracking-wider"
                   >
                     <Lock className="w-4 h-4" /> ENTER AIR-GAP PROTOCOL
                   </Button>
                   <Button
-                    onClick={() => setShowProofModal(true)}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold flex items-center gap-2 px-5"
+                    onClick={() => {
+                      audioEngine.playTactileClick();
+                      setShowProofModal(true);
+                    }}
+                    className="bg-emerald-400 hover:bg-emerald-300 text-black font-bold flex items-center gap-2 px-5 h-9 font-mono text-xs tracking-wider"
                   >
                     <FileCheck className="w-4 h-4" /> SUBMIT PROOF
                   </Button>
@@ -487,7 +579,7 @@ export default function MissionCommand() {
 
         {/* ─── DYNAMIC LIVING ROADMAP COMMAND ENCLAVE ─── */}
         {profile?.roadmapMilestones && profile.roadmapMilestones.length > 0 && (
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5 backdrop-blur-md relative overflow-hidden">
+          <section className="obsidian-card p-5 sm:p-6 space-y-5 relative overflow-hidden razor-border">
             {/* Ambient accent based on trajectory status */}
             <div className={`absolute top-0 left-0 w-full h-1 ${
               trajectory?.status === "AHEAD_OF_PACE"
@@ -495,25 +587,24 @@ export default function MissionCommand() {
                 : trajectory?.status === "ON_TRACK"
                 ? "bg-gradient-to-r from-cyan-500 via-amber-400 to-cyan-500"
                 : trajectory?.status === "DRIFT_WARNING"
-                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 animate-pulse"
-                : "bg-gradient-to-r from-red-600 via-rose-500 to-red-600 animate-pulse"
+                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+                : "bg-gradient-to-r from-red-600 via-rose-500 to-red-600"
             }`} />
 
             {/* Header with Title, Status Pill & Recalibrate CTA */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-8 h-8 rounded bg-[#141922] border border-white/10 flex items-center justify-center text-amber-400">
                   <Compass className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                    <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider font-mono">
                       LIVING ROADMAP & DYNAMIC TRAJECTORY
                     </h3>
                     {trajectory && (
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 ${
+                      <span
+                        className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded border ${
                           trajectory.status === "AHEAD_OF_PACE"
                             ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/40"
                             : trajectory.status === "ON_TRACK"
@@ -523,15 +614,15 @@ export default function MissionCommand() {
                             : "border-red-500/50 text-red-400 bg-red-950/50"
                         }`}
                       >
-                        {trajectory.status === "AHEAD_OF_PACE" && "🟢 Ahead of Schedule"}
-                        {trajectory.status === "ON_TRACK" && "⚡ On Track"}
-                        {trajectory.status === "DRIFT_WARNING" && "⚠️ Velocity Drift"}
-                        {trajectory.status === "CRITICAL_DRIFT" && "🚨 Critical Drift"}
-                      </Badge>
+                        {trajectory.status === "AHEAD_OF_PACE" && "[PACE: OPTIMAL] Ahead of Schedule"}
+                        {trajectory.status === "ON_TRACK" && "[PACE: NOMINAL] On Track"}
+                        {trajectory.status === "DRIFT_WARNING" && "[WARN: DRIFT] Velocity Drift"}
+                        {trajectory.status === "CRITICAL_DRIFT" && "[ALERT: CRITICAL] Critical Drift"}
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 font-mono mt-0.5">
-                    Target: <span className="text-slate-200">{profile.targetOutcome}</span>
+                  <p className="text-xs text-zinc-400 font-mono mt-0.5">
+                    Target: <span className="text-zinc-200">{profile.targetOutcome}</span>
                   </p>
                 </div>
               </div>
@@ -540,9 +631,12 @@ export default function MissionCommand() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => recalibrateMutation.mutate()}
+                  onClick={() => {
+                    audioEngine.playTactileClick();
+                    recalibrateMutation.mutate();
+                  }}
                   disabled={recalibrateMutation.isPending}
-                  className="border-slate-700 bg-slate-950 hover:bg-slate-800 text-xs font-mono text-slate-300 hover:text-white flex items-center gap-1.5 h-8"
+                  className="border-white/[0.08] bg-[#0E1218] hover:bg-[#141922] text-xs font-mono text-zinc-300 hover:text-white flex items-center gap-1.5 h-8"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${recalibrateMutation.isPending ? "animate-spin" : ""}`} />
                   {recalibrateMutation.isPending ? "Recalibrating..." : "Recalibrate Trajectory"}
@@ -552,29 +646,29 @@ export default function MissionCommand() {
 
             {/* Dynamic Telemetry Velocity Bar */}
             {trajectory && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 text-xs font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#090C10] p-3.5 rounded border border-white/[0.08] text-xs font-mono">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-md bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                  <div className="w-7 h-7 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
                     <TrendingUp className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 uppercase">EXECUTION VELOCITY</div>
-                    <div className="text-sm font-bold text-white flex items-center gap-1">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-tight">EXECUTION VELOCITY</div>
+                    <div className="text-sm font-bold text-zinc-100 flex items-center gap-1 tabular-telemetry">
                       {trajectory.velocityIndex}x
-                      <span className={`text-[11px] ${trajectory.velocityIndex >= 1.0 ? "text-emerald-400" : "text-amber-400"}`}>
+                      <span className={`text-[10px] ${trajectory.velocityIndex >= 1.0 ? "text-emerald-400" : "text-amber-400"}`}>
                         {trajectory.velocityIndex >= 1.0 ? "Pacing High" : "Under Baseline"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-3">
-                  <div className="w-7 h-7 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="flex items-center gap-2.5 border-t sm:border-t-0 sm:border-l border-white/[0.08] pt-2 sm:pt-0 sm:pl-3">
+                  <div className="w-7 h-7 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
                     <Calendar className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 uppercase">PROJECTED COMPLETION</div>
-                    <div className="text-sm font-bold text-white">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-tight">PROJECTED COMPLETION</div>
+                    <div className="text-sm font-bold text-zinc-100 tabular-telemetry">
                       {trajectory.projectedDate}{" "}
                       <span className={`text-[10px] font-semibold ${trajectory.daysDelta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                         ({trajectory.daysDelta >= 0 ? `+${trajectory.daysDelta}d Ahead` : `${Math.abs(trajectory.daysDelta)}d Drift`})
@@ -606,52 +700,55 @@ export default function MissionCommand() {
                 return (
                   <div
                     key={m.id || idx}
-                    className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+                    className={`p-3.5 rounded border flex flex-col justify-between transition-all ${
                       isCurrent
-                        ? "bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30"
+                        ? "bg-amber-500/10 border-amber-500/40 shadow-lg shadow-amber-500/5 ring-1 ring-amber-500/20"
                         : isPast
-                        ? "bg-emerald-950/20 border-emerald-500/40 text-slate-300"
-                        : "bg-slate-950/50 border-slate-800/80 text-slate-500"
+                        ? "bg-emerald-950/15 border-emerald-500/30 text-zinc-300"
+                        : "bg-[#090C10] border-white/[0.08] text-zinc-500"
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between text-[11px] font-mono mb-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                           isPast
                             ? "bg-emerald-500/20 text-emerald-400"
                             : isCurrent
                             ? "bg-amber-500/20 text-amber-300"
-                            : "bg-slate-900 text-slate-500"
+                            : "bg-[#141922] text-zinc-500"
                         }`}>
                           {isPast ? "Conquered" : `Phase ${idx + 1}`}
                         </span>
                         <div className="flex items-center gap-1 font-bold">
-                          <span className={
+                          <span className={`tabular-telemetry ${
                             m.probabilityScore >= 80 ? "text-emerald-400" : m.probabilityScore >= 60 ? "text-amber-400" : "text-red-400"
-                          }>
+                          }`}>
                             {m.probabilityScore}%
                           </span>
-                          <span className="text-[9px] text-slate-500 font-normal">PROB</span>
+                          <span className="text-[9px] text-zinc-500 font-normal">PROB</span>
                         </div>
                       </div>
 
-                      <div className="text-xs font-bold text-white leading-snug">{m.title}</div>
-                      <div className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                      <div className="text-xs font-bold text-zinc-100 leading-snug">{m.title}</div>
+                      <div className="text-[11px] text-zinc-400 mt-1.5 leading-relaxed">
                         {m.coreDeliverable}
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono">
-                      <span className="text-slate-500">Target: Week {m.weekNumber}</span>
+                    <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-zinc-500">Target: Wk {m.weekNumber}</span>
                       {isCurrent && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => advanceMutation.mutate()}
+                          onClick={() => {
+                            audioEngine.playTactileClick();
+                            advanceMutation.mutate();
+                          }}
                           disabled={advanceMutation.isPending}
-                          className="h-6 px-2 text-[10px] font-bold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 p-0"
+                          className="h-6 px-2 text-[10px] font-mono font-bold text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 p-0"
                         >
-                          {advanceMutation.isPending ? "Locking..." : "Advance Phase ➔"}
+                          {advanceMutation.isPending ? "Locking..." : "ADVANCE PHASE"}
                         </Button>
                       )}
                       {isPast && (
@@ -667,6 +764,11 @@ export default function MissionCommand() {
             </div>
           </section>
         )}
+
+        {/* ─── REAL-TIME SOCIAL TELEMETRY STREAM & PEER ENDORSEMENTS ─── */}
+        <section>
+          <SocialTelemetryFeed />
+        </section>
       </div>
 
       {/* ─── PROOF OF WORK SUBMISSION MODAL ─── */}
@@ -733,6 +835,15 @@ export default function MissionCommand() {
 
       {/* Mid-Day Pulse Intercept Enforcer */}
       <MidDayPulseModal />
+
+      {/* Lapsed Operative Resurrection Protocol */}
+      <ResurrectionModal />
+
+      {/* Weekly Spotify Wrapped Style Telemetry Recap */}
+      <WeeklyRecapModal open={showWeeklyRecap} onOpenChange={setShowWeeklyRecap} />
+
+      {/* Tactical Mystery Cache Cipher Decryption */}
+      <TacticalCacheModal />
     </div>
   );
 }

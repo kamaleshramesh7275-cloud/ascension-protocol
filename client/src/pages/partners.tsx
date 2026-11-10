@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Search, Clock, Briefcase, MessageSquare, UserPlus, Zap, Loader2, Check } from "lucide-react";
+import { Users, Search, Clock, Briefcase, MessageSquare, UserPlus, Zap, Loader2, Check, ShieldCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { CreateCovenantModal } from "@/components/create-covenant-modal";
 
 export default function PartnersPage() {
     const { toast } = useToast();
@@ -20,6 +21,12 @@ export default function PartnersPage() {
     const [subjectFilter, setSubjectFilter] = useState("All");
     const [availabilityFilter, setAvailabilityFilter] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
+    const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
+
+    // Fetch user active covenants
+    const { data: userCovenants = [] } = useQuery<any[]>({
+        queryKey: ["/api/covenants/user/active"],
+    });
 
     // Fetch potential partners
     const { data: partners = [], isLoading } = useQuery({
@@ -150,7 +157,65 @@ export default function PartnersPage() {
                     </h1>
                     <p className="text-zinc-400 mt-1">Connect, collaborate, and compete.</p>
                 </div>
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => setIsCovenantModalOpen(true)}
+                        className="bg-zinc-100 hover:bg-white text-black font-mono text-xs uppercase font-bold tracking-wider h-10 px-4"
+                    >
+                        <ShieldCheck className="w-4 h-4 mr-2 text-blue-600" />
+                        Establish Peer Covenant
+                    </Button>
+                </div>
             </div>
+
+            {/* Bilateral Peer Covenants Section */}
+            {userCovenants.length > 0 && (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                            Active Discipline Covenants ({userCovenants.length})
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {userCovenants.map((cov: any) => (
+                            <div
+                                key={cov.id}
+                                className="p-4 rounded-md bg-[#090B0E] border border-white/10 font-mono text-xs flex justify-between items-center"
+                            >
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-zinc-500 uppercase">{cov.covenantCode}</span>
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[9px] uppercase px-1.5 py-0 ${
+                                                cov.status === "active"
+                                                    ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
+                                                    : "border-amber-500/50 text-amber-400 bg-amber-500/10"
+                                            }`}
+                                        >
+                                            {cov.status}
+                                        </Badge>
+                                    </div>
+                                    <div className="text-white font-semibold">{cov.protocolObjective}</div>
+                                    <div className="text-[10px] text-zinc-400">
+                                        Pot: <span className="text-amber-400 font-bold">{cov.stakeCoins * 2} Coins</span> | Window: {cov.termsDays} Days
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setLocation(`/covenant/${cov.covenantCode}`)}
+                                    className="border-white/15 hover:bg-zinc-800 text-[11px] font-mono uppercase h-8 px-2.5"
+                                >
+                                    <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                                    Inspect
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Rivalry Section */}
             {(activeRivalies.length > 0 || pendingRivalries.length > 0) && (
@@ -461,6 +526,11 @@ export default function PartnersPage() {
                     )}
                 </div>
             </div>
+
+            <CreateCovenantModal
+                open={isCovenantModalOpen}
+                onOpenChange={setIsCovenantModalOpen}
+            />
         </div>
     );
 }

@@ -110,74 +110,88 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
 export const pushNotifications = {
     questComplete: (userId: string, questTitle: string, xp: number) =>
         sendPushToUser(userId, {
-            title: "⚔️ Quest Complete!",
-            body: `"${questTitle}" done! +${xp} XP earned.`,
+            title: "[MISSION COMPLETE] Objective Verified",
+            body: `"${questTitle}" logged. +${xp} XP credited to your telemetry record.`,
             url: "/quests",
         }),
 
     levelUp: (userId: string, newLevel: number) =>
         sendPushToUser(userId, {
-            title: "🎉 Level Up!",
-            body: `You are now Level ${newLevel}. Keep ascending!`,
+            title: "[TIER ELEVATION] Operational Rank Advanced",
+            body: `Security clearance advanced to Level ${newLevel}. Continue your ascent.`,
             url: "/stats",
         }),
 
     partnerRequest: (userId: string, requesterName: string) =>
         sendPushToUser(userId, {
-            title: "🤝 New Partner Request",
-            body: `${requesterName} wants to connect as a study partner!`,
+            title: "[COMMUNICATION INCOMING] Peer Protocol Link",
+            body: `${requesterName} has dispatched an accountability partner request.`,
             url: "/partners",
         }),
 
     streakReminder: (userId: string, streakDays: number) =>
         sendPushToUser(userId, {
-            title: "🔥 Don't Break Your Streak!",
-            body: `You have a ${streakDays}-day streak. Complete a quest before midnight!`,
+            title: "[CRITICAL DISCIPLINE ALERT] Protocol Sequence at Risk",
+            body: `Your Day ${streakDays} streak expires at midnight. Complete an operational mission immediately.`,
             url: "/quests",
         }),
 
     rankUp: (userId: string, newTier: string) =>
         sendPushToUser(userId, {
-            title: "🏆 Rank Up!",
-            body: `You've reached Tier ${newTier}. A new chapter begins!`,
+            title: "[ASCENSION BENCHMARK] Tier Designation Achieved",
+            body: `You have crossed into Tier ${newTier}. Increased multipliers active.`,
             url: "/stats",
         }),
 
     // ─── 4 Pillars Execution Protocol Push Notifications ───
     morningBriefing: (userId: string, failureStatement?: string) =>
         sendPushToUser(userId, {
-            title: "📋 MORNING BRIEFING LOCK",
+            title: "[06:00 DIRECTIVE] Morning Briefing Locked",
             body: failureStatement
-                ? `Orders locked: "${failureStatement.substring(0, 60)}..." Accept your mission now.`
+                ? `Orders locked: "${failureStatement.substring(0, 60)}..." Authorize your mission now.`
                 : "Daily orders generated. Confirm your single mission before cognitive drift sets in.",
             url: "/mission-command",
         }),
 
     midDayPulse: (userId: string, missionTitle?: string) =>
         sendPushToUser(userId, {
-            title: "⚠️ 13:00 MID-DAY PULSE INTERCEPT",
+            title: "[13:00 INTERCEPT] Mid-Day Execution Audit",
             body: `50% of today has elapsed. "${missionTitle || 'Primary mission'}" incomplete. Declare your 30-min action now.`,
             url: "/mission-command",
         }),
 
     eveningDebrief: (userId: string) =>
         sendPushToUser(userId, {
-            title: "📊 MANDATORY EVENING DEBRIEF",
-            body: "Day concluding. The AI Chief of Staff requires your written assessment before 23:59.",
+            title: "[21:00 MANDATORY AUDIT] Evening Debrief Required",
+            body: "Day concluding. The Chief of Staff requires your written assessment before 23:59.",
             url: "/evening-debrief",
         }),
 
     sundayPerformanceCourt: (userId: string, verdict: string = "Audit In Session") =>
         sendPushToUser(userId, {
-            title: "⚖️ PERFORMANCE COURT CONVENED",
+            title: "[PERFORMANCE COURT] Judicial Audit Convened",
             body: `Weekly judicial audit complete. Status: ${verdict}. Review your roadmap trajectory.`,
             url: "/performance-court",
         }),
 
     squadDefectorAlert: (userId: string, defectorName: string, dividendPoints: number) =>
         sendPushToUser(userId, {
-            title: "💀 SQUAD PACT LIQUIDATION",
-            body: `${defectorName} defaulted. Their stake was liquidated. +${dividendPoints} pts performance dividend credited to you.`,
+            title: "[PACT LIQUIDATION] Defaulter Stake Distributed",
+            body: `${defectorName} defaulted on their contract. Stake liquidated. +${dividendPoints} pts performance dividend credited.`,
             url: "/squad-pact",
+        }),
+
+    covenantBreachWarning: (userId: string, covenantCode: string, counterpartyName: string) =>
+        sendPushToUser(userId, {
+            title: "[COVENANT ALERT] Bilateral Pot in Jeopardy",
+            body: `Counterparty ${counterpartyName} held protocol today. Your stake will be forfeited if you do not execute before midnight.`,
+            url: `/covenant/${covenantCode}`,
+        }),
+
+    resurrectionAlert: (userId: string, hoursInactive: number) =>
+        sendPushToUser(userId, {
+            title: "[RECOVERY DIRECTIVE] Inactivity Detected",
+            body: `${hoursInactive} hours of radio silence. Your accumulated capital is at risk. Return to authorize Resurrection Protocol.`,
+            url: "/dashboard",
         }),
 };

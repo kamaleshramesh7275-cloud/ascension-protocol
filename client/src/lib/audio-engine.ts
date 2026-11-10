@@ -218,6 +218,159 @@ class AudioEngine {
   public isGammaFlowActive(): boolean {
     return this.isBinauralPlaying;
   }
+
+  /**
+   * 5. Mechanical Switch Tactile Click (Zero Network Latency)
+   * Procedural combination of a 40ms pitch-drop resonance and a 15ms filtered noise snap.
+   * Triggered on key button taps and toggles.
+   */
+  public playTactileClick() {
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+
+      // 1. Resonant body pitch drop
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.04);
+      oscGain.gain.setValueAtTime(0.25, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.045);
+
+      // 2. High-pass transient click
+      const bufferSize = Math.floor(ctx.sampleRate * 0.015);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "highpass";
+      filter.frequency.setValueAtTime(1100, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.12, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + 0.018);
+
+      // 3. Mobile physical haptic trigger
+      if (typeof window !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(10);
+      }
+    } catch {
+      // Fallback silently if audio context is blocked
+    }
+  }
+
+  /**
+   * 6. Ascension Coffer Anticipation Rumble
+   * Rising pitch sub-bass vibration (60Hz -> 180Hz) with rattling mechanical resonance.
+   * Played for 800ms while the loot cache shakes before bursting open.
+   */
+  public playChestRumble() {
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+      const duration = 0.85;
+
+      // Low frequency rumble oscillator with pitch climb
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(55, now);
+      osc.frequency.exponentialRampToValueAtTime(170, now + duration);
+
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.linearRampToValueAtTime(0.3, now + duration * 0.8);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(120, now);
+      filter.frequency.exponentialRampToValueAtTime(450, now + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration);
+
+      // Mobile haptic vibration pattern
+      if (typeof window !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([15, 30, 20, 30, 30, 40, 50]);
+      }
+    } catch (e) {
+      console.warn("Chest rumble sound failed:", e);
+    }
+  }
+
+  /**
+   * 7. Loot Rarity Fanfare & Chime Burst
+   * Procedural harmonic revelation based on rarity drop.
+   */
+  public playLootFanfare(rarity: "common" | "rare" | "epic" | "legendary" = "common") {
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+
+      let freqs: number[] = [523.25, 659.25, 783.99]; // C Major
+      let hapticPattern = [30, 40];
+
+      if (rarity === "rare") {
+        freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        hapticPattern = [30, 40, 50];
+      } else if (rarity === "epic") {
+        freqs = [440.00, 554.37, 659.25, 880.00, 1108.73]; // A Major 9
+        hapticPattern = [40, 50, 60, 80];
+      } else if (rarity === "legendary") {
+        freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00]; // Multi-octave cascade
+        hapticPattern = [50, 60, 80, 80, 120, 200];
+      }
+
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = rarity === "legendary" ? "triangle" : "sine";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+
+        const noteGain = rarity === "legendary" ? 0.2 : 0.15;
+        gain.gain.setValueAtTime(0, now + idx * 0.06);
+        gain.gain.linearRampToValueAtTime(noteGain, now + idx * 0.06 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0005, now + idx * 0.06 + 0.85);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + idx * 0.06);
+        osc.stop(now + idx * 0.06 + 0.9);
+      });
+
+      // Mobile haptics
+      if (typeof window !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(hapticPattern);
+      }
+    } catch (e) {
+      console.warn("Loot fanfare sound failed:", e);
+    }
+  }
 }
 
 export const audioEngine = new AudioEngine();

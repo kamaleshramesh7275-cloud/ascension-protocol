@@ -159,7 +159,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       clearRestTimer();
       queryClient.invalidateQueries({ queryKey: ["/api/workouts/sessions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/workouts/prs"] });
-      toast({ title: "Workout Completed! 🏆", description: "Awesome job! XP awarded." });
+      toast({ title: "Workout Completed", description: "Discipline verified. XP awarded." });
     },
     onError: (error: any) => {
       toast({ title: "Failed to finish workout", description: error.message, variant: "destructive" });

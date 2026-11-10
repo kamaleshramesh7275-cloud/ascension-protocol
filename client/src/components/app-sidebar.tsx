@@ -1,5 +1,4 @@
-import { LayoutDashboard, Trophy, User, Swords, Activity, LogOut, BookOpen, Shield, Brain, Users, MessageSquare, ShoppingBag, Map, Lock, Phone, ArrowRight, Dumbbell, Crosshair, FileCheck, Scale, Gavel, Flame, Eye } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { Activity, Award, BookOpen, Brain, Crosshair, Dumbbell, Eye, FileCheck, Flame, Gavel, Lock, LogOut, Map, MessageSquare, Scale, Shield, ShoppingBag, Swords, Trophy, User, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import {
     Sidebar,
@@ -17,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { User as BackendUser } from "@shared/schema";
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
+import { audioEngine } from "@/lib/audio-engine";
 
 export function AppSidebar() {
     const [location, setLocation] = useLocation();
@@ -33,284 +33,206 @@ export function AppSidebar() {
             title: "Mission Command",
             url: "/mission-command",
             icon: Crosshair,
-            color: "text-amber-500",
-            activeBg: "bg-amber-500/10",
-            activeBorder: "border-amber-500",
-            gradient: "from-amber-500/20 to-transparent"
+            tag: "CTRL.01",
         },
         {
             title: "Air-Gap Focus",
             url: "/air-gap-focus",
             icon: Lock,
-            color: "text-cyan-500",
-            activeBg: "bg-cyan-500/10",
-            activeBorder: "border-cyan-500",
-            gradient: "from-cyan-500/20 to-transparent"
+            tag: "VOID.40",
         },
         {
             title: "Evening Debrief",
             url: "/evening-debrief",
             icon: FileCheck,
-            color: "text-purple-400",
-            activeBg: "bg-purple-500/10",
-            activeBorder: "border-purple-500",
-            gradient: "from-purple-500/20 to-transparent"
+            tag: "AUDIT.02",
         },
         {
             title: "Performance Court",
             url: "/performance-court",
             icon: Gavel,
-            color: "text-rose-500",
-            activeBg: "bg-rose-500/10",
-            activeBorder: "border-rose-500",
-            gradient: "from-rose-500/20 to-transparent"
+            tag: "JUD.01",
         },
         {
             title: "Commitment Contract",
             url: "/commitment-contract",
             icon: Scale,
-            color: "text-amber-400",
-            activeBg: "bg-amber-400/10",
-            activeBorder: "border-amber-400",
-            gradient: "from-amber-400/20 to-transparent"
+            tag: "PACT.01",
         },
         {
             title: "Squad Pact",
             url: "/squad-pact",
             icon: Flame,
-            color: "text-orange-500",
-            activeBg: "bg-orange-500/10",
-            activeBorder: "border-orange-500",
-            gradient: "from-orange-500/20 to-transparent"
+            tag: "ESCROW",
         },
         {
             title: "Public Wall",
             url: "/public-commitments",
             icon: Eye,
-            color: "text-blue-400",
-            activeBg: "bg-blue-400/10",
-            activeBorder: "border-blue-400",
-            gradient: "from-blue-400/20 to-transparent"
+            tag: "RECORD",
         },
         {
             title: "Hall of Ascension",
             url: "/hall-of-ascension",
             icon: Trophy,
-            color: "text-yellow-400",
-            activeBg: "bg-yellow-400/10",
-            activeBorder: "border-yellow-400",
-            gradient: "from-yellow-400/20 to-transparent"
+            tag: "LEDGER",
+        },
+        {
+            title: "Achievements",
+            url: "/achievements",
+            icon: Award,
+            tag: "TROPHY",
         },
         {
             title: "Quests",
             url: "/quests",
             icon: Swords,
-            color: "text-orange-500",
-            activeBg: "bg-orange-500/10",
-            activeBorder: "border-orange-500",
-            gradient: "from-orange-500/20 to-transparent"
+            tag: "EXP",
         },
         {
-            title: "Roadmap",
+            title: "Living Roadmap",
             url: "/roadmap",
             icon: Map,
-            color: "text-red-500",
-            activeBg: "bg-red-500/10",
-            activeBorder: "border-red-500",
-            gradient: "from-red-500/20 to-transparent",
+            tag: "VECTOR",
             premiumOnly: true
         },
         {
             title: "Focus Sanctum",
             url: "/focus",
             icon: Brain,
-            color: "text-blue-600",
-            activeBg: "bg-blue-600/10",
-            activeBorder: "border-blue-600",
-            gradient: "from-blue-600/20 to-transparent"
+            tag: "CHAMBER",
         },
         {
-            title: "Workout",
+            title: "Physical Calibration",
             url: "/workout",
             icon: Dumbbell,
-            color: "text-emerald-500",
-            activeBg: "bg-emerald-500/10",
-            activeBorder: "border-emerald-500",
-            gradient: "from-emerald-500/20 to-transparent"
+            tag: "KINETIC",
         },
         {
-            title: "Store",
+            title: "Tactical Supply",
             url: "/store",
             icon: ShoppingBag,
-            color: "text-amber-500",
-            activeBg: "bg-amber-500/10",
-            activeBorder: "border-amber-500",
-            gradient: "from-amber-500/20 to-transparent"
+            tag: "DEPOT",
         },
         {
-            title: "Stats",
+            title: "Telemetry Stats",
             url: "/stats",
             icon: Activity,
-            color: "text-sky-500",
-            activeBg: "bg-sky-500/10",
-            activeBorder: "border-sky-500",
-            gradient: "from-sky-500/20 to-transparent"
+            tag: "METRICS",
         },
         {
-            title: "Leaderboard",
+            title: "Global Leaderboard",
             url: "/leaderboard",
             icon: Trophy,
-            color: "text-yellow-500",
-            activeBg: "bg-yellow-500/10",
-            activeBorder: "border-yellow-500",
-            gradient: "from-yellow-500/20 to-transparent"
+            tag: "GLOBAL",
         },
         {
-            title: "Profile",
+            title: "Operative Dossier",
             url: "/profile",
             icon: User,
-            color: "text-emerald-500",
-            activeBg: "bg-emerald-500/10",
-            activeBorder: "border-emerald-500",
-            gradient: "from-emerald-500/20 to-transparent"
+            tag: "PROFILE",
         },
         {
-            title: "Library",
+            title: "Standard Library",
             url: "/library",
             icon: BookOpen,
-            color: "text-purple-500",
-            activeBg: "bg-purple-500/10",
-            activeBorder: "border-purple-500",
-            gradient: "from-purple-500/20 to-transparent"
+            tag: "ARCHIVE",
         },
         {
-            title: "Gangs",
+            title: "Squadron Alliances",
             url: "/gangs",
             icon: Shield,
-            color: "text-cyan-500",
-            activeBg: "bg-cyan-500/10",
-            activeBorder: "border-cyan-500",
-            gradient: "from-cyan-500/20 to-transparent"
+            tag: "ALLIED",
         },
         {
-            title: "Partners",
+            title: "Bilateral Partners",
             url: "/partners",
             icon: Users,
-            color: "text-pink-500",
-            activeBg: "bg-pink-500/10",
-            activeBorder: "border-pink-500",
-            gradient: "from-pink-500/20 to-transparent"
+            tag: "COVENANT",
         },
         {
-            title: "Global Chat",
+            title: "Secure Frequency",
             url: "/global-chat",
             icon: MessageSquare,
-            color: "text-indigo-500",
-            activeBg: "bg-indigo-500/10",
-            activeBorder: "border-indigo-500",
-            gradient: "from-indigo-500/20 to-transparent"
+            tag: "UPLINK",
         },
     ];
 
-    // Spotlight Effect
-    const mouseX = useMotionValue(0);
-    const mouseY = useMotionValue(0);
-
-    function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-        const { left, top } = currentTarget.getBoundingClientRect();
-        mouseX.set(clientX - left);
-        mouseY.set(clientY - top);
-    }
+    const handleNavigate = (url: string) => {
+        audioEngine.playTactileClick();
+        setLocation(url);
+    };
 
     return (
-        <Sidebar
-            className="border-r border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden group/sidebar"
-            onMouseMove={handleMouseMove}
-        >
-            {/* Spotlight Gradient */}
-            <motion.div
-                className="pointer-events-none absolute -inset-px rounded-xl opacity-0 transition duration-300 group-hover/sidebar:opacity-100"
-                style={{
-                    background: useMotionTemplate`
-            radial-gradient(
-              650px circle at ${mouseX}px ${mouseY}px,
-              rgba(255, 255, 255, 0.05),
-              transparent 80%
-            )
-          `,
-                }}
-            />
-
-            <SidebarHeader className="p-6 relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex items-center gap-2 px-2"
-                >
-                    <motion.div
-                        whileHover={{ rotate: 180, scale: 1.1 }}
-                        transition={{ duration: 0.3 }}
-                        className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20"
-                    >
-                        <Activity className="w-5 h-5 text-white" />
-                    </motion.div>
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                        Ascension
-                    </h1>
-                </motion.div>
+        <Sidebar className="border-r border-white/[0.08] bg-[#07080B] text-zinc-300 w-64 select-none">
+            {/* Header: Precision Instrument Console */}
+            <SidebarHeader className="p-4 border-b border-white/[0.06] bg-[#090C10]">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded bg-[#141922] border border-white/10 flex items-center justify-center">
+                            <Crosshair className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-black tracking-wider text-zinc-100 swiss-display uppercase">
+                                ASCENSION
+                            </div>
+                            <div className="text-[9px] font-mono text-zinc-500 tracking-wider">
+                                PROTOCOL // OS
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[9px] font-mono font-semibold text-emerald-400 tracking-wider">
+                            ACTIVE
+                        </span>
+                    </div>
+                </div>
             </SidebarHeader>
 
-            <SidebarContent className="px-4 relative z-10 scrollbar-hide">
+            {/* Navigation List: Swiss Modular Hierarchy */}
+            <SidebarContent className="px-2 py-3 scrollbar-hide">
                 <SidebarGroup>
+                    <div className="px-2 pb-2 text-[10px] font-mono uppercase tracking-widest text-zinc-500 flex items-center justify-between">
+                        <span>// SECTORS</span>
+                        <span className="text-[9px] text-zinc-600">{items.length} INSTRUMENTS</span>
+                    </div>
                     <SidebarGroupContent>
-                        <SidebarMenu className="space-y-2">
-                            {items.map((item, index) => {
+                        <SidebarMenu className="space-y-0.5">
+                            {items.map((item) => {
                                 const isActive = location === item.url;
                                 return (
                                     <SidebarMenuItem key={item.title}>
-                                        <motion.div
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.1 * index }}
+                                        <SidebarMenuButton
+                                            isActive={isActive}
+                                            onClick={() => handleNavigate(item.url)}
+                                            className={`
+                                                w-full justify-between px-2.5 py-2 rounded transition-all duration-150 group relative
+                                                ${isActive
+                                                    ? "bg-[#0E1218] text-zinc-100 border-l-2 border-cyan-400 font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                                                    : "text-zinc-400 hover:text-zinc-200 hover:bg-[#0E1218]/50 border-l-2 border-transparent"
+                                                }
+                                            `}
                                         >
-                                            <SidebarMenuButton
-                                                data-tour={`sidebar-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                                                isActive={isActive}
-                                                onClick={() => setLocation(item.url)}
-                                                className={`
-                          w-full justify-start gap-3 px-4 py-6 rounded-xl transition-all duration-200 group relative overflow-hidden
-                          ${isActive
-                                                        ? `${item.color} font-semibold`
-                                                        : "text-muted-foreground hover:bg-white/5 hover:text-white"
-                                                    }
-                        `}
-                                            >
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="activeTab"
-                                                        className={`absolute inset-0 ${item.activeBg} border-l-4 ${item.activeBorder}`}
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                    >
-                                                        <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-50`} />
-                                                    </motion.div>
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <item.icon
+                                                    className={`w-4 h-4 shrink-0 transition-colors ${
+                                                        isActive ? "text-cyan-400" : "text-zinc-500 group-hover:text-zinc-300"
+                                                    }`}
+                                                />
+                                                <span className="text-xs truncate tracking-tight">{item.title}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                {(item as any).premiumOnly && !user?.isPremium && (
+                                                    <Lock className="w-2.5 h-2.5 text-zinc-600" />
                                                 )}
-                                                <motion.div
-                                                    className="relative z-10 flex items-center gap-3"
-                                                    whileHover={{ x: 5 }}
-                                                >
-                                                    <item.icon
-                                                        className={`w-5 h-5 transition-transform duration-300 ${isActive ? item.color : `group-hover:${item.color} group-hover:scale-110 group-hover:rotate-3`}`}
-                                                    />
-                                                    <span>{item.title}</span>
-                                                    {(item as any).premiumOnly && !user?.isPremium && (
-                                                        <Lock className="w-3 h-3 ml-auto text-zinc-500" />
-                                                    )}
-                                                </motion.div>
-                                            </SidebarMenuButton>
-                                        </motion.div>
+                                                <span className={`text-[9px] font-mono tracking-wider ${
+                                                    isActive ? "text-cyan-400/80" : "text-zinc-600 group-hover:text-zinc-500"
+                                                }`}>
+                                                    {item.tag}
+                                                </span>
+                                            </div>
+                                        </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 );
                             })}
@@ -319,72 +241,57 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="p-6 border-t border-white/5 relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm mb-4 hover:bg-white/10 transition-colors cursor-pointer group"
+            {/* Footer: Operator Telemetry Badge */}
+            <SidebarFooter className="p-3 border-t border-white/[0.06] bg-[#090C10] space-y-2">
+                <div
+                    onClick={() => handleNavigate("/profile")}
+                    className="p-2.5 rounded bg-[#0E1218] border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
                 >
-                    <div className="flex items-center gap-3 mb-3">
-                        <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent group-hover:ring-violet-500/50 transition-all">
+                    <div className="flex items-center gap-2.5 mb-2">
+                        <Avatar className="h-8 w-8 rounded border border-white/10">
                             <AvatarImage src={user?.avatarUrl || undefined} />
-                            <AvatarFallback className="bg-violet-500/20 text-violet-500 font-bold">
-                                {user?.name?.charAt(0) || "U"}
+                            <AvatarFallback className="bg-[#141922] text-zinc-300 font-mono text-xs rounded">
+                                {user?.name?.charAt(0) || "O"}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col overflow-hidden">
-                            <span className="text-sm font-bold truncate text-white group-hover:text-violet-500 transition-colors">{user?.name || "Ascendant"}</span>
-                            {user?.activeTitle && (
-                                <span className="text-[10px] uppercase tracking-wider text-yellow-500 font-bold mb-0.5">{user.activeTitle}</span>
-                            )}
-                            <span className="text-xs text-violet-500 font-medium">Level {user?.level || 1}</span>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold truncate text-zinc-200 group-hover:text-cyan-400 transition-colors">
+                                {user?.name || "Operative"}
+                            </span>
+                            <span className="text-[10px] font-mono text-zinc-500 tracking-tight">
+                                LVL {user?.level || 1} // {user?.xp || 0} XP
+                            </span>
                         </div>
                     </div>
-                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                        <motion.div
-                            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${((user?.xp || 0) % 1000) / 10}%` }}
-                            transition={{ duration: 1, delay: 0.8 }}
+                    {/* Linear Cyan Telemetry Bar */}
+                    <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-cyan-400 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(5, ((user?.xp || 0) % 1000) / 10))}%` }}
                         />
                     </div>
-                </motion.div>
+                </div>
 
-                {/* Contact & Feedback Navigation */}
-                <motion.button
-                    onClick={() => setLocation("/contact")}
-                    whileHover={{ scale: 1.02 }}
-                    className={`
-                        w-full mb-4 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm transition-all text-left flex items-center justify-between group
-                        ${location === "/contact" ? "border-violet-500/50 bg-violet-500/10 text-violet-400 font-semibold" : "text-zinc-400 hover:bg-white/10 hover:text-white"}
-                    `}
+                {/* Citadel Feedback & Uplink */}
+                <button
+                    onClick={() => handleNavigate("/contact")}
+                    className="w-full px-2.5 py-1.5 rounded bg-[#0E1218]/60 hover:bg-[#0E1218] border border-white/[0.06] hover:border-white/15 text-zinc-400 hover:text-zinc-200 text-xs flex items-center justify-between transition-colors"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl transition-all ${location === "/contact" ? "bg-violet-500/20 text-violet-400" : "bg-white/5 text-zinc-400 group-hover:bg-violet-500/10 group-hover:text-violet-400"}`}>
-                            <MessageSquare className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-sm font-bold text-white">Citadel Support</span>
-                            <span className="text-[10px] text-muted-foreground group-hover:text-violet-400 transition-colors">Feedback & Uplinks</span>
-                        </div>
-                    </div>
-                    <motion.div
-                        animate={{ x: location === "/contact" ? 3 : 0 }}
-                        className="text-muted-foreground group-hover:text-white transition-colors mr-1"
-                    >
-                        <ArrowRight className="w-3.5 h-3.5" />
-                    </motion.div>
-                </motion.button>
+                    <span className="text-[11px] font-mono tracking-tight flex items-center gap-1.5">
+                        <MessageSquare className="w-3 h-3 text-cyan-400" />
+                        CITADEL UPLINK
+                    </span>
+                    <span className="keycap text-[9px]">U</span>
+                </button>
 
                 <Button
                     variant="ghost"
-                    className="w-full justify-start gap-2 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    size="sm"
+                    className="w-full justify-start gap-2 h-7 px-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 text-xs transition-colors rounded"
                     onClick={() => signOut()}
                 >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
+                    <LogOut className="w-3 h-3" />
+                    <span className="font-mono text-[10px]">TERMINATE SESSION</span>
                 </Button>
             </SidebarFooter>
         </Sidebar>

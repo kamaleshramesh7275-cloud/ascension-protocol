@@ -1,4 +1,4 @@
-import { Home, Target, Brain, ShoppingBag, Dumbbell, MoreHorizontal, Trophy, User, Activity, BookOpen, Users, MessageSquare, Map, Phone, X, ArrowRight, Lock, Gavel, Scale, Flame, Eye } from "lucide-react";
+import { Home, Target, Brain, ShoppingBag, Dumbbell, MoreHorizontal, Trophy, User, Activity, BookOpen, Users, MessageSquare, Map, Phone, X, ArrowRight, Lock, Gavel, Scale, Flame, Eye, Award } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { User as BackendUser } from "@shared/schema";
+
+import { audioEngine } from "@/lib/audio-engine";
 
 interface MobileBottomNavProps {
     className?: string;
@@ -30,6 +32,7 @@ const moreNavItems = [
     { icon: Eye, label: "Public Wall", path: "/public-commitments", color: "text-blue-400", bg: "bg-blue-500/10" },
     { icon: Activity, label: "Stats", path: "/stats", color: "text-sky-400", bg: "bg-sky-500/10" },
     { icon: Trophy, label: "Leaderboard", path: "/leaderboard", color: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { icon: Award, label: "Achievements", path: "/achievements", color: "text-amber-400", bg: "bg-amber-500/10" },
     { icon: Trophy, label: "Hall of Immortals", path: "/hall-of-ascension", color: "text-amber-400", bg: "bg-amber-500/10" },
     { icon: User, label: "Profile", path: "/profile", color: "text-emerald-400", bg: "bg-emerald-500/10" },
     { icon: Map, label: "Roadmap", path: "/roadmap", color: "text-red-400", bg: "bg-red-500/10", premiumOnly: true },
@@ -50,13 +53,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         enabled: !!firebaseUser,
     });
 
-    // Check if any "more" item is currently active to highlight the "More" button
     const isMoreActive = moreNavItems.some(item =>
         location === item.path || (item.path === "/profile" && location.startsWith("/profile"))
     );
 
     const handleMoreItemClick = (path: string) => {
-        if ('vibrate' in navigator) navigator.vibrate(10);
+        audioEngine.playTactileClick();
         setIsDrawerOpen(false);
         setLocation(path);
     };
@@ -157,13 +159,13 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
             {/* Bottom Nav Bar */}
             <nav
                 className={cn(
-                    "border-t border-white/10 bg-black/70 backdrop-blur-xl relative overflow-hidden",
+                    "border-t border-white/[0.08] bg-[#07080B]/95 backdrop-blur-2xl relative overflow-hidden select-none",
                     className
                 )}
                 style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
-                {/* Ambient glow line at top */}
-                <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                {/* Razor top hairline highlight */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-white/[0.08]" />
 
                 <div className="flex items-stretch justify-around px-1 pt-2 pb-1">
                     {primaryNavItems.map((item) => {
@@ -175,63 +177,44 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                             <button
                                 key={item.path}
                                 onClick={() => {
-                                    if ('vibrate' in navigator) navigator.vibrate(10);
+                                    audioEngine.playTactileClick();
                                     setLocation(item.path);
                                 }}
-                                className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-xl transition-all duration-200 group focus:outline-none"
-                                style={{ minHeight: "52px", minWidth: "44px" }}
+                                className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-lg transition-all duration-150 group focus:outline-none"
+                                style={{ minHeight: "50px", minWidth: "44px" }}
                                 aria-label={item.label}
                                 aria-current={isActive ? "page" : undefined}
                             >
-                                {/* Sliding pill indicator */}
-                                <AnimatePresence>
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="mobile-nav-pill"
-                                            className="absolute inset-0 rounded-xl bg-primary/15 border border-primary/25"
-                                            initial={{ opacity: 0, scale: 0.85 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.85 }}
-                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                        />
-                                    )}
-                                </AnimatePresence>
+                                {/* Precision Cyan Active Pill */}
+                                {isActive && (
+                                    <div className="absolute inset-0 rounded-md bg-cyan-950/30 border border-cyan-500/20" />
+                                )}
 
-                                <motion.div
-                                    whileTap={{ scale: 0.82 }}
-                                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                                    className="relative z-10"
-                                >
+                                <div className="relative z-10">
                                     <Icon
                                         className={cn(
-                                            "h-5 w-5 transition-all duration-200",
+                                            "h-4 w-4 transition-colors duration-150",
                                             isActive
-                                                ? "text-primary drop-shadow-[0_0_6px_var(--tw-shadow-color)] shadow-primary"
+                                                ? "text-cyan-400"
                                                 : isWorkout && isWorkoutActive
                                                     ? "text-emerald-400"
-                                                    : "text-muted-foreground group-hover:text-foreground"
+                                                    : "text-zinc-500 group-hover:text-zinc-300"
                                         )}
-                                        style={isActive ? { filter: "drop-shadow(0 0 5px hsl(var(--primary) / 0.7))" } :
-                                            isWorkout && isWorkoutActive ? { filter: "drop-shadow(0 0 5px rgba(52,211,153,0.7))" } : {}}
                                     />
-                                    {/* Pulsing dot when workout is active */}
+                                    {/* Pulsing indicator when workout is active */}
                                     {isWorkout && isWorkoutActive && (
-                                        <motion.span
-                                            className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-black"
-                                            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
-                                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                        />
+                                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                                     )}
-                                </motion.div>
+                                </div>
 
                                 <span
                                     className={cn(
-                                        "relative z-10 text-[10px] font-semibold tracking-wide leading-none transition-colors duration-200",
+                                        "relative z-10 text-[9px] font-mono tracking-tight leading-none transition-colors duration-150 uppercase",
                                         isActive
-                                            ? "text-primary"
+                                            ? "text-cyan-400 font-semibold"
                                             : isWorkout && isWorkoutActive
                                                 ? "text-emerald-400"
-                                                : "text-muted-foreground group-hover:text-foreground"
+                                                : "text-zinc-500 group-hover:text-zinc-300"
                                     )}
                                 >
                                     {item.label}
@@ -243,50 +226,35 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                     {/* More Button */}
                     <button
                         onClick={() => {
-                            if ('vibrate' in navigator) navigator.vibrate(10);
+                            audioEngine.playTactileClick();
                             setIsDrawerOpen(prev => !prev);
                         }}
-                        className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-xl transition-all duration-200 group focus:outline-none"
-                        style={{ minHeight: "52px", minWidth: "44px" }}
+                        className="relative flex flex-col items-center gap-1 flex-1 py-1.5 rounded-lg transition-all duration-150 group focus:outline-none"
+                        style={{ minHeight: "50px", minWidth: "44px" }}
                         aria-label="More navigation options"
                         aria-expanded={isDrawerOpen}
                     >
-                        <AnimatePresence>
-                            {(isMoreActive || isDrawerOpen) && (
-                                <motion.div
-                                    layoutId="mobile-nav-pill"
-                                    className="absolute inset-0 rounded-xl bg-primary/15 border border-primary/25"
-                                    initial={{ opacity: 0, scale: 0.85 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.85 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                />
-                            )}
-                        </AnimatePresence>
+                        {(isMoreActive || isDrawerOpen) && (
+                            <div className="absolute inset-0 rounded-md bg-cyan-950/30 border border-cyan-500/20" />
+                        )}
 
-                        <motion.div
-                            whileTap={{ scale: 0.82 }}
-                            animate={{ rotate: isDrawerOpen ? 45 : 0 }}
-                            transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                            className="relative z-10"
-                        >
+                        <div className="relative z-10">
                             <MoreHorizontal
                                 className={cn(
-                                    "h-5 w-5 transition-colors duration-200",
+                                    "h-4 w-4 transition-colors duration-150",
                                     isMoreActive || isDrawerOpen
-                                        ? "text-primary"
-                                        : "text-muted-foreground group-hover:text-foreground"
+                                        ? "text-cyan-400"
+                                        : "text-zinc-500 group-hover:text-zinc-300"
                                 )}
-                                style={(isMoreActive || isDrawerOpen) ? { filter: "drop-shadow(0 0 5px hsl(var(--primary) / 0.7))" } : {}}
                             />
-                        </motion.div>
+                        </div>
                         <span
                             className={cn(
-                                "relative z-10 text-[10px] font-semibold tracking-wide leading-none transition-colors duration-200",
-                                isMoreActive || isDrawerOpen ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                "relative z-10 text-[9px] font-mono tracking-tight leading-none transition-colors duration-150 uppercase",
+                                isMoreActive || isDrawerOpen ? "text-cyan-400 font-semibold" : "text-zinc-500 group-hover:text-zinc-300"
                             )}
                         >
-                            More
+                            SECTORS
                         </span>
                     </button>
                 </div>

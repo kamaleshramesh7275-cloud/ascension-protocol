@@ -245,6 +245,7 @@ export interface IStorage {
   getUserItems(userId: string): Promise<UserItem[]>;
   createUserItem(item: InsertUserItem): Promise<UserItem>;
   updateUserItem(id: string, updates: Partial<UserItem>): Promise<UserItem>;
+  deleteUserItem(id: string): Promise<boolean>;
 
   // Guild operations
   getGuild(id: string): Promise<Guild | undefined>;
@@ -1601,6 +1602,12 @@ export class MemStorage implements IStorage {
     return userItem;
   }
 
+  async deleteUserItem(id: string): Promise<boolean> {
+    const deleted = this.userItems.delete(id);
+    if (deleted) this.autoSave();
+    return deleted;
+  }
+
   // Referral operations
   async getReferrals(userId: string): Promise<(Referral & { referredUser: User })[]> {
     const userReferrals = Array.from(this.referrals.values()).filter(r => r.referrerId === userId);
@@ -2400,10 +2407,39 @@ export class MemStorage implements IStorage {
       profile.totalReferrals += 1;
       this.referralProfiles.set(profile.id, profile);
 
-      // Award bonus at 3 referrals
-      if (profile.totalReferrals === 3) {
-        console.log(`[REFERRAL BONUS] Awarding 3000 coins to user ${userId} for 3 referrals`);
-        await this.awardCoins(userId, 3000);
+      // Award bonuses at milestone tiers (System V6)
+      if (profile.totalReferrals === 1) {
+        await this.awardCoins(userId, 100);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 1",
+          message: "First warrior inducted into protocol. Yield: +100 coins & Recruiter status.",
+        });
+      } else if (profile.totalReferrals === 3) {
+        await this.awardCoins(userId, 250);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 2",
+          message: "3 operatives inducted. Yield: +250 coins & Obsidian Frame clearance.",
+        });
+      } else if (profile.totalReferrals === 5) {
+        await this.awardCoins(userId, 500);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 3",
+          message: "5 operatives inducted. Yield: +500 coins & Pro Telemetry unlocked.",
+        });
+      } else if (profile.totalReferrals === 10) {
+        await this.awardCoins(userId, 1500);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT PINNACLE // FOUNDING CIRCLE",
+          message: "10 operatives inducted. Highest recruitment clearance. Yield: +1,500 coins.",
+        });
       }
 
       this.autoSave();
@@ -3840,6 +3876,11 @@ export class DatabaseStorage implements IStorage {
     return ui;
   }
 
+  async deleteUserItem(id: string): Promise<boolean> {
+    const res = await db!.delete(userItems).where(eq(userItems.id, id)).returning();
+    return res.length > 0;
+  }
+
   async getGuild(id: string): Promise<Guild | undefined> {
     return await db!.query.guilds.findFirst({ where: eq(guilds.id, id) });
   }
@@ -5000,10 +5041,39 @@ export class DatabaseStorage implements IStorage {
         .set({ totalReferrals: newCount })
         .where(eq(referralProfiles.id, profile.id));
 
-      // Award bonus at 3 referrals
-      if (newCount === 3) {
-        console.log(`[REFERRAL BONUS] Awarding 3000 coins to user ${userId} for 3 referrals`);
-        await this.awardCoins(userId, 3000);
+      // Award bonuses at milestone tiers (System V6)
+      if (newCount === 1) {
+        await this.awardCoins(userId, 100);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 1",
+          message: "First warrior inducted into protocol. Yield: +100 coins & Recruiter status.",
+        });
+      } else if (newCount === 3) {
+        await this.awardCoins(userId, 250);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 2",
+          message: "3 operatives inducted. Yield: +250 coins & Obsidian Frame clearance.",
+        });
+      } else if (newCount === 5) {
+        await this.awardCoins(userId, 500);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT RECRUITER // LEVEL 3",
+          message: "5 operatives inducted. Yield: +500 coins & Pro Telemetry unlocked.",
+        });
+      } else if (newCount === 10) {
+        await this.awardCoins(userId, 1500);
+        await this.createNotification({
+          userId,
+          type: "achievement",
+          title: "COHORT PINNACLE // FOUNDING CIRCLE",
+          message: "10 operatives inducted. Highest recruitment clearance. Yield: +1,500 coins.",
+        });
       }
     }
   }

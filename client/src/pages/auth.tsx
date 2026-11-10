@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { audioEngine } from "@/lib/audio-engine";
+import { InstantFocusSandboxModal } from "@/components/sandbox/instant-focus-sandbox-modal";
 
 // Detect iOS device
 function isIOS() {
@@ -36,6 +37,7 @@ export default function AuthPage() {
   const { isInstallable, promptInstall } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showSandbox, setShowSandbox] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Soundboard interactive preview state
@@ -384,26 +386,41 @@ export default function AuthPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 }}
-                  className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xl mb-6"
+                  className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-6"
                 >
-                  {/* Primary App Download Button */}
-                  <Button
-                    onClick={handleInstall}
-                    size="lg"
-                    className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-base py-7 px-8 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-[1.02]"
-                  >
-                    <Download className="mr-2.5 w-5 h-5" />
-                    INSTALL APP TO DEVICE
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                    {/* Primary App Download Button */}
+                    <Button
+                      onClick={handleInstall}
+                      size="lg"
+                      className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-base py-7 px-8 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-[1.02]"
+                    >
+                      <Download className="mr-2.5 w-5 h-5" />
+                      INSTALL APP TO DEVICE
+                    </Button>
 
-                  {/* Instant Browser Access */}
+                    {/* Instant Browser Access */}
+                    <Button
+                      onClick={() => setLocation('/account-selection')}
+                      size="lg"
+                      variant="outline"
+                      className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/60 hover:bg-slate-800/80 text-white font-mono font-semibold text-base py-7 px-8 rounded-xl"
+                    >
+                      LAUNCH WEB CONSOLE <ArrowRight className="ml-2 w-5 h-5 text-cyan-400" />
+                    </Button>
+                  </div>
+
+                  {/* Zero-Auth 3-Minute Sandbox Button */}
                   <Button
-                    onClick={() => setLocation('/account-selection')}
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/60 hover:bg-slate-800/80 text-white font-mono font-semibold text-base py-7 px-8 rounded-xl"
+                    onClick={() => {
+                      audioEngine.playTactileClick();
+                      setShowSandbox(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-amber-500/15 via-cyan-500/15 to-purple-500/15 hover:from-amber-500/25 hover:via-cyan-500/25 hover:to-purple-500/25 border border-cyan-400/50 text-cyan-300 font-mono font-bold text-xs sm:text-sm py-6 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all transform hover:scale-[1.01]"
                   >
-                    LAUNCH WEB CONSOLE <ArrowRight className="ml-2 w-5 h-5 text-cyan-400" />
+                    <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span>TEST 3-MIN FOCUS SPRINT & OPEN FIRST COFFER (NO SIGN-UP)</span>
+                    <ArrowRight className="w-4 h-4 text-cyan-400" />
                   </Button>
                 </motion.div>
 
@@ -950,6 +967,16 @@ export default function AuthPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Zero-Auth 3-Minute Instant Focus Sandbox Modal */}
+      <InstantFocusSandboxModal
+        isOpen={showSandbox}
+        onClose={() => setShowSandbox(false)}
+        onConvertToAccount={() => {
+          setShowSandbox(false);
+          setLocation('/account-selection');
+        }}
+      />
 
     </div>
   );

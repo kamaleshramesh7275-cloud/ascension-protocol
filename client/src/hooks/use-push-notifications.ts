@@ -93,7 +93,7 @@ export function usePushNotifications() {
 
             if (result === "granted") {
                 await registerToken();
-                toast({ title: "🔔 Notifications enabled!", description: "You'll receive push notifications from Ascensions Protocol." });
+                toast({ title: "Notifications enabled", description: "You will receive verified mission dispatches from Ascension Protocol." });
                 return true;
             } else {
                 toast({ title: "Notifications blocked", description: "You can enable them in your browser settings.", variant: "destructive" });

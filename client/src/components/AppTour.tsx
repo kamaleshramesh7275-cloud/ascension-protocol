@@ -10,7 +10,7 @@ const steps: (Step & { path?: string })[] = [
     {
         target: 'body',
         placement: 'center',
-        title: 'Welcome to Ascensions Protocol! 🚀',
+        title: 'Welcome to Ascension Protocol',
         content: "I'll take you on a quick tour of your new base of operations. Let's explore the system together!",
         path: '/dashboard'
     },
@@ -110,7 +110,7 @@ const steps: (Step & { path?: string })[] = [
     {
         target: 'body',
         placement: 'center',
-        title: 'Ascensions Commences! 🎖',
+        title: 'Protocol Commences',
         content: "You're all set, Commander. Your journey to the top begins now. We'll see you in the rankings!",
         path: '/profile'
     }
