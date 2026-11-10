@@ -18,25 +18,23 @@ export async function requireAuth(req: Request, res: Response, next: Function) {
         return res.status(403).json({ error: "Account has been deleted" });
     }
 
-    // Handle guest users OR users lost due to server restart (MemStorage)
+    // Handle guest users, local users, or recovered Firebase/Google sessions (e.g. after server restart or fresh token)
     if (!user) {
         const isGuest = firebaseUid.startsWith("guest_");
         const isLocal = firebaseUid.startsWith("local_");
 
-        if (isGuest || isLocal) {
-            user = await storage.createUser({
-                firebaseUid,
-                name: isGuest ? "Guest Ascendant" : "Ascendant",
-                email: isGuest ? `${firebaseUid}@guest.com` : "user@ascension.com",
-                avatarUrl: null,
-                timezone: "UTC",
-                onboardingCompleted: !isGuest, // Assume real users have onboarded
-            });
+        user = await storage.createUser({
+            firebaseUid,
+            name: isGuest ? "Guest Ascendant" : "Ascendant",
+            email: isGuest ? `${firebaseUid}@guest.com` : `${firebaseUid.slice(0, 10)}@ascension.protocol`,
+            avatarUrl: null,
+            timezone: "UTC",
+            onboardingCompleted: !isGuest, // Assume real users have onboarded
+        });
 
-            // Give them coins to test shop if they were lost
-            if (!isGuest) {
-                await storage.updateUser(user.id, { coins: 1000 });
-            }
+        // Give coins to non-guests
+        if (!isGuest) {
+            await storage.updateUser(user.id, { coins: 500 });
         }
     }
 

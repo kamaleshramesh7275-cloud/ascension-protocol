@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LiveTelemetryTicker } from "@/components/live-telemetry-ticker";
 import { motion } from "framer-motion";
 import { User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
-import { signInWithGoogle } from "@/lib/firebase";
+import { signInWithGoogle, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
 
 export default function Login() {
     const [, setLocation] = useLocation();
@@ -21,6 +21,68 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Process authenticated Firebase user with backend
+    const completeGoogleLogin = async (firebaseUser: { uid: string; email: string | null; displayName: string | null; photoURL?: string | null }) => {
+        const response = await fetch("/api/auth/login-google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                firebaseUid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                photoUrl: firebaseUser.photoURL,
+            }),
+        });
+
+        if (!response.ok) {
+            let errText = "Google login failed";
+            try {
+                const errData = await response.json();
+                errText = errData.error || errText;
+            } catch {
+                errText = response.statusText || errText;
+            }
+            throw new Error(errText);
+        }
+
+        const data = await response.json();
+        await loginGoogle(data.userId, data.firebaseUid, data.username || firebaseUser.displayName || undefined);
+
+        toast({
+            title: data.isNewUser ? "Welcome to Ascension Protocol!" : "Welcome back, Ascendant!",
+            description: `Signed in as ${data.username || firebaseUser.displayName || "Hunter"}.`,
+        });
+        setLocation("/dashboard");
+    };
+
+    // Check for redirect result on component mount (for mobile/standalone redirect flow)
+    useEffect(() => {
+        let isMounted = true;
+
+        getGoogleRedirectResult()
+            .then(async (user) => {
+                if (!isMounted || !user) return;
+                setIsLoading(true);
+                await completeGoogleLogin(user);
+            })
+            .catch((error) => {
+                console.error("Google redirect resolution error:", error);
+                const { title, description } = formatFirebaseAuthError(error);
+                toast({
+                    title,
+                    description,
+                    variant: "destructive",
+                });
+            })
+            .finally(() => {
+                if (isMounted) setIsLoading(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,36 +138,19 @@ export default function Login() {
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
-            const result = await signInWithGoogle();
-            const firebaseUser = result.user;
-
-            const response = await fetch("/api/auth/login-google", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ firebaseUid: firebaseUser.uid }),
-            });
-
-            if (response.status === 404) {
-                toast({ title: "Account not found", description: "Redirecting to registration..." });
-                setLocation("/register?google=true");
+            const authResult = await signInWithGoogle();
+            if (!authResult) {
+                // Page redirect initiated (mobile / PWA / popup-blocked fallback)
                 return;
             }
-
-            if (!response.ok) {
-                throw new Error("Google login failed");
-            }
-
-            const data = await response.json();
-            await loginGoogle(data.userId, data.firebaseUid, firebaseUser.displayName || undefined);
-            
-            toast({ title: "Welcome back, Ascendant!" });
-            setLocation("/dashboard");
+            await completeGoogleLogin(authResult.user);
         } catch (error: any) {
             console.error("Google Login Error:", error);
+            const { title, description } = formatFirebaseAuthError(error);
             toast({
-                title: "Login failed",
-                description: error.message || "Could not sign in with Google",
-                variant: "destructive"
+                title,
+                description,
+                variant: "destructive",
             });
         } finally {
             setIsLoading(false);

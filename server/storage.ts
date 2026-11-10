@@ -205,6 +205,7 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   isUserDeleted(firebaseUid: string): Promise<boolean>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
@@ -1125,6 +1126,13 @@ export class MemStorage implements IStorage {
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
     const user = Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid);
+    return user ? normalizeUser(user) : undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    if (!email) return undefined;
+    const lowerEmail = email.toLowerCase().trim();
+    const user = Array.from(this.users.values()).find(u => u.email?.toLowerCase().trim() === lowerEmail);
     return user ? normalizeUser(user) : undefined;
   }
 
@@ -3623,6 +3631,13 @@ export class DatabaseStorage implements IStorage {
     //     console.error("Failed to lazy generate referral code (firebase)", e);
     //   }
     // }
+    return user ? normalizeUser(user) : undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    if (!email) return undefined;
+    const lowerEmail = email.toLowerCase().trim();
+    const user = await db!.query.users.findFirst({ where: eq(users.email, lowerEmail) });
     return user ? normalizeUser(user) : undefined;
   }
 

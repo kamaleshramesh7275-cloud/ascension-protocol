@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
-import { signInWithGoogle, onAuthChange } from "@/lib/firebase";
+import { signInWithGoogle, onAuthChange, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
 
 export default function Register() {
     const [, setLocation] = useLocation();
@@ -51,18 +51,49 @@ export default function Register() {
     const [googleUid, setGoogleUid] = useState<string | null>(null);
     const [googleEmail, setGoogleEmail] = useState<string | null>(null);
 
+    // Check for redirect result from Google OAuth or active auth state
     useEffect(() => {
+        let isMounted = true;
+
+        getGoogleRedirectResult()
+            .then((user) => {
+                if (!isMounted || !user) return;
+                setGoogleUid(user.uid);
+                setGoogleEmail(user.email);
+                if (user.displayName && !username) {
+                    setUsername(user.displayName.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 14));
+                }
+                setIsGoogleAuth(true);
+                setStep("assessment");
+                toast({ title: "Authenticated with Google", description: "Let's calibrate your stats." });
+            })
+            .catch((err) => {
+                console.error("Redirect result error:", err);
+                const { title, description } = formatFirebaseAuthError(err);
+                toast({ title, description, variant: "destructive" });
+            });
+
         if (window.location.search.includes("google=true")) {
             const unsubscribe = onAuthChange((user) => {
-                if (user) {
+                if (user && isMounted) {
                     setGoogleUid(user.uid);
                     setGoogleEmail(user.email);
+                    if (user.displayName && !username) {
+                        setUsername(user.displayName.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 14));
+                    }
                     setIsGoogleAuth(true);
                     setStep("assessment");
                 }
             });
-            return () => unsubscribe();
+            return () => {
+                isMounted = false;
+                unsubscribe();
+            };
         }
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // Auto-fill referral code from localStorage (set by /ref/:code redirect)
@@ -163,14 +194,16 @@ export default function Register() {
             return;
         }
 
-        if (!isPasswordValid) {
-            toast({ title: "Password does not meet requirements", variant: "destructive" });
-            return;
-        }
+        if (!isGoogleAuth) {
+            if (!isPasswordValid) {
+                toast({ title: "Password does not meet requirements", variant: "destructive" });
+                return;
+            }
 
-        if (!passwordsMatch) {
-            toast({ title: "Passwords do not match", variant: "destructive" });
-            return;
+            if (!passwordsMatch) {
+                toast({ title: "Passwords do not match", variant: "destructive" });
+                return;
+            }
         }
 
         try {
@@ -233,16 +266,24 @@ export default function Register() {
 
     const handleGoogleSignup = async () => {
         try {
-            const result = await signInWithGoogle();
-            const firebaseUser = result.user;
+            const authResult = await signInWithGoogle();
+            if (!authResult) {
+                // Page redirect initiated (fallback for mobile/standalone PWA)
+                return;
+            }
+            const firebaseUser = authResult.user;
             setGoogleUid(firebaseUser.uid);
             setGoogleEmail(firebaseUser.email);
+            if (firebaseUser.displayName && !username) {
+                setUsername(firebaseUser.displayName.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 14));
+            }
             setIsGoogleAuth(true);
             setStep("assessment");
-            toast({ title: "Authenticated", description: "Let's calibrate your stats." });
+            toast({ title: "Authenticated with Google", description: "Let's calibrate your stats." });
         } catch (error: any) {
             console.error("Google Signup Error:", error);
-            toast({ title: "Google Signup failed", description: error.message, variant: "destructive" });
+            const { title, description } = formatFirebaseAuthError(error);
+            toast({ title, description, variant: "destructive" });
         }
     };
 
@@ -274,6 +315,24 @@ export default function Register() {
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                                 </svg>
                                 Continue with Google
+                            </Button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-zinc-800"></div>
+                                <span className="flex-shrink mx-4 text-xs text-zinc-500 uppercase tracking-widest font-mono">Or</span>
+                                <div className="flex-grow border-t border-zinc-800"></div>
+                            </div>
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => {
+                                    setIsGoogleAuth(false);
+                                    setStep("assessment");
+                                }}
+                                className="w-full h-11 border border-zinc-800 hover:bg-zinc-800/60 text-zinc-300 font-mono text-sm"
+                            >
+                                Register with Username & Password
                             </Button>
                             
                             <div className="text-center text-sm text-zinc-500 mt-6 pt-4 border-t border-zinc-800">
@@ -501,7 +560,7 @@ export default function Register() {
 
                             {/* Phone Number */}
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Mobile Number</Label>
+                                <Label htmlFor="phone">Mobile Number {isGoogleAuth && <span className="text-zinc-500 text-xs">(Optional)</span>}</Label>
                                 <div className="relative">
                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
@@ -511,7 +570,7 @@ export default function Register() {
                                         onChange={(e) => setPhone(e.target.value)}
                                         className="bg-black border-zinc-700 pl-10"
                                         placeholder="e.g. +91 9876543210"
-                                        required
+                                        required={!isGoogleAuth}
                                     />
                                 </div>
                                 {phone && phone.length < 10 && (
@@ -519,82 +578,87 @@ export default function Register() {
                                 )}
                             </div>
 
-                            {/* Password */}
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="bg-black border-zinc-700 pl-10 pr-10"
-                                        placeholder="Create a strong password"
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
-                                    >
-                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
+                            {isGoogleAuth ? (
+                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1">
+                                    <p className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                                        <Check className="w-4 h-4" /> Google SSO Verified
+                                    </p>
+                                    <p className="text-xs text-zinc-400">
+                                        Linked to <span className="text-zinc-200 font-mono">{googleEmail}</span>. No separate password needed.
+                                    </p>
                                 </div>
-
-                                {/* Password Requirements */}
-                                <div className="space-y-1 text-xs">
-                                    {Object.entries({
-                                        length: "At least 8 characters",
-                                        uppercase: "One uppercase letter",
-                                        lowercase: "One lowercase letter",
-                                        number: "One number",
-                                    }).map(([key, label]) => (
-                                        <div key={key} className="flex items-center gap-2">
-                                            {passwordRequirements[key as keyof typeof passwordRequirements] ? (
-                                                <Check className="w-3 h-3 text-green-500" />
-                                            ) : (
-                                                <X className="w-3 h-3 text-red-500" />
-                                            )}
-                                            <span className={passwordRequirements[key as keyof typeof passwordRequirements] ? "text-green-500" : "text-zinc-500"}>
-                                                {label}
-                                            </span>
+                            ) : (
+                                <>
+                                    {/* Password */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password">Password</Label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                            <Input
+                                                id="password"
+                                                type={showPassword ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="bg-black border-zinc-700 pl-10 pr-10"
+                                                placeholder="Create a strong password"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
 
-                            {/* Confirm Password */}
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="bg-black border-zinc-700 pl-10"
-                                        placeholder="Confirm your password"
-                                        required
-                                    />
-                                </div>
-                                {confirmPassword && !passwordsMatch && (
-                                    <p className="text-xs text-red-400">Passwords do not match</p>
-                                )}
-                                {passwordsMatch && (
-                                    <p className="text-xs text-green-500 flex items-center gap-1">
-                                        <Check className="w-3 h-3" /> Passwords match
-                                    </p>
-                                )}
-                            </div>
+                                        {/* Password Requirements */}
+                                        <div className="space-y-1 text-xs">
+                                            {Object.entries({
+                                                length: "At least 8 characters",
+                                                uppercase: "One uppercase letter",
+                                                lowercase: "One lowercase letter",
+                                                number: "One number",
+                                            }).map(([key, label]) => (
+                                                <div key={key} className="flex items-center gap-2">
+                                                    {passwordRequirements[key as keyof typeof passwordRequirements] ? (
+                                                        <Check className="w-3 h-3 text-green-500" />
+                                                    ) : (
+                                                        <X className="w-3 h-3 text-red-500" />
+                                                    )}
+                                                    <span className={passwordRequirements[key as keyof typeof passwordRequirements] ? "text-green-500" : "text-zinc-500"}>
+                                                        {label}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            {isGoogleAuth && (
-                                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-md">
-                                    <p className="text-sm text-purple-300 flex items-center gap-2">
-                                        <Check className="w-4 h-4" /> Account linked with Google.
-                                    </p>
-                                </div>
+                                    {/* Confirm Password */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                                            <Input
+                                                id="confirmPassword"
+                                                type={showPassword ? "text" : "password"}
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="bg-black border-zinc-700 pl-10"
+                                                placeholder="Confirm your password"
+                                                required
+                                            />
+                                        </div>
+                                        {confirmPassword && !passwordsMatch && (
+                                            <p className="text-xs text-red-400">Passwords do not match</p>
+                                        )}
+                                        {passwordsMatch && (
+                                            <p className="text-xs text-green-500 flex items-center gap-1">
+                                                <Check className="w-3 h-3" /> Passwords match
+                                            </p>
+                                        )}
+                                    </div>
+                                </>
                             )}
 
                             {/* Referral Code (Optional) */}

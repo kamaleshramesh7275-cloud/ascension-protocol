@@ -292,19 +292,108 @@ export function registerLocalAuthRoutes(app: Express) {
         res.json({ exists });
     });
 
-    // Google Auth Login
+    // Google Auth Login & Auto-Provisioning
     app.post("/api/auth/login-google", async (req, res) => {
         try {
-            const { firebaseUid } = req.body;
+            const { firebaseUid, email, displayName, photoUrl, referralCode } = req.body;
             if (!firebaseUid) return res.status(400).json({ error: "Missing Firebase UID" });
 
             const storage = getStorage();
-            const user = await storage.getUserByFirebaseUid(firebaseUid);
-            if (!user) {
-                return res.status(404).json({ error: "User not found" });
+            let user = await storage.getUserByFirebaseUid(firebaseUid);
+            let isNewUser = false;
+
+            // 1. If not found by Firebase UID, check by email to link existing local account
+            if (!user && email) {
+                const existingByEmail = await storage.getUserByEmail(email);
+                if (existingByEmail) {
+                    console.log(`[LOGIN-GOOGLE] Linking existing user account ${existingByEmail.id} with Google Firebase UID ${firebaseUid}`);
+                    user = await storage.updateUser(existingByEmail.id, {
+                        firebaseUid,
+                        avatarUrl: existingByEmail.avatarUrl || photoUrl || null,
+                    });
+                }
             }
 
-            res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
+            // 2. If user still does not exist, auto-provision account seamlessly
+            if (!user) {
+                console.log(`[LOGIN-GOOGLE] Auto-provisioning new account for Google UID ${firebaseUid}`);
+                isNewUser = true;
+
+                // Generate clean, unique username
+                let baseUsername = (displayName || email?.split("@")[0] || "Hunter")
+                    .replace(/[^a-zA-Z0-9_]/g, "")
+                    .slice(0, 14);
+                if (!baseUsername || baseUsername.length < 3) baseUsername = "Hunter";
+
+                let chosenUsername = baseUsername;
+                let counter = 1;
+                while (await storage.usernameExists(chosenUsername)) {
+                    const suffix = Math.floor(100 + Math.random() * 900);
+                    chosenUsername = `${baseUsername.slice(0, 10)}_${suffix}`;
+                    counter++;
+                    if (counter > 15) {
+                        chosenUsername = `Hunter_${Math.floor(1000 + Math.random() * 9000)}`;
+                        break;
+                    }
+                }
+
+                // Check referral if supplied
+                let referrerId: string | undefined;
+                if (referralCode) {
+                    try {
+                        const referrerProfile = await storage.getReferralProfileByCode(referralCode);
+                        if (referrerProfile) {
+                            referrerId = referrerProfile.userId;
+                        }
+                    } catch (refErr) {
+                        console.warn("[LOGIN-GOOGLE] Referral lookup skipped:", refErr);
+                    }
+                }
+
+                user = await storage.createUser({
+                    firebaseUid,
+                    name: chosenUsername,
+                    email: email || `${chosenUsername}@ascension.protocol`,
+                    avatarUrl: photoUrl || null,
+                    timezone: "UTC",
+                    onboardingCompleted: true,
+                    coins: referrerId ? 250 : 150,
+                    level: 1,
+                    xp: 0,
+                    tier: "D",
+                    streak: 1,
+                    strength: 20,
+                    agility: 20,
+                    endurance: 20,
+                    discipline: 20,
+                    intelligence: 20,
+                    perception: 20,
+                    vitality: 20,
+                    recovery: 20,
+                    charisma: 20,
+                } as any);
+
+                // Initialize welcome activity
+                try {
+                    await storage.createActivity({
+                        userId: user.id,
+                        action: "system",
+                        xpDelta: 0,
+                        coinsDelta: user.coins || 150,
+                        description: "Initiated Ascension Protocol via Google Auth",
+                    } as any);
+                } catch {
+                    // non-critical
+                }
+            }
+
+            res.json({
+                success: true,
+                userId: user.id,
+                firebaseUid: user.firebaseUid,
+                username: user.name,
+                isNewUser,
+            });
         } catch (error) {
             console.error("Google Login Error:", error);
             res.status(500).json({ error: "Google login failed" });
