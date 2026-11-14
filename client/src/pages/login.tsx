@@ -285,6 +285,16 @@ export default function Login() {
                                     </button>
                                 </div>
                             </div>
+
+                            <div className="pt-2 text-center text-[11px] font-mono text-zinc-500 flex items-center justify-center gap-3 border-t border-zinc-800/80">
+                                <a href="/privacy" onClick={(e) => { e.preventDefault(); setLocation("/privacy"); }} className="hover:text-cyan-400 transition-colors">
+                                    Privacy Policy
+                                </a>
+                                <span>•</span>
+                                <a href="/terms" onClick={(e) => { e.preventDefault(); setLocation("/terms"); }} className="hover:text-cyan-400 transition-colors">
+                                    Terms of Service
+                                </a>
+                            </div>
                         </form>
                     </CardContent>
                 </Card>

@@ -77,6 +77,8 @@ import PublicCommitmentsPage from "@/pages/public-commitments";
 import HallOfAscensionPage from "@/pages/hall-of-ascension";
 import CovenantViewPage from "@/pages/covenant-view";
 import AchievementsPage from "@/pages/achievements";
+import PrivacyPolicyPage from "@/pages/privacy";
+import TermsOfServicePage from "@/pages/terms";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -285,6 +287,8 @@ function Router() {
         <Route path="/session/:id" component={() => <ProtectedRoute component={withSeo(SessionPage, { title: "Session" })} />} />
         <Route path="/covenant/:code" component={withSeo(CovenantViewPage, { title: "Bilateral Peer Covenant" })} />
         <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
+        <Route path="/privacy" component={withSeo(PrivacyPolicyPage, { title: "Privacy Policy", description: "Ascension Protocol Privacy Policy & User Data Protocol", url: "/privacy" })} />
+        <Route path="/terms" component={withSeo(TermsOfServicePage, { title: "Terms of Service", description: "Ascension Protocol Terms of Service & Operator Compliance Charter", url: "/terms" })} />
         <Route component={withSeo(NotFound, { title: "404 Not Found" })} />
       </Switch>
     );
@@ -300,6 +304,8 @@ function Router() {
       <Route path="/ref/:code" component={ReferralRedirect} />
       <Route path="/covenant/:code" component={withSeo(CovenantViewPage, { title: "Bilateral Peer Covenant" })} />
       <Route path="/admin/dashboard" component={withSeo(AdminDashboard, { title: "Admin Control" })} />
+      <Route path="/privacy" component={withSeo(PrivacyPolicyPage, { title: "Privacy Policy", description: "Ascension Protocol Privacy Policy & User Data Protocol", url: "/privacy" })} />
+      <Route path="/terms" component={withSeo(TermsOfServicePage, { title: "Terms of Service", description: "Ascension Protocol Terms of Service & Operator Compliance Charter", url: "/terms" })} />
 
       {/* Catch-all: Redirect to home */}
       <Route component={() => <Redirect to="/" />} />
@@ -379,7 +385,7 @@ function AppContent() {
   return (
     <>
       <AppTour />
-      {location === "/onboarding" || location === "/briefing-room" || location === "/air-gap-focus" ? (
+      {location === "/onboarding" || location === "/briefing-room" || location === "/air-gap-focus" || location === "/privacy" || location === "/terms" ? (
         <Router />
       ) : (
         <SidebarProvider>

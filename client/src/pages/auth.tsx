@@ -794,8 +794,30 @@ export default function AuthPage() {
                 </div>
 
                 {/* Footer */}
-                <footer className="w-full text-center pb-6 text-xs font-mono text-slate-600">
-                  <p>© {new Date().getFullYear()} ASCENSION OS // MIL-SPEC HUMAN PROTOCOL. ALL RIGHTS RESERVED.</p>
+                <footer className="w-full text-center pb-8 pt-4 text-xs font-mono text-slate-500 border-t border-slate-900/80">
+                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
+                    <button
+                      onClick={() => setLocation('/privacy')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      PRIVACY POLICY
+                    </button>
+                    <span>•</span>
+                    <button
+                      onClick={() => setLocation('/terms')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      TERMS OF SERVICE
+                    </button>
+                    <span>•</span>
+                    <button
+                      onClick={() => setLocation('/contact')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      CONTACT DESK
+                    </button>
+                  </div>
+                  <p className="text-slate-600">© {new Date().getFullYear()} ASCENSION OS // MIL-SPEC HUMAN PROTOCOL. ALL RIGHTS RESERVED.</p>
                 </footer>
               </section>
             </motion.div>

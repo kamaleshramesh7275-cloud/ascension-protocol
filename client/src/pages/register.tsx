@@ -343,8 +343,19 @@ export default function Register() {
                             >
                                 Register with Username & Password
                             </Button>
+
+                            <p className="text-[11px] text-zinc-500 text-center font-mono pt-1 leading-relaxed">
+                                By continuing, you agree to our{" "}
+                                <a href="/terms" onClick={(e) => { e.preventDefault(); setLocation("/terms"); }} className="text-cyan-400 underline hover:text-cyan-300">
+                                    Terms of Service
+                                </a>{" "}
+                                and acknowledge our{" "}
+                                <a href="/privacy" onClick={(e) => { e.preventDefault(); setLocation("/privacy"); }} className="text-cyan-400 underline hover:text-cyan-300">
+                                    Privacy Policy
+                                </a>.
+                            </p>
                             
-                            <div className="text-center text-sm text-zinc-500 mt-6 pt-4 border-t border-zinc-800">
+                            <div className="text-center text-sm text-zinc-500 mt-4 pt-4 border-t border-zinc-800">
                                 Already have an account?{" "}
                                 <span className="underline cursor-pointer text-purple-400 hover:text-purple-300 transition-colors" onClick={() => setLocation("/login")}>
                                     Login here
@@ -728,6 +739,17 @@ export default function Register() {
                                     Create Account
                                 </Button>
                             </div>
+
+                            <p className="text-[11px] text-zinc-500 text-center font-mono pt-1 leading-relaxed">
+                                By creating an account, you agree to our{" "}
+                                <a href="/terms" onClick={(e) => { e.preventDefault(); setLocation("/terms"); }} className="text-cyan-400 underline hover:text-cyan-300">
+                                    Terms of Service
+                                </a>{" "}
+                                and{" "}
+                                <a href="/privacy" onClick={(e) => { e.preventDefault(); setLocation("/privacy"); }} className="text-cyan-400 underline hover:text-cyan-300">
+                                    Privacy Policy
+                                </a>.
+                            </p>
                         </form>
                     </CardContent>
                 </Card>
