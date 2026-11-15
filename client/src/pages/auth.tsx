@@ -7,7 +7,7 @@ import {
   AlertCircle, ArrowRight, Shield, Lock, Download, 
   Smartphone, Zap, QrCode, Copy, Check, Terminal, Users, 
   Trophy, Flame, Sword, Sparkles, Activity, Layers, 
-  Target, Award, ChevronRight, CheckCircle2
+  Target, Award, ChevronRight, CheckCircle2, Compass, Brain, Crown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -26,11 +26,23 @@ function isStandalone() {
     (window.navigator as any).standalone === true;
 }
 
-// Hunter Class Archetypes Metadata
+// Helper to render vector icon for archetypes (no emojis)
+function renderArchetypeIcon(key: string, className: string = "w-5 h-5") {
+  switch (key) {
+    case "zap": return <Zap className={className} />;
+    case "shield": return <Shield className={className} />;
+    case "compass": return <Compass className={className} />;
+    case "brain": return <Brain className={className} />;
+    case "crown": return <Crown className={className} />;
+    default: return <Sword className={className} />;
+  }
+}
+
+// Hunter Class Archetypes Metadata (Clean SVG Icons)
 const HUNTER_ARCHETYPES = [
   {
     name: "Shadow Assassin",
-    icon: "🗡️",
+    iconKey: "zap",
     focus: "Calisthenics & Speed",
     stat: "AGILITY & DISCIPLINE",
     description: "Bodyweight mastery, explosive plyometrics, sprint intervals, and high-cadence mobility drills.",
@@ -38,7 +50,7 @@ const HUNTER_ARCHETYPES = [
   },
   {
     name: "Iron Tank",
-    icon: "🛡️",
+    iconKey: "shield",
     focus: "Hypertrophy & Power",
     stat: "STRENGTH & VITALITY",
     description: "Heavy compound resistance, progressive overload, physical density, and high-intensity lifting.",
@@ -46,7 +58,7 @@ const HUNTER_ARCHETYPES = [
   },
   {
     name: "Phantom Ranger",
-    icon: "🏹",
+    iconKey: "compass",
     focus: "Cardio & VO2 Endurance",
     stat: "STAMINA & PACE",
     description: "Long-distance pacing, zone-2 metabolic stamina, threshold intervals, and continuous grit.",
@@ -54,7 +66,7 @@ const HUNTER_ARCHETYPES = [
   },
   {
     name: "Void Scholar",
-    icon: "🔮",
+    iconKey: "brain",
     focus: "Deep Cognitive Focus",
     stat: "INTELLECT & WILLPOWER",
     description: "Unbroken deep work sessions, deliberate learning, strategic planning, and cognitive endurance.",
@@ -62,7 +74,7 @@ const HUNTER_ARCHETYPES = [
   },
   {
     name: "Shadow Monarch",
-    icon: "👑",
+    iconKey: "crown",
     focus: "Hybrid Mastery",
     stat: "ALL ATTRIBUTES",
     description: "The balanced sovereign archetype. Uniting physical strength, cognitive discipline, and peak leadership.",
@@ -555,15 +567,19 @@ export default function AuthPage() {
                         <button
                           key={archetype.name}
                           onClick={() => setActiveArchetypeIndex(idx)}
-                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                          className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
                             isActive
                               ? "border-cyan-400 bg-cyan-950/40 shadow-[0_0_20px_rgba(6,182,212,0.25)]"
                               : "border-slate-800 bg-slate-900/40 hover:border-slate-700 text-slate-400"
                           }`}
                         >
-                          <div className="text-2xl mb-1">{archetype.icon}</div>
-                          <div className="text-xs font-bold text-white truncate">{archetype.name}</div>
-                          <div className="text-[10px] text-cyan-400/90 truncate mt-0.5">{archetype.focus}</div>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${
+                            isActive ? "text-cyan-400 bg-cyan-500/20" : "text-slate-400 bg-slate-800/60"
+                          }`}>
+                            {renderArchetypeIcon(archetype.iconKey, "w-4 h-4")}
+                          </div>
+                          <div className="text-xs font-bold text-white truncate w-full">{archetype.name}</div>
+                          <div className="text-[10px] text-cyan-400/90 truncate mt-0.5 w-full">{archetype.focus}</div>
                         </button>
                       );
                     })}
@@ -573,7 +589,9 @@ export default function AuthPage() {
                   <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-slate-900/80 to-[#020617] border border-cyan-500/30 backdrop-blur-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div className="space-y-3 max-w-xl">
                       <div className="flex items-center gap-3">
-                        <span className="text-4xl">{HUNTER_ARCHETYPES[activeArchetypeIndex].icon}</span>
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                          {renderArchetypeIcon(HUNTER_ARCHETYPES[activeArchetypeIndex].iconKey, "w-6 h-6")}
+                        </div>
                         <div>
                           <h3 className="text-2xl font-bold text-white tracking-tight">
                             {HUNTER_ARCHETYPES[activeArchetypeIndex].name}
