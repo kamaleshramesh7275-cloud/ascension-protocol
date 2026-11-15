@@ -11,3 +11,10 @@ vite.config.ts.*
 .env.production
 .env.development
 *.env
+
+# Android & Capacitor build artifacts
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+*.apk
