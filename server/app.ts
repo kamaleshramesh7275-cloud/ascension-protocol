@@ -38,7 +38,8 @@ app.set("trust proxy", 1);
 // Set security headers (CSP disabled to allow Vite/React inline scripts for now)
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  frameguard: process.env.NODE_ENV === "production" ? { action: 'sameorigin' } : false,
 }));
 
 // Global Rate Limiter: 100 requests per 15 minutes per IP
