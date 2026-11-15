@@ -1,18 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { 
   AlertCircle, ArrowRight, Shield, Lock, Download, 
-  Smartphone, Zap, Volume2, AlertTriangle, 
-  Gavel, QrCode, Copy, Check, Terminal, Users, 
-  Cpu, Play, Square
+  Smartphone, Zap, QrCode, Copy, Check, Terminal, Users, 
+  Trophy, Flame, Sword, Sparkles, Activity, Layers, 
+  Target, Award, ChevronRight, CheckCircle2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
-import { audioEngine } from "@/lib/audio-engine";
-import { InstantFocusSandboxModal } from "@/components/sandbox/instant-focus-sandbox-modal";
 
 // Detect iOS device
 function isIOS() {
@@ -28,6 +26,102 @@ function isStandalone() {
     (window.navigator as any).standalone === true;
 }
 
+// Hunter Class Archetypes Metadata
+const HUNTER_ARCHETYPES = [
+  {
+    name: "Shadow Assassin",
+    icon: "🗡️",
+    focus: "Calisthenics & Speed",
+    stat: "AGILITY & DISCIPLINE",
+    description: "Bodyweight mastery, explosive plyometrics, sprint intervals, and high-cadence mobility drills.",
+    color: "border-cyan-500/40 text-cyan-400 bg-cyan-950/20",
+  },
+  {
+    name: "Iron Tank",
+    icon: "🛡️",
+    focus: "Hypertrophy & Power",
+    stat: "STRENGTH & VITALITY",
+    description: "Heavy compound resistance, progressive overload, physical density, and high-intensity lifting.",
+    color: "border-blue-500/40 text-blue-400 bg-blue-950/20",
+  },
+  {
+    name: "Phantom Ranger",
+    icon: "🏹",
+    focus: "Cardio & VO2 Endurance",
+    stat: "STAMINA & PACE",
+    description: "Long-distance pacing, zone-2 metabolic stamina, threshold intervals, and continuous grit.",
+    color: "border-emerald-500/40 text-emerald-400 bg-emerald-950/20",
+  },
+  {
+    name: "Void Scholar",
+    icon: "🔮",
+    focus: "Deep Cognitive Focus",
+    stat: "INTELLECT & WILLPOWER",
+    description: "Unbroken deep work sessions, deliberate learning, strategic planning, and cognitive endurance.",
+    color: "border-purple-500/40 text-purple-400 bg-purple-950/20",
+  },
+  {
+    name: "Shadow Monarch",
+    icon: "👑",
+    focus: "Hybrid Mastery",
+    stat: "ALL ATTRIBUTES",
+    description: "The balanced sovereign archetype. Uniting physical strength, cognitive discipline, and peak leadership.",
+    color: "border-amber-500/40 text-amber-400 bg-amber-950/20",
+  },
+];
+
+// Progression Tiers Matrix
+const PROGRESSION_TIERS = [
+  {
+    rank: "E-Rank",
+    title: "Initiate",
+    requirement: "Level 1 – 5",
+    color: "text-zinc-400 border-zinc-700 bg-zinc-900/40",
+    badge: "Awakened",
+    desc: "Baseline calibration. Establishes the 3 daily priorities and foundational habit consistency.",
+  },
+  {
+    rank: "D-Rank",
+    title: "Apprentice",
+    requirement: "Level 6 – 15",
+    color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/20",
+    badge: "Streak Active",
+    desc: "Sustained momentum. Unbroken 7-day streaks, active recovery management, and calibrated workouts.",
+  },
+  {
+    rank: "C-Rank",
+    title: "Operator",
+    requirement: "Level 16 – 30",
+    color: "text-cyan-400 border-cyan-500/30 bg-cyan-950/20",
+    badge: "Calibrated",
+    desc: "Progressive overload. High-density deep work sprints and physical volume scaling.",
+  },
+  {
+    rank: "B-Rank",
+    title: "Veteran",
+    requirement: "Level 31 – 50",
+    color: "text-blue-400 border-blue-500/30 bg-blue-950/20",
+    badge: "Elite Executor",
+    desc: "Advanced attribute distribution. Squad commitment leadership and zero-deviation consistency.",
+  },
+  {
+    rank: "A-Rank",
+    title: "Master",
+    requirement: "Level 51 – 75",
+    color: "text-purple-400 border-purple-500/30 bg-purple-950/20",
+    badge: "Top 5%",
+    desc: "Sovereign execution across both mental and physical domains. 30+ day unbroken execution records.",
+  },
+  {
+    rank: "S-Rank",
+    title: "Monarch",
+    requirement: "Level 76+",
+    color: "text-amber-400 border-amber-500/40 bg-amber-950/20 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
+    badge: "Apex Tier",
+    desc: "The pinnacle of self-mastery. Top 1% of executors globally on the global leaderboard.",
+  },
+];
+
 export default function AuthPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -37,18 +131,10 @@ export default function AuthPage() {
   const { isInstallable, promptInstall } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
-  const [showSandbox, setShowSandbox] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Soundboard interactive preview state
-  const [isGammaPlaying, setIsGammaPlaying] = useState(false);
-  const [isSirenTesting, setIsSirenTesting] = useState(false);
-  const sirenTimerRef = useRef<number | null>(null);
-
-  // Escrow dividend calculator state
-  const [squadStake, setSquadStake] = useState<number>(200);
-  const [squadSize, setSquadSize] = useState<number>(5);
-  const [failedMembers, setFailedMembers] = useState<number>(2);
+  // Selected Hunter Archetype in visual showcase
+  const [activeArchetypeIndex, setActiveArchetypeIndex] = useState(0);
 
   const ios = isIOS();
   const standalone = isStandalone();
@@ -62,15 +148,6 @@ export default function AuthPage() {
       }
     }
   }, [user, loading, setLocation]);
-
-  useEffect(() => {
-    return () => {
-      // Cleanup sounds on unmount
-      audioEngine.stop40HzGammaFlow();
-      audioEngine.stopKlaxonSiren();
-      if (sirenTimerRef.current) clearTimeout(sirenTimerRef.current);
-    };
-  }, []);
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,30 +170,6 @@ export default function AuthPage() {
     }
   };
 
-  const toggleGammaFlow = () => {
-    if (isGammaPlaying) {
-      audioEngine.stop40HzGammaFlow();
-      setIsGammaPlaying(false);
-    } else {
-      audioEngine.start40HzGammaFlow(0.3);
-      setIsGammaPlaying(true);
-    }
-  };
-
-  const triggerSirenTest = () => {
-    if (isSirenTesting) return;
-    setIsSirenTesting(true);
-    audioEngine.startKlaxonSiren();
-    sirenTimerRef.current = window.setTimeout(() => {
-      audioEngine.stopKlaxonSiren();
-      setIsSirenTesting(false);
-    }, 2200);
-  };
-
-  const triggerGavelTest = () => {
-    audioEngine.playCourtGavel();
-  };
-
   const copyAppUrl = () => {
     const url = window.location.origin;
     navigator.clipboard.writeText(url);
@@ -124,18 +177,10 @@ export default function AuthPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  // Escrow Dividend Math
-  const totalPool = squadStake * squadSize;
-  const forfeitedCapital = squadStake * failedMembers;
-  const survivingMembers = Math.max(1, squadSize - failedMembers);
-  const bountyPerSurvivor = (forfeitedCapital * 0.85) / survivingMembers; // 15% protocol reserve, 85% dividend
-  const totalPayout = squadStake + bountyPerSurvivor;
-  const roiPercentage = Math.round((bountyPerSurvivor / squadStake) * 100);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
-        <div className="text-center">
+        <div className="text-center font-sans">
           <div className="h-10 w-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-cyan-400 text-sm font-medium tracking-wide">Loading Ascension Protocol...</p>
         </div>
@@ -146,12 +191,11 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen w-full bg-[#020617] text-slate-100 font-sans selection:bg-cyan-500 selection:text-black overflow-x-hidden">
 
-      {/* Cybernetic Grid & Glow Background */}
+      {/* Subtle Background Glows (Low-Stimulation) */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a15_1px,transparent_1px),linear-gradient(to_bottom,#0f172a15_1px,transparent_1px)] bg-[size:4rem_4rem]" />
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
         <div className="absolute bottom-1/3 right-1/4 w-[32rem] h-[32rem] bg-indigo-500/10 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[600px] bg-gradient-radial from-cyan-900/5 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* iOS Install Guide Drawer */}
@@ -180,44 +224,44 @@ export default function AuthPage() {
                 <h3 className="text-xl font-bold tracking-tight text-white">Install on iOS / Safari</h3>
               </div>
               <p className="text-xs text-slate-400 text-center mb-6">
-                Add Ascension Protocol to your home screen for full offline and distraction-free operation.
+                Add Ascension Protocol to your home screen for full offline access and clean full-screen performance.
               </p>
               
-              <div className="space-y-3">
+              <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
                     1
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-200">Tap the Safari Share Button</p>
+                    <p className="font-semibold text-slate-200">Tap the Safari Share Button</p>
                     <p className="text-xs text-slate-400 mt-0.5">Located at the bottom of Safari (the square icon with an arrow pointing up).</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
                     2
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-200">Select "Add to Home Screen"</p>
+                    <p className="font-semibold text-slate-200">Select "Add to Home Screen"</p>
                     <p className="text-xs text-slate-400 mt-0.5">Scroll down slightly in the share menu and tap "Add to Home Screen".</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
                     3
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-200">Confirm "Add"</p>
-                    <p className="text-xs text-slate-400 mt-0.5">The app icon will appear directly on your home screen with zero browser bars.</p>
+                    <p className="font-semibold text-slate-200">Confirm "Add"</p>
+                    <p className="text-xs text-slate-400 mt-0.5">The app icon installs directly to your home screen with zero browser bars.</p>
                   </div>
                 </div>
               </div>
 
               <Button 
                 onClick={() => setShowIOSGuide(false)} 
-                className="w-full mt-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-semibold tracking-wide py-6"
+                className="w-full mt-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-semibold tracking-wide py-5"
               >
                 Understood, Proceed
               </Button>
@@ -246,12 +290,12 @@ export default function AuthPage() {
               >
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-medium mb-4">
                   <QrCode className="w-3.5 h-3.5" />
-                  <span>Mobile App Launcher</span>
+                  <span>Mobile Device Access</span>
                 </div>
 
                 <h3 className="text-xl font-bold text-white mb-2">Scan to Open on Mobile</h3>
                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                  Open your smartphone camera to launch Ascension Protocol with built-in focus audio and offline sync.
+                  Open your camera to access your personal leveling system, daily directives, and rank progression on mobile.
                 </p>
 
                 {/* QR Code Container */}
@@ -267,12 +311,12 @@ export default function AuthPage() {
                   <Button
                     onClick={copyAppUrl}
                     variant="outline"
-                    className="flex-1 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs py-5"
+                    className="flex-1 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs py-5 rounded-xl"
                   >
                     {copiedLink ? (
                       <>
                         <Check className="w-4 h-4 mr-1.5 text-emerald-400" />
-                        Link Copied
+                        Copied
                       </>
                     ) : (
                       <>
@@ -283,7 +327,7 @@ export default function AuthPage() {
                   </Button>
                   <Button
                     onClick={() => setShowQRModal(false)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 px-5"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 px-5 rounded-xl"
                   >
                     Close
                   </Button>
@@ -294,16 +338,16 @@ export default function AuthPage() {
         )}
       </AnimatePresence>
 
-      {/* Main Top Tactical Navigation Bar */}
+      {/* Clean Top Navigation Bar */}
       <header className="relative z-30 border-b border-slate-800/80 bg-[#020617]/90 backdrop-blur-md px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/40">
-              <Terminal className="w-5 h-5 text-black font-bold" />
+              <Sword className="w-5 h-5 text-black font-bold" />
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-lg text-white tracking-tight">Ascension Protocol</span>
-              <span className="text-xs text-cyan-400 font-medium px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 hidden sm:inline-block">v2.4</span>
+              <span className="text-xs text-cyan-400 font-medium px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 hidden sm:inline-block">The System</span>
             </div>
           </div>
 
@@ -317,12 +361,11 @@ export default function AuthPage() {
             </button>
 
             <Button
-              onClick={() => setView('selection')}
-              variant="outline"
+              onClick={() => setLocation('/account-selection')}
               size="sm"
-              className="text-xs border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/50 font-medium px-4 h-9 rounded-lg"
+              className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-4 h-9 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
-              Sign In
+              Awaken Your Rank
             </Button>
           </div>
         </div>
@@ -332,7 +375,7 @@ export default function AuthPage() {
       <main className="relative z-10 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: standalone ? '0' : '88px' }}>
         <AnimatePresence mode="wait">
 
-          {/* ============ HERO & SHOWCASE VIEW ============ */}
+          {/* ============ HERO & SYSTEM SHOWCASE VIEW ============ */}
           {view === 'hero' && (
             <motion.div
               key="hero"
@@ -341,18 +384,18 @@ export default function AuthPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Hero Section */}
-              <section className="w-full max-w-6xl mx-auto px-6 pt-16 sm:pt-20 pb-20 text-center flex flex-col items-center">
-                {/* Clean Eyebrow Pill */}
+              {/* HERO SECTION */}
+              <section className="w-full max-w-6xl mx-auto px-6 pt-16 sm:pt-24 pb-20 text-center flex flex-col items-center">
+                {/* Eyebrow Pill */}
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 backdrop-blur-md mb-8"
                 >
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="text-xs font-medium text-cyan-300 tracking-wide">
-                    High-Performance Daily Execution Platform
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-xs font-semibold text-cyan-300 tracking-wide uppercase">
+                    Personal Progression & Hunter Rank System
                   </span>
                 </motion.div>
 
@@ -363,9 +406,9 @@ export default function AuthPage() {
                   transition={{ delay: 0.2, duration: 0.5 }}
                   className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.08] max-w-5xl"
                 >
-                  <span className="text-white">The Daily Operating System </span>
+                  <span className="text-white">A Real-Life Leveling System </span>
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-300">
-                    for High Performers.
+                    Designed for Yourself.
                   </span>
                 </motion.h1>
 
@@ -376,417 +419,354 @@ export default function AuthPage() {
                   transition={{ delay: 0.35 }}
                   className="text-base sm:text-lg md:text-xl text-slate-300/90 max-w-3xl mb-10 leading-relaxed font-normal"
                 >
-                  Designed for founders, operators, and ambitious achievers. Protect your focus with built-in binaural soundscapes, 
-                  lock non-negotiable daily priorities, collaborate in accountability squads, and review execution with AI debriefs.
+                  Turn your daily physical training, focus habits, and mental discipline into quantifiable RPG stats. 
+                  Choose your hunter archetype, calibrate real attributes (STR, AGI, INT, VIT), and climb the global ranks from E-Rank to Monarch.
                 </motion.p>
 
-                {/* Primary Action Buttons */}
+                {/* Action Buttons */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 }}
-                  className="flex flex-col items-center justify-center gap-3.5 w-full max-w-xl mb-6"
+                  className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md mb-10"
                 >
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full">
-                    {/* Primary App Download Button */}
-                    <Button
-                      onClick={handleInstall}
-                      size="lg"
-                      className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-sm sm:text-base py-6 px-7 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.35)] transition-all transform hover:scale-[1.01]"
-                    >
-                      <Download className="mr-2 w-4 h-4" />
-                      Get Started / Install App
-                    </Button>
-
-                    {/* Instant Browser Access */}
-                    <Button
-                      onClick={() => setLocation('/account-selection')}
-                      size="lg"
-                      variant="outline"
-                      className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/70 hover:bg-slate-800 text-white font-medium text-sm sm:text-base py-6 px-7 rounded-xl transition-all"
-                    >
-                      Launch Web App <ArrowRight className="ml-2 w-4 h-4 text-cyan-400" />
-                    </Button>
-                  </div>
-
-                  {/* 3-Minute Sandbox Button */}
                   <Button
-                    onClick={() => {
-                      audioEngine.playTactileClick();
-                      setShowSandbox(true);
-                    }}
-                    className="w-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 font-medium text-xs sm:text-sm py-5 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all"
+                    onClick={() => setLocation('/account-selection')}
+                    size="lg"
+                    className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-sm sm:text-base py-6 px-8 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.35)] transition-all transform hover:scale-[1.01]"
                   >
-                    <Zap className="w-4 h-4 text-cyan-400" />
-                    <span>Try a 3-Minute Deep Work Session (Instant Preview — No Sign-Up)</span>
-                    <ArrowRight className="w-4 h-4 text-cyan-400 ml-1" />
+                    <span>Awaken Your System</span>
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    onClick={() => setLocation('/login')}
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/70 hover:bg-slate-800 text-white font-medium text-sm sm:text-base py-6 px-7 rounded-xl transition-all"
+                  >
+                    Sign In
                   </Button>
                 </motion.div>
 
-                {/* Sub-label Trust Indicators */}
-                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 mb-16">
+                {/* Clean Feature Pills */}
+                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 mb-20">
                   <span className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400" /> 100% Offline Focus Sync
+                    <Check className="w-4 h-4 text-cyan-400" /> E-Rank to Monarch Ladder
                   </span>
                   <span className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400" /> Instant Browser Setup (PWA)
+                    <Check className="w-4 h-4 text-cyan-400" /> Real-Life Stat Calibration
                   </span>
                   <span className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-cyan-400" /> Zero Invasive Ads or Tracking
+                    <Check className="w-4 h-4 text-cyan-400" /> Anti-Burnout Rest Day Shield
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-cyan-400" /> 100% Offline Capable
                   </span>
                 </div>
 
-                {/* Interactive Soundboard Preview Card */}
-                <motion.div
-                  initial={{ opacity: 1, y: 0 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full max-w-4xl bg-slate-900/60 border border-cyan-500/30 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden text-left mb-20 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-                    <div>
-                      <div className="inline-flex items-center gap-2 text-cyan-400 text-xs font-semibold tracking-wider uppercase mb-1">
-                        <Volume2 className="w-4 h-4" />
-                        <span>Acoustic Focus Subsystem</span>
-                      </div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                        Built-In Soundscapes for Deep Focus
-                      </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
-                        Generated locally in your browser with native Web Audio oscillators. Zero downloads, zero latency.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">
-                        Latency: &lt;5ms
-                      </span>
-                      <span className="px-3 py-1 rounded-lg bg-cyan-950 text-xs text-cyan-300 border border-cyan-800">
-                        Frequency: 40Hz Gamma
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 3 Interactive Sound Triggers */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-                    {/* Sound 1: 40Hz Gamma Flow */}
-                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Cognitive Flow</span>
-                          {isGammaPlaying && (
-                            <span className="flex h-2 w-2 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="text-base font-bold text-white mb-1.5">40Hz Binaural Beat</h4>
-                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                          Synchronizes brainwave activity to foster sustained attention and flow state.
-                        </p>
-                      </div>
-
-                      <Button
-                        onClick={toggleGammaFlow}
-                        size="sm"
-                        className={`w-full text-xs font-semibold py-4 rounded-lg transition-all ${
-                          isGammaPlaying 
-                            ? 'bg-cyan-500 text-black hover:bg-cyan-400' 
-                            : 'bg-slate-800 hover:bg-slate-700 text-cyan-300'
-                        }`}
-                      >
-                        {isGammaPlaying ? (
-                          <>
-                            <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop 40Hz Flow
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Start 40Hz Flow
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Sound 2: Distraction Alert */}
-                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Focus Guard</span>
-                          {isSirenTesting && (
-                            <span className="text-[10px] text-rose-400 font-bold animate-pulse">Alerting</span>
-                          )}
-                        </div>
-                        <h4 className="text-base font-bold text-white mb-1.5">Distraction Alert</h4>
-                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                          An immediate acoustic alert triggered if you switch tabs or break focus during an active session.
-                        </p>
-                      </div>
-
-                      <Button
-                        onClick={triggerSirenTest}
-                        disabled={isSirenTesting}
-                        size="sm"
-                        className="w-full text-xs font-semibold py-4 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300"
-                      >
-                        <AlertTriangle className="w-3.5 h-3.5 mr-1.5 text-rose-400" />
-                        {isSirenTesting ? "Playing Alert..." : "Test Alert Chime"}
-                      </Button>
-                    </div>
-
-                    {/* Sound 3: Weekly Review Impact */}
-                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Accountability</span>
-                          <span className="text-[10px] text-slate-500 font-medium">Sunday Review</span>
-                        </div>
-                        <h4 className="text-base font-bold text-white mb-1.5">Review Completion Chime</h4>
-                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                          Signature resonant acoustic impact sounded when weekly performance covenants are audited.
-                        </p>
-                      </div>
-
-                      <Button
-                        onClick={triggerGavelTest}
-                        size="sm"
-                        className="w-full text-xs font-semibold py-4 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-300"
-                      >
-                        <Gavel className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
-                        Play Review Chime
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Squad Accountability & Commitment Calculator */}
-                <motion.div
-                  initial={{ opacity: 1, y: 0 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full max-w-4xl bg-slate-900/60 border border-amber-500/30 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden text-left mb-24 shadow-[0_10px_40px_rgba(0,0,0,0.5)]"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-                    <div>
-                      <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-semibold tracking-wider uppercase mb-1">
-                        <Users className="w-4 h-4" />
-                        <span>Peer Accountability</span>
-                      </div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                        Squad Accountability & Commitment Pools
-                      </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
-                        Put skin in the game. Form an accountability circle with peers, set weekly commitments, and share in the pool when you hit your targets.
-                      </p>
-                    </div>
-
-                    <div className="bg-amber-950/60 border border-amber-500/40 rounded-xl px-4 py-2.5 text-right">
-                      <div className="text-[11px] text-amber-300 uppercase font-semibold">Estimated Payout</div>
-                      <div className="text-2xl font-bold text-amber-400">
-                        ${totalPayout.toFixed(0)} <span className="text-xs text-amber-300 font-medium">({roiPercentage >= 0 ? `+${roiPercentage}%` : ''})</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Calculator Sliders & Output */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                    {/* Stake Slider */}
-                    <div>
-                      <div className="flex justify-between text-xs mb-2">
-                        <span className="text-slate-400 font-medium">Weekly Stake:</span>
-                        <span className="text-cyan-400 font-bold">${squadStake}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="50"
-                        max="1000"
-                        step="50"
-                        value={squadStake}
-                        onChange={(e) => setSquadStake(Number(e.target.value))}
-                        className="w-full accent-cyan-500 cursor-pointer"
-                      />
-                      <span className="text-[11px] text-slate-500 mt-1 block">$50 to $1,000 commitment</span>
-                    </div>
-
-                    {/* Squad Size Slider */}
-                    <div>
-                      <div className="flex justify-between text-xs mb-2">
-                        <span className="text-slate-400 font-medium">Squad Members:</span>
-                        <span className="text-cyan-400 font-bold">{squadSize} members</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="3"
-                        max="10"
-                        step="1"
-                        value={squadSize}
-                        onChange={(e) => {
-                          const size = Number(e.target.value);
-                          setSquadSize(size);
-                          if (failedMembers >= size) setFailedMembers(size - 1);
-                        }}
-                        className="w-full accent-cyan-500 cursor-pointer"
-                      />
-                      <span className="text-[11px] text-slate-500 mt-1 block">Accountability circle size</span>
-                    </div>
-
-                    {/* Failed Operators Slider */}
-                    <div>
-                      <div className="flex justify-between text-xs mb-2">
-                        <span className="text-slate-400 font-medium">Unmet Commitments:</span>
-                        <span className="text-rose-400 font-bold">{failedMembers} missed</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="1"
-                        max={squadSize - 1}
-                        step="1"
-                        value={failedMembers}
-                        onChange={(e) => setFailedMembers(Number(e.target.value))}
-                        className="w-full accent-rose-500 cursor-pointer"
-                      />
-                      <span className="text-[11px] text-slate-500 mt-1 block">
-                        Capital in pool: ${forfeitedCapital}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="leading-relaxed">
-                      <strong className="text-white">Discipline Reward Formula:</strong> Operators who fulfill 100% of their weekly targets recover their full <span className="text-cyan-300 font-semibold">${squadStake}</span> deposit plus an earned <span className="text-emerald-400 font-semibold">+${bountyPerSurvivor.toFixed(1)}</span> dividend.
-                    </div>
-                    <Button
-                      onClick={() => setLocation('/account-selection')}
-                      size="sm"
-                      className="bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs px-4 py-2 rounded-lg flex-shrink-0"
-                    >
-                      Join Squad Pact
-                    </Button>
-                  </div>
-                </motion.div>
-
-                {/* The 4 Core Execution Pillars Showcase */}
-                <section className="w-full max-w-6xl mx-auto mb-20 text-left">
+                {/* ======================================================== */}
+                {/* SECTION 1: HOW THE SYSTEM OPERATES (THE CORE THREE LOOPS) */}
+                {/* ======================================================== */}
+                <section className="w-full max-w-5xl mx-auto mb-24 text-left">
                   <div className="text-center mb-12">
-                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">System Architecture</span>
+                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">System Mechanics</span>
                     <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
-                      Four Pillars of Consistent Execution
+                      How The System Quantifies Your Life
                     </h2>
                     <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
-                      A structured daily operating rhythm engineered to eliminate decision fatigue, protect deep work, and build consistency.
+                      Transform ambiguous self-improvement into a clear, dopamine-driven feedback loop where every rep, focus session, and completed habit levels up your character.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Pillar I */}
-                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-lg">
-                          01
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Loop 1: Calibrate Attributes */}
+                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4">
+                          <Activity className="w-6 h-6" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white tracking-tight">Morning Briefing & Priority Locking</h3>
-                          <span className="text-xs text-cyan-400 font-medium">Pillar I • Priority Locking</span>
-                        </div>
+                        <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider block mb-1">Step 01 • Calibration</span>
+                        <h3 className="text-lg font-bold text-white mb-2">Real Attribute Calibration</h3>
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+                          Input your baseline physical metrics (push-ups, pull-ups, cardio endurance) and cognitive habits. The System calibrates your initial stat distribution across Strength, Agility, Intellect, and Vitality.
+                        </p>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
-                        Define your 3 non-negotiable priorities each morning before communication channels open. Lock your daily focus with clear intention.
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Check className="w-4 h-4 text-cyan-400" /> Priority Weighting
-                        <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-cyan-400" /> Distraction Shielding
+                      <div className="pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> Objective Stat Engine
                       </div>
                     </div>
 
-                    {/* Pillar II */}
-                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-lg">
-                          02
+                    {/* Loop 2: Adaptive Daily Quests */}
+                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
+                          <Target className="w-6 h-6" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white tracking-tight">Deep Work Sessions & Focus Guard</h3>
-                          <span className="text-xs text-rose-400 font-medium">Pillar II • Flow State</span>
-                        </div>
+                        <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block mb-1">Step 02 • Daily Execution</span>
+                        <h3 className="text-lg font-bold text-white mb-2">Archetype Quests & Gear</h3>
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+                          Every morning, receive 3 non-negotiable daily quests customized to your Hunter Class and gear loadout (Bodyweight, Dumbbells, or Commercial Gym). No random filler; only high-yield directives.
+                        </p>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
-                        Full-screen focus sessions powered by local 40Hz binaural audio. Window switches trigger immediate acoustic alerts to preserve attention.
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Check className="w-4 h-4 text-rose-400" /> 100% Offline Enclave Sync
-                        <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-rose-400" /> Real-time Focus Telemetry
+                      <div className="pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" /> Gear & Archetype Customization
                       </div>
                     </div>
 
-                    {/* Pillar III */}
-                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
-                          03
+                    {/* Loop 3: Tier Promotions */}
+                    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-cyan-500/30 transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
+                          <Trophy className="w-6 h-6" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white tracking-tight">AI Performance Coaching</h3>
-                          <span className="text-xs text-indigo-400 font-medium">Pillar III • Execution Insights</span>
-                        </div>
+                        <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block mb-1">Step 03 • Rank Promotion</span>
+                        <h3 className="text-lg font-bold text-white mb-2">Climb From E to S-Tier</h3>
+                        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+                          Accumulate verified execution XP. Unlock Rank Awakening Trials at milestone thresholds to permanently promote your Hunter Rank and climb the global leaderboards.
+                        </p>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
-                        Mid-day pulse checks and structured evening debriefs to pinpoint friction, celebrate momentum, and calibrate daily habits.
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Check className="w-4 h-4 text-indigo-400" /> Friction Root Cause Analysis
-                        <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-indigo-400" /> Daily Execution Velocity
-                      </div>
-                    </div>
-
-                    {/* Pillar IV */}
-                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
-                          04
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white tracking-tight">Sunday Performance Court & Review</h3>
-                          <span className="text-xs text-amber-400 font-medium">Pillar IV • Accountability</span>
-                        </div>
-                      </div>
-                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
-                        Automated weekly accountability review. Audits 7-day consistency, settles squad commitment pools, and resets goals for the coming week.
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Check className="w-4 h-4 text-amber-400" /> Escrow Commitment Pools
-                        <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-amber-400" /> Verified Execution Records
+                      <div className="pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" /> Verified Rank Promotion Trials
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* Final Call to Action */}
-                <div className="w-full max-w-4xl p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-cyan-950/60 to-slate-900 border border-cyan-500/40 text-center relative overflow-hidden mb-12">
+                {/* ======================================================== */}
+                {/* SECTION 2: HUNTER ARCHETYPES SHOWCASE */}
+                {/* ======================================================== */}
+                <section className="w-full max-w-5xl mx-auto mb-24 text-left">
+                  <div className="text-center mb-10">
+                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Class Customization</span>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
+                      Select Your Hunter Archetype
+                    </h2>
+                    <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
+                      Choose the progression path that fits your physical style and life demands. Swap loadouts anytime in your Profile.
+                    </p>
+                  </div>
+
+                  {/* Archetype Selector Tabs */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-6">
+                    {HUNTER_ARCHETYPES.map((archetype, idx) => {
+                      const isActive = activeArchetypeIndex === idx;
+                      return (
+                        <button
+                          key={archetype.name}
+                          onClick={() => setActiveArchetypeIndex(idx)}
+                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                            isActive
+                              ? "border-cyan-400 bg-cyan-950/40 shadow-[0_0_20px_rgba(6,182,212,0.25)]"
+                              : "border-slate-800 bg-slate-900/40 hover:border-slate-700 text-slate-400"
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">{archetype.icon}</div>
+                          <div className="text-xs font-bold text-white truncate">{archetype.name}</div>
+                          <div className="text-[10px] text-cyan-400/90 truncate mt-0.5">{archetype.focus}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Active Archetype Detailed Card */}
+                  <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-slate-900/80 to-[#020617] border border-cyan-500/30 backdrop-blur-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div className="space-y-3 max-w-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="text-4xl">{HUNTER_ARCHETYPES[activeArchetypeIndex].icon}</span>
+                        <div>
+                          <h3 className="text-2xl font-bold text-white tracking-tight">
+                            {HUNTER_ARCHETYPES[activeArchetypeIndex].name}
+                          </h3>
+                          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">
+                            Primary Focus: {HUNTER_ARCHETYPES[activeArchetypeIndex].focus}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        {HUNTER_ARCHETYPES[activeArchetypeIndex].description}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                        <span className="px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-300">
+                          Core Stat: <strong className="text-white">{HUNTER_ARCHETYPES[activeArchetypeIndex].stat}</strong>
+                        </span>
+                        <span className="px-2.5 py-1 rounded-md bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
+                          Adaptive Quest Multiplier: 1.25x XP
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full md:w-auto flex-shrink-0">
+                      <Button
+                        onClick={() => setLocation('/account-selection')}
+                        className="w-full md:w-auto bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-6 py-5 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                      >
+                        Select This Archetype <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* ======================================================== */}
+                {/* SECTION 3: THE HUNTER RANK PROGRESSION LADDER */}
+                {/* ======================================================== */}
+                <section className="w-full max-w-5xl mx-auto mb-24 text-left">
+                  <div className="text-center mb-12">
+                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Tier Hierarchy</span>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
+                      The Six Progression Ranks
+                    </h2>
+                    <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
+                      Every operator awakens at E-Rank. Your real-world consistency dictates how high you climb.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {PROGRESSION_TIERS.map((tier) => (
+                      <div
+                        key={tier.rank}
+                        className={`p-5 rounded-2xl border transition-all ${tier.color} backdrop-blur-md flex flex-col justify-between`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-black tracking-tight">{tier.rank}</span>
+                            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
+                              {tier.badge}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-bold text-white mb-1">{tier.title}</h4>
+                          <span className="text-xs text-slate-400 block mb-2">{tier.requirement}</span>
+                          <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                            {tier.desc}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/10 text-[11px] text-slate-400 flex items-center justify-between">
+                          <span>Promotion Trial:</span>
+                          <span className="text-cyan-300 font-medium">Automatic Check</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* ======================================================== */}
+                {/* SECTION 4: ANTI-BURNOUT RECOVERY PROTOCOL */}
+                {/* ======================================================== */}
+                <section className="w-full max-w-5xl mx-auto mb-24 text-left">
+                  <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-[#020617] border border-cyan-500/30 relative overflow-hidden shadow-2xl">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+                      <div className="space-y-4 max-w-xl">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold">
+                          <Shield className="w-3.5 h-3.5" />
+                          <span>Anti-Burnout Recovery Mechanic</span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                          Mana Shields & Rest Day Protocols
+                        </h3>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                          Most habit trackers demotivate you by wiping your 60-day streak to zero when life, illness, or travel happens. 
+                          The System includes <strong>Mana Shields</strong> that auto-deploy to protect your streak on missed days, plus a 
+                          manual <strong>Rest Day Protocol</strong> that replaces heavy training with active cellular recovery (hydration, myofascial mobility, sleep).
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-2">
+                          <span className="flex items-center gap-1.5 text-cyan-300">
+                            <Check className="w-4 h-4 text-cyan-400" /> Start with 1 Free Mana Shield
+                          </span>
+                          <span className="flex items-center gap-1.5 text-cyan-300">
+                            <Check className="w-4 h-4 text-cyan-400" /> Never lose momentum to burnout
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="w-full md:w-auto p-5 rounded-2xl bg-black/60 border border-cyan-500/30 text-center space-y-3 flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400 mx-auto">
+                          <Shield className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold text-white">Streak Protection</div>
+                          <div className="text-xs text-slate-400">Available in Hunter Shop</div>
+                        </div>
+                        <Button
+                          onClick={() => setLocation('/account-selection')}
+                          className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-4 px-6 rounded-xl"
+                        >
+                          Experience The System
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* ======================================================== */}
+                {/* SECTION 5: SQUAD ACCOUNTABILITY & LEADERBOARDS */}
+                {/* ======================================================== */}
+                <section className="w-full max-w-5xl mx-auto mb-20 text-left">
+                  <div className="text-center mb-12">
+                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Social Architecture</span>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
+                      Accountability Squads & Global Standing
+                    </h2>
+                    <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
+                      Compete with disciplined peers or form a close-knit squad with shared commitments.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/30 transition-all space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                        <Trophy className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Global Hunter Leaderboards</h3>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                        Climb the global tier rankings based on verified habit consistency, completed quest volume, and streak length. Filter by Class (Assassin, Tank, Ranger, Scholar) or region.
+                      </p>
+                      <div className="pt-2 text-xs text-cyan-400 flex items-center gap-1">
+                        <span>Transparent proof-of-work ranking</span>
+                      </div>
+                    </div>
+
+                    <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/30 transition-all space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Squad Commitment Covenants</h3>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                        Form accountability squads with 3 to 10 peers. Stake virtual coins or commitment deposits; operators who fulfill 100% of their weekly targets share the pool dividends.
+                      </p>
+                      <div className="pt-2 text-xs text-amber-400 flex items-center gap-1">
+                        <span>Peer-verified execution consistency</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* FINAL CALL TO ACTION */}
+                <div className="w-full max-w-4xl p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-cyan-950/60 to-slate-900 border border-cyan-500/40 text-center relative overflow-hidden mb-12 shadow-2xl">
                   <div className="relative z-10">
                     <h2 className="text-2xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-                      Ready to Elevate Your Daily Execution?
+                      Your Level 1 Starts Today.
                     </h2>
                     <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-                      Ascension Protocol works across every device. Install the progressive web application to operate with deep focus and consistency.
+                      Awaken your starting stats, pick your Hunter Archetype, and transform your daily life into an objective progression engine.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                       <Button
-                        onClick={handleInstall}
+                        onClick={() => setLocation('/account-selection')}
                         size="lg"
                         className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-sm sm:text-base py-6 px-8 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)]"
                       >
-                        <Download className="mr-2 w-4 h-4" />
-                        Install App Now
+                        Awaken Your Account
                       </Button>
                       <Button
-                        onClick={() => setView('selection')}
+                        onClick={() => setLocation('/login')}
                         size="lg"
                         variant="outline"
                         className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-medium text-sm sm:text-base py-6 px-8 rounded-xl"
                       >
-                        Launch Web App
+                        Sign In
                       </Button>
                     </div>
                   </div>
@@ -822,7 +802,7 @@ export default function AuthPage() {
             </motion.div>
           )}
 
-          {/* ============ SELECTION VIEW (MEMBER / ADMIN PORTAL) ============ */}
+          {/* ============ SELECTION VIEW (SIGN IN / PORTALS) ============ */}
           {view === 'selection' && (
             <motion.div
               key="selection"
@@ -834,7 +814,7 @@ export default function AuthPage() {
             >
               <div className="text-center mb-10">
                 <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Authentication</span>
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1 tracking-tight">Select Sign-In Portal</h2>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1 tracking-tight">Select Access Portal</h2>
                 <p className="text-slate-400 text-sm mt-2">Choose your operator authorization profile</p>
               </div>
 
@@ -850,9 +830,9 @@ export default function AuthPage() {
                     <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                       <Terminal className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-white">Member Portal</h3>
+                    <h3 className="text-xl font-bold text-white">Hunter Portal</h3>
                     <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                      Access your mission command center, 40Hz focus sessions, and squad commitments.
+                      Access your mission command center, calibrated stats, daily quests, and rank standing.
                     </p>
                     <span className="text-cyan-400 text-xs font-semibold flex items-center gap-1 mt-2">
                       Sign In to Account <ArrowRight className="w-4 h-4" />
@@ -901,7 +881,7 @@ export default function AuthPage() {
               transition={{ duration: 0.2 }}
               className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-12"
             >
-              <Card className="bg-[#090d16] border-slate-800 backdrop-blur-xl w-full max-w-sm shadow-2xl">
+              <Card className="bg-[#090d16] border-slate-800 backdrop-blur-xl w-full max-w-sm shadow-2xl rounded-2xl">
                 <CardHeader className="text-center">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-2 text-amber-400">
                     <Lock className="w-6 h-6" />
@@ -950,7 +930,7 @@ export default function AuthPage() {
         </AnimatePresence>
       </main>
 
-      {/* ============ STICKY MOBILE CONSOLE / DOWNLOAD BAR ============ */}
+      {/* STICKY MOBILE LAUNCH BAR */}
       <AnimatePresence>
         {view === 'hero' && (
           <motion.div
@@ -960,44 +940,24 @@ export default function AuthPage() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed bottom-0 left-0 right-0 md:hidden z-40 px-4 py-3 bg-[#020617]/95 backdrop-blur-xl border-t border-cyan-500/20"
           >
-            {standalone ? (
+            <div className="flex gap-2">
               <Button
-                onClick={() => setView('selection')}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl py-6 text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                onClick={() => setLocation('/account-selection')}
+                className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl py-6 text-xs shadow-[0_0_20px_rgba(6,182,212,0.3)]"
               >
-                Launch Dashboard <ArrowRight className="ml-2 w-4 h-4" />
+                Awaken Your Rank <ArrowRight className="ml-1.5 w-4 h-4" />
               </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleInstall}
-                  className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl py-6 text-xs shadow-[0_0_20px_rgba(6,182,212,0.3)]"
-                >
-                  <Download className="mr-1.5 w-4 h-4" />
-                  Install App
-                </Button>
-                <Button
-                  onClick={() => setView('selection')}
-                  variant="outline"
-                  className="border-slate-700 bg-slate-900 text-white text-xs rounded-xl py-6 px-4 font-medium"
-                >
-                  Sign In
-                </Button>
-              </div>
-            )}
+              <Button
+                onClick={() => setLocation('/login')}
+                variant="outline"
+                className="border-slate-700 bg-slate-900 text-white text-xs rounded-xl py-6 px-4 font-medium"
+              >
+                Sign In
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* 3-Minute Instant Focus Sandbox Modal */}
-      <InstantFocusSandboxModal
-        isOpen={showSandbox}
-        onClose={() => setShowSandbox(false)}
-        onConvertToAccount={() => {
-          setShowSandbox(false);
-          setLocation('/account-selection');
-        }}
-      />
 
     </div>
   );
