@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { 
-  AlertCircle, ArrowRight, Shield, Lock, Download, Share, 
-  Smartphone, Zap, Target, Volume2, VolumeX, AlertTriangle, 
-  Gavel, QrCode, Copy, Check, Terminal, Flame, Users, 
-  Cpu, Award, ExternalLink, Play, Square
+  AlertCircle, ArrowRight, Shield, Lock, Download, 
+  Smartphone, Zap, Volume2, AlertTriangle, 
+  Gavel, QrCode, Copy, Check, Terminal, Users, 
+  Cpu, Play, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -128,16 +128,16 @@ export default function AuthPage() {
   const totalPool = squadStake * squadSize;
   const forfeitedCapital = squadStake * failedMembers;
   const survivingMembers = Math.max(1, squadSize - failedMembers);
-  const bountyPerSurvivor = (forfeitedCapital * 0.85) / survivingMembers; // 15% burnt, 85% dividend
+  const bountyPerSurvivor = (forfeitedCapital * 0.85) / survivingMembers; // 15% protocol reserve, 85% dividend
   const totalPayout = squadStake + bountyPerSurvivor;
   const roiPercentage = Math.round((bountyPerSurvivor / squadStake) * 100);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
-        <div className="text-center font-mono">
+        <div className="text-center">
           <div className="h-10 w-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-cyan-400 text-sm tracking-widest uppercase">INITIALIZING ASCENSION OS...</p>
+          <p className="text-cyan-400 text-sm font-medium tracking-wide">Loading Ascension Protocol...</p>
         </div>
       </div>
     );
@@ -177,20 +177,20 @@ export default function AuthPage() {
               </div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Smartphone className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-xl font-bold font-mono tracking-tight text-white uppercase">Install on iOS / Safari</h3>
+                <h3 className="text-xl font-bold tracking-tight text-white">Install on iOS / Safari</h3>
               </div>
-              <p className="text-xs text-slate-400 text-center mb-6 font-mono">
-                Ascension Protocol is designed as an installed standalone tactical enclave.
+              <p className="text-xs text-slate-400 text-center mb-6">
+                Add Ascension Protocol to your home screen for full offline and distraction-free operation.
               </p>
               
-              <div className="space-y-3 font-mono">
+              <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
                   <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
                     1
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-200">Tap the Safari Share Icon</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Located on the bottom navigation bar in Safari (box with up arrow).</p>
+                    <p className="text-sm font-semibold text-slate-200">Tap the Safari Share Button</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Located at the bottom of Safari (the square icon with an arrow pointing up).</p>
                   </div>
                 </div>
 
@@ -200,7 +200,7 @@ export default function AuthPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-200">Select "Add to Home Screen"</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Scroll down slightly in the share menu to locate this option.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Scroll down slightly in the share menu and tap "Add to Home Screen".</p>
                   </div>
                 </div>
 
@@ -210,14 +210,14 @@ export default function AuthPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-200">Confirm "Add"</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Ascension OS will install directly to your device home screen with full offline enclave access.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">The app icon will appear directly on your home screen with zero browser bars.</p>
                   </div>
                 </div>
               </div>
 
               <Button 
                 onClick={() => setShowIOSGuide(false)} 
-                className="w-full mt-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold uppercase tracking-wider py-6"
+                className="w-full mt-6 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-semibold tracking-wide py-6"
               >
                 Understood, Proceed
               </Button>
@@ -244,14 +244,14 @@ export default function AuthPage() {
                 onClick={(e) => e.stopPropagation()}
                 className="bg-[#090d16] border border-cyan-500/40 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center relative shadow-[0_0_50px_rgba(6,182,212,0.25)]"
               >
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-medium mb-4">
                   <QrCode className="w-3.5 h-3.5" />
-                  <span>MOBILE ENCLAVE LAUNCHER</span>
+                  <span>Mobile App Launcher</span>
                 </div>
 
-                <h3 className="text-xl font-bold font-mono text-white mb-2 uppercase">Scan to Install on Mobile</h3>
-                <p className="text-xs text-slate-400 mb-6 font-mono leading-relaxed">
-                  Open your camera to deploy the full Air-Gap protocol and binaural neuro-entrainment engine on your primary smartphone.
+                <h3 className="text-xl font-bold text-white mb-2">Scan to Open on Mobile</h3>
+                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                  Open your smartphone camera to launch Ascension Protocol with built-in focus audio and offline sync.
                 </p>
 
                 {/* QR Code Container */}
@@ -267,25 +267,25 @@ export default function AuthPage() {
                   <Button
                     onClick={copyAppUrl}
                     variant="outline"
-                    className="flex-1 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-mono text-xs py-5"
+                    className="flex-1 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs py-5"
                   >
                     {copiedLink ? (
                       <>
                         <Check className="w-4 h-4 mr-1.5 text-emerald-400" />
-                        URL COPIED
+                        Link Copied
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4 mr-1.5 text-cyan-400" />
-                        COPY DIRECT LINK
+                        Copy Link
                       </>
                     )}
                   </Button>
                   <Button
                     onClick={() => setShowQRModal(false)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs py-5 px-5"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 px-5"
                   >
-                    CLOSE
+                    Close
                   </Button>
                 </div>
               </motion.div>
@@ -299,30 +299,30 @@ export default function AuthPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/40">
-              <Terminal className="w-5 h-5 text-black font-black" />
+              <Terminal className="w-5 h-5 text-black font-bold" />
             </div>
-            <div>
-              <span className="font-mono font-bold text-lg text-white tracking-wider">ASCENSION</span>
-              <span className="font-mono text-xs text-cyan-400 ml-1.5 font-bold tracking-widest px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/60">OS v2.4</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg text-white tracking-tight">Ascension Protocol</span>
+              <span className="text-xs text-cyan-400 font-medium px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 hidden sm:inline-block">v2.4</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowQRModal(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 bg-slate-900/50"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 bg-slate-900/50"
             >
               <QrCode className="w-3.5 h-3.5" />
-              <span>Mobile QR</span>
+              <span>Mobile App</span>
             </button>
 
             <Button
               onClick={() => setView('selection')}
               variant="outline"
               size="sm"
-              className="font-mono text-xs border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/50"
+              className="text-xs border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/50 font-medium px-4 h-9 rounded-lg"
             >
-              OPERATOR LOGIN
+              Sign In
             </Button>
           </div>
         </div>
@@ -342,17 +342,17 @@ export default function AuthPage() {
               transition={{ duration: 0.3 }}
             >
               {/* Hero Section */}
-              <section className="w-full max-w-6xl mx-auto px-6 pt-16 pb-20 text-center flex flex-col items-center">
-                {/* HUD Pill */}
+              <section className="w-full max-w-6xl mx-auto px-6 pt-16 sm:pt-20 pb-20 text-center flex flex-col items-center">
+                {/* Clean Eyebrow Pill */}
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 backdrop-blur-md mb-8"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 backdrop-blur-md mb-8"
                 >
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                  <span className="text-xs font-mono font-medium text-cyan-300 tracking-wider uppercase">
-                    MIL-SPEC HUMAN EXECUTION SYSTEM // ACTIVE
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="text-xs font-medium text-cyan-300 tracking-wide">
+                    High-Performance Daily Execution Platform
                   </span>
                 </motion.div>
 
@@ -361,42 +361,41 @@ export default function AuthPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.5 }}
-                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-[1.04]"
+                  className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.08] max-w-5xl"
                 >
-                  <span className="block text-white">THE HUMAN</span>
-                  <span className="block text-white">OPERATING SYSTEM FOR</span>
-                  <span className="block bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400">
-                    MAXIMUM EXECUTION.
+                  <span className="text-white">The Daily Operating System </span>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-300">
+                    for High Performers.
                   </span>
                 </motion.h1>
 
-                {/* Cybernetic Subhead */}
+                {/* Refined Subhead */}
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.35 }}
-                  className="text-sm sm:text-base md:text-lg text-slate-400 max-w-3xl mb-10 leading-relaxed font-mono"
+                  className="text-base sm:text-lg md:text-xl text-slate-300/90 max-w-3xl mb-10 leading-relaxed font-normal"
                 >
-                  Air-gapped deep work chambers. 40Hz binaural neuro-entrainment. Anti-distraction breach klaxons.
-                  Peer-backed escrow covenants and Sunday judicial decrees. Stop managing habits. Start enforcing protocols.
+                  Designed for founders, operators, and ambitious achievers. Protect your focus with built-in binaural soundscapes, 
+                  lock non-negotiable daily priorities, collaborate in accountability squads, and review execution with AI debriefs.
                 </motion.p>
 
-                {/* Primary Multi-Action Funnel */}
+                {/* Primary Action Buttons */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 }}
-                  className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-6"
+                  className="flex flex-col items-center justify-center gap-3.5 w-full max-w-xl mb-6"
                 >
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full">
                     {/* Primary App Download Button */}
                     <Button
                       onClick={handleInstall}
                       size="lg"
-                      className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-base py-7 px-8 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-[1.02]"
+                      className="w-full sm:w-auto flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-sm sm:text-base py-6 px-7 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.35)] transition-all transform hover:scale-[1.01]"
                     >
-                      <Download className="mr-2.5 w-5 h-5" />
-                      INSTALL APP TO DEVICE
+                      <Download className="mr-2 w-4 h-4" />
+                      Get Started / Install App
                     </Button>
 
                     {/* Instant Browser Access */}
@@ -404,40 +403,40 @@ export default function AuthPage() {
                       onClick={() => setLocation('/account-selection')}
                       size="lg"
                       variant="outline"
-                      className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/60 hover:bg-slate-800/80 text-white font-mono font-semibold text-base py-7 px-8 rounded-xl"
+                      className="w-full sm:w-auto border-slate-700 hover:border-cyan-500/50 bg-slate-900/70 hover:bg-slate-800 text-white font-medium text-sm sm:text-base py-6 px-7 rounded-xl transition-all"
                     >
-                      LAUNCH WEB CONSOLE <ArrowRight className="ml-2 w-5 h-5 text-cyan-400" />
+                      Launch Web App <ArrowRight className="ml-2 w-4 h-4 text-cyan-400" />
                     </Button>
                   </div>
 
-                  {/* Zero-Auth 3-Minute Sandbox Button */}
+                  {/* 3-Minute Sandbox Button */}
                   <Button
                     onClick={() => {
                       audioEngine.playTactileClick();
                       setShowSandbox(true);
                     }}
-                    className="w-full bg-gradient-to-r from-amber-500/15 via-cyan-500/15 to-purple-500/15 hover:from-amber-500/25 hover:via-cyan-500/25 hover:to-purple-500/25 border border-cyan-400/50 text-cyan-300 font-mono font-bold text-xs sm:text-sm py-6 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all transform hover:scale-[1.01]"
+                    className="w-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/30 hover:border-cyan-500/60 text-cyan-300 font-medium text-xs sm:text-sm py-5 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all"
                   >
-                    <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
-                    <span>TEST 3-MIN FOCUS SPRINT & OPEN FIRST COFFER (NO SIGN-UP)</span>
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span>Try a 3-Minute Deep Work Session (Instant Preview — No Sign-Up)</span>
+                    <ArrowRight className="w-4 h-4 text-cyan-400 ml-1" />
                   </Button>
                 </motion.div>
 
-                {/* Sub-label indicators */}
-                <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-slate-500 mb-16">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-cyan-400" /> Zero installation store tax
+                {/* Sub-label Trust Indicators */}
+                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 mb-16">
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-cyan-400" /> 100% Offline Focus Sync
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-cyan-400" /> 100% Offline Air-Gap sync
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-cyan-400" /> Instant Browser Setup (PWA)
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-cyan-400" /> Native PWA Push support
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-cyan-400" /> Zero Invasive Ads or Tracking
                   </span>
                 </div>
 
-                {/* Live Protocol Soundboard Preview Card */}
+                {/* Interactive Soundboard Preview Card */}
                 <motion.div
                   initial={{ opacity: 1, y: 0 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -445,24 +444,24 @@ export default function AuthPage() {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                     <div>
-                      <div className="inline-flex items-center gap-2 text-cyan-400 text-xs font-mono tracking-widest uppercase mb-1">
+                      <div className="inline-flex items-center gap-2 text-cyan-400 text-xs font-semibold tracking-wider uppercase mb-1">
                         <Volume2 className="w-4 h-4" />
-                        <span>Interactive Acoustics Subsystem</span>
+                        <span>Acoustic Focus Subsystem</span>
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold font-mono text-white">
-                        Test The Neuro-Reconditioning Audio Engine
+                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        Built-In Soundscapes for Deep Focus
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">
-                        Generated locally with native Web Audio oscillators. No downloads, zero latency.
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+                        Generated locally in your browser with native Web Audio oscillators. Zero downloads, zero latency.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded bg-slate-800 text-[11px] font-mono text-slate-300 border border-slate-700">
-                        LATENCY: &lt;5ms
+                      <span className="px-3 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">
+                        Latency: &lt;5ms
                       </span>
-                      <span className="px-2.5 py-1 rounded bg-cyan-950 text-[11px] font-mono text-cyan-300 border border-cyan-800">
-                        FREQ: 40Hz GAMMA
+                      <span className="px-3 py-1 rounded-lg bg-cyan-950 text-xs text-cyan-300 border border-cyan-800">
+                        Frequency: 40Hz Gamma
                       </span>
                     </div>
                   </div>
@@ -470,10 +469,10 @@ export default function AuthPage() {
                   {/* 3 Interactive Sound Triggers */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
                     {/* Sound 1: 40Hz Gamma Flow */}
-                    <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono text-cyan-400 font-bold uppercase">Neuro-Flow</span>
+                          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Cognitive Flow</span>
                           {isGammaPlaying && (
                             <span className="flex h-2 w-2 relative">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -481,16 +480,16 @@ export default function AuthPage() {
                             </span>
                           )}
                         </div>
-                        <h4 className="text-sm font-bold text-white mb-1">40Hz Binaural Beat</h4>
-                        <p className="text-xs text-slate-400 mb-4 font-mono leading-relaxed">
-                          210Hz Left + 250Hz Right channels. Entrains prefrontal cortex into deep focus state.
+                        <h4 className="text-base font-bold text-white mb-1.5">40Hz Binaural Beat</h4>
+                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                          Synchronizes brainwave activity to foster sustained attention and flow state.
                         </p>
                       </div>
 
                       <Button
                         onClick={toggleGammaFlow}
                         size="sm"
-                        className={`w-full font-mono text-xs font-bold ${
+                        className={`w-full text-xs font-semibold py-4 rounded-lg transition-all ${
                           isGammaPlaying 
                             ? 'bg-cyan-500 text-black hover:bg-cyan-400' 
                             : 'bg-slate-800 hover:bg-slate-700 text-cyan-300'
@@ -498,28 +497,28 @@ export default function AuthPage() {
                       >
                         {isGammaPlaying ? (
                           <>
-                            <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> STOP GAMMA FLOW
+                            <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> Stop 40Hz Flow
                           </>
                         ) : (
                           <>
-                            <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> START 40HZ FLOW
+                            <Play className="w-3.5 h-3.5 mr-1.5 fill-current" /> Start 40Hz Flow
                           </>
                         )}
                       </Button>
                     </div>
 
-                    {/* Sound 2: Breach Klaxon Siren */}
-                    <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+                    {/* Sound 2: Distraction Alert */}
+                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono text-rose-400 font-bold uppercase">Enforcer</span>
+                          <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Focus Guard</span>
                           {isSirenTesting && (
-                            <span className="text-[10px] font-mono text-rose-400 font-bold animate-pulse">ALERTING</span>
+                            <span className="text-[10px] text-rose-400 font-bold animate-pulse">Alerting</span>
                           )}
                         </div>
-                        <h4 className="text-sm font-bold text-white mb-1">Breach Klaxon Siren</h4>
-                        <p className="text-xs text-slate-400 mb-4 font-mono leading-relaxed">
-                          Alternating 880Hz / 660Hz sawtooth wave triggered on focus window breach or app-switching.
+                        <h4 className="text-base font-bold text-white mb-1.5">Distraction Alert</h4>
+                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                          An immediate acoustic alert triggered if you switch tabs or break focus during an active session.
                         </p>
                       </div>
 
@@ -527,39 +526,39 @@ export default function AuthPage() {
                         onClick={triggerSirenTest}
                         disabled={isSirenTesting}
                         size="sm"
-                        className="w-full font-mono text-xs font-bold bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300"
+                        className="w-full text-xs font-semibold py-4 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300"
                       >
                         <AlertTriangle className="w-3.5 h-3.5 mr-1.5 text-rose-400" />
-                        {isSirenTesting ? "FIRING 2S BURST..." : "TEST BREACH KLAXON"}
+                        {isSirenTesting ? "Playing Alert..." : "Test Alert Chime"}
                       </Button>
                     </div>
 
-                    {/* Sound 3: Court Gavel Impact */}
-                    <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+                    {/* Sound 3: Weekly Review Impact */}
+                    <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono text-amber-400 font-bold uppercase">Judiciary</span>
-                          <span className="text-[10px] font-mono text-slate-500">SUNDAY 20:00</span>
+                          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Accountability</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Sunday Review</span>
                         </div>
-                        <h4 className="text-sm font-bold text-white mb-1">Court Gavel Decree</h4>
-                        <p className="text-xs text-slate-400 mb-4 font-mono leading-relaxed">
-                          Sub-120Hz resonant impact played when weekly performance covenants are audited.
+                        <h4 className="text-base font-bold text-white mb-1.5">Review Completion Chime</h4>
+                        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                          Signature resonant acoustic impact sounded when weekly performance covenants are audited.
                         </p>
                       </div>
 
                       <Button
                         onClick={triggerGavelTest}
                         size="sm"
-                        className="w-full font-mono text-xs font-bold bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-300"
+                        className="w-full text-xs font-semibold py-4 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-300"
                       >
                         <Gavel className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
-                        STRIKE GAVEL
+                        Play Review Chime
                       </Button>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Escrow Covenant & Dividend Calculator */}
+                {/* Squad Accountability & Commitment Calculator */}
                 <motion.div
                   initial={{ opacity: 1, y: 0 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -567,22 +566,22 @@ export default function AuthPage() {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                     <div>
-                      <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-mono tracking-widest uppercase mb-1">
+                      <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-semibold tracking-wider uppercase mb-1">
                         <Users className="w-4 h-4" />
-                        <span>Squad Pact Financial Dynamics</span>
+                        <span>Peer Accountability</span>
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold font-mono text-white">
-                        Simulate Your Squad Escrow Dividend Yield
+                      <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                        Squad Accountability & Commitment Pools
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">
-                        When undisciplined operators fail their weekly oath, 85% of their deposit is redistributed to surviving executors.
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
+                        Put skin in the game. Form an accountability circle with peers, set weekly commitments, and share in the pool when you hit your targets.
                       </p>
                     </div>
 
                     <div className="bg-amber-950/60 border border-amber-500/40 rounded-xl px-4 py-2.5 text-right">
-                      <div className="text-[11px] font-mono text-amber-300 uppercase">Estimated Payout</div>
-                      <div className="text-2xl font-mono font-bold text-amber-400">
-                        ${totalPayout.toFixed(0)} <span className="text-xs text-amber-300">({roiPercentage >= 0 ? `+${roiPercentage}%` : ''})</span>
+                      <div className="text-[11px] text-amber-300 uppercase font-semibold">Estimated Payout</div>
+                      <div className="text-2xl font-bold text-amber-400">
+                        ${totalPayout.toFixed(0)} <span className="text-xs text-amber-300 font-medium">({roiPercentage >= 0 ? `+${roiPercentage}%` : ''})</span>
                       </div>
                     </div>
                   </div>
@@ -591,8 +590,8 @@ export default function AuthPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
                     {/* Stake Slider */}
                     <div>
-                      <div className="flex justify-between text-xs font-mono mb-2">
-                        <span className="text-slate-400">YOUR ESCROW STAKE:</span>
+                      <div className="flex justify-between text-xs mb-2">
+                        <span className="text-slate-400 font-medium">Weekly Stake:</span>
                         <span className="text-cyan-400 font-bold">${squadStake}</span>
                       </div>
                       <input
@@ -604,13 +603,13 @@ export default function AuthPage() {
                         onChange={(e) => setSquadStake(Number(e.target.value))}
                         className="w-full accent-cyan-500 cursor-pointer"
                       />
-                      <span className="text-[11px] font-mono text-slate-500 mt-1 block">$50 to $1,000 weekly pledge</span>
+                      <span className="text-[11px] text-slate-500 mt-1 block">$50 to $1,000 commitment</span>
                     </div>
 
                     {/* Squad Size Slider */}
                     <div>
-                      <div className="flex justify-between text-xs font-mono mb-2">
-                        <span className="text-slate-400">SQUAD OPERATORS:</span>
+                      <div className="flex justify-between text-xs mb-2">
+                        <span className="text-slate-400 font-medium">Squad Members:</span>
                         <span className="text-cyan-400 font-bold">{squadSize} members</span>
                       </div>
                       <input
@@ -626,14 +625,14 @@ export default function AuthPage() {
                         }}
                         className="w-full accent-cyan-500 cursor-pointer"
                       />
-                      <span className="text-[11px] font-mono text-slate-500 mt-1 block">Tactical peer circle size</span>
+                      <span className="text-[11px] text-slate-500 mt-1 block">Accountability circle size</span>
                     </div>
 
                     {/* Failed Operators Slider */}
                     <div>
-                      <div className="flex justify-between text-xs font-mono mb-2">
-                        <span className="text-slate-400">FAILED OPERATORS:</span>
-                        <span className="text-rose-400 font-bold">{failedMembers} failed</span>
+                      <div className="flex justify-between text-xs mb-2">
+                        <span className="text-slate-400 font-medium">Unmet Commitments:</span>
+                        <span className="text-rose-400 font-bold">{failedMembers} missed</span>
                       </div>
                       <input
                         type="range"
@@ -644,35 +643,35 @@ export default function AuthPage() {
                         onChange={(e) => setFailedMembers(Number(e.target.value))}
                         className="w-full accent-rose-500 cursor-pointer"
                       />
-                      <span className="text-[11px] font-mono text-slate-500 mt-1 block">
-                        Capital forfeited: ${forfeitedCapital}
+                      <span className="text-[11px] text-slate-500 mt-1 block">
+                        Capital in pool: ${forfeitedCapital}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-mono text-slate-400 flex items-center justify-between">
-                    <div>
-                      <span className="text-white font-bold">DISCIPLINE BOUNTY FORMULA:</span> You recover your initial <span className="text-cyan-300 font-bold">${squadStake}</span> deposit plus <span className="text-emerald-400 font-bold">+${bountyPerSurvivor.toFixed(1)}</span> dividend extracted from non-compliant peers.
+                  <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="leading-relaxed">
+                      <strong className="text-white">Discipline Reward Formula:</strong> Operators who fulfill 100% of their weekly targets recover their full <span className="text-cyan-300 font-semibold">${squadStake}</span> deposit plus an earned <span className="text-emerald-400 font-semibold">+${bountyPerSurvivor.toFixed(1)}</span> dividend.
                     </div>
                     <Button
                       onClick={() => setLocation('/account-selection')}
                       size="sm"
-                      className="hidden sm:inline-flex bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-xs"
+                      className="bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs px-4 py-2 rounded-lg flex-shrink-0"
                     >
-                      ENTER ESCROW PACT
+                      Join Squad Pact
                     </Button>
                   </div>
                 </motion.div>
 
-                {/* The 4 Mil-Spec Pillars Showcase */}
+                {/* The 4 Core Execution Pillars Showcase */}
                 <section className="w-full max-w-6xl mx-auto mb-20 text-left">
                   <div className="text-center mb-12">
-                    <span className="text-xs font-mono text-cyan-400 tracking-widest uppercase">OPERATIONAL ARCHITECTURE</span>
-                    <h2 className="text-3xl sm:text-4xl font-bold font-mono text-white mt-2">
-                      The 4 Pillars of Ascension Protocol
+                    <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">System Architecture</span>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
+                      Four Pillars of Consistent Execution
                     </h2>
-                    <p className="text-slate-400 text-sm font-mono mt-2 max-w-xl mx-auto">
-                      Engineered to eliminate decision fatigue, enforce focused deep work, and audit execution integrity.
+                    <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
+                      A structured daily operating rhythm engineered to eliminate decision fatigue, protect deep work, and build consistency.
                     </p>
                   </div>
 
@@ -680,60 +679,60 @@ export default function AuthPage() {
                     {/* Pillar I */}
                     <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-lg">
                           01
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold font-mono text-white">Morning Briefing & Mission Oath</h3>
-                          <span className="text-xs font-mono text-cyan-400">Pillar I // Intention Locking</span>
+                          <h3 className="text-lg font-bold text-white tracking-tight">Morning Briefing & Priority Locking</h3>
+                          <span className="text-xs text-cyan-400 font-medium">Pillar I • Priority Locking</span>
                         </div>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4">
-                        Lock in 3 Non-Negotiable Directives before opening communications. Seal the digital oath with biometric confirmation.
+                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
+                        Define your 3 non-negotiable priorities each morning before communication channels open. Lock your daily focus with clear intention.
                       </p>
-                      <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                        <Check className="w-4 h-4 text-cyan-400" /> Directive Priority Weighting
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <Check className="w-4 h-4 text-cyan-400" /> Priority Weighting
                         <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-cyan-400" /> Anti-Procrastination Calibration
+                        <Check className="w-4 h-4 text-cyan-400" /> Distraction Shielding
                       </div>
                     </div>
 
                     {/* Pillar II */}
                     <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-lg">
                           02
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold font-mono text-white">Air-Gap Chamber & Klaxon Enforcer</h3>
-                          <span className="text-xs font-mono text-rose-400">Pillar II // Cognitive Isolation</span>
+                          <h3 className="text-lg font-bold text-white tracking-tight">Deep Work Sessions & Focus Guard</h3>
+                          <span className="text-xs text-rose-400 font-medium">Pillar II • Flow State</span>
                         </div>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4">
-                        Full-screen lockdown with 40Hz Gamma flow audio. Tab switches and attention breaches trigger a piercing 880Hz klaxon countdown.
+                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
+                        Full-screen focus sessions powered by local 40Hz binaural audio. Window switches trigger immediate acoustic alerts to preserve attention.
                       </p>
-                      <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
                         <Check className="w-4 h-4 text-rose-400" /> 100% Offline Enclave Sync
                         <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-rose-400" /> Focus Density Telemetry
+                        <Check className="w-4 h-4 text-rose-400" /> Real-time Focus Telemetry
                       </div>
                     </div>
 
                     {/* Pillar III */}
                     <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
                           03
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold font-mono text-white">AI Chief of Staff</h3>
-                          <span className="text-xs font-mono text-indigo-400">Pillar III // Adaptive Strategy</span>
+                          <h3 className="text-lg font-bold text-white tracking-tight">AI Performance Coaching</h3>
+                          <span className="text-xs text-indigo-400 font-medium">Pillar III • Execution Insights</span>
                         </div>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4">
-                        Conducts mid-day strategic pulse checks and evening debriefs. Detects cognitive friction, rebalances directives, and verifies proof-of-work.
+                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
+                        Mid-day pulse checks and structured evening debriefs to pinpoint friction, celebrate momentum, and calibrate daily habits.
                       </p>
-                      <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
                         <Check className="w-4 h-4 text-indigo-400" /> Friction Root Cause Analysis
                         <span className="mx-1">•</span>
                         <Check className="w-4 h-4 text-indigo-400" /> Daily Execution Velocity
@@ -743,87 +742,87 @@ export default function AuthPage() {
                     {/* Pillar IV */}
                     <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
                           04
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold font-mono text-white">Sunday Performance Court & Vaults</h3>
-                          <span className="text-xs font-mono text-amber-400">Pillar IV // Consequence System</span>
+                          <h3 className="text-lg font-bold text-white tracking-tight">Sunday Performance Court & Review</h3>
+                          <span className="text-xs text-amber-400 font-medium">Pillar IV • Accountability</span>
                         </div>
                       </div>
-                      <p className="text-slate-400 text-xs sm:text-sm font-mono leading-relaxed mb-4">
-                        Automated weekly judicial tribunal. Evaluates 7-day compliance. Releases escrow bounties or executes public forfeitures.
+                      <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4">
+                        Automated weekly accountability review. Audits 7-day consistency, settles squad commitment pools, and resets goals for the coming week.
                       </p>
-                      <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                        <Check className="w-4 h-4 text-amber-400" /> Escrow Financial Covenants
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <Check className="w-4 h-4 text-amber-400" /> Escrow Commitment Pools
                         <span className="mx-1">•</span>
-                        <Check className="w-4 h-4 text-amber-400" /> Hall of Consequence decrees
+                        <Check className="w-4 h-4 text-amber-400" /> Verified Execution Records
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* Final Pre-Footer Call to Action */}
+                {/* Final Call to Action */}
                 <div className="w-full max-w-4xl p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-cyan-950/60 to-slate-900 border border-cyan-500/40 text-center relative overflow-hidden mb-12">
                   <div className="relative z-10">
-                    <h2 className="text-2xl sm:text-4xl font-bold font-mono text-white mb-4">
-                      Ready to Enforce Your Potential?
+                    <h2 className="text-2xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                      Ready to Elevate Your Daily Execution?
                     </h2>
-                    <p className="text-slate-300 text-sm sm:text-base font-mono max-w-xl mx-auto mb-8">
-                      Ascension Protocol runs on any device. Install the progressive web application to operate without distraction.
+                    <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+                      Ascension Protocol works across every device. Install the progressive web application to operate with deep focus and consistency.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                       <Button
                         onClick={handleInstall}
                         size="lg"
-                        className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-base py-6 px-8 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)]"
+                        className="w-full sm:w-auto bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-sm sm:text-base py-6 px-8 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)]"
                       >
-                        <Download className="mr-2 w-5 h-5" />
-                        INSTALL APP NOW
+                        <Download className="mr-2 w-4 h-4" />
+                        Install App Now
                       </Button>
                       <Button
                         onClick={() => setView('selection')}
                         size="lg"
                         variant="outline"
-                        className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-mono text-base py-6 px-8 rounded-xl"
+                        className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-medium text-sm sm:text-base py-6 px-8 rounded-xl"
                       >
-                        LAUNCH WEB CONSOLE
+                        Launch Web App
                       </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer */}
-                <footer className="w-full text-center pb-8 pt-4 text-xs font-mono text-slate-500 border-t border-slate-900/80">
+                {/* Professional Footer */}
+                <footer className="w-full text-center pb-8 pt-4 text-xs text-slate-500 border-t border-slate-900/80">
                   <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
                     <button
                       onClick={() => setLocation('/privacy')}
                       className="hover:text-cyan-400 transition-colors cursor-pointer"
                     >
-                      PRIVACY POLICY
+                      Privacy Policy
                     </button>
                     <span>•</span>
                     <button
                       onClick={() => setLocation('/terms')}
                       className="hover:text-cyan-400 transition-colors cursor-pointer"
                     >
-                      TERMS OF SERVICE
+                      Terms of Service
                     </button>
                     <span>•</span>
                     <button
                       onClick={() => setLocation('/contact')}
                       className="hover:text-cyan-400 transition-colors cursor-pointer"
                     >
-                      CONTACT DESK
+                      Contact Support
                     </button>
                   </div>
-                  <p className="text-slate-600">© {new Date().getFullYear()} ASCENSION OS // MIL-SPEC HUMAN PROTOCOL. ALL RIGHTS RESERVED.</p>
+                  <p className="text-slate-600">© {new Date().getFullYear()} Ascension Protocol. All rights reserved.</p>
                 </footer>
               </section>
             </motion.div>
           )}
 
-          {/* ============ SELECTION VIEW ============ */}
+          {/* ============ SELECTION VIEW (MEMBER / ADMIN PORTAL) ============ */}
           {view === 'selection' && (
             <motion.div
               key="selection"
@@ -834,9 +833,9 @@ export default function AuthPage() {
               className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-12"
             >
               <div className="text-center mb-10">
-                <span className="text-xs font-mono text-cyan-400 tracking-widest uppercase">SECURITY CLEARANCE</span>
-                <h2 className="text-3xl sm:text-4xl font-bold font-mono text-white mt-1">Select Access Vector</h2>
-                <p className="text-slate-400 text-xs sm:text-sm font-mono mt-2">Choose your operator authorization profile</p>
+                <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Authentication</span>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mt-1 tracking-tight">Select Sign-In Portal</h2>
+                <p className="text-slate-400 text-sm mt-2">Choose your operator authorization profile</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
@@ -851,12 +850,12 @@ export default function AuthPage() {
                     <div className="p-4 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                       <Terminal className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold font-mono text-white">Operator Console</h3>
-                    <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                      Access your mission command center, 40Hz air-gap focus chamber, and squad covenants.
+                    <h3 className="text-xl font-bold text-white">Member Portal</h3>
+                    <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                      Access your mission command center, 40Hz focus sessions, and squad commitments.
                     </p>
-                    <span className="text-cyan-400 text-xs font-mono font-bold flex items-center gap-1 mt-2">
-                      AUTHORIZE ACCESS <ArrowRight className="w-4 h-4" />
+                    <span className="text-cyan-400 text-xs font-semibold flex items-center gap-1 mt-2">
+                      Sign In to Account <ArrowRight className="w-4 h-4" />
                     </span>
                   </div>
                 </motion.div>
@@ -872,12 +871,12 @@ export default function AuthPage() {
                     <div className="p-4 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
                       <Shield className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold font-mono text-white">Command Authority</h3>
-                    <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                      System diagnostics, court tribunal audit logging, and protocol telemetric oversight.
+                    <h3 className="text-xl font-bold text-white">Administrator Access</h3>
+                    <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                      System diagnostics, performance audits, and platform management.
                     </p>
-                    <span className="text-amber-400 text-xs font-mono font-bold flex items-center gap-1 mt-2">
-                      COMMAND KEY LOGIN <Lock className="w-4 h-4" />
+                    <span className="text-amber-400 text-xs font-semibold flex items-center gap-1 mt-2">
+                      Admin Passphrase Login <Lock className="w-4 h-4" />
                     </span>
                   </div>
                 </motion.div>
@@ -885,9 +884,9 @@ export default function AuthPage() {
 
               <button
                 onClick={() => setView('hero')}
-                className="mt-10 text-xs font-mono text-slate-500 hover:text-cyan-400 transition-colors"
+                className="mt-10 text-xs text-slate-400 hover:text-cyan-400 transition-colors"
               >
-                ← RETURN TO PUBLIC SHOWCASE
+                ← Return to Home Overview
               </button>
             </motion.div>
           )}
@@ -907,8 +906,8 @@ export default function AuthPage() {
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-2 text-amber-400">
                     <Lock className="w-6 h-6" />
                   </div>
-                  <CardTitle className="text-xl font-mono text-white">Command Security Gate</CardTitle>
-                  <CardDescription className="text-xs font-mono text-slate-400">
+                  <CardTitle className="text-xl font-bold text-white">Administrator Sign-In</CardTitle>
+                  <CardDescription className="text-xs text-slate-400">
                     Enter root administrator passphrase
                   </CardDescription>
                 </CardHeader>
@@ -919,25 +918,25 @@ export default function AuthPage() {
                       value={adminPassword}
                       onChange={(e) => { setAdminPassword(e.target.value); setAdminError(""); }}
                       placeholder="Root security passphrase"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-sm placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition-all"
                       autoFocus
                     />
                     {adminError && (
-                      <p className="text-xs font-mono text-rose-400 flex items-center gap-1.5">
+                      <p className="text-xs text-rose-400 flex items-center gap-1.5">
                         <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /> {adminError}
                       </p>
                     )}
                     <Button 
                       type="submit" 
-                      className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold text-xs uppercase py-5 rounded-xl"
+                      className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 rounded-xl"
                     >
-                      AUTHENTICATE
+                      Authenticate
                     </Button>
                     <div className="text-center pt-2">
                       <button 
                         type="button" 
                         onClick={() => setView('selection')} 
-                        className="text-xs font-mono text-slate-500 hover:text-slate-300 transition-colors"
+                        className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
                       >
                         Cancel
                       </button>
@@ -964,25 +963,25 @@ export default function AuthPage() {
             {standalone ? (
               <Button
                 onClick={() => setView('selection')}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold rounded-xl py-6 text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl py-6 text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)]"
               >
-                ENTER PROTOCOL CONSOLE <ArrowRight className="ml-2 w-4 h-4" />
+                Launch Dashboard <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             ) : (
               <div className="flex gap-2">
                 <Button
                   onClick={handleInstall}
-                  className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-mono font-bold rounded-xl py-6 text-xs uppercase shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl py-6 text-xs shadow-[0_0_20px_rgba(6,182,212,0.3)]"
                 >
                   <Download className="mr-1.5 w-4 h-4" />
-                  INSTALL APP
+                  Install App
                 </Button>
                 <Button
                   onClick={() => setView('selection')}
                   variant="outline"
-                  className="border-slate-700 bg-slate-900 text-white font-mono text-xs rounded-xl py-6 px-4"
+                  className="border-slate-700 bg-slate-900 text-white text-xs rounded-xl py-6 px-4 font-medium"
                 >
-                  LOGIN
+                  Sign In
                 </Button>
               </div>
             )}
@@ -990,7 +989,7 @@ export default function AuthPage() {
         )}
       </AnimatePresence>
 
-      {/* Zero-Auth 3-Minute Instant Focus Sandbox Modal */}
+      {/* 3-Minute Instant Focus Sandbox Modal */}
       <InstantFocusSandboxModal
         isOpen={showSandbox}
         onClose={() => setShowSandbox(false)}

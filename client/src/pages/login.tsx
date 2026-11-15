@@ -170,26 +170,26 @@ export default function Login() {
                 className="relative z-10 w-full max-w-md"
             >
                 <InAppBrowserBanner className="mb-4" />
-                <Card className="bg-zinc-900/90 border-zinc-800 backdrop-blur-xl">
+                <Card className="bg-zinc-900/90 border-zinc-800 backdrop-blur-xl font-sans rounded-2xl">
                     <CardHeader className="text-center">
-                        <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <LogIn className="w-8 h-8 text-blue-400" />
+                        <div className="mx-auto mb-3 w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                            <LogIn className="w-7 h-7 text-cyan-400" />
                         </div>
-                        <CardTitle className="text-3xl">Welcome Back</CardTitle>
-                        <CardDescription>Continue your ascension journey</CardDescription>
+                        <CardTitle className="text-2xl font-bold text-white tracking-tight">Sign In</CardTitle>
+                        <CardDescription className="text-xs text-zinc-400">Continue to your Ascension Protocol dashboard</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleLogin} className="space-y-6">
+                        <form onSubmit={handleLogin} className="space-y-5">
                             {/* Username */}
-                            <div className="space-y-2">
-                                <Label htmlFor="username">Username</Label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="username" className="text-xs font-medium text-zinc-300">Username</Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
                                         id="username"
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        className="bg-black border-zinc-700 pl-10"
+                                        className="bg-black/70 border-zinc-700 pl-10 rounded-xl text-sm h-11"
                                         placeholder="Enter your username"
                                         required
                                         autoFocus
@@ -198,8 +198,8 @@ export default function Login() {
                             </div>
 
                             {/* Password */}
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="password" className="text-xs font-medium text-zinc-300">Password</Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <Input
@@ -207,7 +207,7 @@ export default function Login() {
                                         type={showPassword ? "text" : "password"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="bg-black border-zinc-700 pl-10 pr-10"
+                                        className="bg-black/70 border-zinc-700 pl-10 pr-10 rounded-xl text-sm h-11"
                                         placeholder="Enter your password"
                                         required
                                     />
@@ -223,18 +223,18 @@ export default function Login() {
 
                             <Button
                                 type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl h-11 text-sm shadow-[0_0_20px_rgba(6,182,212,0.2)]"
                                 disabled={isLoading}
                             >
-                                {isLoading ? "Logging in..." : "Login"}
+                                {isLoading ? "Signing in..." : "Sign In"}
                             </Button>
 
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t border-zinc-700" />
+                                    <span className="w-full border-t border-zinc-800" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-zinc-900 px-2 text-zinc-500">Or continue with</span>
+                                    <span className="bg-zinc-900 px-3 text-zinc-500 font-medium">Or</span>
                                 </div>
                             </div>
 
@@ -243,7 +243,7 @@ export default function Login() {
                                 variant="outline"
                                 onClick={handleGoogleLogin}
                                 disabled={isLoading}
-                                className="w-full border-zinc-700 bg-transparent hover:bg-zinc-800"
+                                className="w-full border-zinc-700 bg-transparent hover:bg-zinc-800 rounded-xl h-11 text-sm flex items-center justify-center gap-2"
                             >
                                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                                     <path

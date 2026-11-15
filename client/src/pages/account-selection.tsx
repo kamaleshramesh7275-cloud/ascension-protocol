@@ -90,13 +90,13 @@ export default function AccountSelection() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative z-10 w-full max-w-4xl"
+                className="relative z-10 w-full max-w-4xl font-sans"
             >
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">
-                        Welcome, Ascendant
+                    <h1 className="text-3xl md:text-5xl font-extrabold mb-3 text-white tracking-tight">
+                        Welcome to Ascension Protocol
                     </h1>
-                    <p className="text-lg text-zinc-400">Choose your path or access instantly</p>
+                    <p className="text-base sm:text-lg text-zinc-400">Sign in to your account or create a new profile</p>
                 </div>
 
                 <div className="max-w-md mx-auto mb-4">
@@ -109,7 +109,7 @@ export default function AccountSelection() {
                         type="button"
                         onClick={handleGoogleAuth}
                         disabled={isGoogleLoading}
-                        className="w-full h-13 py-3 bg-zinc-900/90 border border-purple-500/40 hover:border-purple-400 hover:bg-zinc-800 text-white font-medium shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-all flex items-center justify-center gap-3"
+                        className="w-full h-12 py-3 bg-zinc-900 border border-cyan-500/30 hover:border-cyan-400 hover:bg-zinc-800 text-white font-medium rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all flex items-center justify-center gap-3"
                     >
                         <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -117,12 +117,12 @@ export default function AccountSelection() {
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                         </svg>
-                        <span>{isGoogleLoading ? "Authenticating..." : "Fast-Track: Continue with Google"}</span>
+                        <span>{isGoogleLoading ? "Connecting..." : "Continue with Google"}</span>
                     </Button>
 
                     <div className="relative flex py-4 items-center">
                         <div className="flex-grow border-t border-zinc-800"></div>
-                        <span className="flex-shrink mx-4 text-xs text-zinc-500 uppercase tracking-widest font-mono">Or Manual Credentials</span>
+                        <span className="flex-shrink mx-4 text-xs text-zinc-500 uppercase tracking-wider font-medium">Or Use Credentials</span>
                         <div className="flex-grow border-t border-zinc-800"></div>
                     </div>
                 </div>
@@ -130,41 +130,41 @@ export default function AccountSelection() {
                 <div className="grid md:grid-cols-2 gap-6">
                     {/* New User Card */}
                     <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
                     >
                         <Card
-                            className="h-full bg-gradient-to-br from-purple-900/20 to-black border-purple-500/30 hover:border-purple-500/60 transition-all cursor-pointer"
+                            className="h-full bg-gradient-to-br from-cyan-950/20 via-slate-900 to-black border-cyan-500/30 hover:border-cyan-500/60 rounded-2xl transition-all cursor-pointer p-2"
                             onClick={() => setLocation("/register")}
                         >
-                            <CardHeader className="text-center pb-4">
-                                <div className="mx-auto mb-4 w-20 h-20 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                    <UserPlus className="w-10 h-10 text-purple-400" />
+                            <CardHeader className="text-center pb-3">
+                                <div className="mx-auto mb-3 w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                                    <UserPlus className="w-8 h-8 text-cyan-400" />
                                 </div>
-                                <CardTitle className="text-2xl">New User</CardTitle>
-                                <CardDescription className="text-base">Begin your ascension journey</CardDescription>
+                                <CardTitle className="text-xl font-bold text-white">Create New Account</CardTitle>
+                                <CardDescription className="text-sm text-zinc-400">Set up your personal execution dashboard</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <ul className="space-y-3 text-sm text-zinc-300">
+                                <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-300">
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                        <span>Complete initial assessment</span>
+                                        <ArrowRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                        <span>Calibrate your daily priorities & habits</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                        <span>Create your unique username</span>
+                                        <ArrowRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                        <span>Select your archetype & fitness loadout</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                        <span>Set a secure password</span>
+                                        <ArrowRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                        <span>Access 40Hz binaural deep focus sessions</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                        <span>Start earning XP and leveling up</span>
+                                        <ArrowRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                        <span>Join peer accountability squads</span>
                                     </li>
                                 </ul>
-                                <Button className="w-full bg-purple-600 hover:bg-purple-700 mt-6">
-                                    Start Calibration
+                                <Button className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl mt-4">
+                                    Get Started
                                 </Button>
                             </CardContent>
                         </Card>
@@ -172,41 +172,37 @@ export default function AccountSelection() {
 
                     {/* Returning User Card */}
                     <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
                     >
                         <Card
-                            className="h-full bg-gradient-to-br from-blue-900/20 to-black border-blue-500/30 hover:border-blue-500/60 transition-all cursor-pointer"
+                            className="h-full bg-gradient-to-br from-indigo-950/20 via-slate-900 to-black border-slate-800 hover:border-indigo-500/50 rounded-2xl transition-all cursor-pointer p-2"
                             onClick={() => setLocation("/login")}
                         >
-                            <CardHeader className="text-center pb-4">
-                                <div className="mx-auto mb-4 w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <LogIn className="w-10 h-10 text-blue-400" />
+                            <CardHeader className="text-center pb-3">
+                                <div className="mx-auto mb-3 w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
+                                    <LogIn className="w-8 h-8 text-indigo-400" />
                                 </div>
-                                <CardTitle className="text-2xl">Returning User</CardTitle>
-                                <CardDescription className="text-base">Continue your ascension</CardDescription>
+                                <CardTitle className="text-xl font-bold text-white">Returning Member</CardTitle>
+                                <CardDescription className="text-sm text-zinc-400">Continue your streak & active targets</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <ul className="space-y-3 text-sm text-zinc-300">
+                                <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-300">
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                        <span>Access your existing account</span>
+                                        <ArrowRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+                                        <span>Access your existing dashboard</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                        <span>Continue your daily quests</span>
+                                        <ArrowRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+                                        <span>Execute today's priority commitments</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                        <span>Check your telemetry progress</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <ArrowRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                        <span>Climb the Hunter leaderboards</span>
+                                        <ArrowRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+                                        <span>Review squad pool standing and rankings</span>
                                     </li>
                                 </ul>
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-6">
-                                    Login with Password
+                                <Button variant="outline" className="w-full border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-white font-semibold rounded-xl mt-4">
+                                    Sign In
                                 </Button>
                             </CardContent>
                         </Card>

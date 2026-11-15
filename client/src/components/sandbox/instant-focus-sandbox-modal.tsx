@@ -101,54 +101,54 @@ export function InstantFocusSandboxModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md w-[92vw] bg-[#07090F]/95 backdrop-blur-3xl border border-cyan-500/30 p-6 text-white rounded-3xl overflow-hidden shadow-2xl">
+        <DialogContent className="max-w-md w-[92vw] bg-[#07090F]/95 backdrop-blur-3xl border border-cyan-500/30 p-6 text-white rounded-3xl overflow-hidden shadow-2xl font-sans">
           <div className="relative z-10 flex flex-col items-center text-center space-y-4">
             {/* Header Pill */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-mono text-[10px] uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-medium">
               <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <span>ZERO-AUTH GUEST SANDBOX // TRIAL RUN</span>
+              <span>Instant Focus Session • No Sign-Up Required</span>
             </div>
 
             {/* PHASE 1: SET INTENTION */}
             {phase === "intent" && (
               <div className="w-full space-y-4 pt-2">
                 <div className="space-y-1">
-                  <h3 className="text-xl sm:text-2xl font-black font-display text-white uppercase tracking-tight">
-                    3-Minute Focus Test
+                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    3-Minute Deep Work Sprint
                   </h3>
-                  <p className="text-xs text-zinc-400 font-mono">
-                    Experience mil-spec air-gapped focus with 40Hz binaural neuro-entrainment. No sign-up required.
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Experience deep focus powered by local 40Hz binaural neuro-acoustic audio. Works offline with zero setup.
                   </p>
                 </div>
 
                 <div className="text-left space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider">
-                    TARGET MISSION INTENTION:
+                  <label className="text-xs font-semibold text-zinc-300">
+                    What are you working on?
                   </label>
                   <Input
                     value={taskName}
                     onChange={(e) => setTaskName(e.target.value)}
-                    placeholder="e.g. Read 5 pages, Review code, Clear inbox"
-                    className="bg-black/60 border-white/15 text-white font-mono text-xs h-10"
+                    placeholder="e.g. Clear inbox, Outline presentation, Write code"
+                    className="bg-black/60 border-white/15 text-white text-xs h-10 rounded-xl"
                   />
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-left space-y-1 text-xs font-mono">
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-left space-y-1 text-xs">
                   <div className="text-zinc-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Trial Completion Reward:</span>
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Sprint Milestone:</span>
                   </div>
-                  <div className="text-white font-bold">
-                    Vault of Will Coffer Drop (+150 XP & Rare Relic)
+                  <div className="text-white font-semibold">
+                    Complete this sprint to earn +150 Performance Points
                   </div>
                 </div>
 
                 <Button
                   onClick={handleStartSprint}
-                  className="w-full bg-cyan-400 hover:bg-cyan-300 text-black font-mono text-xs font-black h-11 tracking-wider uppercase shadow-lg shadow-cyan-500/20"
+                  className="w-full bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-semibold h-11 rounded-xl shadow-lg shadow-cyan-500/20"
                 >
                   <Play className="w-4 h-4 mr-1.5 text-black" />
-                  INITIATE 3-MIN FOCUS SPRINT
+                  Start 3-Minute Focus Session
                 </Button>
               </div>
             )}
@@ -157,10 +157,10 @@ export function InstantFocusSandboxModal({
             {phase === "running" && (
               <div className="w-full flex flex-col items-center space-y-5 py-4">
                 <div className="space-y-1">
-                  <Badge variant="outline" className="border-cyan-500/50 text-cyan-400 font-mono text-[10px] uppercase">
-                    AIR-GAP SHIELD ACTIVE
+                  <Badge variant="outline" className="border-cyan-500/50 text-cyan-400 text-xs font-medium">
+                    Deep Focus Active
                   </Badge>
-                  <h4 className="text-sm font-mono text-zinc-300 max-w-xs truncate">
+                  <h4 className="text-sm text-zinc-300 max-w-xs truncate font-medium">
                     {taskName}
                   </h4>
                 </div>
@@ -173,7 +173,7 @@ export function InstantFocusSandboxModal({
                     className="absolute inset-0 rounded-full border-2 border-cyan-400/40"
                   />
 
-                  <div className="text-5xl font-black font-mono text-white tracking-tighter tabular-nums drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]">
+                  <div className="text-5xl font-black text-white tracking-tighter tabular-nums drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]">
                     {timeFormatted}
                   </div>
                 </div>
@@ -184,19 +184,19 @@ export function InstantFocusSandboxModal({
                     variant="outline"
                     size="sm"
                     onClick={toggleAudio}
-                    className={`h-8 font-mono text-xs border ${
+                    className={`h-9 text-xs font-medium border rounded-xl ${
                       isAudioActive ? "border-cyan-500/50 text-cyan-300 bg-cyan-950/40" : "border-white/10 text-zinc-400"
                     }`}
                   >
                     {isAudioActive ? (
                       <>
                         <Volume2 className="w-3.5 h-3.5 mr-1.5 text-cyan-400 animate-pulse" />
-                        40Hz BINAURAL FLOWING
+                        40Hz Audio Playing
                       </>
                     ) : (
                       <>
                         <VolumeX className="w-3.5 h-3.5 mr-1.5 text-zinc-500" />
-                        AUDIO MUTED
+                        Audio Muted
                       </>
                     )}
                   </Button>
@@ -205,9 +205,9 @@ export function InstantFocusSandboxModal({
                     variant="ghost"
                     size="sm"
                     onClick={handleCompleteSprint}
-                    className="text-xs font-mono text-zinc-400 hover:text-white"
+                    className="text-xs text-zinc-400 hover:text-white"
                   >
-                    Skip Ahead
+                    Complete Early
                   </Button>
                 </div>
               </div>
@@ -221,23 +221,23 @@ export function InstantFocusSandboxModal({
                 </div>
 
                 <div className="space-y-1">
-                  <h3 className="text-xl sm:text-2xl font-black font-display text-white uppercase tracking-tight">
-                    Trial Sprint Accomplished!
+                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    Focus Session Complete!
                   </h3>
-                  <p className="text-xs text-zinc-300 font-mono">
-                    You earned <strong className="text-cyan-400">+{earnedLoot?.xp || 150} XP</strong> and unlocked provisional Hunter Rank status.
+                  <p className="text-xs text-zinc-300">
+                    You earned <strong className="text-cyan-400">+{earnedLoot?.xp || 150} Points</strong> towards your daily focus consistency.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-black border border-cyan-500/30 text-left space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-zinc-400">PROVISIONAL HUNTER ID:</span>
-                    <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-mono text-[10px]">
-                      D-TIER RECRUIT
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-400 font-medium">Session Status:</span>
+                    <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 text-xs">
+                      Verified Completion
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-zinc-300 font-mono leading-relaxed">
-                    Create your free account now to link your Google identity, save your earned loot, unlock your 3D Hunter License, and begin climbing the Spire.
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Create your free account to track your daily streak, access unlimited deep focus sessions, and join peer accountability squads.
                   </p>
                 </div>
 
@@ -246,10 +246,10 @@ export function InstantFocusSandboxModal({
                     audioEngine.playCommandLock();
                     onConvertToAccount();
                   }}
-                  className="w-full bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-black font-mono text-xs font-black h-12 tracking-wider uppercase shadow-xl flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-black font-semibold text-xs h-12 rounded-xl shadow-xl flex items-center justify-center gap-2"
                 >
                   <Trophy className="w-4 h-4 text-black" />
-                  <span>CLAIM LOOT & ACTIVATE HUNTER ACCOUNT</span>
+                  <span>Save Progress & Create Free Account</span>
                   <ArrowRight className="w-4 h-4 text-black" />
                 </Button>
               </div>
