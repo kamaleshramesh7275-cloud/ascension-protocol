@@ -363,14 +363,37 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => setShowQRModal(true)}
+              onClick={() => setLocation('/about')}
+              className="hidden md:inline-flex items-center text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5"
+            >
+              About
+            </button>
+
+            <button
+              onClick={() => setLocation('/download')}
               className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 bg-slate-900/50"
             >
-              <QrCode className="w-3.5 h-3.5" />
+              <Smartphone className="w-3.5 h-3.5" />
               <span>Mobile App</span>
             </button>
+
+            <button
+              onClick={() => setLocation('/contact')}
+              className="hidden md:inline-flex items-center text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5"
+            >
+              Contact
+            </button>
+
+            <Button
+              onClick={() => setLocation('/login')}
+              size="sm"
+              variant="outline"
+              className="border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs px-3 h-9 rounded-lg"
+            >
+              Sign In
+            </Button>
 
             <Button
               onClick={() => setLocation('/account-selection')}
@@ -794,6 +817,27 @@ export default function AuthPage() {
                 <footer className="w-full text-center pb-8 pt-4 text-xs text-slate-500 border-t border-slate-900/80">
                   <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
                     <button
+                      onClick={() => setLocation('/about')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      About
+                    </button>
+                    <span>•</span>
+                    <button
+                      onClick={() => setLocation('/download')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      Mobile App
+                    </button>
+                    <span>•</span>
+                    <button
+                      onClick={() => setLocation('/contact')}
+                      className="hover:text-cyan-400 transition-colors cursor-pointer"
+                    >
+                      Contact & Support
+                    </button>
+                    <span>•</span>
+                    <button
                       onClick={() => setLocation('/privacy')}
                       className="hover:text-cyan-400 transition-colors cursor-pointer"
                     >
@@ -805,13 +849,6 @@ export default function AuthPage() {
                       className="hover:text-cyan-400 transition-colors cursor-pointer"
                     >
                       Terms of Service
-                    </button>
-                    <span>•</span>
-                    <button
-                      onClick={() => setLocation('/contact')}
-                      className="hover:text-cyan-400 transition-colors cursor-pointer"
-                    >
-                      Contact Support
                     </button>
                   </div>
                   <p className="text-slate-600">© {new Date().getFullYear()} Ascension Protocol. All rights reserved.</p>

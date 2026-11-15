@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LiveTelemetryTicker } from "@/components/live-telemetry-ticker";
 import { motion } from "framer-motion";
-import { User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import { User, Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,8 +159,30 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-black via-blue-950/20 to-black flex flex-col justify-between relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-black via-blue-950/20 to-black flex flex-col justify-between relative overflow-hidden font-sans">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover opacity-10 pointer-events-none" />
+
+            {/* Top Navigation Strip */}
+            <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-zinc-800/60 bg-black/40 backdrop-blur-md">
+                <button
+                    onClick={() => setLocation("/")}
+                    className="flex items-center gap-2 text-xs text-zinc-400 hover:text-cyan-400 transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Home</span>
+                </button>
+                <div className="flex items-center gap-4 text-xs text-zinc-400">
+                    <button onClick={() => setLocation("/about")} className="hover:text-cyan-400 transition-colors">
+                        About
+                    </button>
+                    <button onClick={() => setLocation("/download")} className="hover:text-cyan-400 transition-colors">
+                        Mobile App
+                    </button>
+                    <button onClick={() => setLocation("/contact")} className="hover:text-cyan-400 transition-colors">
+                        Contact
+                    </button>
+                </div>
+            </div>
 
             <div className="flex-1 flex items-center justify-center p-6">
 

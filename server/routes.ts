@@ -2467,12 +2467,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/subscription", subscriptionRouter);
 
   // ─────────────────────────────────────────────
-  // BRIDGE – Proposals, Reviews, Feature Requests
+  // BRIDGE – Proposals, Reviews, Feature Requests & Contact
   // ─────────────────────────────────────────────
   // Simple in-memory store (consistent with the rest of the codebase)
   const bridgeProposals: any[] = [];
   const bridgeReviews: any[] = [];
   const bridgeFeatures: any[] = [];
+  const contactInquiries: any[] = [];
   let bridgeIdCounter = 1;
 
   const adminCheck = (req: Request, res: Response): boolean => {
@@ -2654,6 +2655,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     bridgeFeatures.push(feature);
     res.status(201).json(feature);
+  });
+
+  // Public contact & support inquiry submission
+  app.post("/api/contact", (req, res) => {
+    const { name, email, topic, message } = req.body;
+    if (!email || !message) {
+      return res.status(400).json({ error: "Email and message are required" });
+    }
+    const inquiry = {
+      id: String(bridgeIdCounter++),
+      name: name || "Anonymous Visitor",
+      email: email.trim().toLowerCase(),
+      topic: topic || "General Inquiry",
+      message: message.trim(),
+      createdAt: new Date().toISOString(),
+      status: "pending",
+    };
+    contactInquiries.push(inquiry);
+    console.log(`[Contact] New inquiry from ${inquiry.email} regarding "${inquiry.topic}"`);
+    res.status(201).json({ success: true, message: "Inquiry received. Our team will review and respond promptly." });
+  });
+
+  app.get("/api/admin/contact-inquiries", (req, res) => {
+    if (!adminCheck(req, res)) return;
+    res.json(contactInquiries.slice().reverse());
   });
 
   // --- Telemetry Routes ---

@@ -79,6 +79,8 @@ import CovenantViewPage from "@/pages/covenant-view";
 import AchievementsPage from "@/pages/achievements";
 import PrivacyPolicyPage from "@/pages/privacy";
 import TermsOfServicePage from "@/pages/terms";
+import DownloadPage from "@/pages/download";
+import AboutPage from "@/pages/about";
 
 function TierWatcher() {
   const { user } = useAuth();
@@ -281,7 +283,9 @@ function Router() {
         <Route path="/global-chat" component={() => <ProtectedRoute component={withSeo(GlobalChatPage, { title: "Global Chat" })} />} />
         <Route path="/store" component={() => <ProtectedRoute component={withSeo(StorePage, { title: "Store" })} />} />
         <Route path="/gangs" component={() => <ProtectedRoute component={withSeo(GangsPage, { title: "Gangs" })} />} />
-        <Route path="/contact" component={() => <ProtectedRoute component={withSeo(ContactPage, { title: "Contact", url: "/contact" })} />} />
+        <Route path="/about" component={withSeo(AboutPage, { title: "About", description: "The Real-Life Leveling System & Philosophy", url: "/about" })} />
+        <Route path="/download" component={withSeo(DownloadPage, { title: "Mobile App Download", description: "Install Ascension Protocol on iOS, Android, and Desktop", url: "/download" })} />
+        <Route path="/contact" component={withSeo(ContactPage, { title: "Contact & Support", description: "Ascension Protocol Support Desk & Inquiries", url: "/contact" })} />
         <Route path="/pay-redirect" component={PaymentRedirect} />
         <Route path="/ref/:code" component={ReferralRedirect} />
         <Route path="/session/:id" component={() => <ProtectedRoute component={withSeo(SessionPage, { title: "Session" })} />} />
@@ -298,6 +302,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={withSeo(AuthPage, { title: "Level Up Your Life", url: "/" })} />
+      <Route path="/about" component={withSeo(AboutPage, { title: "About", description: "The Real-Life Leveling System & Philosophy", url: "/about" })} />
+      <Route path="/download" component={withSeo(DownloadPage, { title: "Mobile App Download", description: "Install Ascension Protocol on iOS, Android, and Desktop", url: "/download" })} />
+      <Route path="/contact" component={withSeo(ContactPage, { title: "Contact & Support", description: "Ascension Protocol Support Desk & Inquiries", url: "/contact" })} />
       <Route path="/account-selection" component={withSeo(AccountSelection, { title: "Choose Account Type", url: "/account-selection" })} />
       <Route path="/register" component={withSeo(Register, { title: "Register", url: "/register" })} />
       <Route path="/login" component={withSeo(Login, { title: "Login", url: "/login" })} />
@@ -385,7 +392,7 @@ function AppContent() {
   return (
     <>
       <AppTour />
-      {location === "/onboarding" || location === "/briefing-room" || location === "/air-gap-focus" || location === "/privacy" || location === "/terms" ? (
+      {location === "/onboarding" || location === "/briefing-room" || location === "/air-gap-focus" || location === "/privacy" || location === "/terms" || location === "/about" || location === "/download" || location === "/contact" ? (
         <Router />
       ) : (
         <SidebarProvider>
