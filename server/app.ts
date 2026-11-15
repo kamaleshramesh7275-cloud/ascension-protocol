@@ -36,11 +36,22 @@ import rateLimit from "express-rate-limit";
 app.set("trust proxy", 1);
 
 // Set security headers (CSP disabled to allow Vite/React inline scripts for now)
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  frameguard: process.env.NODE_ENV === "production" ? { action: 'sameorigin' } : false,
-}));
+if (process.env.NODE_ENV === "production") {
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
+} else {
+  // In development, allow embedded webviews, in-IDE previews, and mobile simulators
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    frameguard: false,
+    originAgentCluster: false,
+  }));
+}
 
 // Global Rate Limiter: 100 requests per 15 minutes per IP
 const globalLimiter = rateLimit({
