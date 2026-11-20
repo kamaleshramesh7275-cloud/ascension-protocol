@@ -1,60 +1,54 @@
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { Capacitor } from '@capacitor/core';
+
 /**
- * Tactile Haptic Vibration System
- * Emulates physical gamepad/mobile rumble feedback during quest events,
- * level-ups, and System notifications.
+ * Trigger tactile impact feedback on native device (iOS/Android)
  */
-
-export function isHapticSupported(): boolean {
-  return typeof window !== "undefined" && "vibrate" in navigator;
-}
-
-export function hapticLight(): void {
-  if (isHapticSupported()) {
+export async function hapticTap(style: ImpactStyle = ImpactStyle.Light) {
+  if (Capacitor.isNativePlatform()) {
     try {
-      navigator.vibrate(30);
+      await Haptics.impact({ style });
     } catch {
-      // safe fallback
+      // Haptics optional or unsupported on some devices
     }
   }
 }
 
-export function hapticSuccess(): void {
-  if (isHapticSupported()) {
+/**
+ * Trigger success/warning/error vibration pattern
+ */
+export async function hapticNotification(type: NotificationType = NotificationType.Success) {
+  if (Capacitor.isNativePlatform()) {
     try {
-      navigator.vibrate([40, 30, 60]);
+      await Haptics.notification({ type });
     } catch {
-      // safe fallback
+      // Haptics optional
     }
   }
 }
 
-export function hapticLevelUp(): void {
-  if (isHapticSupported()) {
+/**
+ * Trigger timed vibration pulse (e.g. for Level-Up or Rank Awakening)
+ */
+export async function hapticVibrate(duration: number = 200) {
+  if (Capacitor.isNativePlatform()) {
     try {
-      navigator.vibrate([70, 40, 100, 50, 200]);
+      await Haptics.vibrate({ duration });
     } catch {
-      // safe fallback
+      // Vibration fallback
     }
+  } else if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(duration);
   }
 }
 
-export function hapticWarning(): void {
-  if (isHapticSupported()) {
-    try {
-      navigator.vibrate([100, 40, 100]);
-    } catch {
-      // safe fallback
-    }
-  }
-}
-
-export function hapticShield(): void {
-  if (isHapticSupported()) {
-    try {
-      navigator.vibrate([30, 20, 30, 20, 40]);
-    } catch {
-      // safe fallback
-    }
-  }
-}
+/**
+ * Game specific haptic triggers
+ */
+export const hapticSuccess = () => hapticNotification(NotificationType.Success);
+export const hapticShield = () => hapticTap(ImpactStyle.Medium);
+export const hapticLevelUp = async () => {
+  await hapticNotification(NotificationType.Success);
+  await hapticVibrate(300);
+};
 

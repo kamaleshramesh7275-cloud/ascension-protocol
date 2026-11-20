@@ -27,6 +27,47 @@ import { NetworkStatus } from "@/components/network-status";
 import { useSwUpdate } from "@/hooks/use-sw-update";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { App as CapApp } from "@capacitor/app";
+
+function NativeAppBridge() {
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // Set dark OLED status bar matching the app palette
+    try {
+      StatusBar.setStyle({ style: Style.Dark });
+      StatusBar.setBackgroundColor({ color: "#020617" });
+    } catch (e) {
+      console.warn("[NativeBridge] StatusBar error:", e);
+    }
+
+    // Android hardware back button handler
+    let backListener: any;
+    try {
+      backListener = CapApp.addListener("backButton", ({ canGoBack }) => {
+        if (location === "/" || location === "/mission-command" || location === "/dashboard") {
+          CapApp.exitApp();
+        } else if (canGoBack || window.history.length > 1) {
+          window.history.back();
+        } else {
+          setLocation("/mission-command");
+        }
+      });
+    } catch (e) {
+      console.warn("[NativeBridge] BackButton error:", e);
+    }
+
+    return () => {
+      if (backListener?.remove) backListener.remove();
+    };
+  }, [location, setLocation]);
+
+  return null;
+}
 
 // Service worker is now registered by vite-plugin-pwa (via use-sw-update hook)
 
@@ -499,6 +540,7 @@ function App() {
           <TooltipProvider>
             <AnimationProvider>
               <WorkoutProvider>
+                <NativeAppBridge />
                 <TelemetryTracker />
                 <TierWatcher />
                 <NotificationWatcher />

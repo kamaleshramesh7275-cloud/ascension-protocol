@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { Capacitor } from "@capacitor/core";
+import { hapticTap, hapticSuccess } from "@/lib/haptics";
 
 // Detect iOS device
 function isIOS() {
@@ -145,8 +147,32 @@ export default function AuthPage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return Capacitor.isNativePlatform() || window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => {
+      setIsMobile(Capacitor.isNativePlatform() || window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Selected Hunter Archetype in visual showcase
   const [activeArchetypeIndex, setActiveArchetypeIndex] = useState(0);
+  // Active feature slide in native mobile onboarding (0: Hunter Stats, 1: 40Hz Chamber, 2: Directives, 3: Squad Escrow)
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    if (!isMobile || view !== 'hero') return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % 4);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [isMobile, view]);
 
   const ios = isIOS();
   const standalone = isStandalone();
@@ -350,6 +376,333 @@ export default function AuthPage() {
         )}
       </AnimatePresence>
 
+      {/* ============ NATIVE MOBILE WELCOME VIEW ============ */}
+      {isMobile && view === 'hero' && (
+        <div className="min-h-[100dvh] bg-[#020617] text-white flex flex-col justify-between overflow-x-hidden relative px-4 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.9rem,env(safe-area-inset-bottom))] font-sans select-none">
+          {/* Subtle Ambient Background Aura */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[340px] h-[340px] bg-gradient-to-b from-cyan-500/20 via-indigo-600/10 to-transparent blur-3xl pointer-events-none" />
+
+          {/* Top Native Header */}
+          <header className="relative z-10 flex items-center justify-between py-1 px-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl overflow-hidden border border-cyan-400/40 shadow-md shadow-cyan-500/20 bg-slate-900 flex-shrink-0">
+                <img src="/pwa-192x192.png" alt="Ascension Crest" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <span className="font-black text-sm text-white tracking-tight block leading-none">Ascension Protocol</span>
+                <span className="text-[9px] text-cyan-400/90 font-mono tracking-wider uppercase block mt-0.5">Self-Leveling System</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-[10px] font-mono text-cyan-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>LIVE v2.4</span>
+            </div>
+          </header>
+
+          {/* Main Mobile Body: Hero Branding + Interactive Carousel Unified */}
+          <div className="relative z-10 flex-1 flex flex-col justify-center py-1 space-y-2.5">
+            {/* Hero Branding Section with Official Project Logo */}
+            <div className="flex flex-col items-center text-center pt-0.5">
+              <div className="relative my-0.5 w-20 h-20 rounded-2xl p-1 bg-gradient-to-b from-cyan-400/30 via-slate-900 to-black border border-cyan-400/50 shadow-[0_0_35px_rgba(6,182,212,0.35)] flex items-center justify-center">
+                <img
+                  src="/pwa-192x192.png"
+                  alt="Ascension Protocol Official Logo"
+                  className="w-full h-full object-cover rounded-xl"
+                />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-cyan-500 border-2 border-slate-950 flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-2.5 h-2.5 text-black" />
+                </div>
+              </div>
+
+              <h1 className="text-xl font-black text-white tracking-tight leading-tight mt-1">
+                ASCENSION PROTOCOL
+              </h1>
+              <p className="text-[11px] font-mono text-cyan-400/90 tracking-wide uppercase">
+                The Sovereign Self-Leveling Operating System
+              </p>
+            </div>
+
+            {/* Interactive Feature Carousel Container */}
+            <div className="flex flex-col">
+              {/* Feature Tabs Selector */}
+              <div className="grid grid-cols-4 gap-1 mb-2 bg-slate-950/70 p-1 rounded-xl border border-slate-800/80">
+              {[
+                { label: "Stats", icon: Activity },
+                { label: "40Hz", icon: Zap },
+                { label: "Quests", icon: Target },
+                { label: "Squad", icon: Users },
+              ].map((tab, idx) => {
+                const TabIcon = tab.icon;
+                const isActive = activeSlide === idx;
+                return (
+                  <button
+                    key={tab.label}
+                    onClick={() => {
+                      hapticTap();
+                      setActiveSlide(idx);
+                    }}
+                    className={`py-1.5 px-1 rounded-lg text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)]"
+                        : "text-slate-400 hover:text-slate-200 border border-transparent"
+                    }`}
+                  >
+                    <TabIcon className="w-3 h-3" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Dynamic Feature Slide Card */}
+            <motion.div
+              key={activeSlide}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-[#020617] border border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.15)] backdrop-blur-xl"
+            >
+              {/* Slide 0: RPG Attributes & Archetypes */}
+              {activeSlide === 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2 border-b border-cyan-500/20 pb-1.5">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span>[ RPG ATTRIBUTE CALIBRATION ]</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">Rank E → S</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+                    Converts physical volume, deep work sprints, and unbroken habits into real hunter attributes.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+                    <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-red-400 font-mono">STR (Power)</span>
+                      <span className="text-[11px] font-mono font-bold text-white">+45</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-cyan-400 font-mono">AGI (Speed)</span>
+                      <span className="text-[11px] font-mono font-bold text-white">+38</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-purple-400 font-mono">INT (Focus)</span>
+                      <span className="text-[11px] font-mono font-bold text-white">+52</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-emerald-400 font-mono">VIT (Shields)</span>
+                      <span className="text-[11px] font-mono font-bold text-white">+40</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-medium text-slate-400 flex justify-between">
+                      <span>Hunter Discipline:</span>
+                      <span className="text-cyan-400 font-semibold">{HUNTER_ARCHETYPES[activeArchetypeIndex].name}</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {HUNTER_ARCHETYPES.map((arch, idx) => (
+                        <button
+                          key={arch.name}
+                          onClick={() => { hapticTap(); setActiveArchetypeIndex(idx); }}
+                          className={`py-1.5 rounded-lg border flex flex-col items-center justify-center transition-all cursor-pointer ${
+                            activeArchetypeIndex === idx
+                              ? "bg-cyan-500/20 border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                              : "bg-slate-950/60 border-slate-800 text-slate-500 hover:text-slate-300"
+                          }`}
+                        >
+                          {renderArchetypeIcon(arch.iconKey, "w-3.5 h-3.5 mb-0.5")}
+                          <span className="text-[8px] font-bold truncate max-w-full px-0.5">
+                            {arch.name.split(" ")[1] || arch.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Slide 1: 40Hz Air-Gap Focus Chamber */}
+              {activeSlide === 1 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2 border-b border-cyan-500/20 pb-1.5">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      <span>[ 40Hz AIR-GAP FOCUS CHAMBER ]</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400">ENCLAVE ACTIVE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+                    Gamma binaural acoustic isolation designed to eradicate digital distraction and force uninterrupted deep execution.
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800/80 mb-2">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
+                      <span>Binaural Frequency:</span>
+                      <span className="text-cyan-400 font-bold">40Hz Pure Gamma</span>
+                    </div>
+                    <div className="flex items-end justify-center gap-1.5 h-12 bg-black/60 rounded-lg p-2 border border-cyan-500/20">
+                      {[40, 75, 55, 95, 65, 85, 45, 90, 60, 80, 50].map((h, i) => (
+                        <div
+                          key={i}
+                          style={{ height: `${h}%` }}
+                          className="w-1.5 bg-gradient-to-t from-cyan-600 to-cyan-300 rounded-full animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-center">
+                      <div className="text-[11px] font-bold text-white font-mono">0-Tab Lock</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">Zero Distractions</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-center">
+                      <div className="text-[11px] font-bold text-cyan-400 font-mono">99.4% Flow</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">Execution Efficiency</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Slide 2: Autonomous Hunter Directives */}
+              {activeSlide === 2 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2 border-b border-cyan-500/20 pb-1.5">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      <span>[ DAILY SYSTEM DIRECTIVES ]</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-amber-400">EXPIRING 23:59</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+                    Autonomous missions tailored dynamically to your equipment profile, physical readiness, and rank requirements.
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-slate-950/90 border border-cyan-500/30 mb-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-400">Directive #084</span>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">+150 XP</span>
+                    </div>
+                    <div className="text-xs font-bold text-white">5km Zone-2 Pace + 4h Deep Work Sprint</div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full w-3/4 rounded-full" />
+                    </div>
+                    <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                      <span>Progress: 75% Completed</span>
+                      <span className="text-cyan-400">Rank Trial Pending</span>
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-300">Failure Consequence:</span>
+                    <span className="text-red-400 font-mono font-bold">XP Penalty & Streak Reset</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Slide 3: Peer Escrow & Leaderboard Pacts */}
+              {activeSlide === 3 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2 border-b border-cyan-500/20 pb-1.5">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      <span>[ PEER ESCROW & SQUAD PACTS ]</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-indigo-400">ESCROW ACTIVE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+                    High-stakes accountability contracts. Commit alongside verified hunters with cryptographic proof of execution.
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800/80 mb-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">Apex Squad #04</span>
+                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-500/30">100% Verified</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 text-center">
+                      <div className="p-1.5 rounded bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] font-bold text-white font-mono">Top 3%</div>
+                        <div className="text-[8px] text-slate-400">Global Leaderboard</div>
+                      </div>
+                      <div className="p-1.5 rounded bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] font-bold text-cyan-400 font-mono">30-Day</div>
+                        <div className="text-[8px] text-slate-400">Zero-Deviation Streak</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-300">Accountability Type:</span>
+                    <span className="text-cyan-400 font-mono font-bold">Escrow Verification</span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Pagination Indicator Dots (Sleek Slim Native Pills) */}
+            <div className="flex items-center justify-center gap-2 mt-2.5">
+              {[0, 1, 2, 3].map((dot) => (
+                <div
+                  key={dot}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    hapticTap();
+                    setActiveSlide(dot);
+                  }}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    activeSlide === dot ? "w-7 bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.7)]" : "w-2 bg-slate-700 hover:bg-slate-500"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          </div>
+
+          {/* Bottom Native Action Buttons */}
+          <div className="relative z-10 space-y-2 pt-1">
+            <Button
+              onClick={() => {
+                hapticSuccess();
+                setLocation('/account-selection');
+              }}
+              className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-sm h-13 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-transform"
+            >
+              <span>AWAKEN YOUR SYSTEM</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+
+            <Button
+              onClick={() => {
+                hapticTap();
+                setLocation('/login');
+              }}
+              variant="outline"
+              className="w-full border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-200 font-semibold text-xs h-11 rounded-xl cursor-pointer active:scale-[0.98] transition-transform"
+            >
+              <span>I Already Have an Account (Sign In)</span>
+            </Button>
+
+            {/* Discreet Legal & Support Links */}
+            <div className="flex items-center justify-center gap-3 text-[10px] text-slate-500 pt-0.5">
+              <button onClick={() => setLocation('/about')} className="hover:text-cyan-400">About</button>
+              <span>•</span>
+              <button onClick={() => setLocation('/contact')} className="hover:text-cyan-400">Contact</button>
+              <span>•</span>
+              <button onClick={() => setLocation('/privacy')} className="hover:text-cyan-400">Privacy</button>
+              <span>•</span>
+              <button onClick={() => setLocation('/terms')} className="hover:text-cyan-400">Terms</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ DESKTOP WEB VIEW ============ */}
+      {(!isMobile || view !== 'hero') && (
+        <>
       {/* Clean Top Navigation Bar */}
       <header className="relative z-30 border-b border-slate-800/80 bg-[#020617]/90 backdrop-blur-md px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -1013,6 +1366,9 @@ export default function AuthPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      </>
+      )}
 
     </div>
   );

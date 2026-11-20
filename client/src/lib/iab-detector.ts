@@ -4,6 +4,8 @@
  * where Google OAuth fails with 403 disallowed_useragent.
  */
 
+import { Capacitor } from "@capacitor/core";
+
 export interface IABDetectionResult {
   isInApp: boolean;
   appName?: string;
@@ -15,6 +17,11 @@ export interface IABDetectionResult {
 export function detectInAppBrowser(): IABDetectionResult {
   if (typeof window === "undefined" || !navigator) {
     return { isInApp: false, isAndroid: false, isIOS: false };
+  }
+
+  // Capacitor native app is NOT a 3rd party embedded browser
+  if (Capacitor.isNativePlatform()) {
+    return { isInApp: false, isAndroid: /Android/i.test(navigator.userAgent), isIOS: false };
   }
 
   const ua = navigator.userAgent || navigator.vendor || (window as any).opera || "";

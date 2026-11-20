@@ -16,6 +16,8 @@ import {
 import { getFirestore } from "firebase/firestore";
 import { getMessaging, isSupported } from "firebase/messaging";
 
+import { Capacitor } from "@capacitor/core";
+
 const firebaseConfig = {
   apiKey: "AIzaSyCG6MOlkw0EREki69YhwA2qm1I0EmrTQAI",
   authDomain: "ascension-957b6.firebaseapp.com",
@@ -44,6 +46,8 @@ googleProvider.setCustomParameters({
 // Detect iOS, mobile, or standalone PWA environment where popups are restricted
 export function isStandaloneOrMobile(): boolean {
   if (typeof window === "undefined") return false;
+  // If running inside Capacitor Native App, NEVER use browser redirect that escapes to Chrome localhost
+  if (Capacitor.isNativePlatform()) return false;
   const isStandalone = 
     window.matchMedia?.("(display-mode: standalone)").matches ||
     (window.navigator as any).standalone === true;
@@ -85,6 +89,9 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult | null> => {
     return { user: cred.user, isRedirect: false };
   } catch (error: any) {
     console.warn("[Firebase Auth] signInWithPopup encountered issue:", error.code, error.message);
+    if (Capacitor.isNativePlatform()) {
+      throw new Error("On mobile, please use In-App Sign In (Username & Password or 1-Tap Demo Operator).");
+    }
     if (
       error.code === "auth/popup-blocked" || 
       error.code === "auth/popup-closed-by-user" || 

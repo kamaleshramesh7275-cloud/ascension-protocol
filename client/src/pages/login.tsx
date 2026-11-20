@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { LiveTelemetryTicker } from "@/components/live-telemetry-ticker";
 import { motion } from "framer-motion";
-import { User, Lock, Eye, EyeOff, LogIn, ArrowLeft } from "lucide-react";
+import { User, Lock, Eye, EyeOff, LogIn, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { hapticTap, hapticSuccess } from "@/lib/haptics";
 
 import { useAuth } from "@/hooks/use-auth";
 import { signInWithGoogle, getGoogleRedirectResult, formatFirebaseAuthError } from "@/lib/firebase";
@@ -136,6 +137,40 @@ export default function Login() {
         }
     };
 
+    const handleDemoLogin = async () => {
+        setIsLoading(true);
+        hapticTap();
+        try {
+            const response = await fetch("/api/auth/login-local", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "demo", password: "password123" }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Demo operator session unavailable");
+            }
+
+            const data = await response.json();
+            localStorage.setItem("username", "demo");
+            localStorage.setItem("userId", data.userId);
+            localStorage.setItem("guest_uid", data.firebaseUid);
+
+            await loginLocal("demo", data.userId, data.firebaseUid);
+            hapticSuccess();
+            toast({ title: "Welcome back, Operator!", description: "Signed into Demo Hunter session." });
+            setLocation("/dashboard");
+        } catch (error: any) {
+            toast({
+                title: "Login notice",
+                description: error.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
@@ -245,10 +280,21 @@ export default function Login() {
 
                             <Button
                                 type="submit"
-                                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl h-11 text-sm shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+                                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl h-11 text-sm shadow-[0_0_20px_rgba(6,182,212,0.2)] cursor-pointer"
                                 disabled={isLoading}
                             >
                                 {isLoading ? "Signing in..." : "Sign In"}
+                            </Button>
+
+                            {/* 1-Tap Instant In-App Operator Login */}
+                            <Button
+                                type="button"
+                                onClick={handleDemoLogin}
+                                disabled={isLoading}
+                                className="w-full bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-bold rounded-xl h-11 text-xs font-mono flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                                <span>1-Tap Demo Operator Sign In</span>
                             </Button>
 
                             <div className="relative">

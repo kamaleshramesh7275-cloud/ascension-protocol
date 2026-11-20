@@ -22,11 +22,14 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    // Allowed origins
+    // Allowed origins (Web + Capacitor Native Mobile Apps)
     const allowedOrigins = [
       /^http:\/\/localhost:\d+$/,
+      /^https:\/\/localhost(:\d+)?$/,
+      "capacitor://localhost",
+      "ionic://localhost",
       /^https:\/\/.*\.vercel\.app$/,
-      "https://ascensions.in" // Add your custom domain here
+      "https://ascensions.in" // Production domain
     ];
 
     const isAllowed = allowedOrigins.some(pattern =>
