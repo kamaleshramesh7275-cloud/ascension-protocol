@@ -1,5 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import fs from "fs";
+import path from "path";
 // import { DrizzleStorage } from "./drizzle-storage";
 import { getStorage } from "./storage";
 import {
@@ -541,6 +543,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Authentication & User Management
+
+  // Native APK Download & Auto-Update Endpoints
+  const apkPathCandidates = [
+    path.resolve(process.cwd(), "client", "public", "AscensionProtocol.apk"),
+    path.resolve(process.cwd(), "AscensionProtocol-debug.apk"),
+    path.resolve(process.cwd(), "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk"),
+    path.resolve(process.cwd(), "dist", "public", "AscensionProtocol.apk"),
+  ];
+
+  const serveApk = (_req: Request, res: Response) => {
+    let targetPath: string | null = null;
+    for (const candidate of apkPathCandidates) {
+      if (fs.existsSync(candidate)) {
+        targetPath = candidate;
+        break;
+      }
+    }
+
+    if (!targetPath) {
+      // If running on hosted environment without local APK file, redirect directly to GitHub Release
+      return res.redirect("https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest/download/AscensionProtocol.apk");
+    }
+
+    res.setHeader("Content-Type", "application/vnd.android.package-archive");
+    res.setHeader("Content-Disposition", 'attachment; filename="AscensionProtocol.apk"');
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.sendFile(targetPath);
+  };
+
+  app.get("/api/download/apk", serveApk);
+  app.get("/AscensionProtocol.apk", serveApk);
+  app.get("/download/apk", serveApk);
+
+  // App Version & Update Info (used by In-App Auto-Updater)
+  app.get("/api/version", (_req: Request, res: Response) => {
+    res.json({
+      appName: "Ascension Protocol",
+      packageName: "in.ascensions.app",
+      version: "1.0.2",
+      versionCode: 3,
+      updatedAt: "2026-11-21T22:00:00Z",
+      downloadUrl: "/api/download/apk",
+      githubReleaseUrl: "https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest/download/AscensionProtocol.apk",
+      githubRepo: "https://github.com/kamaleshramesh7275-cloud/ascension-protocol",
+      features: [
+        "Native Android Google Sign-In with Credential Manager",
+        "Storage Partitioning Elimination & Fast Login",
+        "Continuous Auto-Updates on GitHub Push",
+        "Pure Dark OLED Theme & Tactical Sound Effects"
+      ]
+    });
+  });
 
   // Local username/password authentication
   registerLocalAuthRoutes(app);

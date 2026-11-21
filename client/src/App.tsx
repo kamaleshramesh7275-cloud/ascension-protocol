@@ -28,6 +28,7 @@ import { useSwUpdate } from "@/hooks/use-sw-update";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import { InAppUpdater } from "@/components/in-app-updater";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { App as CapApp } from "@capacitor/app";
 
@@ -546,6 +547,7 @@ function App() {
                 <NotificationWatcher />
                 <NetworkStatus />
                 <SwUpdateToast />
+                <InAppUpdater />
                 <TacticalCommandPalette />
                 <AppContent />
                 <Toaster />
