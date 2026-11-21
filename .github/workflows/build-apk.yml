@@ -35,9 +35,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+          cache: 'gradle'
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
@@ -52,9 +50,8 @@ jobs:
         run: chmod +x ./android/gradlew
 
       - name: Build Debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+        working-directory: ./android
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Prepare APK Asset
         run: |
@@ -72,6 +69,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: latest
+          target_commitish: ${{ github.sha }}
           name: "Ascension Protocol Latest Build (${{ github.sha }})"
           body: |
             ## 🚀 Ascension Protocol - Native Mobile Android Release
@@ -87,5 +85,6 @@ jobs:
           files: release-artifacts/AscensionProtocol.apk
           draft: false
           prerelease: false
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
