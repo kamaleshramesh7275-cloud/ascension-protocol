@@ -35,11 +35,12 @@ import rateLimit from "express-rate-limit";
 // Trust proxy is required for rate limiting behind Vercel/proxies
 app.set("trust proxy", 1);
 
-// Set security headers (CSP disabled to allow Vite/React inline scripts for now)
+// Set security headers (CSP disabled to allow Vite/React inline scripts; COOP disabled to allow Google/Firebase OAuth popups)
 if (process.env.NODE_ENV === "production") {
   app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
   }));
 } else {
   // In development, allow embedded webviews, in-IDE previews, and mobile simulators

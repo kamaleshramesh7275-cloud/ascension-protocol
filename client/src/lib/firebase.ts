@@ -163,27 +163,20 @@ export const signInWithGoogle = async (): Promise<GoogleAuthResult | null> => {
     }
   }
 
-  // 2. Standalone PWAs on mobile fail if popups are attempted; use redirect directly
-  if (isStandaloneOrMobile()) {
-    console.log("[Firebase Auth] Mobile or Standalone PWA environment detected. Using signInWithRedirect...");
-    await signInWithRedirect(auth, googleProvider);
-    return null;
-  }
-
-  // 3. Desktop / Web Browsers: Standard Popup Flow
+  // 2. Web Browsers (Desktop & Mobile) / PWAs: Secure Popup Flow (immune to storage partitioning)
   try {
     const cred = await signInWithPopup(auth, googleProvider);
     return { user: cred.user, isRedirect: false };
   } catch (error: any) {
     console.warn("[Firebase Auth] signInWithPopup encountered issue:", error.code, error.message);
     if (
-      error.code === "auth/popup-blocked" || 
       error.code === "auth/popup-closed-by-user" || 
       error.code === "auth/cancelled-popup-request"
     ) {
-      console.log("[Firebase Auth] Falling back to signInWithRedirect...");
-      await signInWithRedirect(auth, googleProvider);
-      return null;
+      throw new Error("Google sign-in window was closed.");
+    }
+    if (error.code === "auth/popup-blocked") {
+      throw new Error("Popup was blocked by your browser. Please allow popups for Ascension Protocol, or sign in using Username & Password.");
     }
     throw error;
   }
@@ -201,6 +194,10 @@ export const getGoogleRedirectResult = async (): Promise<User | null> => {
     }
     return null;
   } catch (error: any) {
+    if (error?.code === "auth/missing-initial-state") {
+      console.warn("[Firebase Auth] Suppressed partitioned or missing initial state.");
+      return null;
+    }
     console.error("[Firebase Auth] getRedirectResult error:", error);
     throw error;
   }
@@ -243,6 +240,11 @@ export function formatFirebaseAuthError(error: any): { title: string; descriptio
   const currentHost = typeof window !== "undefined" ? window.location.hostname : "your current domain";
 
   switch (code) {
+    case "auth/missing-initial-state":
+      return {
+        title: "Session Storage Cleared",
+        description: "Your browser partitioned or cleared initial session state. Tap Continue with Google again to sign in directly via secure popup.",
+      };
     case "auth/unauthorized-domain":
       return {
         title: "Domain Not Authorized in Firebase",
