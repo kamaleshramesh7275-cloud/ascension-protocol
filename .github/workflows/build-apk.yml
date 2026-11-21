@@ -10,6 +10,7 @@ on:
       - 'server/**'
       - 'package.json'
       - 'capacitor.config.ts'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
