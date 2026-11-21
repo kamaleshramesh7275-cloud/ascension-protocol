@@ -205,9 +205,14 @@ export default function EveningDebrief() {
             </div>
 
             <Button
-              onClick={() => submitMutation.mutate()}
-              disabled={submitMutation.isPending || reflectionText.trim().length < 20}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold h-12 flex items-center justify-center gap-2"
+              onClick={() => {
+                if (reflectionText.trim().length < 10) {
+                  setReflectionText("Executed daily focus session with discipline and avoided major distractions.");
+                }
+                submitMutation.mutate();
+              }}
+              disabled={submitMutation.isPending}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold h-12 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider"
             >
               {submitMutation.isPending ? "SEALING AUDIT..." : "SUBMIT EVENING DEBRIEF"}
               <ArrowRight className="w-4 h-4" />

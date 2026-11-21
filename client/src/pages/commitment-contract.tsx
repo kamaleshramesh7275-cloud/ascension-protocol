@@ -347,9 +347,13 @@ export default function CommitmentContractPage() {
             </div>
 
             <Button
-              onClick={() => signMutation.mutate()}
-              disabled={signMutation.isPending || !oathAccepted}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold h-12 flex items-center justify-center gap-2"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                if (!oathAccepted) setOathAccepted(true);
+                signMutation.mutate();
+              }}
+              disabled={signMutation.isPending}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold h-12 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20"
             >
               {signMutation.isPending ? "SEALING CONTRACT..." : "SIGN & LOCK WEEKLY COMMITMENT"}
               <ArrowRight className="w-4 h-4" />

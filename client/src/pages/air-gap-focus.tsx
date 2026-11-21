@@ -621,22 +621,21 @@ export default function AirGapFocus() {
           <Button
             onClick={() => {
               audioEngine.playCommandLock();
+              setOathReady(true);
+              setOathCountdown(0);
               handleStartSession();
             }}
-            disabled={!oathReady || startSessionMutation.isPending}
+            disabled={startSessionMutation.isPending}
             className={`w-full h-12 text-xs sm:text-sm font-mono font-extrabold uppercase tracking-wider ${
               oathReady
                 ? "bg-amber-400 hover:bg-amber-300 text-black shadow-lg shadow-amber-500/10"
-                : "bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed"
+                : "bg-amber-400/90 hover:bg-amber-300 text-black shadow-lg shadow-amber-500/10"
             }`}
           >
-            {oathReady ? (
-              <span className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-black" /> ENGAGE AIR-GAP PROTOCOL
-              </span>
-            ) : (
-              <span>CALIBRATING PROTOCOL ({oathCountdown}s)...</span>
-            )}
+            <span className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-black" />
+              {oathReady ? "ENGAGE AIR-GAP PROTOCOL" : `CALIBRATING (${oathCountdown}s) — TAP TO ENGAGE`}
+            </span>
           </Button>
         </motion.div>
       )}

@@ -9,10 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { hapticSuccess, hapticTap } from "@/lib/haptics";
 
+import { isMobilePhoneBrowser } from "@/App";
+
 export default function DownloadPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [downloading, setDownloading] = useState(false);
+  const isMobile = isMobilePhoneBrowser();
 
   const apkDownloadUrl = "/api/download/apk";
   const githubReleaseUrl = "https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases";
@@ -61,28 +64,42 @@ export default function DownloadPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => { hapticTap(); setLocation("/"); }}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 bg-slate-900/50"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
-            </button>
-            <Button
-              onClick={() => { hapticTap(); setLocation("/login"); }}
-              size="sm"
-              variant="outline"
-              className="border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs px-3.5 h-9 rounded-lg"
-            >
-              Sign In
-            </Button>
-            <Button
-              onClick={() => { hapticTap(); setLocation("/account-selection"); }}
-              size="sm"
-              className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-4 h-9 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-            >
-              Get Started
-            </Button>
+            {isMobile ? (
+              <Button
+                onClick={handleDownloadClick}
+                disabled={downloading}
+                size="sm"
+                className="bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs px-4 h-9 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                <span>Install APK</span>
+              </Button>
+            ) : (
+              <>
+                <button
+                  onClick={() => { hapticTap(); setLocation("/"); }}
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-cyan-400 transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 bg-slate-900/50"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+                <Button
+                  onClick={() => { hapticTap(); setLocation("/login"); }}
+                  size="sm"
+                  variant="outline"
+                  className="border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs px-3.5 h-9 rounded-lg"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => { hapticTap(); setLocation("/account-selection"); }}
+                  size="sm"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs px-4 h-9 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -240,12 +257,16 @@ export default function DownloadPage() {
       {/* Footer */}
       <footer className="relative z-20 border-t border-slate-900/80 bg-[#020617] px-6 py-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-3">
-          <button onClick={() => setLocation("/")} className="hover:text-cyan-400 transition-colors">Home</button>
-          <span>•</span>
-          <button onClick={() => setLocation("/about")} className="hover:text-cyan-400 transition-colors">About</button>
-          <span>•</span>
-          <button onClick={() => setLocation("/contact")} className="hover:text-cyan-400 transition-colors">Contact</button>
-          <span>•</span>
+          {!isMobile && (
+            <>
+              <button onClick={() => setLocation("/")} className="hover:text-cyan-400 transition-colors">Home</button>
+              <span>•</span>
+              <button onClick={() => setLocation("/about")} className="hover:text-cyan-400 transition-colors">About</button>
+              <span>•</span>
+              <button onClick={() => setLocation("/contact")} className="hover:text-cyan-400 transition-colors">Contact</button>
+              <span>•</span>
+            </>
+          )}
           <button onClick={() => setLocation("/privacy")} className="hover:text-cyan-400 transition-colors">Privacy Policy</button>
           <span>•</span>
           <button onClick={() => setLocation("/terms")} className="hover:text-cyan-400 transition-colors">Terms of Service</button>

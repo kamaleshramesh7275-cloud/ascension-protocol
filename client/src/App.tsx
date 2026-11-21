@@ -264,12 +264,45 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+export function isMobilePhoneBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  // If running inside Capacitor native Android/iOS shell, it is the NATIVE APP, not mobile web!
+  if (Capacitor.isNativePlatform()) return false;
+
+  // Bypass if explicitly requested via query parameter (?web=1 or ?desktop=1) for testing
+  if (window.location.search.includes("web=1") || window.location.search.includes("desktop=1")) {
+    return false;
+  }
+
+  const ua = (navigator.userAgent || navigator.vendor || (window as any).opera || "").toLowerCase();
+  const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|crios|samsungbrowser/i.test(ua);
+  const isMobileScreen = window.innerWidth <= 800 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  return isMobileUA || isMobileScreen;
+}
+
 function Router() {
   const { user, loading: authLoading } = useAuth();
   const { data: backendUser, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/user"],
     enabled: !!user
   });
+
+  // Mobile Phone Web Browser:
+  // When opened on a phone web browser (NOT inside the native app), ONLY show the download button for the app!
+  // All core features, login, briefing room, and missions run exclusively inside the native mobile app.
+  if (isMobilePhoneBrowser()) {
+    return (
+      <Switch>
+        <Route path="/privacy" component={withSeo(PrivacyPolicyPage, { title: "Privacy Policy", url: "/privacy" })} />
+        <Route path="/terms" component={withSeo(TermsOfServicePage, { title: "Terms of Service", url: "/terms" })} />
+        <Route path="/about" component={withSeo(AboutPage, { title: "About Ascension Protocol", url: "/about" })} />
+        <Route path="/download" component={withSeo(DownloadPage, { title: "Download Android App", url: "/download" })} />
+        {/* All other routes on phone web browser display DownloadPage directly */}
+        <Route component={withSeo(DownloadPage, { title: "Download Ascension Protocol Mobile App", url: "/download" })} />
+      </Switch>
+    );
+  }
 
   // Remove blocking check for userLoading
 

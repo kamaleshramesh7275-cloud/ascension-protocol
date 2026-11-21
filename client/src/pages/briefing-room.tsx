@@ -157,25 +157,28 @@ export default function BriefingRoom() {
   });
 
   const handleNext = () => {
+    // If fields are empty, provide elite tactical defaults rather than blocking the user
     if (step === 1) {
-      if (!data.targetOutcome.trim() || data.targetOutcome.length < 5) {
-        toast({ title: "Objective Required", description: "State your exact strategic target outcome.", variant: "destructive" });
-        return;
+      if (!data.targetOutcome.trim() || data.targetOutcome.length < 3) {
+        setData(prev => ({ ...prev, targetOutcome: "Master Core Discipline & Execute Daily High-Leverage Tasks" }));
       }
-      if (!data.failureStatement.trim() || data.failureStatement.length < 15) {
-        toast({ title: "Consequence Required", description: "Articulate the exact painful consequence if you fail.", variant: "destructive" });
-        return;
+      if (!data.failureStatement.trim() || data.failureStatement.length < 5) {
+        setData(prev => ({ ...prev, failureStatement: "Wasted momentum, regression to old habits, and remaining stuck in mediocrity." }));
       }
     }
     if (step === 3) {
-      if (!data.rationalizationPattern.trim() || !data.relapseSignature.trim()) {
-        toast({ title: "Diagnostic Incomplete", description: "Expose your rationalization pattern and relapse trigger.", variant: "destructive" });
-        return;
+      if (!data.rationalizationPattern.trim()) {
+        setData(prev => ({ ...prev, rationalizationPattern: "Telling myself I worked hard enough and can afford to slack." }));
+      }
+      if (!data.relapseSignature.trim()) {
+        setData(prev => ({ ...prev, relapseSignature: "Opening social feeds during small transitions between deep work." }));
       }
     }
     if (step < totalSteps) {
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      handleSubmit(true);
     }
   };
 
@@ -186,16 +189,15 @@ export default function BriefingRoom() {
     }
   };
 
-  const handleSubmit = () => {
-    if (!oathAccepted) {
-      toast({ title: "Oath Required", description: "You must acknowledge and lock the Execution Oath.", variant: "destructive" });
-      return;
+  const handleSubmit = (overrideOath?: boolean) => {
+    if (overrideOath && !oathAccepted) {
+      setOathAccepted(true);
     }
     saveMutation.mutate(data);
   };
 
   return (
-    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col items-center justify-start p-4 sm:p-6 md:p-10 relative overflow-y-auto selection:bg-amber-500 selection:text-black select-none">
+    <div className="min-h-screen bg-[#07080B] text-zinc-100 flex flex-col items-center justify-start p-4 sm:p-6 md:p-10 pb-36 relative overflow-y-auto selection:bg-amber-500 selection:text-black select-none">
       {/* Background ambient lighting */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-amber-500/5 via-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
 
@@ -243,6 +245,37 @@ export default function BriefingRoom() {
               className="h-full bg-amber-400 rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
+          </div>
+
+          {/* Interactive Step Selector Pills */}
+          <div className="flex items-center justify-between gap-1.5 pt-3">
+            {[
+              { num: 1, label: "Target" },
+              { num: 2, label: "X-Ray" },
+              { num: 3, label: "Autopsy" },
+              { num: 4, label: "Cognitive" },
+              { num: 5, label: "Oath" },
+            ].map(({ num, label }) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => {
+                  audioEngine.playTactileClick();
+                  setStep(num);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`flex-1 py-1 px-1 sm:px-2 rounded-lg text-[10px] sm:text-xs font-mono font-bold transition-all border flex items-center justify-center gap-1 ${
+                  step === num
+                    ? "bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-500/20"
+                    : step > num
+                    ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                    : "bg-zinc-900/60 text-zinc-500 border-white/5 hover:text-zinc-300"
+                }`}
+              >
+                <span>L{num}</span>
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </header>
@@ -694,6 +727,22 @@ export default function BriefingRoom() {
                     I BIND MYSELF TO THIS PROTOCOL (LOCK SYSTEM)
                   </span>
                 </div>
+
+                {/* Direct Prominent Inline Action Button */}
+                <Button
+                  type="button"
+                  onClick={() => {
+                    audioEngine.playCommandLock();
+                    setOathAccepted(true);
+                    handleSubmit(true);
+                  }}
+                  disabled={saveMutation.isPending}
+                  className="w-full bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold h-12 rounded-xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 text-xs sm:text-sm uppercase tracking-wider font-mono mt-3"
+                >
+                  <Cpu className="w-4 h-4 text-black" />
+                  <span>{saveMutation.isPending ? "LOCKING PROTOCOL..." : "ACCEPT OATH & FINISH CALIBRATION"}</span>
+                  <ArrowRight className="w-4 h-4 text-black" />
+                </Button>
               </div>
             </motion.div>
           )}
@@ -703,6 +752,7 @@ export default function BriefingRoom() {
         <div className="flex justify-between items-center mt-6">
           {step > 1 ? (
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => {
@@ -719,6 +769,7 @@ export default function BriefingRoom() {
 
           {step < totalSteps ? (
             <Button
+              type="button"
               size="sm"
               onClick={() => {
                 audioEngine.playTactileClick();
@@ -730,12 +781,13 @@ export default function BriefingRoom() {
             </Button>
           ) : (
             <Button
+              type="button"
               size="sm"
               onClick={() => {
                 audioEngine.playCommandLock();
-                handleSubmit();
+                handleSubmit(true);
               }}
-              disabled={saveMutation.isPending || !oathAccepted}
+              disabled={saveMutation.isPending}
               className="bg-amber-400 hover:bg-amber-300 text-black font-extrabold flex items-center gap-2 px-8 h-10 font-mono text-xs tracking-wider shadow-lg shadow-amber-500/10"
             >
               {saveMutation.isPending ? "INITIALIZING ENGINE..." : "LOCK PROTOCOL & COMMENCE"}
@@ -744,6 +796,63 @@ export default function BriefingRoom() {
           )}
         </div>
       </main>
+
+      {/* ─── FIXED STICKY BOTTOM NAVIGATION BAR (ALWAYS VISIBLE AT FINGERTIP) ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#07080B]/95 backdrop-blur-xl border-t border-white/10 px-4 py-3 pb-safe shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          {step > 1 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                audioEngine.playTactileClick();
+                handlePrev();
+              }}
+              className="border-white/10 bg-[#0E1218] text-zinc-300 hover:text-white flex items-center gap-1.5 font-mono text-xs h-10 px-4 rounded-xl"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>PREV LAYER</span>
+            </Button>
+          ) : (
+            <div className="text-[11px] font-mono text-zinc-500 flex items-center gap-1.5 pl-1">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>STEP 1 / 5</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {step < totalSteps ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  audioEngine.playTactileClick();
+                  handleNext();
+                }}
+                className="bg-amber-400 hover:bg-amber-300 text-black font-extrabold flex items-center gap-2 px-6 h-10 rounded-xl font-mono text-xs tracking-wider shadow-lg shadow-amber-500/20"
+              >
+                <span>NEXT LAYER ({step + 1}/{totalSteps})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  audioEngine.playCommandLock();
+                  handleSubmit(true);
+                }}
+                disabled={saveMutation.isPending}
+                className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold flex items-center gap-2 px-6 h-10 rounded-xl font-mono text-xs tracking-wider shadow-lg shadow-amber-500/30"
+              >
+                <span>{saveMutation.isPending ? "INITIALIZING..." : "LOCK PROTOCOL & COMMENCE"}</span>
+                <Cpu className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
