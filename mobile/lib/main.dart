@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/hunter_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'features/auth/login_screen.dart';
+import 'features/briefing/briefing_screen.dart';
 import 'features/home/main_navigation_screen.dart';
 
 void main() async {
@@ -40,6 +41,9 @@ class AscensionMobileApp extends ConsumerWidget {
       home: authState.when(
         data: (user) {
           if (user != null) {
+            if (!user.onboardingCompleted) {
+              return BriefingScreen(user: user);
+            }
             return MainNavigationScreen(user: user);
           }
           return const LoginScreen();

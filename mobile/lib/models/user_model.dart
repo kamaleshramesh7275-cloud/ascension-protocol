@@ -11,6 +11,7 @@ class UserModel {
   final String hunterClass; // assassin, tank, ranger, mage, monarch
   final int streakShields; // Mana Shields
   final bool activeRecoveryDay;
+  final bool onboardingCompleted;
 
   // 7 Core Attributes (1-100)
   final int strength;
@@ -34,6 +35,7 @@ class UserModel {
     required this.hunterClass,
     required this.streakShields,
     required this.activeRecoveryDay,
+    this.onboardingCompleted = true,
     required this.strength,
     required this.agility,
     required this.stamina,
@@ -57,6 +59,7 @@ class UserModel {
       hunterClass: json['hunterClass']?.toString() ?? 'assassin',
       streakShields: (json['streakShields'] as num?)?.toInt() ?? 1,
       activeRecoveryDay: json['activeRecoveryDay'] == true,
+      onboardingCompleted: json['onboardingCompleted'] != false,
       strength: (json['strength'] as num?)?.toInt() ?? 10,
       agility: (json['agility'] as num?)?.toInt() ?? 10,
       stamina: (json['stamina'] as num?)?.toInt() ?? 10,

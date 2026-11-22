@@ -546,10 +546,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Native APK Download & Auto-Update Endpoints
   const apkPathCandidates = [
-    path.resolve(process.cwd(), "client", "public", "AscensionProtocol.apk"),
-    path.resolve(process.cwd(), "AscensionProtocol-debug.apk"),
+    path.resolve(process.cwd(), "mobile", "build", "app", "outputs", "flutter-apk", "app-release.apk"),
+    path.resolve(process.cwd(), "release-artifacts", "AscensionProtocol-Flutter.apk"),
     path.resolve(process.cwd(), "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk"),
-    path.resolve(process.cwd(), "dist", "public", "AscensionProtocol.apk"),
   ];
 
   const serveApk = (_req: Request, res: Response) => {
@@ -562,12 +561,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     if (!targetPath) {
-      // If running on hosted environment without local APK file, redirect directly to GitHub Release
-      return res.redirect("https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest/download/AscensionProtocol.apk");
+      // Direct high-speed download from GitHub Releases (Native Flutter APK)
+      return res.redirect("https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest/download/AscensionProtocol-Flutter.apk");
     }
 
     res.setHeader("Content-Type", "application/vnd.android.package-archive");
-    res.setHeader("Content-Disposition", 'attachment; filename="AscensionProtocol.apk"');
+    res.setHeader("Content-Disposition", 'attachment; filename="AscensionProtocol-Flutter.apk"');
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.sendFile(targetPath);
   };

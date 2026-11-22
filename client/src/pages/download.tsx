@@ -24,14 +24,14 @@ export default function DownloadPage() {
     hapticSuccess();
     setDownloading(true);
     toast({
-      title: "Downloading Ascension Protocol APK...",
-      description: "File: AscensionProtocol.apk (~10.9 MB). Tap the notification once finished to install.",
+      title: "Downloading Ascension Protocol Native APK...",
+      description: "File: AscensionProtocol-Flutter.apk. Tap the notification once finished to install.",
     });
 
-    // Trigger direct download
+    // Trigger direct download of the Native Flutter APK
     const link = document.createElement("a");
     link.href = apkDownloadUrl;
-    link.setAttribute("download", "AscensionProtocol.apk");
+    link.setAttribute("download", "AscensionProtocol-Flutter.apk");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -127,13 +127,13 @@ export default function DownloadPage() {
             Install the full native Android mobile application with in-app Google Sign-In, instant biometric haptics, lock-screen notifications, and automatic GitHub live updates.
           </p>
 
-          {/* Primary Big Download Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* Primary Big Download Button (Single Exclusive Option) */}
+          <div className="flex flex-col items-center justify-center gap-4">
             <Button
               onClick={handleDownloadClick}
               disabled={downloading}
               size="lg"
-              className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-black font-extrabold text-base py-7 px-10 rounded-2xl shadow-[0_0_35px_rgba(6,182,212,0.5)] flex items-center justify-center gap-3 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 via-teal-400 to-indigo-500 hover:from-cyan-400 hover:to-teal-300 text-black font-extrabold text-base py-7 px-12 rounded-2xl shadow-[0_0_35px_rgba(6,182,212,0.5)] flex items-center justify-center gap-3 transition-all hover:scale-[1.02]"
             >
               {downloading ? (
                 <>
@@ -143,25 +143,15 @@ export default function DownloadPage() {
               ) : (
                 <>
                   <Download className="w-6 h-6 text-black stroke-[2.5]" />
-                  <span>Download Android APK (10.9 MB)</span>
+                  <span>Download Native Android APK (Flutter Edition)</span>
                 </>
               )}
-            </Button>
-
-            <Button
-              onClick={() => window.open(githubReleaseUrl, "_blank")}
-              size="lg"
-              variant="outline"
-              className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-sm py-7 px-6 rounded-2xl flex items-center justify-center gap-2"
-            >
-              <GitBranch className="w-4 h-4 text-cyan-400" />
-              <span>GitHub CI/CD Releases</span>
             </Button>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-emerald-400 mt-4">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Verified clean • Direct package install • Auto-updates on GitHub push</span>
+            <span>Standalone Native Flutter Client • Direct GPU Rendering • 1-Tap Google Sign-In</span>
           </div>
         </div>
 
