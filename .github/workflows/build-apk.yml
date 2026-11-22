@@ -31,11 +31,11 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
 
       - name: Install Dependencies
@@ -47,8 +47,11 @@ jobs:
       - name: Make Gradle Executable
         run: chmod +x ./android/gradlew
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Copy Web Assets to Android
+        run: npx cap copy android
+
+      - name: Update Capacitor Android Plugins
+        run: npx cap update android
 
       - name: Build Debug APK
         working-directory: ./android
