@@ -219,6 +219,9 @@ export default function DownloadPage() {
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Open your phone's notification panel or <span className="text-white font-medium">Downloads</span> folder and tap the file. If prompted by Android, tap <span className="text-white font-semibold">"Settings" → "Allow from this source"</span>, then confirm <span className="text-cyan-400 font-semibold">Install</span>.
                 </p>
+                <div className="mt-2.5 p-2.5 rounded-lg bg-amber-950/40 border border-amber-600/30 text-[11px] text-amber-300 leading-relaxed">
+                  <span className="font-bold text-amber-200">⚠️ First-Time Update Note:</span> If Android shows <em>"App not installed as package conflicts with an existing package"</em>, uninstall the previous version from your home screen first, then install this release. Future updates will install seamlessly without uninstalling.
+                </div>
               </div>
             </div>
           </CardContent>
