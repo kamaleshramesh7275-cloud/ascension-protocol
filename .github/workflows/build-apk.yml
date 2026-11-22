@@ -44,11 +44,11 @@ jobs:
       - name: Build Web Application
         run: npx vite build
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
-
       - name: Make Gradle Executable
         run: chmod +x ./android/gradlew
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android --verbose
 
       - name: Build Debug APK
         working-directory: ./android
