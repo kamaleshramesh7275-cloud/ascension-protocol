@@ -47,11 +47,16 @@ jobs:
       - name: Make Gradle Executable
         run: chmod +x ./android/gradlew
 
-      - name: Copy Web Assets to Android
-        run: npx cap copy android
-
-      - name: Update Capacitor Android Plugins
-        run: npx cap update android
+      - name: Sync Capacitor Android
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          npx cap sync android 2>&1 | tee sync.log || {
+            echo "### ❌ Capacitor Sync Error Output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat sync.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
 
       - name: Build Debug APK
         working-directory: ./android
