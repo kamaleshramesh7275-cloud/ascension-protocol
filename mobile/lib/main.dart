@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/hunter_theme.dart';
-import 'models/user_model.dart';
+import 'core/providers/auth_provider.dart';
+import 'features/auth/login_screen.dart';
 import 'features/home/main_navigation_screen.dart';
 
 void main() async {
@@ -25,38 +26,62 @@ void main() async {
   );
 }
 
-class AscensionMobileApp extends StatelessWidget {
+class AscensionMobileApp extends ConsumerWidget {
   const AscensionMobileApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Initializing state model (will be bound to Riverpod AuthProvider)
-    const initialUser = UserModel(
-      id: 'hunter_active',
-      name: 'Hunter Sung',
-      email: 'hunter@ascension.app',
-      level: 14,
-      xp: 45,
-      tier: 'B',
-      streak: 8,
-      coins: 450,
-      hunterClass: 'Shadow Monarch',
-      streakShields: 2,
-      activeRecoveryDay: false,
-      strength: 78,
-      agility: 82,
-      stamina: 65,
-      vitality: 70,
-      intelligence: 88,
-      willpower: 92,
-      charisma: 60,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
 
     return MaterialApp(
       title: 'Ascension Protocol',
       debugShowCheckedModeBanner: false,
       theme: HunterTheme.darkTheme,
-      home: const MainNavigationScreen(user: initialUser),
+      home: authState.when(
+        data: (user) {
+          if (user != null) {
+            return MainNavigationScreen(user: user);
+          }
+          return const LoginScreen();
+        },
+        loading: () => Scaffold(
+          backgroundColor: HunterTheme.abyss,
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [HunterTheme.cyan, HunterTheme.purple],
+                    ),
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'AWAKENING HUNTER SYSTEM...',
+                  style: TextStyle(
+                    color: HunterTheme.cyanLight,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        error: (_, _) => const LoginScreen(),
+      ),
     );
   }
 }

@@ -37,6 +37,7 @@ dependencies:
   # Networking & API client
   dio: ^5.4.3+1
   connectivity_plus: ^6.0.3
+  google_sign_in: ^6.2.1
 
   # Secure Storage & Cache
   flutter_secure_storage: ^9.0.0

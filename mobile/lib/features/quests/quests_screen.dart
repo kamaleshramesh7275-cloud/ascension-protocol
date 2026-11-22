@@ -1,117 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../models/user_model.dart';
-import '../../models/quest_model.dart';
+import '../../core/providers/quests_provider.dart';
 
-class QuestsScreen extends StatefulWidget {
+class QuestsScreen extends ConsumerStatefulWidget {
   final UserModel user;
   const QuestsScreen({super.key, required this.user});
 
   @override
-  State<QuestsScreen> createState() => _QuestsScreenState();
+  ConsumerState<QuestsScreen> createState() => _QuestsScreenState();
 }
 
-class _QuestsScreenState extends State<QuestsScreen> {
-  late List<QuestModel> _quests;
+class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   String _selectedFilter = 'ALL';
 
-  @override
-  void initState() {
-    super.initState();
-    _quests = [
-      const QuestModel(
-        id: '1',
-        title: 'Shadow Sprint: 5km Cardio',
-        description: 'Endure a 5-kilometer high-intensity sprint or walk.',
-        category: 'physical',
-        xp: 50,
-        attribute: 'AGI',
-        completed: false,
-        difficulty: 'C',
-        streakCount: 4,
-      ),
-      const QuestModel(
-        id: '2',
-        title: 'Hunter Strength Protocol: 100 Pushups',
-        description: 'Execute 100 total pushups across designated sets.',
-        category: 'physical',
-        xp: 40,
-        attribute: 'STR',
-        completed: true,
-        difficulty: 'D',
-        streakCount: 12,
-      ),
-      const QuestModel(
-        id: '3',
-        title: 'Air-Gap Deep Work Protocol',
-        description: 'Engage 45 minutes of distraction-free focused intellect.',
-        category: 'mental',
-        xp: 60,
-        attribute: 'INT',
-        completed: false,
-        difficulty: 'B',
-        streakCount: 7,
-      ),
-      const QuestModel(
-        id: '4',
-        title: 'Boss Dungeon: 24h Cold Shower Discipline',
-        description: 'Overcome hesitation. Conquer morning thermal discipline.',
-        category: 'boss',
-        xp: 100,
-        attribute: 'WIL',
-        completed: false,
-        difficulty: 'A',
-        streakCount: 2,
-      ),
-    ];
-  }
-
-  void _toggleQuest(int index) {
+  void _toggleQuest(String questId) {
     HapticFeedback.mediumImpact();
-    setState(() {
-      _quests[index] = _quests[index].copyWith(
-        completed: !_quests[index].completed,
-      );
-    });
+    ref.read(questsProvider.notifier).toggleQuest(questId);
 
-    if (_quests[index].completed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.surfaceLight,
-          content: Row(
-            children: [
-              const Icon(Icons.bolt, color: HunterTheme.cyan),
-              const SizedBox(width: 8),
-              Text(
-                '+${_quests[index].xp} XP Gained! Attribute enhanced.',
-                style: const TextStyle(
-                  color: HunterTheme.cyanLight,
-                  fontWeight: FontWeight.bold,
-                ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: HunterTheme.surfaceLight,
+        content: Row(
+          children: const [
+            Icon(Icons.bolt, color: HunterTheme.cyan),
+            SizedBox(width: 8),
+            Text(
+              'Quest State Synchronized with System.',
+              style: TextStyle(
+                color: HunterTheme.cyanLight,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
+            ),
+          ],
         ),
-      );
-    }
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final quests = ref.watch(questsProvider);
+
     final filteredQuests = _selectedFilter == 'ALL'
-        ? _quests
-        : _quests.where((q) {
+        ? quests
+        : quests.where((q) {
             if (_selectedFilter == 'DAILY') return q.category == 'physical';
             if (_selectedFilter == 'BOSS') return q.category == 'boss';
             if (_selectedFilter == 'INTELLECT') return q.category == 'mental';
             return true;
           }).toList();
 
-    final completedCount = _quests.where((q) => q.completed).length;
+    final completedCount = quests.where((q) => q.completed).length;
 
     return Scaffold(
       backgroundColor: HunterTheme.abyss,
@@ -172,221 +117,249 @@ class _QuestsScreenState extends State<QuestsScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        children: [
-          // Hunter Progress HUD Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  HunterTheme.surfaceLight,
-                  HunterTheme.surface,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: HunterTheme.cyan.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'LV. ${widget.user.level} ${widget.user.hunterClass.toUpperCase()}',
-                      style: const TextStyle(
-                        color: HunterTheme.cyanLight,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    Text(
-                      'STREAK: ${widget.user.streak} DAYS 🔥',
-                      style: const TextStyle(
-                        color: HunterTheme.gold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(questsProvider.notifier).loadQuests(),
+        color: HunterTheme.cyan,
+        backgroundColor: HunterTheme.surface,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          children: [
+            // Hunter Progress HUD Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    HunterTheme.surfaceLight,
+                    HunterTheme.surface,
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: widget.user.xpProgress,
-                    backgroundColor: HunterTheme.abyss,
-                    valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
-                    minHeight: 8,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: HunterTheme.cyan.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'XP: ${widget.user.xp} / ${widget.user.xpForNextLevel}',
-                      style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
-                    ),
-                    Text(
-                      'Quests Cleared: $completedCount/${_quests.length}',
-                      style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
-
-          const SizedBox(height: 20),
-
-          // Quest Category Filters
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('ALL'),
-                _buildFilterChip('DAILY'),
-                _buildFilterChip('BOSS'),
-                _buildFilterChip('INTELLECT'),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Quest Cards List
-          ...filteredQuests.asMap().entries.map((entry) {
-            final index = entry.key;
-            final quest = entry.value;
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              color: quest.completed
-                  ? HunterTheme.surface.withValues(alpha: 0.5)
-                  : HunterTheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: BorderSide(
-                  color: quest.completed
-                      ? HunterTheme.emerald.withValues(alpha: 0.4)
-                      : (quest.category == 'boss'
-                          ? HunterTheme.crimson.withValues(alpha: 0.5)
-                          : HunterTheme.cyan.withValues(alpha: 0.2)),
-                  width: 1.2,
-                ),
+                ],
               ),
-              child: InkWell(
-                onTap: () => _toggleQuest(index),
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Checkbox
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: quest.completed
-                              ? HunterTheme.emerald
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: quest.completed
-                                ? HunterTheme.emerald
-                                : HunterTheme.cyan,
-                            width: 2,
-                          ),
+                      Text(
+                        'LV. ${widget.user.level} ${widget.user.hunterClass.toUpperCase()}',
+                        style: const TextStyle(
+                          color: HunterTheme.cyanLight,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 1.2,
                         ),
-                        child: quest.completed
-                            ? const Icon(Icons.check, size: 18, color: Colors.black)
-                            : null,
                       ),
-                      const SizedBox(width: 14),
-
-                      // Quest Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: quest.category == 'boss'
-                                        ? HunterTheme.crimson.withValues(alpha: 0.2)
-                                        : HunterTheme.cyan.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    '[RANK ${quest.difficulty}]',
-                                    style: TextStyle(
-                                      color: quest.category == 'boss'
-                                          ? HunterTheme.crimson
-                                          : HunterTheme.cyanLight,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '+${quest.xp} XP • ${quest.attribute}',
-                                  style: const TextStyle(
-                                    color: HunterTheme.gold,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              quest.title,
-                              style: TextStyle(
-                                color: quest.completed
-                                    ? HunterTheme.textMuted
-                                    : HunterTheme.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                decoration: quest.completed
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              quest.description,
-                              style: const TextStyle(
-                                color: HunterTheme.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'STREAK: ${widget.user.streak} DAYS 🔥',
+                        style: const TextStyle(
+                          color: HunterTheme.gold,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: widget.user.xpProgress,
+                      backgroundColor: HunterTheme.abyss,
+                      valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
+                      minHeight: 8,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'XP: ${widget.user.xp} / ${widget.user.xpForNextLevel}',
+                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                      ),
+                      Text(
+                        'Quests Cleared: $completedCount/${quests.length}',
+                        style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ).animate().fadeIn(delay: (index * 60).ms);
-          }),
-        ],
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+
+            const SizedBox(height: 20),
+
+            // Quest Category Filters
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterChip('ALL'),
+                  _buildFilterChip('DAILY'),
+                  _buildFilterChip('BOSS'),
+                  _buildFilterChip('INTELLECT'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Quest Cards List
+            if (filteredQuests.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Column(
+                    children: const [
+                      Icon(Icons.check_circle_outline, color: HunterTheme.cyan, size: 48),
+                      SizedBox(height: 12),
+                      Text(
+                        'ALL SECTOR QUESTS CLEARED',
+                        style: TextStyle(
+                          color: HunterTheme.cyanLight,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Rest and recover, Hunter. New missions await at 00:00.',
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...filteredQuests.map((quest) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  color: quest.completed
+                      ? HunterTheme.surface.withValues(alpha: 0.5)
+                      : HunterTheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(
+                      color: quest.completed
+                          ? HunterTheme.emerald.withValues(alpha: 0.4)
+                          : (quest.category == 'boss'
+                              ? HunterTheme.crimson.withValues(alpha: 0.5)
+                              : HunterTheme.cyan.withValues(alpha: 0.2)),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () => _toggleQuest(quest.id),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          // Checkbox
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: quest.completed
+                                  ? HunterTheme.emerald
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: quest.completed
+                                    ? HunterTheme.emerald
+                                    : HunterTheme.cyan,
+                                width: 2,
+                              ),
+                            ),
+                            child: quest.completed
+                                ? const Icon(Icons.check, size: 18, color: Colors.black)
+                                : null,
+                          ),
+                          const SizedBox(width: 14),
+
+                          // Quest Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: quest.category == 'boss'
+                                            ? HunterTheme.crimson.withValues(alpha: 0.2)
+                                            : HunterTheme.cyan.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '[RANK ${quest.difficulty}]',
+                                        style: TextStyle(
+                                          color: quest.category == 'boss'
+                                              ? HunterTheme.crimson
+                                              : HunterTheme.cyanLight,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '+${quest.xp} XP • ${quest.attribute}',
+                                      style: const TextStyle(
+                                        color: HunterTheme.gold,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  quest.title,
+                                  style: TextStyle(
+                                    color: quest.completed
+                                        ? HunterTheme.textMuted
+                                        : HunterTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    decoration: quest.completed
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  quest.description,
+                                  style: const TextStyle(
+                                    color: HunterTheme.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+          ],
+        ),
       ),
     );
   }
