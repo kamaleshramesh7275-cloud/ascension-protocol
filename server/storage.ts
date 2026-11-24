@@ -206,6 +206,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
+  phoneExists(phone: string): Promise<boolean>;
   isUserDeleted(firebaseUid: string): Promise<boolean>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
@@ -280,6 +282,7 @@ export interface IStorage {
   // Credentials
   saveCredentials(username: string, passwordHash: string, password: string, userId: string): Promise<void>;
   getCredentialsByUsername(username: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined>;
+  getCredentialsByUserId(userId: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined>;
   usernameExists(username: string): Promise<boolean>;
   getAllCredentials(): Promise<{ username: string; passwordHash: string; userId: string }[]>;
 
@@ -1141,6 +1144,24 @@ export class MemStorage implements IStorage {
     return user ? normalizeUser(user) : undefined;
   }
 
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    if (!phone) return undefined;
+    const digits = phone.replace(/\D/g, "");
+    const target = digits.length >= 10 ? digits.slice(-10) : digits;
+    const user = Array.from(this.users.values()).find(u => {
+      if (!u.phone) return false;
+      const uDigits = u.phone.replace(/\D/g, "");
+      const uTarget = uDigits.length >= 10 ? uDigits.slice(-10) : uDigits;
+      return uTarget === target;
+    });
+    return user ? normalizeUser(user) : undefined;
+  }
+
+  async phoneExists(phone: string): Promise<boolean> {
+    const user = await this.getUserByPhone(phone);
+    return !!user;
+  }
+
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
     return this.deletedUids.has(firebaseUid);
   }
@@ -1830,6 +1851,10 @@ export class MemStorage implements IStorage {
 
   async getCredentialsByUsername(username: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined> {
     return this.userCredentials.get(username.toLowerCase());
+  }
+
+  async getCredentialsByUserId(userId: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined> {
+    return Array.from(this.userCredentials.values()).find(c => c.userId === userId);
   }
 
   async usernameExists(username: string): Promise<boolean> {
@@ -3652,6 +3677,25 @@ export class DatabaseStorage implements IStorage {
     return user ? normalizeUser(user) : undefined;
   }
 
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    if (!phone) return undefined;
+    const digits = phone.replace(/\D/g, "");
+    const target = digits.length >= 10 ? digits.slice(-10) : digits;
+    const all = await db!.select().from(users).where(isNotNull(users.phone));
+    const matched = all.find(u => {
+      if (!u.phone) return false;
+      const uDigits = u.phone.replace(/\D/g, "");
+      const uTarget = uDigits.length >= 10 ? uDigits.slice(-10) : uDigits;
+      return uTarget === target;
+    });
+    return matched ? normalizeUser(matched) : undefined;
+  }
+
+  async phoneExists(phone: string): Promise<boolean> {
+    const user = await this.getUserByPhone(phone);
+    return !!user;
+  }
+
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
     return this.deletedUids.has(firebaseUid);
   }
@@ -4004,6 +4048,11 @@ export class DatabaseStorage implements IStorage {
 
   async getCredentialsByUsername(username: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined> {
     const cred = await db!.query.credentials.findFirst({ where: eq(credentials.username, username.toLowerCase()) });
+    return cred;
+  }
+
+  async getCredentialsByUserId(userId: string): Promise<{ username: string; passwordHash: string; userId: string } | undefined> {
+    const cred = await db!.query.credentials.findFirst({ where: eq(credentials.userId, userId) });
     return cred;
   }
 

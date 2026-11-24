@@ -118,6 +118,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
       id: widget.user.id,
       name: widget.user.name,
       email: widget.user.email,
+      phone: widget.user.phone,
       level: 1,
       xp: 100,
       tier: _selectedClass == 'monarch' ? 'C' : 'D',

@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { verifyFirebaseToken } from "../firebase-admin";
 import { enrichUserWithLevelData } from "../middleware/auth";
+import type { User } from "@shared/schema";
 
 // Helper to generate referral code
 function generateReferralCode(): string {
@@ -18,28 +19,39 @@ function generateReferralCode(): string {
 
 // Validation Schemas
 const registerSchema = z.object({
-    username: z.string().min(3, "Username must be at least 3 characters"),
+    username: z.string().min(2, "Username/Name must be at least 2 characters").optional(),
+    name: z.string().min(2, "Name must be at least 2 characters").optional(),
+    email: z.string().email("Valid email address is required"),
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    age: z.coerce.number().int().positive(),
-    weight: z.coerce.number().int().positive(),
-    height: z.coerce.number().int().positive(),
-    pushups: z.coerce.number().int().nonnegative(),
-    pullups: z.coerce.number().int().nonnegative(),
-    intelligence: z.coerce.number().int().min(1).max(10),
-    willpower: z.coerce.number().int().min(1).max(10),
-    vitality: z.coerce.number().int().min(1).max(10),
-    charisma: z.coerce.number().int().min(1).max(10),
     referralCode: z.string().optional(),
-    phone: z.string().min(10, "Phone number must be at least 10 digits").optional(),
+    age: z.coerce.number().int().positive().optional().default(20),
+    weight: z.coerce.number().int().positive().optional().default(70),
+    height: z.coerce.number().int().positive().optional().default(175),
+    pushups: z.coerce.number().int().nonnegative().optional().default(20),
+    pullups: z.coerce.number().int().nonnegative().optional().default(5),
+    intelligence: z.coerce.number().int().min(1).max(10).optional().default(5),
+    willpower: z.coerce.number().int().min(1).max(10).optional().default(5),
+    vitality: z.coerce.number().int().min(1).max(10).optional().default(5),
+    charisma: z.coerce.number().int().min(1).max(10).optional().default(5),
 });
 
 const googleRegisterSchema = registerSchema.extend({
+    username: z.string().min(2, "Username is required"),
     firebaseUid: z.string().min(1, "Firebase UID is required"),
     email: z.string().email().optional(),
 });
 
 const loginSchema = z.object({
-    username: z.string().min(1, "Username is required"),
+    phone: z.string().optional(),
+    username: z.string().optional(),
+    password: z.string().min(1, "Password is required"),
+}).refine(data => data.phone || data.username, {
+    message: "Either phone number or username is required",
+});
+
+const loginPhoneSchema = z.object({
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
     password: z.string().min(1, "Password is required"),
 });
 
@@ -52,10 +64,19 @@ export function registerLocalAuthRoutes(app: Express) {
             const data = registerSchema.parse(req.body);
             const storage = getStorage();
 
-            // 2. Check Existence
-            const exists = await storage.usernameExists(data.username);
-            if (exists) {
-                return res.status(400).json({ error: "Username already taken" });
+            const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, "").trim();
+            if (await storage.phoneExists(normalizedPhone)) {
+                return res.status(400).json({ error: "Phone number already registered" });
+            }
+
+            const existingEmailUser = await storage.getUserByEmail(data.email);
+            if (existingEmailUser) {
+                return res.status(400).json({ error: "Email address already registered" });
+            }
+
+            let chosenUsername = (data.username || data.name || "Hunter").trim();
+            if (await storage.usernameExists(chosenUsername)) {
+                chosenUsername = `${chosenUsername.slice(0, 10)}_${Math.floor(100 + Math.random() * 900)}`;
             }
 
             // 3. Hash Password
@@ -81,30 +102,29 @@ export function registerLocalAuthRoutes(app: Express) {
             // 4. Create User
             const user = await storage.createUser({
                 firebaseUid,
-                name: data.username,
-                email: `${data.username}@local.ascension`,
+                name: chosenUsername,
+                email: data.email,
                 avatarUrl: null,
                 timezone: "UTC",
-                onboardingCompleted: false,
-                // referredBy: referrerId,
+                onboardingCompleted: false, // Mandatory page customization follows in BriefingScreen
                 assessmentData: {
                     age: data.age,
                     weight: data.weight,
                     height: data.height,
-                    pushups: data.pushups, // Minimum floor handled in quest logic based on this
+                    pushups: data.pushups,
                     pullups: data.pullups,
                     intelligence: data.intelligence,
                     willpower: data.willpower,
                     vitality: data.vitality,
                     charisma: data.charisma
                 },
-                phone: data.phone || null,
+                phone: normalizedPhone,
             });
 
             // 4.5 Create Referral Profile (using username as referral code)
             await storage.createReferralProfile({
                 userId: user.id,
-                referralCode: data.username.toUpperCase(),
+                referralCode: chosenUsername.toUpperCase(),
                 referredById: referrerId,
                 totalReferrals: 0,
             });
@@ -138,15 +158,15 @@ export function registerLocalAuthRoutes(app: Express) {
                             userId: referrerId,
                             type: "achievement",
                             title: "[REFERRAL RECORDED] New Operator Joined",
-                            message: `${data.username} joined using your referral link! You'll earn +200 coins when they complete their first quest.`,
+                            message: `${chosenUsername} joined using your referral link! You'll earn +200 coins when they complete their first quest.`,
                         });
-                        console.log(`[REGISTER] Pending referral created: ${referrerUser.name} -> ${data.username}`);
+                        console.log(`[REGISTER] Pending referral created: ${referrerUser.name} -> ${chosenUsername}`);
                     }
                 }
             }
 
             // 5. Save Credentials
-            await storage.saveCredentials(data.username, passwordHash, data.password, user.id);
+            await storage.saveCredentials(chosenUsername, passwordHash, data.password, user.id);
 
             // 6. Calculate Stats (Simplified & Typed)
             let strength = 10, agility = 10, stamina = 10;
@@ -171,7 +191,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
             const cap = (val: number) => Math.min(100, Math.max(1, val));
 
-            await storage.updateUser(user.id, {
+            const finalUser = await storage.updateUser(user.id, {
                 strength: cap(strength),
                 agility: cap(agility),
                 stamina: cap(stamina),
@@ -179,69 +199,142 @@ export function registerLocalAuthRoutes(app: Express) {
                 intelligence: cap(data.intelligence * 4),
                 willpower: cap(data.willpower * 4),
                 charisma: cap(data.charisma * 4),
-                onboardingCompleted: true,
-                // Give +50 bonus coins if referred, otherwise 100 base
+                onboardingCompleted: false, // Customization will be finalized in BriefingScreen
                 coins: referrerId ? 150 : 100,
             });
 
+            const enrichedUser = enrichUserWithLevelData(finalUser);
             console.log("[REGISTER] Success:", user.id);
-            res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
+            res.json({
+                success: true,
+                userId: user.id,
+                firebaseUid: user.firebaseUid,
+                username: user.name,
+                user: enrichedUser,
+                isNewUser: true,
+                requiresPhone: false,
+                requiresOnboarding: true,
+            });
 
         } catch (error: any) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors[0].message });
             }
             console.error("[REGISTER] Error:", error);
-            // Ensure we always return JSON, even for unexpected errors
             const errorMessage = error?.message || "Registration failed";
             res.status(500).json({ error: errorMessage });
         }
     });
 
-    // Login with username/password
+    // Login with phone or username and password
     app.post("/api/auth/login-local", async (req, res) => {
         try {
             const data = loginSchema.parse(req.body);
             const storage = getStorage();
 
-            // Hardcode demo user (DEV ONLY)
-            // Allow in prod ONLY if explicitly enabled via ENV
-            const isDev = process.env.NODE_ENV !== "production";
-            const demoEnabled = true;
+            let user: User | undefined;
+            let credentials: { username: string; passwordHash: string; userId: string } | undefined;
 
-            if ((isDev || demoEnabled) && data.username === "demo" && data.password === "password123") {
-                console.log("[LOGIN] Demo bypass (Secure Mode)");
-                let demoUser = await storage.getUserByFirebaseUid("local_demo");
-                if (!demoUser) {
-                    demoUser = await storage.createUser({
-                        firebaseUid: "local_demo",
-                        name: "Demo User",
-                        email: "demo@ascension.com",
-                        avatarUrl: null,
-                        timezone: "UTC",
-                        onboardingCompleted: true
-                    });
-                    await storage.updateUser(demoUser.id, { coins: 1000 });
+            if (data.phone) {
+                const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, "").trim();
+                user = await storage.getUserByPhone(normalizedPhone);
+                if (user) {
+                    credentials = await storage.getCredentialsByUserId(user.id);
                 }
-                return res.json({ success: true, userId: demoUser.id, firebaseUid: demoUser.firebaseUid });
+            } else if (data.username) {
+                // Hardcode demo user (DEV ONLY)
+                // Allow in prod ONLY if explicitly enabled via ENV
+                const isDev = process.env.NODE_ENV !== "production";
+                const demoEnabled = true;
+
+                if ((isDev || demoEnabled) && data.username === "demo" && data.password === "password123") {
+                    console.log("[LOGIN] Demo bypass (Secure Mode)");
+                    let demoUser = await storage.getUserByFirebaseUid("local_demo");
+                    if (!demoUser) {
+                        demoUser = await storage.createUser({
+                            firebaseUid: "local_demo",
+                            name: "Demo User",
+                            email: "demo@ascension.com",
+                            avatarUrl: null,
+                            timezone: "UTC",
+                            onboardingCompleted: true
+                        });
+                        await storage.updateUser(demoUser.id, { coins: 1000 });
+                    }
+                    const enrichedDemo = enrichUserWithLevelData(demoUser);
+                    return res.json({ success: true, userId: demoUser.id, firebaseUid: demoUser.firebaseUid, user: enrichedDemo });
+                }
+
+                credentials = await storage.getCredentialsByUsername(data.username);
+                if (credentials) {
+                    user = await storage.getUser(credentials.userId);
+                }
             }
 
-            const credentials = await storage.getCredentialsByUsername(data.username);
-            if (!credentials) return res.status(404).json({ error: "User not found" });
+            if (!credentials || !user) return res.status(401).json({ error: "Invalid credentials" });
 
             const isValid = await bcrypt.compare(data.password, credentials.passwordHash);
-            if (!isValid) return res.status(401).json({ error: "Invalid username or password" });
+            if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
 
-            const user = await storage.getUser(credentials.userId);
-            if (!user) return res.status(404).json({ error: "User not found" });
-
-            res.json({ success: true, userId: user.id, firebaseUid: user.firebaseUid });
+            const enrichedUser = enrichUserWithLevelData(user);
+            res.json({
+                success: true,
+                userId: user.id,
+                firebaseUid: user.firebaseUid,
+                username: user.name,
+                user: enrichedUser,
+                isNewUser: !user.onboardingCompleted,
+                requiresPhone: !user.phone || user.phone.trim().length === 0,
+                requiresOnboarding: !user.onboardingCompleted,
+            });
 
         } catch (error) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ error: error.errors[0].message });
             }
             console.error("Login Error:", error);
+            res.status(500).json({ error: "Login failed" });
+        }
+    });
+
+    // Dedicated Phone + Password Login
+    app.post("/api/auth/login-phone", async (req, res) => {
+        try {
+            const data = loginPhoneSchema.parse(req.body);
+            const storage = getStorage();
+            const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, "").trim();
+
+            const user = await storage.getUserByPhone(normalizedPhone);
+            if (!user) {
+                return res.status(401).json({ error: "Invalid phone number or password" });
+            }
+
+            const credentials = await storage.getCredentialsByUserId(user.id);
+            if (!credentials) {
+                return res.status(401).json({ error: "Invalid phone number or password" });
+            }
+
+            const isValid = await bcrypt.compare(data.password, credentials.passwordHash);
+            if (!isValid) {
+                return res.status(401).json({ error: "Invalid phone number or password" });
+            }
+
+            const enrichedUser = enrichUserWithLevelData(user);
+            res.json({
+                success: true,
+                userId: user.id,
+                firebaseUid: user.firebaseUid,
+                username: user.name,
+                user: enrichedUser,
+                isNewUser: !user.onboardingCompleted,
+                requiresPhone: !user.phone || user.phone.trim().length === 0,
+                requiresOnboarding: !user.onboardingCompleted,
+            });
+        } catch (error: any) {
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors[0].message });
+            }
+            console.error("[LOGIN-PHONE] Error:", error);
             res.status(500).json({ error: "Login failed" });
         }
     });
@@ -397,7 +490,8 @@ export function registerLocalAuthRoutes(app: Express) {
                     email: email || `${chosenUsername}@ascension.protocol`,
                     avatarUrl: photoUrl || null,
                     timezone: "UTC",
-                    onboardingCompleted: true,
+                    onboardingCompleted: false,
+                    phone: null,
                     coins: referrerId ? 250 : 150,
                     level: 1,
                     xp: 0,
@@ -428,6 +522,8 @@ export function registerLocalAuthRoutes(app: Express) {
             }
 
             const enrichedUser = enrichUserWithLevelData(user);
+            const requiresPhone = !user.phone || user.phone.trim().length === 0;
+            const requiresOnboarding = !user.onboardingCompleted;
 
             res.json({
                 success: true,
@@ -435,11 +531,87 @@ export function registerLocalAuthRoutes(app: Express) {
                 firebaseUid: user.firebaseUid,
                 username: user.name,
                 user: enrichedUser,
-                isNewUser,
+                isNewUser: isNewUser || requiresPhone || requiresOnboarding,
+                requiresPhone,
+                requiresOnboarding,
             });
         } catch (error) {
             console.error("Google Login Error:", error);
             res.status(500).json({ error: "Google login failed" });
+        }
+    });
+
+    // Complete Profile (Mandatory Phone & optional Name update)
+    app.post("/api/user/complete-profile", async (req, res) => {
+        try {
+            const authHeader = req.headers.authorization;
+            let currentUid = (req.headers["x-firebase-uid"] as string) || (req as any).firebaseUid;
+
+            if (!currentUid && authHeader?.startsWith("Bearer ")) {
+                const token = authHeader.slice(7).trim();
+                if (process.env.ALLOW_TEST_AUTH === "true" && token.startsWith("test_token_")) {
+                    currentUid = token.replace("test_token_", "");
+                } else {
+                    try {
+                        const decoded = await verifyFirebaseToken(token);
+                        currentUid = decoded.uid;
+                    } catch {
+                        // Token verification fallback
+                    }
+                }
+            }
+
+            const storage = getStorage();
+            let user: User | undefined;
+            if (currentUid) {
+                user = await storage.getUserByFirebaseUid(currentUid);
+            }
+            if (!user && req.body?.userId) {
+                user = await storage.getUser(req.body.userId);
+            }
+            if (!user && req.body?.firebaseUid) {
+                user = await storage.getUserByFirebaseUid(req.body.firebaseUid);
+            }
+
+            if (!user) {
+                return res.status(401).json({ error: "User session not found. Please log in again." });
+            }
+
+            const schema = z.object({
+                phone: z.string().min(10, "Phone number must be at least 10 digits"),
+                name: z.string().min(2).optional(),
+            });
+
+            const data = schema.parse(req.body);
+            const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, "").trim();
+
+            const existingPhoneUser = await storage.getUserByPhone(normalizedPhone);
+            if (existingPhoneUser && existingPhoneUser.id !== user.id) {
+                return res.status(409).json({ error: "Phone number is already associated with another account" });
+            }
+
+            const updates: Partial<User> = {
+                phone: normalizedPhone,
+            };
+            if (data.name && data.name.trim().length >= 2) {
+                updates.name = data.name.trim();
+            }
+
+            const updatedUser = await storage.updateUser(user.id, updates);
+            const enrichedUser = enrichUserWithLevelData(updatedUser);
+
+            return res.json({
+                success: true,
+                user: enrichedUser,
+                requiresPhone: false,
+                requiresOnboarding: !updatedUser.onboardingCompleted,
+            });
+        } catch (error: any) {
+            if (error instanceof z.ZodError) {
+                return res.status(400).json({ error: error.errors[0].message });
+            }
+            console.error("[COMPLETE-PROFILE] Error:", error);
+            res.status(500).json({ error: error?.message || "Failed to update profile" });
         }
     });
 

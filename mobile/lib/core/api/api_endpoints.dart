@@ -4,6 +4,9 @@ class ApiEndpoints {
 
   // Auth & Profile
   static const String authGoogle = '/api/auth/login-google';
+  static const String loginPhone = '/api/auth/login-phone';
+  static const String registerLocal = '/api/auth/register-local';
+  static const String completeProfile = '/api/user/complete-profile';
   static const String authMe = '/api/user';
   static const String deleteAccount = '/api/user';
   static const String userStats = '/api/user/stats';

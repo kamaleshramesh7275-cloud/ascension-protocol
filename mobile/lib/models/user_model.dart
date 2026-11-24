@@ -2,6 +2,7 @@ class UserModel {
   final String id;
   final String name;
   final String email;
+  final String? phone;
   final String? avatarUrl;
   final int level;
   final int xp;
@@ -29,6 +30,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
+    this.phone,
     this.avatarUrl,
     required this.level,
     required this.xp,
@@ -81,6 +83,7 @@ class UserModel {
       intelligence: (json['intelligence'] as num?)?.toInt() ?? 10,
       willpower: (json['willpower'] as num?)?.toInt() ?? 10,
       charisma: (json['charisma'] as num?)?.toInt() ?? 10,
+      phone: json['phone']?.toString(),
     );
   }
 
@@ -89,6 +92,7 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
+      'phone': phone,
       'avatarUrl': avatarUrl,
       'level': level,
       'xp': xp,
@@ -116,6 +120,7 @@ class UserModel {
     String? id,
     String? name,
     String? email,
+    String? phone,
     String? avatarUrl,
     int? level,
     int? xp,
@@ -141,6 +146,7 @@ class UserModel {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       level: level ?? this.level,
       xp: xp ?? this.xp,

@@ -5,6 +5,7 @@ import 'core/theme/hunter_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/sync/sync_queue.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/profile_setup_screen.dart';
 import 'features/briefing/briefing_screen.dart';
 import 'features/home/main_navigation_screen.dart';
 
@@ -45,9 +46,15 @@ class AscensionMobileApp extends ConsumerWidget {
       home: authState.when(
         data: (user) {
           if (user != null) {
+            // 1. Mandatory Phone verification check
+            if (user.phone == null || user.phone!.isEmpty) {
+              return ProfileSetupScreen(user: user);
+            }
+            // 2. Customization / Briefing calibration check
             if (!user.onboardingCompleted) {
               return BriefingScreen(user: user);
             }
+            // 3. Direct access to Main Dashboard
             return MainNavigationScreen(initialUser: user);
           }
           return const LoginScreen();

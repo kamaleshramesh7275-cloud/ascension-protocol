@@ -42,6 +42,65 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     }
   }
 
+  Future<bool> loginWithPhone(String phone, String password) async {
+    if (!mounted) return false;
+    state = const AsyncValue.loading();
+    try {
+      final user = await _repo.loginWithPhone(phone, password);
+      if (!mounted) return user != null;
+      state = AsyncValue.data(user);
+      return user != null;
+    } catch (e, st) {
+      if (!mounted) return false;
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> registerDirect({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    String? referralCode,
+  }) async {
+    if (!mounted) return false;
+    state = const AsyncValue.loading();
+    try {
+      final user = await _repo.registerDirect(
+        name: name,
+        email: email,
+        phone: phone,
+        password: password,
+        referralCode: referralCode,
+      );
+      if (!mounted) return user != null;
+      state = AsyncValue.data(user);
+      return user != null;
+    } catch (e, st) {
+      if (!mounted) return false;
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> completeProfile({required String phone, String? name}) async {
+    if (!mounted) return false;
+    try {
+      final user = await _repo.completeProfile(phone: phone, name: name);
+      if (!mounted) return user != null;
+      if (user != null) {
+        state = AsyncValue.data(user);
+        return true;
+      }
+      return false;
+    } catch (e, st) {
+      if (!mounted) return false;
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
   Future<void> loginGuest() async {
     if (!mounted) return;
     state = const AsyncValue.loading();

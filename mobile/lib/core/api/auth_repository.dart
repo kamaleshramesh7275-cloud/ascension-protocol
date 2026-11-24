@@ -56,6 +56,112 @@ class AuthRepository {
     }
   }
 
+  /// Direct Phone + Password Login
+  Future<UserModel?> loginWithPhone(String phone, String password) async {
+    try {
+      final dio = await ApiClient.getInstance();
+      final response = await dio.post(
+        ApiEndpoints.loginPhone,
+        data: {
+          'phone': phone,
+          'password': password,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        final uid = data['firebaseUid']?.toString() ?? data['userId']?.toString() ?? '';
+        await SessionStorage.saveFirebaseUid(uid);
+        final token = data['token']?.toString() ?? uid;
+        await SessionStorage.saveToken(token);
+
+        if (data['user'] != null) {
+          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          await SessionStorage.saveCachedUser(user);
+          return user;
+        }
+
+        return await getProfile();
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Direct Manual Registration (Name, Email, Phone, Password, Referral)
+  Future<UserModel?> registerDirect({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    String? referralCode,
+  }) async {
+    try {
+      final dio = await ApiClient.getInstance();
+      final response = await dio.post(
+        ApiEndpoints.registerLocal,
+        data: {
+          'name': name,
+          'username': name,
+          'email': email,
+          'phone': phone,
+          'password': password,
+          if (referralCode != null && referralCode.isNotEmpty) 'referralCode': referralCode,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        final uid = data['firebaseUid']?.toString() ?? data['userId']?.toString() ?? '';
+        await SessionStorage.saveFirebaseUid(uid);
+        final token = data['token']?.toString() ?? uid;
+        await SessionStorage.saveToken(token);
+
+        if (data['user'] != null) {
+          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          await SessionStorage.saveCachedUser(user);
+          return user;
+        }
+
+        return await getProfile();
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Complete user profile with mandatory phone and optional name
+  Future<UserModel?> completeProfile({
+    required String phone,
+    String? name,
+  }) async {
+    try {
+      final dio = await ApiClient.getInstance();
+      final response = await dio.post(
+        ApiEndpoints.completeProfile,
+        data: {
+          'phone': phone,
+          if (name != null && name.isNotEmpty) 'name': name,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data['user'] != null) {
+          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          await SessionStorage.saveCachedUser(user);
+          return user;
+        }
+        return await getProfile();
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Anonymous guest authentication
   Future<UserModel?> signInAnonymously() async {
     try {
