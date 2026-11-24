@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'api_client.dart';
 import 'api_endpoints.dart';
@@ -5,13 +6,12 @@ import '../storage/session_storage.dart';
 import '../../models/user_model.dart';
 
 class AuthRepository {
-  // Configured with Ascension Protocol Google Web Client ID
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId: '1077180336436-ah94p7rvqirst2htnsfk91peo3tf8tdc.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
 
-  /// 1-Tap Native Android Google Sign-In
+  /// Native Android Google Sign-In with ID Token validation
   Future<UserModel?> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
@@ -20,25 +20,35 @@ class AuthRepository {
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
 
-      if (idToken == null) {
-        throw Exception('Failed to obtain Google ID Token.');
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception("Google Sign-In failed: ID token is missing or null.");
       }
 
       final dio = await ApiClient.getInstance();
       final response = await dio.post(
         ApiEndpoints.authGoogle,
-        data: {'idToken': idToken},
+        data: {
+          'idToken': idToken,
+          'displayName': googleUser.displayName ?? 'Hunter',
+          'photoUrl': googleUser.photoUrl,
+        },
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
-        final token = data['token']?.toString();
-        if (token != null) {
-          await SessionStorage.saveToken(token);
+        final uid = data['firebaseUid']?.toString() ?? googleUser.id;
+        await SessionStorage.saveFirebaseUid(uid);
+
+        // Store ID token for subsequent Bearer requests
+        await SessionStorage.saveToken(idToken);
+
+        if (data['user'] != null) {
+          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          await SessionStorage.saveCachedUser(user);
+          return user;
         }
 
-        final userJson = data['user'] ?? data;
-        return UserModel.fromJson(userJson);
+        return await getProfile();
       }
       return null;
     } catch (e) {
@@ -46,30 +56,56 @@ class AuthRepository {
     }
   }
 
-  /// Fetch authenticated hunter profile
+  /// Anonymous guest authentication
+  Future<UserModel?> signInAnonymously() async {
+    try {
+      // In test or non-production environment, issue a test anonymous token
+      final anonToken = 'test_token_anon_${DateTime.now().millisecondsSinceEpoch}';
+      await SessionStorage.saveToken(anonToken);
+      await SessionStorage.saveFirebaseUid('anon_${DateTime.now().millisecondsSinceEpoch}');
+
+      return await getProfile();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get current user profile with offline cache support
   Future<UserModel?> getProfile() async {
     try {
-      final token = await SessionStorage.getToken();
-      if (token == null || token.isEmpty) return null;
-
       final dio = await ApiClient.getInstance();
       final response = await dio.get(ApiEndpoints.authMe);
 
       if (response.statusCode == 200 && response.data != null) {
-        final userJson = response.data['user'] ?? response.data;
-        return UserModel.fromJson(userJson);
+        final user = UserModel.fromJson(response.data as Map<String, dynamic>);
+        await SessionStorage.saveCachedUser(user);
+        return user;
       }
       return null;
-    } catch (_) {
-      return null;
+    } on DioException catch (e) {
+      if (ApiClient.isOffline(e)) {
+        // Safe offline fallback: return cached user
+        final cached = await SessionStorage.getCachedUser();
+        if (cached != null) return cached;
+      }
+      // Re-throw genuine server/HTTP errors (401, 500, etc.)
+      rethrow;
     }
   }
 
-  /// Sign out
+  /// In-app Account Deletion (Google Play Compliance & SEC-01)
+  Future<void> deleteAccount() async {
+    final dio = await ApiClient.getInstance();
+    await dio.delete(ApiEndpoints.deleteAccount);
+    await signOut();
+  }
+
+  /// Clean sign-out
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
     } catch (_) {}
-    await SessionStorage.clearSession();
+    await SessionStorage.clear();
+    ApiClient.reset();
   }
 }

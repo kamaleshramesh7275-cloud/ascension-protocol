@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/hunter_theme.dart';
 import 'core/providers/auth_provider.dart';
+import 'core/sync/sync_queue.dart';
 import 'features/auth/login_screen.dart';
 import 'features/briefing/briefing_screen.dart';
 import 'features/home/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize offline sync queue listener
+  SyncQueueService.initializeConnectivityListener();
 
   // Immersive Edge-to-Edge System Bar Styling
   SystemChrome.setSystemUIOverlayStyle(
@@ -44,7 +48,7 @@ class AscensionMobileApp extends ConsumerWidget {
             if (!user.onboardingCompleted) {
               return BriefingScreen(user: user);
             }
-            return MainNavigationScreen(user: user);
+            return MainNavigationScreen(initialUser: user);
           }
           return const LoginScreen();
         },

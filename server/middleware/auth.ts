@@ -1,79 +1,145 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { getStorage } from "../storage";
+import { verifyFirebaseToken } from "../firebase-admin";
 
-// Middleware to check Firebase auth (simplified for MVP)
-// In production, you'd verify Firebase tokens here
-export async function requireAuth(req: Request, res: Response, next: Function) {
-    const storage = getStorage(); // Lazy load
-    const firebaseUid = req.headers["x-firebase-uid"] as string;
-
-    if (!firebaseUid) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    let user = await storage.getUserByFirebaseUid(firebaseUid);
-
-    // Check if user was explicitly deleted
-    if (await storage.isUserDeleted(firebaseUid)) {
-        return res.status(403).json({ error: "Account has been deleted" });
-    }
-
-    // Handle guest users, local users, or recovered Firebase/Google sessions (e.g. after server restart or fresh token)
-    if (!user) {
-        const isGuest = firebaseUid.startsWith("guest_");
-        const isLocal = firebaseUid.startsWith("local_");
-
-        user = await storage.createUser({
-            firebaseUid,
-            name: isGuest ? "Guest Ascendant" : "Ascendant",
-            email: isGuest ? `${firebaseUid}@guest.com` : `${firebaseUid.slice(0, 10)}@ascension.protocol`,
-            avatarUrl: null,
-            timezone: "UTC",
-            onboardingCompleted: !isGuest, // Assume real users have onboarded
-        });
-
-        // Give coins to non-guests
-        if (!isGuest) {
-            await storage.updateUser(user.id, { coins: 500 });
-        }
-    }
-
-    if (!user) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    // Calculate subscription status
-    const { getSubscriptionStatus } = await import("../utils/subscription");
-    const { isPremium, isTrial, trialEndsAt } = getSubscriptionStatus(user);
-
-    // Inject effective premium status
-    // We override the DB value with the effective value (Trial OR Premium)
-    // This allows existing routes to work without modification
-    (user as any).isPremium = isPremium;
-    (user as any).isTrial = isTrial;
-    (user as any).trialEndsAt = trialEndsAt;
-
-    console.log(`Auth check for ${req.path} | User: ${user.name} | Premium: ${isPremium} (Trial: ${isTrial})`);
-
-    req.firebaseUid = firebaseUid;
-    (req as any).user = user;
-    next();
+function isValidTimezone(tz: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export async function requireAdmin(req: Request, res: Response, next: Function) {
-    const user = (req as any).user;
-    if (!user || user.role !== "admin") {
-        return res.status(403).json({ error: "Access denied. Admin role required." });
-    }
-    next();
+export function enrichUserWithLevelData(user: any) {
+  if (!user) return user;
+  const xp = user.xp || 0;
+  const level = Math.floor(xp / 100) + 1;
+  const xpIntoLevel = xp % 100;
+  const xpForNextLevel = 100;
+  const xpProgress = xpIntoLevel / xpForNextLevel;
+
+  return {
+    ...user,
+    level,
+    xpIntoLevel,
+    xpForNextLevel,
+    xpProgress,
+  };
 }
 
-export async function requireAdminPassword(req: Request, res: Response, next: Function) {
-    const adminPassword = req.headers["x-admin-password"] as string;
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
 
-    if (adminPassword !== ADMIN_PASSWORD) {
-        return res.status(403).json({ error: "Unauthorized" });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      code: "invalid_token",
+      error: "Missing or invalid authorization header. Bearer token required.",
+    });
+  }
+
+  const token = authHeader.slice(7).trim();
+  if (!token) {
+    return res.status(401).json({
+      code: "invalid_token",
+      error: "Empty Bearer token provided.",
+    });
+  }
+
+  let decodedUser: { uid: string; email?: string; name?: string; picture?: string; isAnonymous: boolean };
+
+  try {
+    // If running in automated local test mode with explicit test token flag
+    if (process.env.ALLOW_TEST_AUTH === "true" && token.startsWith("test_token_")) {
+      const uid = token.replace("test_token_", "");
+      decodedUser = {
+        uid,
+        email: `${uid}@test.ascension.protocol`,
+        name: `Test User ${uid.slice(0, 6)}`,
+        isAnonymous: uid.startsWith("anon_"),
+      };
+    } else {
+      decodedUser = await verifyFirebaseToken(token);
     }
-    next();
+  } catch (error: any) {
+    if (error?.code === "auth/id-token-expired" || error?.message?.includes("expired")) {
+      return res.status(401).json({
+        code: "token_expired",
+        error: "Firebase token expired. Re-authentication required.",
+      });
+    }
+
+    return res.status(401).json({
+      code: "invalid_token",
+      error: "Invalid Firebase token.",
+    });
+  }
+
+  const firebaseUid = decodedUser.uid;
+  const storage = getStorage();
+
+  // Check if account was explicitly deleted
+  if (await storage.isUserDeleted(firebaseUid)) {
+    return res.status(403).json({ error: "Account has been deleted" });
+  }
+
+  // Parse & validate timezone from X-Timezone header
+  const tzHeader = req.headers["x-timezone"] as string | undefined;
+  const timezone = tzHeader && isValidTimezone(tzHeader) ? tzHeader : "UTC";
+  (req as any).timezone = timezone;
+
+  let user = await storage.getUserByFirebaseUid(firebaseUid);
+
+  // Auto-provision ONLY upon first presentation of a cryptographically valid token
+  if (!user) {
+    const isGuest = decodedUser.isAnonymous || firebaseUid.startsWith("anon_");
+    const email = decodedUser.email || (isGuest ? `guest_${firebaseUid.slice(0, 8)}@ascensions.in` : `${firebaseUid.slice(0, 10)}@ascension.protocol`);
+    const name = decodedUser.name || (isGuest ? "Guest Ascendant" : "Ascendant");
+
+    user = await storage.createUser({
+      firebaseUid,
+      name,
+      email,
+      avatarUrl: decodedUser.picture || null,
+      timezone,
+      onboardingCompleted: false,
+    });
+
+    if (!isGuest) {
+      await storage.updateUser(user.id, { coins: 150 });
+    }
+  }
+
+  // Inject subscription status
+  const { getSubscriptionStatus } = await import("../utils/subscription");
+  const { isPremium, isTrial, trialEndsAt } = getSubscriptionStatus(user);
+
+  (user as any).isPremium = isPremium;
+  (user as any).isTrial = isTrial;
+  (user as any).trialEndsAt = trialEndsAt;
+
+  const enrichedUser = enrichUserWithLevelData(user);
+
+  req.firebaseUid = firebaseUid;
+  (req as any).user = enrichedUser;
+
+  next();
+}
+
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user || user.role !== "admin") {
+    return res.status(403).json({ error: "Access denied. Admin role required." });
+  }
+  next();
+}
+
+export async function requireAdminPassword(req: Request, res: Response, next: NextFunction) {
+  const adminPassword = req.headers["x-admin-password"] as string;
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
+  if (adminPassword !== ADMIN_PASSWORD) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  next();
 }

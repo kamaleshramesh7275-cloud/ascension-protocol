@@ -3545,6 +3545,7 @@ export class MemStorage implements IStorage {
 export class DatabaseStorage implements IStorage {
   private campaignsCache: Campaign[] | null = null;
   private guildPerksCache: GuildPerk[] | null = null;
+  private deletedUids: Set<string> = new Set();
 
   constructor() {
     console.log("🗄️ DatabaseStorage initialized");
@@ -3652,7 +3653,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async isUserDeleted(firebaseUid: string): Promise<boolean> {
-    return false; // Not implemented for DB
+    return this.deletedUids.has(firebaseUid);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -3688,8 +3689,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<void> {
-    // Cascade delete manually if needed, but relying on foreign keys
-    await db!.delete(users).where(eq(users.id, id));
+    if (!db) return;
+    const user = await this.getUser(id);
+    if (user) {
+      this.deletedUids.add(user.firebaseUid);
+    }
+    try {
+      await db.delete(focusSessions).where(eq(focusSessions.userId, id));
+      await db.delete(quests).where(eq(quests.userId, id));
+      await db.delete(eveningDebriefs).where(eq(eveningDebriefs.userId, id));
+      await db.delete(userItems).where(eq(userItems.userId, id));
+      await db.delete(activityHistory).where(eq(activityHistory.userId, id));
+      await db.delete(notifications).where(eq(notifications.userId, id));
+    } catch (e) {
+      console.warn("[deleteUser] Child table cleanup warning:", e);
+    }
+    await db.delete(users).where(eq(users.id, id));
   }
 
 

@@ -54,30 +54,37 @@ if (process.env.NODE_ENV === "production") {
   }));
 }
 
-// Global Rate Limiter: 100 requests per 15 minutes per IP
+// Global Rate Limiter: 60 requests per 1 minute per IP
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
+  windowMs: 60 * 1000,
+  limit: 60,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: "Too many requests, please try again later."
+  message: { error: "Too many requests, please try again later." }
 });
 
-// Disable global rate limit in development because Vite loads hundreds of modules
-if (process.env.NODE_ENV === "production") {
-  app.use(globalLimiter);
-}
-
-// Auth Rate Limiter: 5 login attempts per 15 minutes per IP (Strict)
+// Auth Rate Limiter: 5 attempts per 1 minute per IP
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 60 * 1000,
   limit: 5,
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: "Too many login attempts, please try again after 15 minutes."
+  message: { error: "Too many login attempts, please try again after 1 minute." }
 });
-if (process.env.NODE_ENV === "production") {
+
+// Focus Rate Limiter: 10 attempts per 1 minute per IP
+const focusLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many focus requests, please slow down." }
+});
+
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_TEST_AUTH !== "true") {
   app.use("/api/auth", authLimiter);
+  app.use("/api/focus", focusLimiter);
+  app.use("/api", globalLimiter);
 }
 
 

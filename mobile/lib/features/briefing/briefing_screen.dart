@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import '../home/main_navigation_screen.dart';
 
@@ -94,11 +96,11 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
   Future<void> _affirmOathAndAwaken() async {
     HapticFeedback.heavyImpact();
 
-    // Persist onboarding data to backend
+    // Persist onboarding data to production backend
     try {
       final dio = await ApiClient.getInstance();
       await dio.post(
-        '/api/user/onboarding',
+        ApiEndpoints.onboarding,
         data: {
           'hunterClass': _selectedClass,
           'equipmentProfile': _equipment,
@@ -124,6 +126,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
       hunterClass: _selectedClass,
       streakShields: 1,
       activeRecoveryDay: false,
+      onboardingCompleted: true,
       strength: _selectedClass == 'tank' ? 45 : 25,
       agility: _selectedClass == 'assassin' ? 50 : 25,
       stamina: _selectedClass == 'ranger' ? 45 : 25,
@@ -133,10 +136,12 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
       charisma: 20,
     );
 
+    ref.read(authProvider.notifier).updateUser(awakenedUser);
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MainNavigationScreen(user: awakenedUser),
+          builder: (_) => MainNavigationScreen(initialUser: awakenedUser),
         ),
       );
     }
@@ -171,6 +176,19 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                 color: HunterTheme.cyanLight,
               ),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => MainNavigationScreen(initialUser: widget.user),
+                ),
+              );
+            },
+            icon: const Icon(Icons.close, color: HunterTheme.cyanLight, size: 18),
+            label: const Text('EXIT', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(

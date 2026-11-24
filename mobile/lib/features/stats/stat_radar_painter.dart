@@ -25,7 +25,7 @@ class StatRadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = min(size.width, size.height) / 2 * 0.75;
+    final radius = min(size.width, size.height) / 2 * 0.72;
     const sides = 7;
     const angleStep = (2 * pi) / sides;
 
@@ -57,12 +57,37 @@ class StatRadarPainter extends CustomPainter {
       canvas.drawPath(path, ringPaint);
     }
 
-    // Draw axes from center to vertices
+    // Draw axes from center to vertices and label vertices
     for (int i = 0; i < sides; i++) {
       final angle = -pi / 2 + i * angleStep;
       final x = center.dx + radius * cos(angle);
       final y = center.dy + radius * sin(angle);
       canvas.drawLine(center, Offset(x, y), axisPaint);
+
+      // Draw Attribute Vertex Name Label
+      final labelRadius = radius + 14;
+      final lx = center.dx + labelRadius * cos(angle);
+      final ly = center.dy + labelRadius * sin(angle);
+
+      final textSpan = TextSpan(
+        text: statNames[i],
+        style: const TextStyle(
+          color: HunterTheme.cyanLight,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1,
+        ),
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      textPainter.paint(
+        canvas,
+        Offset(lx - (textPainter.width / 2), ly - (textPainter.height / 2)),
+      );
     }
 
     // Prepare stat normalized values (1 to 100)

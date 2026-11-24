@@ -1,18 +1,51 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'api_endpoints.dart';
 import '../storage/session_storage.dart';
 
 class ApiClient {
   static Dio? _dio;
+  static String? _cachedBaseUrl;
+  static VoidCallback? onAuthenticationRequired;
+  static Interceptor? testInterceptor;
+
+  static void reset() {
+    _dio?.close();
+    _dio = null;
+    _cachedBaseUrl = null;
+    testInterceptor = null;
+  }
+
+  /// Strict offline error discriminator
+  /// Only real network transmission/connection failures are treated as offline.
+  /// Any HTTP 4xx or 5xx status code is a real server response, NEVER offline.
+  static bool isOffline(DioException e) {
+    if (e.response != null) return false;
+    return e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.connectionError;
+  }
+
+  static String _getDeviceTimezone() {
+    try {
+      final name = DateTime.now().timeZoneName;
+      if (name.isNotEmpty) return name;
+    } catch (_) {}
+    return 'UTC';
+  }
 
   static Future<Dio> getInstance() async {
-    if (_dio != null) return _dio!;
-
     final customBaseUrl = await SessionStorage.getCustomBaseUrl();
-    final baseUrl = (customBaseUrl != null && customBaseUrl.isNotEmpty)
+    final baseUrl = (!kReleaseMode && customBaseUrl != null && customBaseUrl.isNotEmpty)
         ? customBaseUrl
         : ApiEndpoints.defaultBaseUrl;
 
+    if (_dio != null && _cachedBaseUrl == baseUrl) {
+      return _dio!;
+    }
+
+    _cachedBaseUrl = baseUrl;
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -28,18 +61,55 @@ class ApiClient {
     _dio!.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // 1. Strictly attach Bearer token (x-firebase-uid is eliminated per contract)
           final token = await SessionStorage.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+
+          // 2. Attach X-Timezone header
+          options.headers['X-Timezone'] = _getDeviceTimezone();
+
           return handler.next(options);
         },
-        onError: (DioException e, handler) {
-          // Centralized error handling & retry
+        onError: (DioException e, handler) async {
+          // Handle 401 token expiration and re-auth contract
+          if (e.response?.statusCode == 401) {
+            final data = e.response?.data;
+            final isExpired = data is Map && data['code'] == 'token_expired';
+
+            if (isExpired && e.requestOptions.extra['retry_count'] == null) {
+              e.requestOptions.extra['retry_count'] = 1;
+              // Token expired: attempt token refresh
+              final refreshedToken = await SessionStorage.getToken();
+              if (refreshedToken != null) {
+                e.requestOptions.headers['Authorization'] = 'Bearer $refreshedToken';
+                try {
+                  final retryResponse = await _dio!.fetch(e.requestOptions);
+                  return handler.resolve(retryResponse);
+                } catch (retryError) {
+                  if (retryError is DioException) {
+                    return handler.next(retryError);
+                  }
+                }
+              }
+            }
+
+            // Unrecoverable authentication failure -> clear session
+            if (data is Map && (data['code'] == 'token_expired' || data['code'] == 'invalid_token')) {
+              await SessionStorage.clear();
+              onAuthenticationRequired?.call();
+            }
+          }
+
           return handler.next(e);
         },
       ),
     );
+
+    if (testInterceptor != null) {
+      _dio!.interceptors.add(testInterceptor!);
+    }
 
     return _dio!;
   }

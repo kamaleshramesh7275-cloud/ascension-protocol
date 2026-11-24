@@ -50,9 +50,18 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     final filteredQuests = _selectedFilter == 'ALL'
         ? quests
         : quests.where((q) {
-            if (_selectedFilter == 'DAILY') return q.category == 'physical';
-            if (_selectedFilter == 'BOSS') return q.category == 'boss';
-            if (_selectedFilter == 'INTELLECT') return q.category == 'mental';
+            if (_selectedFilter == 'DAILY') {
+              return q.type == 'daily' || q.category == 'fitness' || q.category == 'physical';
+            }
+            if (_selectedFilter == 'WEEKLY') {
+              return q.type == 'weekly' || q.category == 'weekly';
+            }
+            if (_selectedFilter == 'BOSS') {
+              return q.isBoss || q.type == 'boss' || q.category == 'boss';
+            }
+            if (_selectedFilter == 'INTELLECT') {
+              return q.category == 'productivity' || q.category == 'mental' || q.attribute == 'INT';
+            }
             return true;
           }).toList();
 
@@ -186,7 +195,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'XP: ${widget.user.xp} / ${widget.user.xpForNextLevel}',
+                        'XP: ${widget.user.xpIntoLevel} / ${widget.user.xpForNextLevel}',
                         style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                       ),
                       Text(
@@ -208,6 +217,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 children: [
                   _buildFilterChip('ALL'),
                   _buildFilterChip('DAILY'),
+                  _buildFilterChip('WEEKLY'),
                   _buildFilterChip('BOSS'),
                   _buildFilterChip('INTELLECT'),
                 ],
@@ -261,13 +271,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     ),
                   ),
                   child: InkWell(
-                    onTap: () => _toggleQuest(quest.id),
+                    onTap: quest.isCompleting ? null : () => _toggleQuest(quest.id),
                     borderRadius: BorderRadius.circular(14),
                     child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
-                          // Checkbox
+                          // Checkbox / Loading indicator
                           Container(
                             width: 28,
                             height: 28,
@@ -283,9 +293,17 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                 width: 2,
                               ),
                             ),
-                            child: quest.completed
-                                ? const Icon(Icons.check, size: 18, color: Colors.black)
-                                : null,
+                            child: quest.isCompleting
+                                ? const Center(
+                                    child: SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                    ),
+                                  )
+                                : (quest.completed
+                                    ? const Icon(Icons.check, size: 18, color: Colors.black)
+                                    : null),
                           ),
                           const SizedBox(width: 14),
 

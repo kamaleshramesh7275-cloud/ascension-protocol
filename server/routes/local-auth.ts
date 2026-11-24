@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { getStorage } from "../storage";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { verifyFirebaseToken } from "../firebase-admin";
+import { enrichUserWithLevelData } from "../middleware/auth";
 
 // Helper to generate referral code
 function generateReferralCode(): string {
@@ -292,21 +294,60 @@ export function registerLocalAuthRoutes(app: Express) {
         res.json({ exists });
     });
 
-    // Google Auth Login & Auto-Provisioning
+    // Google Auth Login & Auto-Provisioning (SEC-01/02 Secure implementation)
     app.post("/api/auth/login-google", async (req, res) => {
         try {
-            const { firebaseUid, email, displayName, photoUrl, referralCode } = req.body;
-            if (!firebaseUid) return res.status(400).json({ error: "Missing Firebase UID" });
+            // Must provide Firebase ID token in body or Authorization header
+            const idToken = req.body?.idToken || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7).trim() : null);
+            if (!idToken) {
+                return res.status(401).json({
+                    code: "invalid_token",
+                    error: "Missing Firebase idToken. Cryptographic token verification is strictly required.",
+                });
+            }
+
+            let decodedUser: { uid: string; email?: string; name?: string; picture?: string; isAnonymous: boolean };
+            try {
+                if (process.env.ALLOW_TEST_AUTH === "true" && idToken.startsWith("test_token_")) {
+                    const uid = idToken.replace("test_token_", "");
+                    decodedUser = {
+                        uid,
+                        email: `${uid}@test.ascension.protocol`,
+                        name: `Test User ${uid.slice(0, 6)}`,
+                        isAnonymous: uid.startsWith("anon_"),
+                    };
+                } else {
+                    decodedUser = await verifyFirebaseToken(idToken);
+                }
+            } catch (authErr: any) {
+                const isExpired = authErr?.code === "auth/id-token-expired" || authErr?.message?.includes("expired");
+                return res.status(401).json({
+                    code: isExpired ? "token_expired" : "invalid_token",
+                    error: isExpired ? "Firebase token expired. Re-authentication required." : "Invalid Firebase token signature.",
+                });
+            }
+
+            // Derive identity ONLY from verified token, strictly ignoring any spoofed body parameters
+            const firebaseUid = decodedUser.uid;
+            const email = decodedUser.email;
+            const displayName = decodedUser.name || req.body?.displayName;
+            const photoUrl = decodedUser.picture || req.body?.photoUrl;
+            const referralCode = req.body?.referralCode;
 
             const storage = getStorage();
+
+            if (await storage.isUserDeleted(firebaseUid)) {
+                return res.status(403).json({ error: "Account has been deleted" });
+            }
+
             let user = await storage.getUserByFirebaseUid(firebaseUid);
             let isNewUser = false;
 
-            // 1. If not found by Firebase UID, check by email to link existing local account
+            // 1. If not found by Firebase UID, check by verified email to link existing local account
             if (!user && email) {
                 const existingByEmail = await storage.getUserByEmail(email);
                 if (existingByEmail) {
-                    console.log(`[LOGIN-GOOGLE] Linking existing user account ${existingByEmail.id} with Google Firebase UID ${firebaseUid}`);
+                    console.log(`[LOGIN-GOOGLE] Linking existing verified user account ${existingByEmail.id} with Google Firebase UID ${firebaseUid}`);
                     user = await storage.updateUser(existingByEmail.id, {
                         firebaseUid,
                         avatarUrl: existingByEmail.avatarUrl || photoUrl || null,
@@ -316,7 +357,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
             // 2. If user still does not exist, auto-provision account seamlessly
             if (!user) {
-                console.log(`[LOGIN-GOOGLE] Auto-provisioning new account for Google UID ${firebaseUid}`);
+                console.log(`[LOGIN-GOOGLE] Auto-provisioning new account for verified Google UID ${firebaseUid}`);
                 isNewUser = true;
 
                 // Generate clean, unique username
@@ -373,7 +414,6 @@ export function registerLocalAuthRoutes(app: Express) {
                     charisma: 20,
                 } as any);
 
-                // Initialize welcome activity
                 try {
                     await storage.createActivity({
                         userId: user.id,
@@ -387,11 +427,14 @@ export function registerLocalAuthRoutes(app: Express) {
                 }
             }
 
+            const enrichedUser = enrichUserWithLevelData(user);
+
             res.json({
                 success: true,
                 userId: user.id,
                 firebaseUid: user.firebaseUid,
                 username: user.name,
+                user: enrichedUser,
                 isNewUser,
             });
         } catch (error) {

@@ -40,9 +40,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _handleGuestLogin() {
+  Future<void> _handleGuestLogin() async {
     HapticFeedback.mediumImpact();
-    ref.read(authProvider.notifier).loginGuest();
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authProvider.notifier).loginGuest();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

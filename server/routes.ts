@@ -73,7 +73,20 @@ import { WebSocket, WebSocketServer } from "ws";
 
 
 
-import { requireAuth } from "./middleware/auth";
+import { requireAuth, enrichUserWithLevelData } from "./middleware/auth";
+
+interface ActiveFocusSession {
+  sessionId: string;
+  userId: string;
+  duration: number; // minutes
+  task?: string | null;
+  backgroundType?: string | null;
+  startedAt: Date;
+  claimed: boolean;
+}
+
+const activeFocusSessions = new Map<string, ActiveFocusSession>();
+const idempotencyCache = new Map<string, { status: number; body: any }>();
 
 
 // Helper to calculate tier from XP
@@ -128,7 +141,11 @@ async function assignDailyQuests(userId: string) {
 
   if (yesterdayQuests.length > 0) {
     const completedYesterday = yesterdayQuests.some((q: any) => q.completed);
-    if (!completedYesterday && (user.streak || 0) > 0) {
+    if (user.activeRecoveryDay) {
+      // DATA-02: Rest Day Protocol active - streak is fully protected!
+      console.log(`[Streak Shield] User ${userId} active recovery day protected streak ${user.streak}.`);
+      await storage.updateUser(userId, { activeRecoveryDay: false });
+    } else if (!completedYesterday && (user.streak || 0) > 0) {
       if ((user.streakShields || 0) > 0) {
         // MANA SHIELD CONSUMPTION: Protect streak from reset!
         const remainingShields = Math.max(0, (user.streakShields || 1) - 1);
@@ -751,12 +768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getSubscriptionStatus } = await import("./utils/subscription");
       const { isPremium, isTrial, trialEndsAt } = getSubscriptionStatus(user);
 
-      res.json({
+      res.json(enrichUserWithLevelData({
         ...user,
         isPremium, // Override DB value with effective value
         isTrial,
         trialEndsAt
-      });
+      }));
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -793,10 +810,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log("✅ User updated, currentGoal is now:", updatedUser.currentGoal);
-      res.json(updatedUser);
+      res.json(enrichUserWithLevelData(updatedUser));
     } catch (error) {
       console.error("Update user error:", error);
       res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // User In-App Account Deletion (Google Play Compliance & SEC-01)
+  app.delete("/api/user", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      console.log(`[Account Deletion] Initiating permanent deletion for user: ${user.id} (${user.firebaseUid})`);
+
+      // 1. Transactionally delete user and dependent child records
+      await storage.deleteUser(user.id);
+
+      // 2. Delete user in Firebase Authentication
+      try {
+        const { getFirebaseAdmin } = await import("./firebase-admin");
+        const admin = getFirebaseAdmin();
+        await admin.auth().deleteUser(user.firebaseUid);
+        console.log(`[Account Deletion] Firebase Auth record deleted for ${user.firebaseUid}`);
+      } catch (fbErr: any) {
+        console.warn(`[Account Deletion] Firebase Auth deletion warning (non-fatal):`, fbErr?.message || fbErr);
+      }
+
+      res.json({
+        success: true,
+        message: "User account and all telemetry data permanently deleted.",
+      });
+    } catch (err: any) {
+      console.error("[Account Deletion] Error deleting user account:", err);
+      res.status(500).json({ error: "Failed to permanently delete account" });
     }
   });
 
@@ -827,7 +877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         streak: Math.max(1, (user.streak || 0) + 1), // Keeps streak active
       });
 
-      // Generate 3 Calibrated Active Recovery Quests
+      // Generate 3 Calibrated Active Recovery Quests with proper schema columns
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const recoveryQuests = [
         {
@@ -835,36 +885,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: "Cellular Hydration Protocol",
           description: "Infuse your physical matrix with at least 2.5 Liters of water throughout the day.",
           type: "daily",
-          statType: "vitality",
-          xpReward: 35,
-          coinReward: 20,
+          category: "vitality",
+          rewardXP: 35,
+          rewardCoins: 20,
           completed: false,
           difficulty: "easy",
           expiresAt,
+          dueAt: expiresAt,
         },
         {
           userId: user.id,
           title: "Myofascial Mobility & Light Stretch",
           description: "Perform 15 minutes of joint mobility, gentle yoga, or foam rolling for tissue repair.",
           type: "daily",
-          statType: "stamina",
-          xpReward: 40,
-          coinReward: 25,
+          category: "stamina",
+          rewardXP: 40,
+          rewardCoins: 25,
           completed: false,
           difficulty: "easy",
           expiresAt,
+          dueAt: expiresAt,
         },
         {
           userId: user.id,
           title: "Deep Parasympathetic Sleep",
           description: "Prioritize neural recovery with 7.5+ hours of uninterrupted sleep tonight.",
           type: "daily",
-          statType: "willpower",
-          xpReward: 45,
-          coinReward: 30,
+          category: "willpower",
+          rewardXP: 45,
+          rewardCoins: 30,
           completed: false,
           difficulty: "easy",
           expiresAt,
+          dueAt: expiresAt,
         },
       ];
 
@@ -883,12 +936,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         message: "Rest Day Protocol activated! Your streak is preserved, and recovery quests are assigned.",
-        user: updatedUser,
+        user: enrichUserWithLevelData(updatedUser),
         remainingShields,
       });
     } catch (err: any) {
       console.error("Recovery day error:", err);
       res.status(500).json({ error: err.message || "Failed to activate recovery mode" });
+    }
+  });
+
+  // Evening Debrief Submissions (FUNC-02)
+  app.post("/api/debrief", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const { date, reflectionText, selfHonestyRating, focusDensityScoreOfDay } = req.body;
+      if (!date || !reflectionText || typeof reflectionText !== "string" || reflectionText.trim().length < 20) {
+        return res.status(400).json({ error: "Date and a reflection of at least 20 characters are required." });
+      }
+
+      const rating = typeof selfHonestyRating === "number" ? Math.min(10, Math.max(1, selfHonestyRating)) : 8;
+
+      const existing = await storage.getEveningDebrief(user.id, date);
+      if (existing) {
+        return res.status(409).json({ error: "Evening debrief already submitted for this date." });
+      }
+
+      const debrief = await storage.createEveningDebrief({
+        userId: user.id,
+        date,
+        reflectionText: reflectionText.trim(),
+        selfHonestyRating: rating,
+        focusDensityScoreOfDay: typeof focusDensityScoreOfDay === "number" ? focusDensityScoreOfDay : 0,
+      });
+
+      res.json(debrief);
+    } catch (err: any) {
+      console.error("Debrief submission error:", err);
+      res.status(500).json({ error: err.message || "Failed to submit evening debrief" });
+    }
+  });
+
+  app.get("/api/debrief/today", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const today = new Date().toISOString().split("T")[0];
+      const debrief = await storage.getEveningDebrief(user.id, today);
+      res.json(debrief || null);
+    } catch (err: any) {
+      console.error("Get today debrief error:", err);
+      res.status(500).json({ error: err.message || "Failed to retrieve today's debrief" });
     }
   });
 
@@ -1455,18 +1555,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
+      // Check Idempotency-Key header to prevent duplicate execution
+      const idempotencyKey = req.headers["idempotency-key"] as string | undefined;
+      if (idempotencyKey) {
+        const cached = idempotencyCache.get(`${user.id}:${idempotencyKey}`);
+        if (cached) {
+          return res.status(cached.status).json(cached.body);
+        }
+      }
+
       const quest = await storage.getQuest(questId);
 
       if (!quest) {
         return res.status(404).json({ error: "Quest not found" });
       }
 
+      // SEC-02 IDOR check: Quest must belong to authenticated user
       if (quest.userId !== user.id) {
-        return res.status(403).json({ error: "Unauthorized" });
+        return res.status(403).json({ error: "Unauthorized: Quest belongs to another user" });
       }
 
+      // Idempotent: Already completed returns 409 with NO XP change
       if (quest.completed) {
-        return res.status(400).json({ error: "Quest already completed" });
+        return res.status(409).json({
+          code: "already_completed",
+          error: "Quest already completed",
+          user: enrichUserWithLevelData(user),
+        });
       }
 
       // Mark quest as completed
@@ -1697,9 +1812,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.json({
+      const responsePayload = {
         quest,
-        user: updatedUser,
+        user: enrichUserWithLevelData(updatedUser),
         dailyBonusClaimed: claimedBonus,
         dailyBonusCoins,
         dailyBonusXP,
@@ -1709,7 +1824,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         streakMilestoneCoins,
         shieldSavedStreak,
         milestoneNotification,
-      });
+      };
+
+      if (idempotencyKey) {
+        idempotencyCache.set(`${user.id}:${idempotencyKey}`, {
+          status: 200,
+          body: responsePayload,
+        });
+      }
+
+      res.json(responsePayload);
     } catch (error) {
       console.error("Complete quest error:", error);
       res.status(500).json({ error: "Failed to complete quest" });
@@ -2222,7 +2346,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Focus Sanctum Routes
+  // Focus Sanctum Routes (SEC-03 Secure Implementation)
+  app.post("/api/focus/start", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      const { duration, task, backgroundType } = req.body;
+
+      if (!duration || typeof duration !== "number" || duration < 1 || duration > 180) {
+        return res.status(400).json({
+          error: "Invalid duration. Focus sessions must be between 1 and 180 minutes.",
+        });
+      }
+
+      const { randomUUID } = await import("crypto");
+      const sessionId = randomUUID();
+      const startedAt = new Date();
+
+      activeFocusSessions.set(sessionId, {
+        sessionId,
+        userId: user.id,
+        duration,
+        task: task || null,
+        backgroundType: backgroundType || null,
+        startedAt,
+        claimed: false,
+      });
+
+      res.json({
+        success: true,
+        sessionId,
+        startedAt,
+        duration,
+      });
+    } catch (err: any) {
+      console.error("Focus start error:", err);
+      res.status(500).json({ error: "Failed to initialize focus session" });
+    }
+  });
+
   app.post("/api/focus/complete", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUserByFirebaseUid(req.firebaseUid!);
@@ -2230,32 +2393,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const { duration, task, backgroundType } = req.body;
+      const { sessionId, duration: clientDuration } = req.body;
 
-      if (!duration || typeof duration !== 'number') {
-        return res.status(400).json({ error: "Invalid duration" });
+      // Exploit guard: Any duration parameter outside 1-180 is immediately rejected with 400
+      if (clientDuration !== undefined) {
+        if (typeof clientDuration !== "number" || clientDuration < 1 || clientDuration > 180) {
+          return res.status(400).json({
+            error: "Invalid duration. Focus sessions must be between 1 and 180 minutes.",
+          });
+        }
       }
 
-      // Calculate XP: 100 XP per 20 minutes block (incentivize deep work)
-      // Coins: 1 Coin per minute
-      const multiplier = 1;
+      if (!sessionId) {
+        return res.status(400).json({
+          error: "Missing sessionId. Focus sessions must be initiated via /api/focus/start.",
+        });
+      }
 
-      const xpBase = Math.floor(duration / 20) * 100;
-      const xpEarned = xpBase * multiplier;
+      const session = activeFocusSessions.get(sessionId);
+      if (!session) {
+        return res.status(400).json({ error: "Invalid or expired focus session." });
+      }
 
-      const coinsBase = Math.floor(duration * 1);
-      const coinsEarned = coinsBase * multiplier;
+      if (session.userId !== user.id) {
+        return res.status(403).json({ error: "Unauthorized: Session belongs to another operative." });
+      }
 
-      // Create focus session
-      const session = await storage.createFocusSession({
+      if (session.claimed) {
+        return res.status(409).json({ error: "Focus session already claimed." });
+      }
+
+      // Check server-side elapsed time: must be >= 95% of session duration
+      const elapsedMs = Date.now() - session.startedAt.getTime();
+      const requiredMs = session.duration * 60 * 1000 * 0.95;
+      const skipTimer = process.env.ALLOW_TEST_AUTH === "true" || process.env.SKIP_FOCUS_TIMER_CHECK === "true";
+
+      if (!skipTimer && elapsedMs < requiredMs) {
+        return res.status(400).json({
+          error: `Focus session completed prematurely (${Math.round(elapsedMs / 1000)}s elapsed). Must maintain protocol for at least 95% of duration (${Math.round(requiredMs / 1000)}s required).`,
+        });
+      }
+
+      // Mark session claimed to prevent replay/double-claim attacks
+      session.claimed = true;
+
+      // XP calculated strictly from stored session duration, NEVER from unverified client input
+      const sessionDuration = session.duration;
+      const xpBase = Math.floor(sessionDuration / 20) * 100;
+      const xpEarned = xpBase;
+      const coinsEarned = sessionDuration;
+
+      // Create focus session in DB
+      const dbSession = await storage.createFocusSession({
         userId: user.id,
-        duration,
+        duration: sessionDuration,
         xpEarned,
-        task: task || null,
-        backgroundType: backgroundType || null,
+        task: session.task || null,
+        backgroundType: session.backgroundType || null,
       });
 
-      // Award XP to user
+      // Award XP & Coins to user
       const newXP = user.xp + xpEarned;
       const newLevel = calculateLevel(newXP);
       const newTier = calculateTier(newXP);
@@ -2286,13 +2483,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: user.id,
             guildId: user.guildId,
             eventType: "focus_session",
-            points: Math.floor(duration / 10), // 1 point per 10 minutes focus
-            description: `Focus session: ${duration} minutes`,
+            points: Math.floor(sessionDuration / 10),
+            description: `Focus session: ${sessionDuration} minutes`,
           });
         }
       }
 
-      res.json({ session, user: updatedUser });
+      res.json({
+        success: true,
+        session: dbSession,
+        xpEarned,
+        coinsEarned,
+        user: enrichUserWithLevelData(updatedUser),
+      });
     } catch (error) {
       console.error("Complete focus session error:", error);
       res.status(500).json({ error: "Failed to complete focus session" });

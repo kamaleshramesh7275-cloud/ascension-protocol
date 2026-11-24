@@ -1,149 +1,246 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../core/theme/hunter_theme.dart';
+import '../../core/api/api_client.dart';
+import '../../core/api/api_endpoints.dart';
+import '../../core/providers/auth_provider.dart';
+import '../../core/sync/sync_queue.dart';
+import '../../models/user_model.dart';
 
-class FocusScreen extends StatefulWidget {
+class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
 
   @override
-  State<FocusScreen> createState() => _FocusScreenState();
+  ConsumerState<FocusScreen> createState() => _FocusScreenState();
 }
 
-class _FocusScreenState extends State<FocusScreen> {
+class _FocusScreenState extends ConsumerState<FocusScreen> {
   int _selectedMinutes = 25;
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   Timer? _timer;
+  final Stopwatch _stopwatch = Stopwatch();
+  String? _serverSessionId;
 
-  void _toggleTimer() {
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _stopwatch.stop();
+    super.dispose();
+  }
+
+  Future<void> _toggleTimer() async {
     HapticFeedback.heavyImpact();
-    setState(() {
-      if (_isRunning) {
-        _timer?.cancel();
-        _isRunning = false;
-      } else {
-        _isRunning = true;
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_remainingSeconds > 0) {
-            setState(() => _remainingSeconds--);
-          } else {
-            _timer?.cancel();
-            _isRunning = false;
-            HapticFeedback.vibrate();
-            _showSessionComplete();
+    if (_isRunning) {
+      _stopwatch.stop();
+      _timer?.cancel();
+      setState(() => _isRunning = false);
+    } else {
+      // 1. Initialize validated session with server if not already started
+      if (_serverSessionId == null) {
+        try {
+          final dio = await ApiClient.getInstance();
+          final startRes = await dio.post(
+            ApiEndpoints.focusStart,
+            data: {
+              'duration': _selectedMinutes,
+              'task': 'Air-Gap Deep Work Protocol',
+              'backgroundType': 'ambient_cyber',
+            },
+          );
+          if (startRes.statusCode == 200 && startRes.data != null) {
+            _serverSessionId = startRes.data['sessionId']?.toString();
           }
-        });
+        } catch (_) {
+          // If offline, generate client session ID for sync queue
+          _serverSessionId = 'offline_session_${DateTime.now().millisecondsSinceEpoch}';
+        }
       }
-    });
+
+      // 2. Start monotonic stopwatch
+      _stopwatch.start();
+      final totalTargetSeconds = _selectedMinutes * 60;
+      setState(() => _isRunning = true);
+
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        final elapsedSeconds = _stopwatch.elapsed.inSeconds;
+        final remaining = totalTargetSeconds - elapsedSeconds;
+
+        if (remaining > 0) {
+          setState(() => _remainingSeconds = remaining);
+        } else {
+          timer.cancel();
+          _stopwatch.stop();
+          setState(() {
+            _remainingSeconds = 0;
+            _isRunning = false;
+          });
+          HapticFeedback.vibrate();
+          _showSessionComplete();
+        }
+      });
+    }
   }
 
   void _resetTimer(int minutes) {
     HapticFeedback.selectionClick();
     _timer?.cancel();
+    _stopwatch.reset();
+    _stopwatch.stop();
     setState(() {
       _selectedMinutes = minutes;
       _remainingSeconds = minutes * 60;
       _isRunning = false;
+      _serverSessionId = null;
     });
+  }
+
+  Future<void> _claimReward(BuildContext dialogContext) async {
+    Navigator.of(dialogContext, rootNavigator: true).pop();
+    final earnedXp = (_selectedMinutes ~/ 20) * 100 > 0 ? (_selectedMinutes ~/ 20) * 100 : 50;
+    final earnedCoins = _selectedMinutes;
+    final sessionId = _serverSessionId ?? 'session_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      final dio = await ApiClient.getInstance();
+      final response = await dio.post(
+        ApiEndpoints.focusComplete,
+        data: {
+          'sessionId': sessionId,
+          'duration': _selectedMinutes,
+          'task': 'Air-Gap Deep Work Protocol',
+          'backgroundType': 'ambient_cyber',
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        if (data is Map<String, dynamic> && data['user'] != null) {
+          final updatedUser = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          ref.read(authProvider.notifier).updateUser(updatedUser);
+        }
+      }
+    } on DioException catch (e) {
+      if (ApiClient.isOffline(e)) {
+        // Enqueue to persistent sync queue
+        await SyncQueueService.enqueue(
+          PendingOperation(
+            id: 'focus_${DateTime.now().millisecondsSinceEpoch}',
+            type: SyncOpType.completeFocus,
+            endpoint: ApiEndpoints.focusComplete,
+            payload: {
+              'sessionId': sessionId,
+              'duration': _selectedMinutes,
+            },
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        // Optimistic local progression
+        final currentUser = ref.read(authProvider).value;
+        if (currentUser != null) {
+          final updatedLocalUser = currentUser.copyWith(
+            xp: currentUser.xp + earnedXp,
+            coins: currentUser.coins + earnedCoins,
+          );
+          ref.read(authProvider.notifier).updateUser(updatedLocalUser);
+        }
+      }
+    } catch (_) {}
+
+    _resetTimer(_selectedMinutes);
   }
 
   void _showSessionComplete() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
         backgroundColor: HunterTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: HunterTheme.cyanLight, width: 1.5),
+        ),
         title: const Text(
           'PROTOCOL COMPLETED',
-          style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: HunterTheme.cyanLight,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+          textAlign: TextAlign.center,
         ),
-        content: const Text(
-          'Air-Gap Focus concluded. Your willpower and intellect have deepened.',
-          style: TextStyle(color: HunterTheme.textPrimary),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.verified, color: HunterTheme.cyan, size: 60),
+            const SizedBox(height: 16),
+            Text(
+              'Deep work session verified.\n+$_selectedMinutes Coins  •  +${(_selectedMinutes ~/ 20) * 100 > 0 ? (_selectedMinutes ~/ 20) * 100 : 50} XP',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 16, height: 1.4),
+            ),
+          ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CLAIM REWARD', style: TextStyle(color: HunterTheme.cyan)),
+          Center(
+            child: ElevatedButton(
+              onPressed: () => _claimReward(dialogCtx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HunterTheme.cyan,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('CLAIM REWARD', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  String get _timeDisplay {
-    final m = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
-    final s = (_remainingSeconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+  String _formatTime(int totalSeconds) {
+    final mins = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final secs = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$mins:$secs';
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalSeconds = _selectedMinutes * 60;
-    final progress = 1.0 - (_remainingSeconds / totalSeconds);
+    final progress = 1.0 - (_remainingSeconds / (_selectedMinutes * 60));
 
     return Scaffold(
       backgroundColor: HunterTheme.abyss,
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: Text(
+        title: const Text(
           'AIR-GAP FOCUS',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                letterSpacing: 2,
-                fontWeight: FontWeight.w800,
-              ),
+          style: TextStyle(
+            color: HunterTheme.cyanLight,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            fontSize: 18,
+          ),
         ),
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Immersion Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: HunterTheme.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _isRunning
-                        ? HunterTheme.cyan
-                        : HunterTheme.cyan.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isRunning ? Icons.shield : Icons.lock_outline,
-                      color: _isRunning ? HunterTheme.cyan : HunterTheme.textMuted,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _isRunning ? 'FOCUS PROTOCOL ENGAGED' : 'AIR-GAP STANDBY',
-                      style: TextStyle(
-                        color: _isRunning ? HunterTheme.cyanLight : HunterTheme.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Circular Countdown Visualizer
+              // Circular Timer Display
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -151,19 +248,17 @@ class _FocusScreenState extends State<FocusScreen> {
                     width: 240,
                     height: 240,
                     child: CircularProgressIndicator(
-                      value: progress,
+                      value: progress.clamp(0.0, 1.0),
                       strokeWidth: 8,
-                      backgroundColor: HunterTheme.surface,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _isRunning ? HunterTheme.cyan : HunterTheme.surfaceLight,
-                      ),
+                      backgroundColor: HunterTheme.surfaceLight,
+                      valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
                     ),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _timeDisplay,
+                        _formatTime(_remainingSeconds),
                         style: const TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
@@ -171,84 +266,60 @@ class _FocusScreenState extends State<FocusScreen> {
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
-                        _isRunning ? 'DEEP WORK IN PROGRESS' : 'SELECT DURATION',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: HunterTheme.textMuted,
-                          letterSpacing: 1.2,
+                        _isRunning ? 'FOCUS AIR-GAP ACTIVE' : 'STANDBY',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _isRunning ? HunterTheme.cyanLight : HunterTheme.textMuted,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-
               const SizedBox(height: 40),
 
               // Duration Presets
-              if (!_isRunning) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [15, 25, 45, 60].map((m) {
-                    final isSel = _selectedMinutes == m;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: OutlinedButton(
-                        onPressed: () => _resetTimer(m),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor:
-                              isSel ? HunterTheme.cyan : HunterTheme.surface,
-                          side: BorderSide(
-                            color: isSel
-                                ? HunterTheme.cyan
-                                : HunterTheme.cyan.withValues(alpha: 0.2),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          '${m}m',
-                          style: TextStyle(
-                            color: isSel ? Colors.black : HunterTheme.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [25, 45, 60, 90].map((mins) {
+                  final isSelected = _selectedMinutes == mins;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: ChoiceChip(
+                      label: Text('${mins}m'),
+                      selected: isSelected,
+                      onSelected: _isRunning ? null : (_) => _resetTimer(mins),
+                      backgroundColor: HunterTheme.surface,
+                      selectedColor: HunterTheme.cyan,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.black : HunterTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
 
-              const SizedBox(height: 30),
-
-              // Big Action Button
+              // Primary Action Button
               SizedBox(
-                width: double.infinity,
-                height: 56,
+                width: 200,
+                height: 52,
                 child: ElevatedButton.icon(
                   onPressed: _toggleTimer,
-                  icon: Icon(
-                    _isRunning ? Icons.pause : Icons.play_arrow,
-                    color: Colors.black,
-                  ),
+                  icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
                   label: Text(
-                    _isRunning ? 'PAUSE PROTOCOL' : 'ENGAGE AIR-GAP',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      letterSpacing: 1,
-                    ),
+                    _isRunning ? 'PAUSE PROTOCOL' : 'INITIALIZE FOCUS',
+                    style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: HunterTheme.cyan,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 6,
+                    backgroundColor: _isRunning ? HunterTheme.crimson : HunterTheme.cyan,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
               ),

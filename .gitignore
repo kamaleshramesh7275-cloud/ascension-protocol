@@ -18,3 +18,12 @@ android/build
 android/app/build
 android/local.properties
 *.apk
+
+# Keystores and Secrets
+key.properties
+*.keystore
+*.jks
+google-services.json
+service-account*.json
+firebase-service-account*.json
+

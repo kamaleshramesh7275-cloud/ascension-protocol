@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../models/user_model.dart';
 import 'stat_radar_painter.dart';
+import '../settings/settings_screen.dart';
 
 class StatsScreen extends StatefulWidget {
   final UserModel user;
@@ -31,6 +33,42 @@ class _StatsScreenState extends State<StatsScreen>
     super.dispose();
   }
 
+  Future<void> _exportDossier() async {
+    final dossier = '''
+=== ASCENSION PROTOCOL: OPERATIVE DOSSIER ===
+Operative: ${widget.user.name}
+Class: ${widget.user.hunterClass.toUpperCase()}
+Level: ${widget.user.level} (Tier ${widget.user.tier})
+Active Streak: ${widget.user.streak} Days
+Mana Shields: ${widget.user.streakShields}
+
+--- 7 CORE ATTRIBUTES ---
+Strength:     ${widget.user.strength}/100
+Agility:      ${widget.user.agility}/100
+Endurance:    ${widget.user.stamina}/100
+Vitality:     ${widget.user.vitality}/100
+Intelligence: ${widget.user.intelligence}/100
+Willpower:    ${widget.user.willpower}/100
+Charisma:     ${widget.user.charisma}/100
+=============================================
+''';
+
+    await Clipboard.setData(ClipboardData(text: dossier));
+    HapticFeedback.selectionClick();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: HunterTheme.surfaceLight,
+          content: Text(
+            'Operative Attribute Dossier copied to clipboard.',
+            style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,6 +83,22 @@ class _StatsScreenState extends State<StatsScreen>
                 fontWeight: FontWeight.w800,
               ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: HunterTheme.cyanLight),
+            tooltip: 'Settings & Security',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: HunterTheme.cyanLight),
+            tooltip: 'Share Dossier',
+            onPressed: _exportDossier,
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -60,8 +114,8 @@ class _StatsScreenState extends State<StatsScreen>
             child: Column(
               children: [
                 Text(
-                  'STAT BALANCE RADAR',
-                  style: TextStyle(
+                  'STAT BALANCE RADAR (7 ATTRIBUTES)',
+                  style: const TextStyle(
                     color: HunterTheme.cyanLight,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
@@ -74,7 +128,7 @@ class _StatsScreenState extends State<StatsScreen>
                     animation: _animController,
                     builder: (context, _) {
                       return CustomPaint(
-                        size: const Size(260, 240),
+                        size: const Size(280, 260),
                         painter: StatRadarPainter(
                           user: widget.user,
                           animationValue: CurvedAnimation(
@@ -86,14 +140,19 @@ class _StatsScreenState extends State<StatsScreen>
                     },
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: 12),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     _buildLegendItem('STR', 'Strength'),
                     _buildLegendItem('AGI', 'Agility'),
                     _buildLegendItem('STA', 'Stamina'),
+                    _buildLegendItem('VIT', 'Vitality'),
                     _buildLegendItem('INT', 'Intellect'),
+                    _buildLegendItem('WIL', 'Willpower'),
+                    _buildLegendItem('CHA', 'Charisma'),
                   ],
                 ),
               ],
@@ -103,7 +162,7 @@ class _StatsScreenState extends State<StatsScreen>
           const SizedBox(height: 20),
 
           // 7 Core Attribute Bars
-          Text(
+          const Text(
             'DETAILED ATTRIBUTE BREAKDOWN',
             style: TextStyle(
               color: HunterTheme.textMuted,
@@ -170,6 +229,30 @@ class _StatsScreenState extends State<StatsScreen>
               ],
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Action Button (Export / Synchronize Dossier)
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: _exportDossier,
+              icon: const Icon(Icons.share, color: HunterTheme.cyan, size: 18),
+              label: const Text(
+                'EXPORT ATTRIBUTE DOSSIER',
+                style: TextStyle(
+                  color: HunterTheme.cyanLight,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  fontSize: 12,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: HunterTheme.cyan),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
         ],
       ),
@@ -177,13 +260,17 @@ class _StatsScreenState extends State<StatsScreen>
   }
 
   Widget _buildLegendItem(String tag, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: HunterTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Text(
         tag,
         style: const TextStyle(
           color: HunterTheme.cyanLight,
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
       ),

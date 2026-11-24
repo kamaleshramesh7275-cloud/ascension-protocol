@@ -12,6 +12,7 @@ class HunterTheme {
   static const Color gold = Color(0xFFEAB308);
   static const Color crimson = Color(0xFFEF4444);
   static const Color emerald = Color(0xFF10B981);
+  static const Color emeraldLight = Color(0xFF34D399);
   static const Color textPrimary = Color(0xFFF8FAFC);
   static const Color textMuted = Color(0xFF94A3B8);
 
