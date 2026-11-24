@@ -1,4 +1,4 @@
-package `in`.ascensions.ascension_mobile
+package `in`.ascensions.app
 
 import io.flutter.embedding.android.FlutterActivity
 
