@@ -27,7 +27,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
       HapticFeedback.heavyImpact();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.purple,
           content: Text('Shadow Monarch formation updated.'),
         ),
@@ -55,7 +55,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
     } else {
       if (next.length >= 3) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: HunterTheme.crimson,
             content: Text('Monarch Command limit: Equip up to 3 active Shadows.'),
           ),
@@ -77,7 +77,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'SHADOW ARMY // ARISE',
           style: TextStyle(
             color: HunterTheme.purple,
@@ -88,13 +88,13 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
         ),
       ),
       body: asyncShadows.when(
-        loading: () => const Center(
+        loading: () => Center(
           child: CircularProgressIndicator(color: HunterTheme.purple),
         ),
         error: (err, _) => Center(
           child: Text(
             extractApiError(err, 'Unable to summon Shadow catalog'),
-            style: const TextStyle(color: HunterTheme.crimson),
+            style: TextStyle(color: HunterTheme.crimson),
           ),
         ),
         data: (catalog) {
@@ -121,7 +121,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'ACTIVE SHADOW FORMATION',
                           style: TextStyle(
                             color: HunterTheme.purple,
@@ -133,7 +133,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${catalog.where((s) => s.unlocked).length} Extracted • Max 3 Deployed',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.textMuted,
                             fontSize: 12,
                           ),
@@ -191,7 +191,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                             ),
                             Text(
                               '${user.pendingExtraction!['attemptsRemaining'] ?? 3} attempts left • Hold 10s to extract',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.cyanLight,
                                 fontSize: 11,
                               ),
@@ -226,7 +226,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'EXTRACTED LEGION CHRONICLES',
                         style: TextStyle(
                           color: HunterTheme.gold,
@@ -241,7 +241,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Text(
                             '• ${s['title'] ?? s['name']}: ${s['loreOrigin'] ?? ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textPrimary,
                               fontSize: 11.5,
                               height: 1.3,
@@ -330,7 +330,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                                           ),
                                           child: Text(
                                             shadow.rank.toUpperCase(),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: HunterTheme.gold,
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w900,
@@ -341,7 +341,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                                     ),
                                     Text(
                                       shadow.epithet,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: HunterTheme.cyanLight,
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w600,
@@ -350,7 +350,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       'PASSIVE: ${shadow.perkTitle}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: HunterTheme.emeraldLight,
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.bold,
@@ -361,7 +361,7 @@ class _ShadowArmyScreenState extends ConsumerState<ShadowArmyScreen> {
                                       unlocked
                                           ? shadow.perkDescription
                                           : 'UNLOCK CONDITION: ${shadow.unlockCondition}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: HunterTheme.textMuted,
                                         fontSize: 11,
                                       ),

@@ -226,7 +226,7 @@ export function TacticalCommandPalette() {
                   </div>
                   <div>
                     <span className="font-bold text-white">Hall of Ascension</span>
-                    <span className="text-[11px] text-slate-400 block">Leaderboard & Wall of Consequence</span>
+                    <span className="text-[11px] text-slate-400 block">Ascension Records & Wall of Consequence</span>
                   </div>
                 </div>
                 <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-400 text-[10px] font-bold">7</kbd>

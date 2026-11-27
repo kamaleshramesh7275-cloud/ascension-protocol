@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/quests_provider.dart';
+import '../../core/storage/session_storage.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/home_widget_bridge.dart';
 import '../../core/widgets/system_command_sheet.dart';
@@ -15,6 +17,7 @@ import '../accountability/contracts_arena_screen.dart';
 import '../arsenal/arsenal_hub_screen.dart';
 import '../debrief/debrief_screen.dart';
 import '../divisions/rival_divisions_screen.dart';
+import '../feedback/post_registration_feedback_dialog.dart';
 import '../focus/focus_screen.dart';
 import '../quests/quests_screen.dart';
 import '../shop/shop_screen.dart';
@@ -41,6 +44,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   StreamSubscription<String>? _notificationRouteSub;
   StreamSubscription<String>? _widgetRouteSub;
   DateTime? _lastBackPressTime;
+  Timer? _feedbackTimer;
 
   @override
   void initState() {
@@ -64,11 +68,36 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
         _handleDeepLinkRoute(initialRoute);
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeSchedulePostRegFeedback();
+    });
+  }
+
+  Future<void> _maybeSchedulePostRegFeedback() async {
+    _feedbackTimer?.cancel();
+    final shown = await SessionStorage.isPostRegFeedbackShown();
+    final regTs = await SessionStorage.getRegistrationTimestamp();
+    final delay = PostRegistrationFeedbackDialog.evaluatePopupDelay(
+      registrationTimestampMs: regTs,
+      alreadyShown: shown,
+      nowMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    if (delay == null || !mounted) return;
+    if (delay == Duration.zero) {
+      await PostRegistrationFeedbackDialog.show(context);
+    } else {
+      _feedbackTimer = Timer(delay, () {
+        if (mounted) {
+          PostRegistrationFeedbackDialog.show(context);
+        }
+      });
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _maybeSchedulePostRegFeedback();
       HomeWidgetBridge.consumeLaunchRoute().then((route) {
         if (route != null && route.isNotEmpty) {
           _handleDeepLinkRoute(route);
@@ -138,6 +167,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _feedbackTimer?.cancel();
     _connectivitySub?.cancel();
     _notificationRouteSub?.cancel();
     _widgetRouteSub?.cancel();
@@ -170,7 +200,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
         now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
       _lastBackPressTime = now;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surface,
           duration: Duration(seconds: 2),
           content: Text(
@@ -186,6 +216,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appearanceProvider);
     ref.listen<AsyncValue<UserModel?>>(authProvider, (_, next) {
       final nextUser = next.value;
       if (nextUser != null) {

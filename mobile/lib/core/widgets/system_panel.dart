@@ -6,7 +6,7 @@ import '../theme/hunter_theme.dart';
 class SystemPanel extends StatelessWidget {
   final Widget child;
   final String? tag;
-  final Color accentColor;
+  final Color? accentColor;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
 
@@ -14,29 +14,30 @@ class SystemPanel extends StatelessWidget {
     super.key,
     required this.child,
     this.tag,
-    this.accentColor = HunterTheme.cyan,
+    this.accentColor,
     this.padding = const EdgeInsets.all(16),
     this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveAccent = accentColor ?? HunterTheme.cyan;
     return Container(
       margin: margin,
       decoration: BoxDecoration(
         color: HunterTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withValues(alpha: 0.35), width: 1),
+        border: Border.all(color: effectiveAccent.withValues(alpha: 0.35), width: 1),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
+            color: effectiveAccent.withValues(alpha: 0.08),
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: CustomPaint(
-        painter: _CornerBracketsPainter(color: accentColor),
+        painter: _CornerBracketsPainter(color: effectiveAccent),
         child: Padding(
           padding: padding,
           child: Column(

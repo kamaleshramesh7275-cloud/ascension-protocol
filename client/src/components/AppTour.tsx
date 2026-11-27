@@ -87,13 +87,6 @@ const steps: (Step & { path?: string })[] = [
         path: '/stats'
     },
     {
-        target: '[data-tour="leaderboard-page"]',
-        content: 'See how you stack up against the best. High-ranking members earn exclusive rewards!',
-        title: 'Global Rankings',
-        placement: 'center',
-        path: '/leaderboard'
-    },
-    {
         target: '[data-tour="store-tabs"]',
         content: 'Spend your hard-earned coins on custom themes, titles, and gear in the Store.',
         title: 'The Armory',

@@ -129,7 +129,7 @@ class StatRadarPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: statNames[i],
-          style: const TextStyle(
+          style: TextStyle(
             color: HunterTheme.cyanLight,
             fontSize: 10,
             fontWeight: FontWeight.bold,

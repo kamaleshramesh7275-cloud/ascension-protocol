@@ -129,7 +129,7 @@ class SystemWindowDialog extends StatefulWidget {
       headerTag: 'SYSTEM NOTIFICATION',
       title: 'LEVEL UP! -> LV. $newLevel',
       body: systemLine ??
-          'Your vessel capacity has expanded.\n+$pointsAwarded Spendable Ability Points awarded. Allocate them in Stats.',
+          'You leveled up and grew stronger.\n+$pointsAwarded Spendable Ability Points awarded. Allocate them in Stats.',
       tone: SystemWindowTone.gold,
       icon: Icons.bolt_rounded,
       primaryLabel: 'CONFIRM ASCENSION',
@@ -383,7 +383,7 @@ class _SystemWindowDialogState extends State<SystemWindowDialog> {
                       Text(
                         widget.title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -396,7 +396,7 @@ class _SystemWindowDialogState extends State<SystemWindowDialog> {
                         child: Text(
                           shownBody,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.textMuted,
                             fontSize: 13.5,
                             height: 1.45,

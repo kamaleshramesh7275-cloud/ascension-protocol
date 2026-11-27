@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/journal_provider.dart';
 import '../../core/theme/hunter_theme.dart';
 
@@ -55,9 +56,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.auto_stories_rounded, color: HunterTheme.purple),
+                    Icon(Icons.auto_stories_rounded, color: HunterTheme.purple),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'NEW CHRONICLE ENTRY',
                       style: TextStyle(
                         color: HunterTheme.textPrimary,
@@ -68,7 +69,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.of(ctx).pop(),
-                      icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                      icon: Icon(Icons.close, color: HunterTheme.textMuted),
                     ),
                   ],
                 ),
@@ -84,14 +85,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                     ),
                     child: Text(
                       prompt,
-                      style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontStyle: FontStyle.italic),
+                      style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ],
                 TextField(
                   controller: titleCtrl,
-                  style: const TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
                     labelText: 'ENTRY TITLE',
                     labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
                   ),
@@ -100,16 +101,16 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 TextField(
                   controller: bodyCtrl,
                   maxLines: 5,
-                  style: const TextStyle(color: HunterTheme.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'YOUR THOUGHTS (SAVED ON DEVICE)',
+                  style: TextStyle(color: HunterTheme.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'YOUR THOUGHTS',
                     hintText: 'Log wins, mental friction, lessons, or tomorrow\'s battle plan...',
                     hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                     labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text('ENERGY / MOOD', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                Text('ENERGY / MOOD', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -125,7 +126,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 10),
-                const Text('TAGS', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                Text('TAGS', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -151,7 +152,15 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   height: 46,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (bodyCtrl.text.trim().isEmpty) return;
+                      if (bodyCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                            backgroundColor: HunterTheme.crimson,
+                            content: const Text('Please write your thoughts before saving.'),
+                          ),
+                        );
+                        return;
+                      }
                       HapticFeedback.mediumImpact();
                       await ref.read(journalProvider.notifier).addEntry(
                             title: titleCtrl.text,
@@ -161,13 +170,24 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                             promptUsed: prompt,
                           );
                       if (ctx.mounted) Navigator.of(ctx).pop();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: HunterTheme.emerald,
+                            content: const Text(
+                              'Chronicle entry saved.',
+                              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HunterTheme.purple,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('SEAL ENTRY ON DEVICE', style: TextStyle(fontWeight: FontWeight.w900)),
+                    child: const Text('SAVE ENTRY', style: TextStyle(fontWeight: FontWeight.w900)),
                   ),
                 ),
               ],
@@ -180,6 +200,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appearanceProvider);
     final entries = ref.watch(journalProvider);
     final filtered = entries.where((e) {
       final matchesSearch = _search.trim().isEmpty ||
@@ -194,7 +215,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'HUNTER\'S CHRONICLE',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -207,7 +228,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           if (entries.isNotEmpty)
             IconButton(
               tooltip: 'Export Journal (Markdown)',
-              icon: const Icon(Icons.ios_share_rounded, color: HunterTheme.cyanLight),
+              icon: Icon(Icons.ios_share_rounded, color: HunterTheme.cyanLight),
               onPressed: () {
                 final md = ref.read(journalProvider.notifier).exportAsMarkdown();
                 Share.share(md, subject: 'Hunter Chronicle Journal');
@@ -225,28 +246,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: HunterTheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: HunterTheme.purple.withValues(alpha: 0.35)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.phonelink_lock_rounded, color: HunterTheme.cyanLight, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '100% On-Device Private Journal • ${entries.length} entries stored locally (0 server cost)',
-                    style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
           // Quick Reflection Prompts
           SizedBox(
             height: 40,
@@ -256,7 +255,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, idx) => ActionChip(
                 backgroundColor: HunterTheme.surfaceLight,
-                label: Text(_prompts[idx], style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
+                label: Text(_prompts[idx], style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
                 onPressed: () => _openComposer(initialPrompt: _prompts[idx]),
               ),
             ),
@@ -264,12 +263,12 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           const SizedBox(height: 12),
 
           TextField(
-            style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+            style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
             onChanged: (v) => setState(() => _search = v),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search, color: HunterTheme.textMuted, size: 18),
+              prefixIcon: Icon(Icons.search, color: HunterTheme.textMuted, size: 18),
               hintText: 'Search your chronicle...',
-              hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
+              hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
               filled: true,
               fillColor: HunterTheme.surface,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -301,7 +300,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           const SizedBox(height: 14),
 
           if (filtered.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(
                 child: Text(
@@ -333,43 +332,43 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                             ),
                             child: Text(
                               e.mood.toUpperCase(),
-                              style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 10, fontWeight: FontWeight.w900),
+                              style: TextStyle(color: HunterTheme.cyanLight, fontSize: 10, fontWeight: FontWeight.w900),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             DateFormat('MMM d, h:mm a').format(e.createdAt.toLocal()),
-                            style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11),
+                            style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, color: HunterTheme.textMuted, size: 18),
+                            icon: Icon(Icons.delete_outline, color: HunterTheme.textMuted, size: 18),
                             onPressed: () => ref.read(journalProvider.notifier).deleteEntry(e.id),
                           ),
                         ],
                       ),
                       Text(
                         e.title,
-                        style: const TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 14.5),
+                        style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 14.5),
                       ),
                       if (e.promptUsed != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           e.promptUsed!,
-                          style: const TextStyle(color: HunterTheme.purple, fontSize: 11.5, fontStyle: FontStyle.italic),
+                          style: TextStyle(color: HunterTheme.purple, fontSize: 11.5, fontStyle: FontStyle.italic),
                         ),
                       ],
                       const SizedBox(height: 6),
                       Text(
                         e.body,
-                        style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13, height: 1.45),
+                        style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13, height: 1.45),
                       ),
                       if (e.tags.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 6,
                           children: e.tags
-                              .map((t) => Text('#$t', style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11)))
+                              .map((t) => Text('#$t', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)))
                               .toList(),
                         ),
                       ],

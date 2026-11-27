@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/quests_provider.dart';
 import '../../core/providers/roadmap_provider.dart';
@@ -276,9 +277,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
         backgroundColor: HunterTheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: HunterTheme.cyanLight, width: 1.5),
+          side: BorderSide(color: HunterTheme.cyanLight, width: 1.5),
         ),
-        title: const Text(
+        title: Text(
           'PROTOCOL COMPLETED',
           style: TextStyle(
             color: HunterTheme.cyanLight,
@@ -290,23 +291,23 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.verified, color: HunterTheme.cyan, size: 54),
+            Icon(Icons.verified, color: HunterTheme.cyan, size: 54),
             const SizedBox(height: 12),
             Text(
               'Deep work session verified (Interruptions: $_breachCount).\n+$_selectedMinutes Coins  •  +${(_selectedMinutes ~/ 20) * 100 > 0 ? (_selectedMinutes ~/ 20) * 100 : 50} XP',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 14, height: 1.4),
+              style: TextStyle(color: HunterTheme.textPrimary, fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 14),
             TextField(
               controller: _outputNoteController,
-              style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+              style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'What concrete thing did you finish?',
-                labelStyle: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
+                labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
                 hintText: 'e.g., Finished Ch.4 notes & 15 practice problems',
-                hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                 filled: true,
                 fillColor: HunterTheme.surfaceLight,
                 border: OutlineInputBorder(
@@ -343,6 +344,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appearanceProvider);
     final progress = 1.0 - (_remainingSeconds / (_selectedMinutes * 60));
 
     return Scaffold(
@@ -350,7 +352,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'AIR-GAP FOCUS',
           style: TextStyle(
             color: HunterTheme.cyanLight,
@@ -394,13 +396,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                               value: pendingQuests.any((q) => q.id == _selectedQuestId)
                                   ? _selectedQuestId
                                   : null,
-                              hint: const Text(
+                              hint: Text(
                                 'Link to a Quest (auto-completes when done)',
                                 style: TextStyle(
                                     color: HunterTheme.textMuted, fontSize: 12),
                               ),
                               items: [
-                                const DropdownMenuItem<String?>(
+                                DropdownMenuItem<String?>(
                                   value: null,
                                   child: Text('Custom Focus Session',
                                       style: TextStyle(
@@ -412,7 +414,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                                       child: Text(
                                         q.title,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             color: HunterTheme.cyanLight,
                                             fontSize: 12.5),
                                       ),
@@ -444,14 +446,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                       const SizedBox(height: 10),
                       TextField(
                         controller: _intentionController,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: HunterTheme.textPrimary, fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Session Target (1 concrete outcome)',
-                          labelStyle: const TextStyle(
+                          labelStyle: TextStyle(
                               color: HunterTheme.cyanLight, fontSize: 12),
                           hintText: 'e.g., Ship API auth module / Solve 10 MCQs',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                               color: HunterTheme.textMuted, fontSize: 12),
                           filled: true,
                           fillColor: HunterTheme.surface,
@@ -468,7 +470,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                               ref.watch(authProvider).value?.nextFocusStep?.trim()) ...[
                         const SizedBox(height: 8),
                         ActionChip(
-                          avatar: const Icon(
+                          avatar: Icon(
                             Icons.auto_awesome,
                             size: 14,
                             color: HunterTheme.gold,
@@ -476,7 +478,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                           label: Text(
                             'RESUME NEXT STEP: ${ref.watch(authProvider).value!.nextFocusStep!}',
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.gold,
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -534,7 +536,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                       value: progress.clamp(0.0, 1.0),
                       strokeWidth: 8,
                       backgroundColor: HunterTheme.surfaceLight,
-                      valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
+                      valueColor: AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
                     ),
                   ),
                   Column(
@@ -542,7 +544,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                     children: [
                       Text(
                         _formatTime(_remainingSeconds),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
                           color: HunterTheme.textPrimary,

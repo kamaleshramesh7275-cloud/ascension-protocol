@@ -86,7 +86,7 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
     final restoreDays = (widget.gate['restoredFromStreak'] as num?)?.toInt() ?? 1;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: HunterTheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: HunterTheme.crimson, width: 2)),
@@ -105,11 +105,11 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: HunterTheme.crimson),
                 ),
-                child: const Icon(Icons.door_front_door_outlined,
+                child: Icon(Icons.door_front_door_outlined,
                     color: HunterTheme.crimson, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -135,7 +135,7 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                icon: Icon(Icons.close, color: HunterTheme.textMuted),
               ),
             ],
           ),
@@ -150,7 +150,7 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
             ),
             child: Text(
               brief,
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.textPrimary,
                 fontSize: 13.5,
                 height: 1.45,
@@ -173,8 +173,8 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.timer_rounded, color: HunterTheme.cyanLight, size: 18),
-                  label: const Text(
+                  icon: Icon(Icons.timer_rounded, color: HunterTheme.cyanLight, size: 18),
+                  label: Text(
                     '1. RUN 10M SPRINT',
                     style: TextStyle(
                       color: HunterTheme.cyanLight,
@@ -183,7 +183,7 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: HunterTheme.cyan),
+                    side: BorderSide(color: HunterTheme.cyan),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -196,7 +196,7 @@ class _ComebackGateSheetState extends ConsumerState<ComebackGateSheet> {
             onChanged: (v) => setState(() => _quickSetDone = v ?? false),
             contentPadding: EdgeInsets.zero,
             activeColor: HunterTheme.gold,
-            title: const Text(
+            title: Text(
               '2. Completed 1 workout set (10+ pushups / squats or gym session)',
               style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
             ),

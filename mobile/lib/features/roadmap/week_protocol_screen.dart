@@ -32,7 +32,7 @@ class WeekProtocolScreen extends ConsumerWidget {
       return Scaffold(
         backgroundColor: HunterTheme.abyss,
         appBar: AppBar(backgroundColor: HunterTheme.abyss),
-        body: const Center(
+        body: Center(
           child: Text('Week protocol unavailable.',
               style: TextStyle(color: HunterTheme.textMuted)),
         ),
@@ -53,7 +53,7 @@ class WeekProtocolScreen extends ConsumerWidget {
         elevation: 0,
         title: Text(
           'WEEK ${week.weekNumber}: ${week.phaseName.toUpperCase()}',
-          style: const TextStyle(
+          style: TextStyle(
             color: HunterTheme.textPrimary,
             fontWeight: FontWeight.w900,
             fontSize: 15,
@@ -77,7 +77,7 @@ class WeekProtocolScreen extends ConsumerWidget {
               children: [
                 Text(
                   week.goal,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.cyanLight,
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
@@ -86,13 +86,13 @@ class WeekProtocolScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   week.description,
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                 ),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(
                   value: week.progress,
                   backgroundColor: HunterTheme.abyss,
-                  valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
+                  valueColor: AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
                   minHeight: 7,
                 ),
               ],
@@ -108,7 +108,7 @@ class WeekProtocolScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(top: 6, bottom: 8),
                   child: Text(
                     'DAY $day',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.gold,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.3,
@@ -151,7 +151,7 @@ class WeekProtocolScreen extends ConsumerWidget {
                         ),
                       ),
                       subtitle: task.isBoss
-                          ? const Text(
+                          ? Text(
                               'BOSS MILESTONE',
                               style: TextStyle(
                                 color: HunterTheme.crimson,

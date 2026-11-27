@@ -50,7 +50,7 @@ class OfficialTemplatesSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'OFFICIAL PROTOCOL SPLITS',
               style: TextStyle(
                 color: HunterTheme.cyanLight,
@@ -60,14 +60,14 @@ class OfficialTemplatesSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Tap any split to deploy directly into an active workout session.',
               style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: templates.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Loading curated split protocols...',
                         style: TextStyle(color: HunterTheme.textMuted),
@@ -96,7 +96,7 @@ class OfficialTemplatesSheet extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     tpl.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: HunterTheme.textPrimary,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 14,
@@ -112,7 +112,7 @@ class OfficialTemplatesSheet extends ConsumerWidget {
                                   ),
                                   child: Text(
                                     tpl.difficulty.toUpperCase(),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: HunterTheme.purple,
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w900,
@@ -129,13 +129,13 @@ class OfficialTemplatesSheet extends ConsumerWidget {
                                   tpl.description,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: HunterTheme.textMuted, fontSize: 11.5),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   '${tpl.exerciseNames.length} Exercises • ${tpl.duration}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.gold,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 11,
@@ -143,7 +143,7 @@ class OfficialTemplatesSheet extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            trailing: const Icon(Icons.play_circle_fill,
+                            trailing: Icon(Icons.play_circle_fill,
                                 color: HunterTheme.cyan, size: 30),
                             onTap: () {
                               Navigator.of(context).pop();

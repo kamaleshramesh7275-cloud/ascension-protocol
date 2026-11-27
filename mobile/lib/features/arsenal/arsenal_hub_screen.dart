@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/home_widget_bridge.dart';
@@ -27,6 +28,7 @@ class ArsenalHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appearanceProvider);
     final liveUser = ref.watch(authProvider).value ?? user;
 
     return Scaffold(
@@ -34,7 +36,7 @@ class ArsenalHubScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'HUNTER ARSENAL',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -46,7 +48,7 @@ class ArsenalHubScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'System Command Grid',
-            icon: const Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight),
+            icon: Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight),
             onPressed: () => SystemCommandSheet.show(context, liveUser),
           ),
           InkWell(
@@ -64,11 +66,11 @@ class ArsenalHubScreen extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.monetization_on, color: HunterTheme.gold, size: 15),
+                  Icon(Icons.monetization_on, color: HunterTheme.gold, size: 15),
                   const SizedBox(width: 5),
                   Text(
                     '${liveUser.coins}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.gold,
                       fontWeight: FontWeight.w900,
                       fontSize: 12.5,
@@ -97,7 +99,7 @@ class ArsenalHubScreen extends ConsumerWidget {
                     children: [
                       Text(
                         liveUser.name.toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
@@ -105,7 +107,7 @@ class ArsenalHubScreen extends ConsumerWidget {
                       ),
                       Text(
                         'Lv.${liveUser.level} ${(liveUser.evolvedClass ?? liveUser.hunterClass).toUpperCase()} • ${liveUser.unspentStatPoints} Unspent Pts',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.cyanLight,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -119,7 +121,7 @@ class ArsenalHubScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
 
-          const Text(
+          Text(
             'SYSTEM & COMBAT PROGRESSION',
             style: TextStyle(
               color: HunterTheme.textMuted,
@@ -176,7 +178,7 @@ class ArsenalHubScreen extends ConsumerWidget {
           ),
 
           const SizedBox(height: 18),
-          const Text(
+          Text(
             'ACCOUNTABILITY, ROADMAP & CODEX',
             style: TextStyle(
               color: HunterTheme.textMuted,
@@ -283,7 +285,7 @@ class ArsenalHubScreen extends ConsumerWidget {
                     ok
                         ? 'System Widget pin prompt dispatched.'
                         : 'Add via Android Home Screen -> Widgets -> Ascension Quest HUD.',
-                    style: const TextStyle(color: HunterTheme.cyanLight),
+                    style: TextStyle(color: HunterTheme.cyanLight),
                   ),
                 ),
               );
@@ -328,7 +330,7 @@ class ArsenalHubScreen extends ConsumerWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontWeight: FontWeight.w900,
                     fontSize: 13.5,
@@ -345,7 +347,7 @@ class ArsenalHubScreen extends ConsumerWidget {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.gold,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w900,
@@ -356,9 +358,9 @@ class ArsenalHubScreen extends ConsumerWidget {
           ),
           subtitle: Text(
             subtitle,
-            style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+            style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
           ),
-          trailing: const Icon(Icons.chevron_right, color: HunterTheme.textMuted),
+          trailing: Icon(Icons.chevron_right, color: HunterTheme.textMuted),
           onTap: onTap,
         ),
       ),

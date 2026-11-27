@@ -186,7 +186,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
         elevation: 0,
         leading: _currentStep > 0
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: HunterTheme.cyanLight),
+                icon: Icon(Icons.arrow_back, color: HunterTheme.cyanLight),
                 onPressed: _prevPage,
               )
             : null,
@@ -208,8 +208,8 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.close, color: HunterTheme.cyanLight, size: 18),
-            label: const Text('EXIT', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontWeight: FontWeight.bold)),
+            icon: Icon(Icons.close, color: HunterTheme.cyanLight, size: 18),
+            label: Text('EXIT', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -224,7 +224,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                 child: LinearProgressIndicator(
                   value: (_currentStep + 1) / 4.0,
                   backgroundColor: HunterTheme.surface,
-                  valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
+                  valueColor: AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
                   minHeight: 4,
                 ),
               ),
@@ -322,7 +322,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Calibrate baseline stamina to tune your daily quest difficulty.',
           style: TextStyle(color: HunterTheme.textMuted, fontSize: 13),
         ),
@@ -342,7 +342,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Pushup Max (Single Set)',
                     style: TextStyle(
                       color: HunterTheme.textPrimary,
@@ -351,7 +351,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                   ),
                   Text(
                     '$_pushups REPS',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.cyanLight,
                       fontWeight: FontWeight.w900,
                     ),
@@ -387,7 +387,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Goal Track & Target',
                 style: TextStyle(
                   color: HunterTheme.textPrimary,
@@ -438,10 +438,10 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _goalController,
-                style: const TextStyle(color: HunterTheme.textPrimary),
+                style: TextStyle(color: HunterTheme.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'What specific outcome do you want in 30 days?',
-                  hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   filled: true,
                   fillColor: HunterTheme.surfaceLight,
                   border: OutlineInputBorder(
@@ -454,7 +454,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Daily Available Deep-Work / Training Time',
                     style: TextStyle(
                       color: HunterTheme.textPrimary,
@@ -464,7 +464,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                   ),
                   Text(
                     '${_dailyCapacityMinutes}m/day',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.cyanLight,
                       fontWeight: FontWeight.w900,
                       fontSize: 13,
@@ -482,7 +482,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                 onChanged: (val) => setState(() => _dailyCapacityMinutes = val.toInt()),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Biggest Daily Distraction / Blocker',
                 style: TextStyle(
                   color: HunterTheme.textPrimary,
@@ -493,10 +493,10 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               const SizedBox(height: 6),
               TextField(
                 controller: _distractorController,
-                style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'e.g., Late-night phone scrolling, Reels, Fatigue',
-                  hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   filled: true,
                   fillColor: HunterTheme.surfaceLight,
                   border: OutlineInputBorder(
@@ -525,7 +525,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Your archetype shapes your initial attribute distribution.',
           style: TextStyle(color: HunterTheme.textMuted, fontSize: 13),
         ),
@@ -593,7 +593,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                           const SizedBox(height: 4),
                           Text(
                             arch['desc'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textMuted,
                               fontSize: 12,
                             ),
@@ -645,7 +645,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Select your available physical training environment.',
           style: TextStyle(color: HunterTheme.textMuted, fontSize: 13),
         ),
@@ -694,7 +694,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
                           const SizedBox(height: 2),
                           Text(
                             opt['desc'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textMuted,
                               fontSize: 12,
                             ),
@@ -726,7 +726,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
               color: HunterTheme.gold.withValues(alpha: 0.15),
               border: Border.all(color: HunterTheme.gold, width: 2),
             ),
-            child: const Icon(Icons.shield, color: HunterTheme.gold, size: 36),
+            child: Icon(Icons.shield, color: HunterTheme.gold, size: 36),
           ),
         ),
         const SizedBox(height: 16),
@@ -741,17 +741,17 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Center(
+        Center(
           child: Text(
             'Final Protocol Before Awakening',
             style: TextStyle(color: HunterTheme.textMuted, fontSize: 13),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // The Sacred Oath Text Box
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: HunterTheme.surface,
             borderRadius: BorderRadius.circular(16),
@@ -759,7 +759,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 '“I, Hunter of the Ascension Protocol, hereby vow to uphold daily discipline without compromise.\n\n'
                 'I accept that weakness is temporary, but surrender is permanent. I will complete my daily quests, protect my focus during air-gap protocols, and face boss dungeons with unwavering resolve.\n\n'
@@ -775,17 +775,17 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
           ),
         ).animate().fadeIn(duration: 500.ms),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: HunterTheme.cyan.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.3)),
           ),
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.verified, color: HunterTheme.cyan, size: 20),
               SizedBox(width: 10),
               Expanded(

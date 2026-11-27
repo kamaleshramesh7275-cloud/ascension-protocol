@@ -56,7 +56,7 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
     QuestModel(
       id: 'default_1',
       title: 'Cellular Hydration Protocol',
-      description: 'Infuse your matrix with 1.0L of water + electrolytes.',
+      description: 'Drink 1.0L of water with electrolytes today.',
       category: 'fitness',
       xp: 35,
       coins: 15,
@@ -67,7 +67,7 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
     QuestModel(
       id: 'default_2',
       title: 'Air-Gap Deep Work',
-      description: 'Zero distractions for 25 uninterrupted minutes.',
+      description: 'Focus with zero distractions for 25 minutes straight.',
       category: 'productivity',
       xp: 50,
       coins: 20,
@@ -78,7 +78,7 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
     QuestModel(
       id: 'default_3',
       title: 'Neural Decompression',
-      description: '10 minutes of box-breathing or non-sleep deep rest.',
+      description: 'Do 10 minutes of deep breathing or quiet rest.',
       category: 'mindfulness',
       xp: 25,
       coins: 10,
@@ -95,7 +95,7 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
   }
 
   void clearQuests() {
-    if (mounted) state = const [];
+    if (mounted) state = defaultQuests;
   }
 
   /// Fetch real quests from backend API, seamlessly backed by local cache when offline
@@ -114,21 +114,27 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
         final quests = data
             .map((item) => QuestModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        state = quests;
-        await SessionStorage.saveCachedQuests(quests);
+        state = quests.isNotEmpty ? quests : defaultQuests;
+        await SessionStorage.saveCachedQuests(state);
         final u = _ref.read(authProvider).value;
         if (u != null) {
-          HomeWidgetBridge.syncFromState(user: u, quests: quests);
+          HomeWidgetBridge.syncFromState(user: u, quests: state);
         }
       }
     } on DioException catch (e) {
-      if (ApiClient.isOffline(e) && state.isEmpty && mounted) {
+      if (ApiClient.isOffline(e) && mounted) {
         final cached = await SessionStorage.getCachedQuests();
         if (cached != null && cached.isNotEmpty) {
           state = cached;
+        } else if (state.isEmpty) {
+          state = defaultQuests;
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted && state.isEmpty) {
+        state = defaultQuests;
+      }
+    }
   }
 
   Future<bool> toggleQuest(String questId) async {
@@ -249,18 +255,24 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
       }
 
       if (mounted) {
-        final revertedList = List<QuestModel>.from(state);
-        revertedList[index] =
-            target.copyWith(isCompleting: false, completed: false);
-        state = revertedList;
+        final currentIndex = state.indexWhere((q) => q.id == questId);
+        if (currentIndex != -1) {
+          final revertedList = List<QuestModel>.from(state);
+          revertedList[currentIndex] =
+              target.copyWith(isCompleting: false, completed: false);
+          state = revertedList;
+        }
       }
       return const QuestCompletionOutcome(success: false);
     } catch (_) {
       if (mounted) {
-        final revertedList = List<QuestModel>.from(state);
-        revertedList[index] =
-            target.copyWith(isCompleting: false, completed: false);
-        state = revertedList;
+        final currentIndex = state.indexWhere((q) => q.id == questId);
+        if (currentIndex != -1) {
+          final revertedList = List<QuestModel>.from(state);
+          revertedList[currentIndex] =
+              target.copyWith(isCompleting: false, completed: false);
+          state = revertedList;
+        }
       }
       return const QuestCompletionOutcome(success: false);
     }

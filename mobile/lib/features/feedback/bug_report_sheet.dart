@@ -73,7 +73,7 @@ class _BugReportSheetState extends ConsumerState<BugReportSheet> {
     }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         backgroundColor: HunterTheme.surfaceLight,
         content: Text(
           'Bug report & diagnostics transmitted. Thank you, Hunter!',
@@ -103,9 +103,9 @@ class _BugReportSheetState extends ConsumerState<BugReportSheet> {
           children: [
             Row(
               children: [
-                const Icon(Icons.bug_report_rounded, color: HunterTheme.crimson),
+                Icon(Icons.bug_report_rounded, color: HunterTheme.crimson),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'QUICK ANOMALY REPORT',
                   style: TextStyle(
                     color: HunterTheme.textPrimary,
@@ -117,20 +117,20 @@ class _BugReportSheetState extends ConsumerState<BugReportSheet> {
                 const Spacer(),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                  icon: Icon(Icons.close, color: HunterTheme.textMuted),
                 ),
               ],
             ),
             Text(
               'Auto-attaching ${widget.screenName ?? FeedbackDiagnosticsService.currentScreen} + $errCount buffered error(s).',
-              style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+              style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _titleController,
               maxLength: 120,
-              style: const TextStyle(color: HunterTheme.textPrimary),
-              decoration: const InputDecoration(
+              style: TextStyle(color: HunterTheme.textPrimary),
+              decoration: InputDecoration(
                 labelText: 'WHAT WENT WRONG?',
                 labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
               ),
@@ -141,8 +141,8 @@ class _BugReportSheetState extends ConsumerState<BugReportSheet> {
               controller: _descController,
               maxLines: 3,
               maxLength: 2000,
-              style: const TextStyle(color: HunterTheme.textPrimary),
-              decoration: const InputDecoration(
+              style: TextStyle(color: HunterTheme.textPrimary),
+              decoration: InputDecoration(
                 labelText: 'DETAILS / STEPS TO REPRODUCE',
                 labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
               ),

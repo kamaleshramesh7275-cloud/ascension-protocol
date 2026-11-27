@@ -45,7 +45,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
             backgroundColor: HunterTheme.surface,
             content: Text(
               'Monday daily capacity calibrated to ${suggestedMinutes}m.',
-              style: const TextStyle(color: HunterTheme.cyanLight),
+              style: TextStyle(color: HunterTheme.cyanLight),
             ),
           ),
         );
@@ -97,12 +97,12 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
 
     return Container(
       margin: const EdgeInsets.only(top: 48),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: HunterTheme.abyss,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: asyncRecap.when(
-        loading: () => const SizedBox(
+        loading: () => SizedBox(
           height: 320,
           child: Center(child: CircularProgressIndicator(color: HunterTheme.cyan)),
         ),
@@ -110,7 +110,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
           padding: const EdgeInsets.all(24),
           child: Text(
             extractApiError(err, 'Failed to compile weekly dossier'),
-            style: const TextStyle(color: HunterTheme.crimson),
+            style: TextStyle(color: HunterTheme.crimson),
           ),
         ),
         data: (recap) => SingleChildScrollView(
@@ -152,7 +152,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                         children: [
                           Text(
                             recap.dateRange,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.cyanLight,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w900,
@@ -168,7 +168,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                             ),
                             child: Text(
                               '${recap.percentile}TH PERCENTILE',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.gold,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w900,
@@ -180,7 +180,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                       const SizedBox(height: 16),
                       Text(
                         recap.archetype,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -189,7 +189,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                       ),
                       Text(
                         '${recap.archetypeTag} • ${recap.userName.toUpperCase()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.purple,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -199,7 +199,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                       const SizedBox(height: 8),
                       Text(
                         recap.archetypeDescription,
-                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
                       ),
                       const SizedBox(height: 18),
                       GridView.count(
@@ -236,7 +236,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                             children: [
                               Text(
                                 'ROADMAP PROGRESS: ${recap.roadmapProgressPercent}%${recap.preferredPeakHour != null ? "  •  PEAK HOUR: ${recap.preferredPeakHour.toString().padLeft(2, '0')}:00" : ""}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: HunterTheme.cyanLight,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 10.5,
@@ -246,7 +246,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                                 const SizedBox(height: 6),
                                 Text(
                                   recap.coachSummary!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.textPrimary,
                                     fontSize: 11.5,
                                     height: 1.35,
@@ -258,7 +258,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                                 const SizedBox(height: 5),
                                 Text(
                                   recap.dayPatternInsight!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.gold,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -270,7 +270,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                                 const SizedBox(height: 5),
                                 Text(
                                   'Monday Rebalance: ${recap.mondayAdjustment!}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.cyanLight,
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
@@ -280,7 +280,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Next Week Focus (${recap.bottleneckStat ?? "Core"}): ${recap.nextWeekRecommendation}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.textPrimary,
                                     fontSize: 11.5,
                                   ),
@@ -296,7 +296,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                         children: [
                           Text(
                             'RANK TIER: ${recap.tier}-RANK',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.gold,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
@@ -304,7 +304,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                           ),
                           Text(
                             'STREAK: ${recap.streakDays}D',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.cyanLight,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
@@ -325,7 +325,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                         ? null
                         : () => _applyMondayAdjustment(recap.suggestedDailyMinutes!),
                     icon: _applyingMonday
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 15,
                             height: 15,
                             child: CircularProgressIndicator(
@@ -333,17 +333,17 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
                               color: HunterTheme.cyan,
                             ),
                           )
-                        : const Icon(Icons.tune_rounded, color: HunterTheme.cyan),
+                        : Icon(Icons.tune_rounded, color: HunterTheme.cyan),
                     label: Text(
                       'APPLY MONDAY ADJUSTMENT (${recap.suggestedDailyMinutes}M/DAY)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.cyanLight,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.9,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: HunterTheme.cyan),
+                      side: BorderSide(color: HunterTheme.cyan),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -409,7 +409,7 @@ class _WeeklyRecapSheetState extends ConsumerState<WeeklyRecapSheet> {
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: HunterTheme.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w900,

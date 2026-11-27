@@ -1,163 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/api/api_error.dart';
 import '../../core/providers/auth_provider.dart';
-import '../../core/providers/shop_provider.dart';
 import '../../core/theme/hunter_theme.dart';
-import '../../models/shop_models.dart';
 
-/// Feature #1 Supply Depot Shop & Hunter Inventory Screen.
-class ShopScreen extends ConsumerStatefulWidget {
+/// Feature #1 Supply Depot Shop — Coming Soon placeholder.
+class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});
 
   @override
-  ConsumerState<ShopScreen> createState() => _ShopScreenState();
-}
-
-class _ShopScreenState extends ConsumerState<ShopScreen> {
-  String _selectedTab = 'ALL';
-  String? _busyItemId;
-
-  static const _tabs = [
-    ('ALL', 'All'),
-    ('utility', 'Tools & Packs'),
-    ('title', 'Titles'),
-    ('badge', 'Badges'),
-    ('theme', 'Themes'),
-    ('avatar', 'Avatars'),
-  ];
-
-  Color _rarityColor(String rarity) {
-    switch (rarity) {
-      case 'legendary':
-        return HunterTheme.gold;
-      case 'epic':
-        return HunterTheme.purple;
-      case 'rare':
-        return HunterTheme.cyan;
-      default:
-        return HunterTheme.textMuted;
-    }
-  }
-
-  Future<void> _useItem(ShopItemModel item) async {
-    setState(() => _busyItemId = item.id);
-    try {
-      final msg = await ref.read(shopProvider.notifier).useItem(item);
-      HapticFeedback.heavyImpact();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.surfaceLight,
-          content: Text(
-            msg,
-            style: const TextStyle(color: HunterTheme.emeraldLight, fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.crimson,
-          content: Text(extractApiError(e, 'Activation failed')),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busyItemId = null);
-    }
-  }
-
-  Future<void> _buyItem(ShopItemModel item) async {
-    setState(() => _busyItemId = item.id);
-    try {
-      await ref.read(shopProvider.notifier).purchaseItem(item);
-      HapticFeedback.heavyImpact();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.surfaceLight,
-          content: Text(
-            'Acquired ${item.name} (-${item.cost} Coins).',
-            style: const TextStyle(color: HunterTheme.gold, fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.crimson,
-          content: Text(extractApiError(e, 'Purchase rejected')),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busyItemId = null);
-    }
-  }
-
-  Future<void> _equipItem(ShopItemModel item) async {
-    setState(() => _busyItemId = item.id);
-    try {
-      await ref.read(shopProvider.notifier).equipItem(item);
-      HapticFeedback.mediumImpact();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.surfaceLight,
-          content: Text(
-            'Equipped ${item.name}.',
-            style: const TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.crimson,
-          content: Text(extractApiError(e, 'Failed to equip artifact')),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busyItemId = null);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).value;
-    final shopState = ref.watch(shopProvider);
-
-    final ownedIds = shopState.inventory.map((i) => i.itemId).toSet();
-    final equippedIds =
-        shopState.inventory.where((i) => i.equipped).map((i) => i.itemId).toSet();
-
-    final items = shopState.catalog.where((item) {
-      if (_selectedTab == 'ALL') return true;
-      if (_selectedTab == 'utility') {
-        return item.type == 'equipment' ||
-            item.type == 'consumable' ||
-            item.type == 'program' ||
-            item.type == 'boost';
-      }
-      return item.type == _selectedTab;
-    }).toList();
-    // Prioritize practical goal tools/consumables ahead of pure cosmetics in ALL view
-    items.sort((a, b) {
-      final aUtil = a.type == 'consumable' || a.type == 'program';
-      final bUtil = b.type == 'consumable' || b.type == 'program';
-      if (aUtil != bUtil) return aUtil ? -1 : 1;
-      return 0;
-    });
 
     return Scaffold(
       backgroundColor: HunterTheme.abyss,
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'SUPPLY DEPOT',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -177,11 +36,11 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.monetization_on, color: HunterTheme.gold, size: 16),
+                Icon(Icons.monetization_on, color: HunterTheme.gold, size: 16),
                 const SizedBox(width: 5),
                 Text(
                   '${user?.coins ?? 0}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.gold,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
@@ -192,275 +51,100 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (user?.inPenaltyZone == true)
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Lock icon with glow
             Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              padding: const EdgeInsets.all(12),
+              width: 110,
+              height: 110,
               decoration: BoxDecoration(
-                color: HunterTheme.crimson.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HunterTheme.crimson),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.lock, color: HunterTheme.crimson, size: 18),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'SUPPLY DEPOT LOCKED — Clear Penalty Zone survival task to unlock purchases.',
-                      style: TextStyle(
-                        color: HunterTheme.crimson,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                shape: BoxShape.circle,
+                color: HunterTheme.gold.withValues(alpha: 0.1),
+                border: Border.all(color: HunterTheme.gold.withValues(alpha: 0.5), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: HunterTheme.gold.withValues(alpha: 0.2),
+                    blurRadius: 24,
+                    spreadRadius: 4,
                   ),
                 ],
               ),
+              child: Icon(Icons.lock_clock_rounded, color: HunterTheme.gold, size: 56),
             ),
-
-          // Category Filter Tabs
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (_, idx) {
-                final tab = _tabs[idx];
-                final active = _selectedTab == tab.$1;
-                return ChoiceChip(
-                  label: Text(tab.$2),
-                  selected: active,
-                  onSelected: (_) => setState(() => _selectedTab = tab.$1),
-                  backgroundColor: HunterTheme.surface,
-                  selectedColor: HunterTheme.cyan,
-                  labelStyle: TextStyle(
-                    color: active ? Colors.black : HunterTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                );
-              },
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemCount: _tabs.length,
+            const SizedBox(height: 28),
+            Text(
+              'SUPPLY DEPOT',
+              style: TextStyle(
+                color: HunterTheme.gold,
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                letterSpacing: 3,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+              decoration: BoxDecoration(
+                color: HunterTheme.gold.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: HunterTheme.gold.withValues(alpha: 0.55)),
+              ),
+              child: Text(
+                '— COMING SOON —',
+                style: TextStyle(
+                  color: HunterTheme.gold,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  letterSpacing: 4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 48),
+              child: Text(
+                'The Armory is being forged.\nItems, titles, badges, boosts, and power-ups will drop here soon.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: HunterTheme.textMuted,
+                  fontSize: 13.5,
+                  height: 1.65,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Teaser chips
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _teaserChip('🛡️ Streak Shield', HunterTheme.cyan),
+                _teaserChip('🏷️ Custom Titles', HunterTheme.purple),
+                _teaserChip('⚡ XP Boosts', HunterTheme.gold),
+                _teaserChip('🏅 Rank Badges', HunterTheme.emeraldLight),
+                _teaserChip('🎨 Avatar Frames', HunterTheme.cyanLight),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-          Expanded(
-            child: shopState.loading && items.isEmpty
-                ? const Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
-                : RefreshIndicator(
-                    onRefresh: () => ref.read(shopProvider.notifier).loadShop(),
-                    child: items.isEmpty
-                        ? ListView(
-                            children: const [
-                              SizedBox(height: 120),
-                              Center(
-                                child: Text(
-                                  'No artifacts found in this sector.',
-                                  style: TextStyle(color: HunterTheme.textMuted),
-                                ),
-                              ),
-                            ],
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                            itemCount: items.length,
-                            itemBuilder: (_, index) {
-                              final item = items[index];
-                              final owned = ownedIds.contains(item.id);
-                              final equipped = equippedIds.contains(item.id);
-                              final rarityCol = _rarityColor(item.rarity);
-                              final isBusy = _busyItemId == item.id;
-                              final isConsumable =
-                                  item.type == 'equipment' || item.type == 'consumable';
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: HunterTheme.surface,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: equipped
-                                        ? HunterTheme.emerald
-                                        : rarityCol.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        color: rarityCol.withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: rarityCol.withValues(alpha: 0.5)),
-                                      ),
-                                      child: Icon(
-                                        isConsumable
-                                            ? Icons.shield_outlined
-                                            : Icons.auto_awesome,
-                                        color: rarityCol,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  item.name,
-                                                  style: const TextStyle(
-                                                    color: HunterTheme.textPrimary,
-                                                    fontWeight: FontWeight.w900,
-                                                    fontSize: 14.5,
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: rarityCol.withValues(alpha: 0.15),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                ),
-                                                child: Text(
-                                                  item.rarity.toUpperCase(),
-                                                  style: TextStyle(
-                                                    color: rarityCol,
-                                                    fontSize: 9.5,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            item.description,
-                                            style: const TextStyle(
-                                              color: HunterTheme.textMuted,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                '${item.cost} COINS • ${item.type.toUpperCase()}',
-                                                style: const TextStyle(
-                                                  color: HunterTheme.gold,
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 11.5,
-                                                ),
-                                              ),
-                                              if (equipped)
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                      horizontal: 10, vertical: 5),
-                                                  decoration: BoxDecoration(
-                                                    color: HunterTheme.emerald
-                                                        .withValues(alpha: 0.2),
-                                                    borderRadius:
-                                                        BorderRadius.circular(8),
-                                                  ),
-                                                  child: const Text(
-                                                    'EQUIPPED',
-                                                    style: TextStyle(
-                                                      color: HunterTheme.emeraldLight,
-                                                      fontWeight: FontWeight.w900,
-                                                      fontSize: 11,
-                                                    ),
-                                                  ),
-                                                )
-                                              else if (owned &&
-                                                  (item.type == 'consumable' ||
-                                                      item.type == 'program') &&
-                                                  item.value != 'streak_shield')
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    ElevatedButton(
-                                                      onPressed: isBusy
-                                                          ? null
-                                                          : () => _useItem(item),
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor:
-                                                            HunterTheme.emerald,
-                                                        foregroundColor: Colors.black,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 6),
-                                                      ),
-                                                      child: Text(
-                                                        isBusy ? '...' : 'USE TOOL',
-                                                        style: const TextStyle(
-                                                            fontWeight: FontWeight.w900,
-                                                            fontSize: 11),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                              else if (owned && !isConsumable)
-                                                ElevatedButton(
-                                                  onPressed:
-                                                      isBusy ? null : () => _equipItem(item),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: HunterTheme.cyan,
-                                                    foregroundColor: Colors.black,
-                                                    padding: const EdgeInsets.symmetric(
-                                                        horizontal: 14, vertical: 6),
-                                                  ),
-                                                  child: Text(
-                                                    isBusy ? '...' : 'EQUIP',
-                                                    style: const TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 11),
-                                                  ),
-                                                )
-                                              else
-                                                ElevatedButton(
-                                                  onPressed: isBusy ||
-                                                          (user?.inPenaltyZone == true)
-                                                      ? null
-                                                      : () => _buyItem(item),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: HunterTheme.gold,
-                                                    foregroundColor: Colors.black,
-                                                    padding: const EdgeInsets.symmetric(
-                                                        horizontal: 14, vertical: 6),
-                                                  ),
-                                                  child: Text(
-                                                    isBusy ? '...' : 'BUY',
-                                                    style: const TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 11),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-          ),
-        ],
+  Widget _teaserChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }

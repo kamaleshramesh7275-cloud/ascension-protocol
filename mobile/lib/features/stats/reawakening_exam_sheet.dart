@@ -119,7 +119,7 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
     final basePushups = (user?.baselineStats?['pushups'] ?? 10);
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: HunterTheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: HunterTheme.cyan, width: 1.8)),
@@ -138,7 +138,7 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '[ HUNTER ASSOCIATION REAWAKENING ]',
                   style: TextStyle(
                     color: HunterTheme.cyanLight,
@@ -149,11 +149,11 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                  icon: Icon(Icons.close, color: HunterTheme.textMuted),
                 ),
               ],
             ),
-            const Text(
+            Text(
               'Proctored Rank Scanner Exam',
               style: TextStyle(
                 color: HunterTheme.textPrimary,
@@ -162,7 +162,7 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Cooldown: 14 days after passing • 7 days after failing • 24h exam window.',
               style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
             ),
@@ -170,7 +170,7 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
             if (!inProgress) ...[
               Text(
                 'Current Authority: ${user?.tier ?? 'D'}-Rank (Lv.${user?.level ?? 1})\nRequired within 24h once opened:\n1. Max pushups >= $basePushups (your Day-1 baseline)\n2. 25m zero-breach Air-Gap Focus session\n3. Shipped concrete deliverable summary',
-                style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5, height: 1.45),
+                style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5, height: 1.45),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -202,8 +202,8 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.timer_rounded, color: HunterTheme.cyanLight),
-                label: const Text(
+                icon: Icon(Icons.timer_rounded, color: HunterTheme.cyanLight),
+                label: Text(
                   'RUN 25M ZERO-BREACH SPRINT NOW',
                   style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold),
                 ),
@@ -212,10 +212,10 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
               TextField(
                 controller: _pushupsCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: HunterTheme.textPrimary),
+                style: TextStyle(color: HunterTheme.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Max Pushups Completed Today (baseline: $basePushups)',
-                  labelStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  labelStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   filled: true,
                   fillColor: HunterTheme.abyss,
                   border: OutlineInputBorder(
@@ -228,10 +228,10 @@ class _ReawakeningExamSheetState extends ConsumerState<ReawakeningExamSheet> {
               TextField(
                 controller: _deliverableCtrl,
                 maxLines: 2,
-                style: const TextStyle(color: HunterTheme.textPrimary),
+                style: TextStyle(color: HunterTheme.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Shipped Deliverable Summary (min 25 chars)',
-                  labelStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  labelStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   filled: true,
                   fillColor: HunterTheme.abyss,
                   border: OutlineInputBorder(

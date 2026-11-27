@@ -78,17 +78,6 @@ export default function HallOfAscensionPage() {
             >
               <Award className="w-3.5 h-3.5 text-amber-400" /> TROPHY CABINET
             </Button>
-            <Button
-              onClick={() => {
-                audioEngine.playTactileClick();
-                setLocation("/leaderboard");
-              }}
-              variant="outline"
-              size="sm"
-              className="border-white/10 bg-[#090C10] hover:bg-[#141922] text-xs font-mono text-zinc-300 hover:text-white h-8 px-3 rounded"
-            >
-              LEADERBOARD
-            </Button>
           </div>
         </header>
 

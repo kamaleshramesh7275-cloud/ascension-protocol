@@ -202,7 +202,7 @@ class _DailyCountdownBannerState extends State<DailyCountdownBanner> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: HunterTheme.gold.withValues(alpha: 0.45)),
               ),
-              child: const Text(
+              child: Text(
                 '🛡️ MANA SHIELD ABSORBED YESTERDAY\'S MISS — STREAK PROTECTED',
                 style: TextStyle(
                   color: HunterTheme.gold,
@@ -251,8 +251,8 @@ class _DailyCountdownBannerState extends State<DailyCountdownBanner> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: _openShareCard,
-                icon: const Icon(Icons.share_rounded, size: 15, color: HunterTheme.gold),
-                label: const Text(
+                icon: Icon(Icons.share_rounded, size: 15, color: HunterTheme.gold),
+                label: Text(
                   'SHARE 4/4 CARD',
                   style: TextStyle(
                     color: HunterTheme.gold,

@@ -71,7 +71,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
     final text = _reflectionController.text.trim();
     if (text.length < 20) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surface,
           content: Text(
             'Reflection must be at least 20 characters for tactical audit.',
@@ -136,7 +136,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surfaceLight,
           content: Text(
             'Evening Debrief Recorded. Mana Shield integrity verified.',
@@ -150,7 +150,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
   Future<void> _deployShieldRecoveryDay() async {
     if (widget.user.streakShields <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surface,
           content: Text(
             'No Mana Shields available in inventory.',
@@ -177,7 +177,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               backgroundColor: HunterTheme.surfaceLight,
               content: Text(
                 'Active Recovery Mode deployed. Daily streak preserved.',
@@ -197,7 +197,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: HunterTheme.abyss,
         body: Center(
           child: CircularProgressIndicator(color: HunterTheme.cyan),
@@ -210,7 +210,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'EVENING DEBRIEF',
           style: TextStyle(
             color: HunterTheme.cyanLight,
@@ -235,9 +235,9 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: HunterTheme.emeraldLight, size: 28),
+                  Icon(Icons.check_circle, color: HunterTheme.emeraldLight, size: 28),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Protocol Debrief Recorded for Today.\nMana Shield lock verified.',
                       style: TextStyle(
@@ -305,7 +305,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HunterTheme.surfaceLight,
                       foregroundColor: HunterTheme.cyanLight,
-                      side: const BorderSide(color: HunterTheme.cyan),
+                      side: BorderSide(color: HunterTheme.cyan),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     ),
@@ -317,7 +317,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
           const SizedBox(height: 24),
 
           // Daily Self-Honesty Rating
-          const Text(
+          Text(
             'SELF-HONESTY & INTENSITY RATING',
             style: TextStyle(
               color: HunterTheme.cyanLight,
@@ -358,7 +358,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'SLEEP & BIO-RECOVERY (SR-7)',
                       style: TextStyle(
                         color: HunterTheme.cyanLight,
@@ -369,7 +369,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                     ),
                     Text(
                       '${_sleepHours.toStringAsFixed(1)} HRS',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.gold,
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -385,7 +385,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                   value: _sleepHours,
                   onChanged: _submitted ? null : (v) => setState(() => _sleepHours = v),
                 ),
-                const Text(
+                Text(
                   'Sub-6h sleep accelerates Bio-Fatigue telemetry & suggests Super-Compensation deload.',
                   style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                 ),
@@ -395,7 +395,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
           const SizedBox(height: 18),
 
           // Obstacle / Blocker Tag Picker
-          const Text(
+          Text(
             'PRIMARY FRICTION / BLOCKER TODAY',
             style: TextStyle(
               color: HunterTheme.cyanLight,
@@ -434,7 +434,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
           const SizedBox(height: 20),
 
           // Tactical Reflection Input
-          const Text(
+          Text(
             'TACTICAL LOG & OBSTACLE ANALYSIS',
             style: TextStyle(
               color: HunterTheme.cyanLight,
@@ -448,10 +448,10 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
             controller: _reflectionController,
             enabled: !_submitted,
             maxLines: 5,
-            style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 14),
+            style: TextStyle(color: HunterTheme.textPrimary, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Record today\'s friction points, victories, and tactical recalibrations (min 20 characters)...',
-              hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 13),
+              hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 13),
               filled: true,
               fillColor: HunterTheme.surface,
               border: OutlineInputBorder(
@@ -460,7 +460,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: HunterTheme.cyan),
+                borderSide: BorderSide(color: HunterTheme.cyan),
               ),
             ),
           ),
@@ -496,7 +496,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'COACH DIAGNOSTIC & TOMORROW RULE',
                     style: TextStyle(
                       color: HunterTheme.cyanLight,
@@ -509,7 +509,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _aiVerdict!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.textPrimary,
                         fontSize: 13,
                         height: 1.4,
@@ -528,12 +528,12 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.bolt, color: HunterTheme.gold, size: 18),
+                          Icon(Icons.bolt, color: HunterTheme.gold, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _tomorrowIfThenCue!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.gold,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12.5,

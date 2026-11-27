@@ -103,7 +103,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF06040D),
         elevation: 0,
-        title: const Text(
+        title: Text(
           'MONARCH\'S DOMAIN // 4H LOCK',
           style: TextStyle(
             color: HunterTheme.purple,
@@ -131,7 +131,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '[ WEEKLY SOVEREIGN FIELD ]',
                   style: TextStyle(
                     color: HunterTheme.purple,
@@ -154,7 +154,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   '7-day cooldown • 3 Focus sprints + 1 Workout inside 4h15m • Max +600 Bonus XP • >1 exit breach shatters Domain.',
                   style: TextStyle(color: HunterTheme.textMuted, fontSize: 12, height: 1.4),
                 ),
@@ -163,7 +163,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
           ),
           const SizedBox(height: 18),
           if (status == 'active') ...[
-            const Text(
+            Text(
               'AI BATTLE PLAN (CONQUER ALL 4 BLOCKS)',
               style: TextStyle(
                 color: HunterTheme.cyanLight,
@@ -188,7 +188,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
                     Expanded(
                       child: Text(
                         e.value,
-                        style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
+                        style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
                       ),
                     ),
                     if (isFocus)
@@ -201,7 +201,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
                             ),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'START 45M',
                           style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.w900),
                         ),
@@ -215,7 +215,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
               onChanged: (v) => setState(() => _workoutDone = v ?? false),
               activeColor: HunterTheme.purple,
               contentPadding: EdgeInsets.zero,
-              title: const Text(
+              title: Text(
                 'Block 4: Completed Domain Workout / Finisher',
                 style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
               ),
@@ -247,7 +247,7 @@ class _MonarchDomainScreenState extends ConsumerState<MonarchDomainScreen> {
                 ),
                 child: Text(
                   dom!['loreSummary'].toString(),
-                  style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12.5),
+                  style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12.5),
                 ),
               ),
             ],

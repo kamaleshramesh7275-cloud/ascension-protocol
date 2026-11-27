@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/workout_provider.dart';
 import '../../core/storage/session_storage.dart';
 import '../../core/theme/hunter_theme.dart';
@@ -81,6 +82,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appearanceProvider);
     final wState = ref.watch(workoutProvider);
 
     return Scaffold(
@@ -88,7 +90,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'COMBAT TRAINING',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -138,13 +140,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.restore, color: HunterTheme.gold),
+                  Icon(Icons.restore, color: HunterTheme.gold),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'UNFINISHED WORKOUT DRAFT',
                           style: TextStyle(
                             color: HunterTheme.gold,
@@ -154,7 +156,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                         ),
                         Text(
                           _pendingDraft?['workoutName']?.toString() ?? 'Session Draft',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: HunterTheme.textPrimary, fontSize: 12.5),
                         ),
                       ],
@@ -165,7 +167,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                       await SessionStorage.clearWorkoutDraft();
                       setState(() => _pendingDraft = null);
                     },
-                    child: const Text('DISCARD', style: TextStyle(color: HunterTheme.crimson)),
+                    child: Text('DISCARD', style: TextStyle(color: HunterTheme.crimson)),
                   ),
                   ElevatedButton(
                     onPressed: () => _launchSession(
@@ -210,8 +212,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     context,
                     onSelectTemplate: _startOfficialTemplate,
                   ),
-                  icon: const Icon(Icons.auto_awesome, size: 18, color: HunterTheme.purple),
-                  label: const Text(
+                  icon: Icon(Icons.auto_awesome, size: 18, color: HunterTheme.purple),
+                  label: Text(
                     'OFFICIAL SPLITS',
                     style: TextStyle(
                       color: HunterTheme.purple,
@@ -220,7 +222,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: HunterTheme.purple),
+                    side: BorderSide(color: HunterTheme.purple),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -234,9 +236,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _showAiSplitDialog,
-              icon: const Icon(Icons.psychology_alt_rounded,
+              icon: Icon(Icons.psychology_alt_rounded,
                   size: 18, color: HunterTheme.gold),
-              label: const Text(
+              label: Text(
                 'AI CUSTOM SPLIT GENERATOR',
                 style: TextStyle(
                   color: HunterTheme.gold,
@@ -255,7 +257,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
           ),
 
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'YOUR SAVED TEMPLATES',
             style: TextStyle(
               color: HunterTheme.textMuted,
@@ -274,7 +276,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.2)),
               ),
-              child: const Text(
+              child: Text(
                 'No custom templates yet. Toggle "Save as template" when finishing any workout, or deploy an Official Split above.',
                 style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
               ),
@@ -293,16 +295,16 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                   child: ListTile(
                     title: Text(
                       tpl.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
                       '${tpl.exerciseIds.length} Exercises',
-                      style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
+                      style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
                     ),
-                    trailing: const Icon(Icons.play_arrow_rounded, color: HunterTheme.cyan),
+                    trailing: Icon(Icons.play_arrow_rounded, color: HunterTheme.cyan),
                     onTap: () {
                       final resolved = tpl.exerciseIds
                           .map(wState.findExerciseById)
@@ -325,7 +327,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
 
   Widget _buildHistoryTab(WorkoutState wState) {
     if (wState.sessions.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No combat sessions logged yet.',
           style: TextStyle(color: HunterTheme.textMuted),
@@ -358,7 +360,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     Expanded(
                       child: Text(
                         s.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontWeight: FontWeight.w900,
                           fontSize: 14.5,
@@ -367,7 +369,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     ),
                     Text(
                       '+${s.xpEarned} XP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.gold,
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
@@ -378,13 +380,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                 const SizedBox(height: 4),
                 Text(
                   '$dateLabel • ${s.totalVolume} kg moved • ${s.totalSets} sets',
-                  style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
+                  style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
                 ),
                 if (s.notes != null && s.notes!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     s.notes!,
-                    style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                    style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                   ),
                 ],
               ],
@@ -406,7 +408,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       padding: const EdgeInsets.all(16),
       children: [
         if (wState.prs.isNotEmpty) ...[
-          const Text(
+          Text(
             'PERSONAL RECORDS HALL',
             style: TextStyle(
               color: HunterTheme.gold,
@@ -437,7 +439,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                       children: [
                         Text(
                           exName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13.5,
@@ -445,7 +447,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                         ),
                         Text(
                           pr.recordType.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: HunterTheme.gold, fontSize: 10, fontWeight: FontWeight.w800),
                         ),
                       ],
@@ -453,7 +455,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                   ),
                   Text(
                     '${pr.value.toStringAsFixed(1)} KG',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.gold,
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
@@ -467,11 +469,11 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         ],
 
         TextField(
-          style: const TextStyle(color: HunterTheme.textPrimary),
+          style: TextStyle(color: HunterTheme.textPrimary),
           decoration: InputDecoration(
             hintText: 'Search 79+ exercises by name or muscle...',
-            hintStyle: const TextStyle(color: HunterTheme.textMuted),
-            prefixIcon: const Icon(Icons.search, color: HunterTheme.cyan),
+            hintStyle: TextStyle(color: HunterTheme.textMuted),
+            prefixIcon: Icon(Icons.search, color: HunterTheme.cyan),
             filled: true,
             fillColor: HunterTheme.surface,
             border: OutlineInputBorder(
@@ -487,14 +489,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             contentPadding: const EdgeInsets.symmetric(horizontal: 4),
             title: Text(
               ex.name,
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
             subtitle: Text(
               '${ex.muscleGroup.toUpperCase()} • ${ex.equipment.toUpperCase()}',
-              style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
+              style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
             ),
           ),
         ),
@@ -520,7 +522,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
               borderRadius: BorderRadius.circular(18),
               side: BorderSide(color: HunterTheme.gold.withValues(alpha: 0.5)),
             ),
-            title: const Row(
+            title: Row(
               children: [
                 Icon(Icons.psychology_alt_rounded, color: HunterTheme.gold),
                 SizedBox(width: 8),
@@ -542,7 +544,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('TRAINING FOCUS',
+                  Text('TRAINING FOCUS',
                       style: TextStyle(
                           color: HunterTheme.textMuted,
                           fontSize: 10.5,
@@ -551,7 +553,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                   DropdownButtonFormField<String>(
                     initialValue: goalFocus,
                     dropdownColor: HunterTheme.surface,
-                    style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                    style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: HunterTheme.abyss,
@@ -577,7 +579,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     onChanged: (v) => setDialogState(() => goalFocus = v ?? goalFocus),
                   ),
                   const SizedBox(height: 12),
-                  const Text('EQUIPMENT ACCESS',
+                  Text('EQUIPMENT ACCESS',
                       style: TextStyle(
                           color: HunterTheme.textMuted,
                           fontSize: 10.5,
@@ -604,7 +606,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     }).toList(),
                   ),
                   const SizedBox(height: 12),
-                  const Text('SESSION LENGTH & DAYS / WEEK',
+                  Text('SESSION LENGTH & DAYS / WEEK',
                       style: TextStyle(
                           color: HunterTheme.textMuted,
                           fontSize: 10.5,
@@ -646,12 +648,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                   const SizedBox(height: 12),
                   TextField(
                     controller: constraintCtrl,
-                    style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
+                    style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
                     decoration: InputDecoration(
                       labelText: 'Constraint or Injury Note (optional)',
-                      labelStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                      labelStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                       hintText: 'e.g., Bad knee, avoid deep barbell squats',
-                      hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                      hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                       filled: true,
                       fillColor: HunterTheme.abyss,
                       border: OutlineInputBorder(
@@ -666,7 +668,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             actions: [
               TextButton(
                 onPressed: generating ? null : () => Navigator.of(dialogCtx).pop(),
-                child: const Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
+                child: Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
               ),
               ElevatedButton.icon(
                 onPressed: generating

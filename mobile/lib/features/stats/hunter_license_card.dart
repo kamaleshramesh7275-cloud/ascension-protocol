@@ -112,7 +112,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'HUNTER ASSOCIATION // LICENSE',
                         overflow: TextOverflow.ellipsis,
@@ -170,7 +170,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
                                 child: Text(
                                   u.name.toUpperCase(),
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.textPrimary,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -181,7 +181,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
                                 const SizedBox(width: 6),
                                 Text(
                                   '★${u.prestigeRank}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.gold,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,
@@ -192,7 +192,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
                           ),
                           Text(
                             'LV.${u.level} • $classDisplay',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.cyanLight,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -201,7 +201,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
                           if (u.activeTitle != null && u.activeTitle!.isNotEmpty)
                             Text(
                               'TITLE: ${u.activeTitle!.toUpperCase()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.gold,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
@@ -247,14 +247,14 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
           child: OutlinedButton.icon(
             onPressed: _exporting ? null : _shareLicenseImage,
             icon: _exporting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: HunterTheme.cyan),
                   )
-                : const Icon(Icons.qr_code_2_rounded, size: 18, color: HunterTheme.cyan),
-            label: const Text(
+                : Icon(Icons.qr_code_2_rounded, size: 18, color: HunterTheme.cyan),
+            label: Text(
               'SHARE HUNTER LICENSE CARD (PNG)',
               style: TextStyle(
                 color: HunterTheme.cyanLight,
@@ -279,7 +279,7 @@ class _HunterLicenseCardState extends State<HunterLicenseCard> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: HunterTheme.textMuted,
             fontSize: 9.5,
             fontWeight: FontWeight.w800,

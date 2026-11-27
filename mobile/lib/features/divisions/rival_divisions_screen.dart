@@ -98,7 +98,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'RIVAL DIVISIONS',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -109,12 +109,37 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
         ),
       ),
       body: divState.loading && pod == null
-          ? const Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
+          ? Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
           : pod == null
-              ? const Center(
-                  child: Text(
-                    'Unable to load weekly rival pod.',
-                    style: TextStyle(color: HunterTheme.textMuted),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.leaderboard_outlined, color: HunterTheme.textMuted, size: 48),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Unable to load weekly rival pod.',
+                          style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Pull down or tap retry to sync your division.',
+                          style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.read(divisionsProvider.notifier).loadDivision(),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('RETRY', style: TextStyle(fontWeight: FontWeight.w900)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HunterTheme.cyan,
+                            foregroundColor: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : RefreshIndicator(
@@ -160,7 +185,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                                   ),
                                   child: Text(
                                     _formatResetCountdown(pod.resetsAt),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: HunterTheme.gold,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w900,
@@ -175,7 +200,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                               children: [
                                 Text(
                                   'YOUR STANDING: #${pod.myRank} OF ${pod.members.length}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.textPrimary,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
@@ -184,7 +209,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                                 if (pod.xpToNextRank > 0)
                                   Text(
                                     '+${pod.xpToNextRank} XP to climb',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: HunterTheme.cyanLight,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -197,7 +222,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                               pod.promotionCount > 0
                                   ? 'Top ${pod.promotionCount} Promote  •  ${pod.demotionCount > 0 ? 'Bottom ${pod.demotionCount} Demote' : 'No Demotions below Bronze/Small Pods'}'
                                   : 'Top Monarch finisher wins +400 Coins Sunday night.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.textMuted,
                                 fontSize: 11.5,
                               ),
@@ -272,7 +297,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           '[${member.userTier}]',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: HunterTheme.gold,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
@@ -298,7 +323,7 @@ class _RivalDivisionsScreenState extends ConsumerState<RivalDivisionsScreen> {
                               ),
                               Text(
                                 '${member.weeklyXp} XP',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: HunterTheme.cyanLight,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,

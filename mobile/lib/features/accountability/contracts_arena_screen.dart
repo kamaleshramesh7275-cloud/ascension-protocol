@@ -76,7 +76,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
       HapticFeedback.heavyImpact();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surfaceLight,
           content: Text('Weekly Blood Contract bound by System.'),
         ),
@@ -194,7 +194,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'ACCOUNTABILITY ARENA',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -245,9 +245,9 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
           ),
           child: Row(
             children: [
-              const Icon(Icons.temple_hindu_rounded, color: HunterTheme.gold, size: 22),
+              Icon(Icons.temple_hindu_rounded, color: HunterTheme.gold, size: 22),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -291,7 +291,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
               children: [
                 Text(
                   'ACTIVE WEEKLY CONTRACT (${c.status.toUpperCase()})',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.gold,
                     fontWeight: FontWeight.w900,
                     fontSize: 12,
@@ -301,24 +301,48 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                 const SizedBox(height: 6),
                 Text(
                   '${c.weekStartDate} -> ${c.weekEndDate}',
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Missions Target: ${c.targetMissionsCount}',
-                  style: const TextStyle(
+                  'Missions Target: ${c.targetMissionsCount} quests (${(c.targetMissionsCount / 7).toStringAsFixed(1)}/day)',
+                  style: TextStyle(
                       color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  'Deep Work Target: ${c.targetFocusMinutes} mins',
-                  style: const TextStyle(
+                  'Deep Work Target: ${c.targetFocusMinutes} mins (~${(c.targetFocusMinutes / 7).round()}m/day)',
+                  style: TextStyle(
                       color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: HunterTheme.abyss.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: HunterTheme.gold.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reward: +150 Coins & +100 XP on fulfillment',
+                        style: TextStyle(color: HunterTheme.emeraldLight, fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Breach Consequence: ${(c.antiCharityRecipient != null && c.antiCharityRecipient!.isNotEmpty) ? c.antiCharityRecipient : 'Recorded on Wall of Consequence'}',
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                      ),
+                    ],
+                  ),
                 ),
                 if (c.outcomeVerdict != null) ...[
                   const SizedBox(height: 8),
                   Text(
                     c.outcomeVerdict!,
-                    style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
+                    style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12),
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -351,7 +375,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'ESTABLISH WEEKLY COMMITMENT CONTRACT',
                   style: TextStyle(
                     color: HunterTheme.cyanLight,
@@ -359,10 +383,63 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                     fontSize: 12.5,
                   ),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  'Pick a realistic weekly target or customize your own:',
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    ActionChip(
+                      backgroundColor: HunterTheme.surfaceLight,
+                      label: Text('Deep Work (5q / 300m)', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
+                      onPressed: () => setState(() {
+                        _missionsTarget = 5;
+                        _focusTarget = 300;
+                        if (_antiCharityCtrl.text.isEmpty) _antiCharityCtrl.text = 'No social media for 48h';
+                      }),
+                    ),
+                    ActionChip(
+                      backgroundColor: HunterTheme.surfaceLight,
+                      label: Text('Exam / Crunch (10q / 600m)', style: TextStyle(color: HunterTheme.gold, fontSize: 11)),
+                      onPressed: () => setState(() {
+                        _missionsTarget = 10;
+                        _focusTarget = 600;
+                        if (_antiCharityCtrl.text.isEmpty) _antiCharityCtrl.text = 'Wake 1h earlier next day';
+                      }),
+                    ),
+                    ActionChip(
+                      backgroundColor: HunterTheme.surfaceLight,
+                      label: Text('Consistency (7q / 210m)', style: TextStyle(color: HunterTheme.emeraldLight, fontSize: 11)),
+                      onPressed: () => setState(() {
+                        _missionsTarget = 7;
+                        _focusTarget = 210;
+                        if (_antiCharityCtrl.text.isEmpty) _antiCharityCtrl.text = '50 burpees penalty';
+                      }),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: HunterTheme.abyss.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.25)),
+                  ),
+                  child: Text(
+                    'Daily Pace: ~${(_focusTarget / 7).round()}m focus/day • ${(_missionsTarget / 7).toStringAsFixed(1)} quests/day',
+                    style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Weekly Missions Target: $_missionsTarget',
-                  style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                  style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                 ),
                 Slider(
                   min: 3,
@@ -374,7 +451,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                 ),
                 Text(
                   'Weekly Deep Work Target: $_focusTarget min',
-                  style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                  style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                 ),
                 Slider(
                   min: 60,
@@ -386,11 +463,28 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                 ),
                 TextField(
                   controller: _antiCharityCtrl,
-                  style: const TextStyle(color: HunterTheme.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'Penalty Clause / Witness Note (Optional)',
+                  style: TextStyle(color: HunterTheme.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Real-World Consequence (If you miss)',
+                    hintText: 'e.g. Donate ₹200, 50 burpees, no gaming 48h',
+                    hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                     labelStyle: TextStyle(color: HunterTheme.textMuted),
                   ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    'No social media 48h',
+                    '50 burpees penalty',
+                    'Donate ₹200 to charity',
+                    'Wake 1h earlier',
+                  ].map((clause) => ActionChip(
+                    backgroundColor: HunterTheme.abyss,
+                    label: Text(clause, style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5)),
+                    onPressed: () => setState(() => _antiCharityCtrl.text = clause),
+                  )).toList(),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -433,8 +527,8 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
               Expanded(
                 child: TextField(
                   controller: _covCodeInputCtrl,
-                  style: const TextStyle(color: HunterTheme.textPrimary),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: HunterTheme.textPrimary),
+                  decoration: InputDecoration(
                     hintText: 'Enter Code (e.g. COV-A1B2C3D4)',
                     hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
                     isDense: true,
@@ -467,7 +561,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'ISSUE 1V1 BUDDY COVENANT',
                 style: TextStyle(
                   color: HunterTheme.cyanLight,
@@ -476,10 +570,27 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                 ),
               ),
               const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  ('7-Day Gym Streak', 7),
+                  ('14-Day Zero-Scroll Morning', 14),
+                  ('7-Day 1h Deep Work Daily', 7),
+                ].map((preset) => ActionChip(
+                  backgroundColor: HunterTheme.surfaceLight,
+                  label: Text(preset.$1, style: TextStyle(color: HunterTheme.cyanLight, fontSize: 10.5)),
+                  onPressed: () => setState(() {
+                    _covObjectiveCtrl.text = preset.$1;
+                    _covDays = preset.$2;
+                  }),
+                )).toList(),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: _covObjectiveCtrl,
-                style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
-                decoration: const InputDecoration(
+                style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
                   labelText: 'Duel Objective',
                   labelStyle: TextStyle(color: HunterTheme.textMuted),
                 ),
@@ -491,8 +602,8 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                     child: DropdownButtonFormField<int>(
                       initialValue: _covDays,
                       dropdownColor: HunterTheme.surface,
-                      style: const TextStyle(color: HunterTheme.textPrimary),
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: HunterTheme.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'Duration',
                         labelStyle: TextStyle(color: HunterTheme.textMuted),
                       ),
@@ -509,8 +620,8 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                     child: DropdownButtonFormField<int>(
                       initialValue: _covStake,
                       dropdownColor: HunterTheme.surface,
-                      style: const TextStyle(color: HunterTheme.textPrimary),
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: HunterTheme.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'Coin Stake',
                         labelStyle: TextStyle(color: HunterTheme.textMuted),
                       ),
@@ -543,7 +654,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
         ),
         const SizedBox(height: 16),
 
-        const Text(
+        Text(
           'YOUR COVENANT DUELS',
           style: TextStyle(
             color: HunterTheme.textMuted,
@@ -554,7 +665,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
         ),
         const SizedBox(height: 8),
         if (aState.covenants.isEmpty)
-          const Text(
+          Text(
             'No covenants initiated or accepted yet.',
             style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
           )
@@ -584,13 +695,30 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                cov.covenantCode,
-                style: const TextStyle(
-                  color: HunterTheme.gold,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.1,
-                ),
+              Row(
+                children: [
+                  Text(
+                    cov.covenantCode,
+                    style: TextStyle(
+                      color: HunterTheme.gold,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: cov.covenantCode));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: HunterTheme.surfaceLight,
+                          content: Text('Copied ${cov.covenantCode} to clipboard.'),
+                        ),
+                      );
+                    },
+                    child: Icon(Icons.copy_rounded, size: 15, color: HunterTheme.cyanLight),
+                  ),
+                ],
               ),
               Text(
                 '${cov.status.toUpperCase()} • ${cov.stakeCoins} COINS',
@@ -605,14 +733,14 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
           const SizedBox(height: 4),
           Text(
             cov.protocolObjective,
-            style: const TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             cov.counterpartyName != null
                 ? '${cov.initiatorName} vs ${cov.counterpartyName} (${cov.termsDays}D)'
                 : 'Initiator: ${cov.initiatorName} • Awaiting Challenger (${cov.termsDays}D)',
-            style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+            style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
           ),
         ],
       ),
@@ -633,7 +761,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'DECLARE PUBLIC HUNTER OATH',
                 style: TextStyle(
                   color: HunterTheme.purple,
@@ -642,11 +770,26 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                 ),
               ),
               const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  'Study 2h daily for 30 days',
+                  'No junk food for 14 days',
+                  'Workout 4x every week',
+                  'Ship my project by Sunday',
+                ].map((tpl) => ActionChip(
+                  backgroundColor: HunterTheme.surfaceLight,
+                  label: Text(tpl, style: TextStyle(color: HunterTheme.cyanLight, fontSize: 10.5)),
+                  onPressed: () => setState(() => _oathCtrl.text = tpl),
+                )).toList(),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: _oathCtrl,
                 maxLines: 2,
-                style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
-                decoration: const InputDecoration(
+                style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
                   hintText: 'State your 30-day objective before fellow Hunters...',
                   hintStyle: TextStyle(color: HunterTheme.textMuted),
                 ),
@@ -700,7 +843,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
               children: [
                 Text(
                   oath.declaration,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -712,7 +855,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                   children: [
                     Text(
                       'Score: ${oath.currentDisciplineScore} • ${oath.witnessesCount} Witnesses',
-                      style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
+                      style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => ref
@@ -739,7 +882,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
+        Text(
           'HALL OF ASCENSION (IMMORTALIZED)',
           style: TextStyle(
             color: HunterTheme.gold,
@@ -750,7 +893,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
         ),
         const SizedBox(height: 8),
         if (aState.hallEntries.isEmpty)
-          const Text('No inductees recorded yet.',
+          Text('No inductees recorded yet.',
               style: TextStyle(color: HunterTheme.textMuted, fontSize: 12))
         else
           ...aState.hallEntries.map((h) => Container(
@@ -766,12 +909,12 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                   children: [
                     Text(
                       '${h.userName.toUpperCase()} — ${h.disciplineScore} PTS',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: HunterTheme.gold, fontWeight: FontWeight.w900),
                     ),
                     Text(
                       '${h.goalTitle} • ${h.consecutiveDays}d Streak',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: HunterTheme.textPrimary, fontSize: 12),
                     ),
                   ],
@@ -779,7 +922,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
               )),
 
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'WALL OF CONSEQUENCE (CONTRACT BREACHES)',
           style: TextStyle(
             color: HunterTheme.crimson,
@@ -790,7 +933,7 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
         ),
         const SizedBox(height: 8),
         if (aState.wallEntries.isEmpty)
-          const Text('Zero defaults recorded.',
+          Text('Zero defaults recorded.',
               style: TextStyle(color: HunterTheme.textMuted, fontSize: 12))
         else
           ...aState.wallEntries.map((w) => Container(
@@ -806,12 +949,12 @@ class _ContractsArenaScreenState extends ConsumerState<ContractsArenaScreen>
                   children: [
                     Text(
                       '${w.userName.toUpperCase()} — ${w.breachType.toUpperCase()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: HunterTheme.crimson, fontWeight: FontWeight.w900),
                     ),
                     Text(
                       'Target: ${w.contractTarget} | ${w.dishonorReason}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: HunterTheme.textMuted, fontSize: 12),
                     ),
                   ],

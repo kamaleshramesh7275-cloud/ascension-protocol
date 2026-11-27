@@ -91,7 +91,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surface,
           content: Text('Left Guild. 24h relocation cooldown started.'),
         ),
@@ -174,7 +174,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'HUNTER GUILD & RAIDS',
           style: TextStyle(
             color: HunterTheme.textPrimary,
@@ -188,12 +188,12 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
             IconButton(
               onPressed: _acting ? null : _leaveGuild,
               tooltip: 'Leave Guild',
-              icon: const Icon(Icons.logout_rounded, color: HunterTheme.crimson),
+              icon: Icon(Icons.logout_rounded, color: HunterTheme.crimson),
             ),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
+          ? Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
           : RefreshIndicator(
               onRefresh: _load,
               child: _raidData != null ? _buildGuildRaidView() : _buildGuildBrowser(),
@@ -205,8 +205,8 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'JOIN A HUNTER GUILD FOR WEEKLY SHARED RAIDS',
+        Text(
+          'JOIN A MONARCH GUILD • EQUAL RANK (NO HIERARCHY)',
           style: TextStyle(
             color: HunterTheme.cyanLight,
             fontWeight: FontWeight.w900,
@@ -227,7 +227,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
               contentPadding: const EdgeInsets.all(14),
               title: Text(
                 g['name']?.toString() ?? 'Guild',
-                style: const TextStyle(
+                style: TextStyle(
                   color: HunterTheme.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
@@ -236,7 +236,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '${g['description'] ?? ''}\nMembers: ${g['memberCount'] ?? 1} • Guild XP: ${g['totalXP'] ?? 0}',
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                 ),
               ),
               trailing: ElevatedButton(
@@ -291,7 +291,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
               children: [
                 Text(
                   '${guild['name']?.toString().toUpperCase() ?? 'GUILD'} • WEEK ${raid['weekKey'] ?? ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.cyanLight,
                     fontWeight: FontWeight.w900,
                     fontSize: 11,
@@ -301,7 +301,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   raid['bossName']?.toString() ?? 'Guild Siege Behemoth',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
@@ -322,7 +322,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
                 const SizedBox(height: 6),
                 Text(
                   '$curHp / $maxHp HP • Floor: >=60m Focus or 2 Workouts to claim loot',
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                 ),
                 if (dispatch != null && dispatch['summary'] != null) ...[
                   const SizedBox(height: 10),
@@ -334,7 +334,7 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
                     ),
                     child: Text(
                       '${dispatch['summary']}\n${dispatch['callout'] ?? ''}',
-                      style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 11.5),
+                      style: TextStyle(color: HunterTheme.textPrimary, fontSize: 11.5),
                     ),
                   ),
                 ],
@@ -348,12 +348,12 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () => _shareRaidCard(guild),
-                icon: const Icon(Icons.share_rounded, color: HunterTheme.cyanLight),
-                label: const Text(
+                icon: Icon(Icons.share_rounded, color: HunterTheme.cyanLight),
+                label: Text(
                   'INVITE & SHARE CARD',
                   style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.w900, fontSize: 11.5),
                 ),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: HunterTheme.cyan)),
+                style: OutlinedButton.styleFrom(side: BorderSide(color: HunterTheme.cyan)),
               ),
             ),
             if (defeated) ...[
@@ -373,8 +373,8 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
           ],
         ),
         const SizedBox(height: 18),
-        const Text(
-          'SQUAD RAID ROSTER (VERIFIED OUTPUT)',
+        Text(
+          'GUILD RAID ROSTER • ALL MEMBERS EQUAL',
           style: TextStyle(
             color: HunterTheme.textMuted,
             fontWeight: FontWeight.bold,
@@ -405,11 +405,11 @@ class _GuildsScreenState extends ConsumerState<GuildsScreen> {
                   children: [
                     Text(
                       m['name']?.toString() ?? 'Hunter',
-                      style: const TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       '${m['focusMinutes'] ?? 0}m Focus • ${m['workouts'] ?? 0} Workouts',
-                      style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                      style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                     ),
                   ],
                 ),

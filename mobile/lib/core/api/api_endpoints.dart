@@ -4,6 +4,7 @@ class ApiEndpoints {
 
   // Auth & Profile
   static const String authGoogle = '/api/auth/login-google';
+  static const String loginGuest = '/api/auth/login-guest';
   static const String loginPhone = '/api/auth/login-phone';
   static const String registerLocal = '/api/auth/register-local';
   static const String completeProfile = '/api/user/complete-profile';
@@ -104,8 +105,7 @@ class ApiEndpoints {
   static const String roadmapTrajectory = '/api/protocol/roadmap/trajectory';
 
 
-  // Leaderboard, Guilds & Rival Divisions
-  static const String leaderboard = '/api/leaderboard';
+  // Guilds & Rival Divisions
   static const String guilds = '/api/guilds';
   static const String divisionsCurrent = '/api/divisions/current';
   static const String divisionsAcknowledge = '/api/divisions/acknowledge';

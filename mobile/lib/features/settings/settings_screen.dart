@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/api/api_error.dart';
 import '../../core/theme/hunter_theme.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/services/system_audio_service.dart';
 import '../../core/widgets/home_widget_bridge.dart';
 import '../../models/user_model.dart';
-import '../auth/login_screen.dart';
 import '../feedback/bug_report_sheet.dart';
 import '../feedback/feedback_screen.dart';
 
@@ -64,9 +65,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: HunterTheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: HunterTheme.crimson, width: 1.5),
+          side: BorderSide(color: HunterTheme.crimson, width: 1.5),
         ),
-        title: const Text(
+        title: Text(
           'PERMANENT ACCOUNT DELETION',
           style: TextStyle(
             color: HunterTheme.crimson,
@@ -75,26 +76,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             fontSize: 16,
           ),
         ),
-        content: const Text(
+        content: Text(
           'WARNING: This action is permanent and irreversible.\n\nAll your hunter levels, attributes, streak history, quest logs, and inventory will be wiped from Ascension Protocol servers immediately.\n\nAre you absolutely sure you wish to terminate your matrix profile?',
           style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
+            child: Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
               setState(() => _isProcessing = true);
               try {
-                await ref.read(authRepositoryProvider).deleteAccount();
+                await ref.read(authProvider.notifier).deleteAccount();
                 if (mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 }
               } catch (e) {
                 if (mounted) {
@@ -102,7 +100,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       backgroundColor: HunterTheme.surface,
-                      content: Text('Failed to delete account: $e', style: const TextStyle(color: HunterTheme.crimson)),
+                      content: Text('Failed to delete account: $e', style: TextStyle(color: HunterTheme.crimson)),
                     ),
                   );
                 }
@@ -127,31 +125,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: HunterTheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: HunterTheme.cyan, width: 1.2),
+          side: BorderSide(color: HunterTheme.cyan, width: 1.2),
         ),
-        title: const Text(
+        title: Text(
           'LOGOUT PROTOCOL',
           style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to log out of Ascension Protocol?',
           style: TextStyle(color: HunterTheme.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
+            child: Text('CANCEL', style: TextStyle(color: HunterTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
               setState(() => _isProcessing = true);
-              await ref.read(authRepositoryProvider).signOut();
+              await ref.read(authProvider.notifier).logout();
               if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                Navigator.of(context).popUntil((route) => route.isFirst);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -170,14 +165,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: HunterTheme.surface,
-        title: Text(title, style: const TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold)),
+        title: Text(title, style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold)),
         content: SingleChildScrollView(
-          child: Text(content, style: const TextStyle(color: HunterTheme.textPrimary, height: 1.4)),
+          child: Text(content, style: TextStyle(color: HunterTheme.textPrimary, height: 1.4)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('CLOSE', style: TextStyle(color: HunterTheme.cyan)),
+            child: Text('CLOSE', style: TextStyle(color: HunterTheme.cyan)),
           ),
         ],
       ),
@@ -187,6 +182,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final liveUser = ref.watch(authProvider).value;
+    final appearance = ref.watch(appearanceProvider);
     final penaltyEnabled = liveUser?.penaltyModeEnabled ?? true;
     final pushEnabled = liveUser?.notificationsEnabled ?? true;
 
@@ -195,7 +191,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'SETTINGS & PROTOCOL',
           style: TextStyle(
             color: HunterTheme.cyanLight,
@@ -206,12 +202,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
       body: _isProcessing
-          ? const Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
+          ? Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
+                // Appearance: Themes & Fonts (Global)
+                _buildAppearanceSection(appearance),
+                const SizedBox(height: 28),
+
                 // System Mechanics & Push Preferences (SL-2 & RET-1)
-                const Text(
+                Text(
                   'SYSTEM MECHANICS & ALERTS',
                   style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2),
                 ),
@@ -222,12 +222,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Column(
                     children: [
                       SwitchListTile(
-                        secondary: const Icon(Icons.gpp_maybe_outlined, color: HunterTheme.crimson),
-                        title: const Text(
+                        secondary: Icon(Icons.gpp_maybe_outlined, color: HunterTheme.crimson),
+                        title: Text(
                           'Hardcore Penalty Zone Mode',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Trigger crimson survival quest & shop lock on missed protocols',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
@@ -235,14 +235,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         value: penaltyEnabled,
                         onChanged: (val) => _updatePreference({'penaltyModeEnabled': val}),
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       SwitchListTile(
-                        secondary: const Icon(Icons.notifications_active_outlined, color: HunterTheme.cyan),
-                        title: const Text(
+                        secondary: Icon(Icons.notifications_active_outlined, color: HunterTheme.cyan),
+                        title: Text(
                           'Smart Contextual Push Alerts',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Morning briefing, 8 PM streak guard & 9 PM penalty deadline',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
@@ -250,14 +250,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         value: pushEnabled,
                         onChanged: (val) => _updatePreference({'notificationsEnabled': val}),
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       SwitchListTile(
-                        secondary: const Icon(Icons.volume_up_rounded, color: HunterTheme.purple),
-                        title: const Text(
+                        secondary: Icon(Icons.volume_up_rounded, color: HunterTheme.purple),
+                        title: Text(
                           'System Voice & SFX Stings',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Holographic System alerts, level-up stings & alarm warnings',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
@@ -274,18 +274,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           if (mounted) setState(() {});
                         },
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.widgets_outlined, color: HunterTheme.gold),
-                        title: const Text(
+                        leading: Icon(Icons.widgets_outlined, color: HunterTheme.gold),
+                        title: Text(
                           'Pin Quest HUD Widget',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Add live Rank, Streak & Morning Anchor widget to Android Home Screen',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
-                        trailing: const Icon(Icons.add_box_outlined, color: HunterTheme.gold),
+                        trailing: Icon(Icons.add_box_outlined, color: HunterTheme.gold),
                         onTap: () async {
                           final ok = await HomeWidgetBridge.requestPinWidget();
                           if (!context.mounted) return;
@@ -296,38 +296,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ok
                                     ? 'System Widget pin request sent to launcher.'
                                     : 'Long-press your Home Screen -> Widgets -> Ascension Quest HUD.',
-                                style: const TextStyle(color: HunterTheme.cyanLight),
+                                style: TextStyle(color: HunterTheme.cyanLight),
                               ),
                             ),
                           );
                         },
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.bug_report_outlined, color: HunterTheme.crimson),
-                        title: const Text(
+                        leading: Icon(Icons.bug_report_outlined, color: HunterTheme.crimson),
+                        title: Text(
                           'Report a Bug / Error',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Auto-attach app & error diagnostics for rapid fix',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
-                        trailing: const Icon(Icons.chevron_right, color: HunterTheme.textMuted),
+                        trailing: Icon(Icons.chevron_right, color: HunterTheme.textMuted),
                         onTap: () => BugReportSheet.show(context, screenName: 'SettingsScreen'),
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.lightbulb_outline_rounded, color: HunterTheme.cyan),
-                        title: const Text(
+                        leading: Icon(Icons.lightbulb_outline_rounded, color: HunterTheme.cyan),
+                        title: Text(
                           'Request Feature / Feedback Board',
                           style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Share what you need, track your reports & upvote top ideas',
                           style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
-                        trailing: const Icon(Icons.chevron_right, color: HunterTheme.textMuted),
+                        trailing: Icon(Icons.chevron_right, color: HunterTheme.textMuted),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const FeedbackScreen()),
                         ),
@@ -338,7 +338,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 28),
 
                 // Account Section
-                const Text(
+                Text(
                   'IDENTITY & CREDENTIALS',
                   style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2),
                 ),
@@ -349,48 +349,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.logout, color: HunterTheme.cyan),
-                        title: const Text('Logout', style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Sign out of active device session', style: TextStyle(color: HunterTheme.textMuted, fontSize: 12)),
+                        leading: Icon(Icons.logout, color: HunterTheme.cyan),
+                        title: Text('Logout', style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold)),
+                        subtitle: Text('Sign out of active device session', style: TextStyle(color: HunterTheme.textMuted, fontSize: 12)),
                         onTap: _showLogoutDialog,
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.delete_forever, color: HunterTheme.crimson),
-                        title: const Text('Delete Account', style: TextStyle(color: HunterTheme.crimson, fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Permanently erase profile & all telemetry (Play Store Requirement)', style: TextStyle(color: HunterTheme.textMuted, fontSize: 12)),
+                        leading: Icon(Icons.delete_forever, color: HunterTheme.crimson),
+                        title: Text('Delete Account', style: TextStyle(color: HunterTheme.crimson, fontWeight: FontWeight.bold)),
+                        subtitle: Text('Permanently erase profile & all telemetry (Play Store Requirement)', style: TextStyle(color: HunterTheme.textMuted, fontSize: 12)),
                         onTap: _showDeleteAccountDialog,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
 
                 // Legal & Compliance Section
-                const Text(
+                Text(
                   'COMPLIANCE & LEGAL',
                   style: TextStyle(color: HunterTheme.cyanLight, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Card(
                   color: HunterTheme.surface,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.privacy_tip_outlined, color: HunterTheme.cyanLight),
-                        title: const Text('Privacy Policy', style: TextStyle(color: HunterTheme.textPrimary)),
-                        trailing: const Icon(Icons.chevron_right, color: HunterTheme.textMuted),
+                        leading: Icon(Icons.privacy_tip_outlined, color: HunterTheme.cyanLight),
+                        title: Text('Privacy Policy', style: TextStyle(color: HunterTheme.textPrimary)),
+                        trailing: Icon(Icons.chevron_right, color: HunterTheme.textMuted),
                         onTap: () => _showInfoDialog(
                           'Privacy Policy',
                           'Ascension Protocol processes your identity, physical stats, and focus records under encrypted storage. You retain the right to delete your data at any time via the Delete Account option.',
                         ),
                       ),
-                      const Divider(color: HunterTheme.surfaceLight, height: 1),
+                      Divider(color: HunterTheme.surfaceLight, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.description_outlined, color: HunterTheme.cyanLight),
-                        title: const Text('Terms of Service', style: TextStyle(color: HunterTheme.textPrimary)),
-                        trailing: const Icon(Icons.chevron_right, color: HunterTheme.textMuted),
+                        leading: Icon(Icons.description_outlined, color: HunterTheme.cyanLight),
+                        title: Text('Terms of Service', style: TextStyle(color: HunterTheme.textPrimary)),
+                        trailing: Icon(Icons.chevron_right, color: HunterTheme.textMuted),
                         onTap: () => _showInfoDialog(
                           'Terms of Service',
                           'By accessing Ascension Protocol, you agree to commit to self-honesty, discipline, and non-tampering of operational records.',
@@ -399,12 +399,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
 
                 // Version Info
                 Center(
                   child: Column(
-                    children: const [
+                    children: [
                       Text(
                         'Ascension Protocol v1.0.4 (Build 42)',
                         style: TextStyle(color: HunterTheme.textMuted, fontSize: 12, fontWeight: FontWeight.bold),
@@ -419,6 +419,214 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildAppearanceSection(AppearanceState appearance) {
+    final notifier = ref.read(appearanceProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SYSTEM THEME & TYPOGRAPHY',
+          style: TextStyle(
+            color: HunterTheme.cyanLight,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          color: HunterTheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'INTERFACE THEME',
+                  style: TextStyle(
+                    color: HunterTheme.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: HunterThemeId.values.map((id) {
+                    final palette = HunterTheme.paletteFor(id);
+                    final isSelected = appearance.themeId == id;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          notifier.setTheme(id);
+                        },
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            right: id != HunterThemeId.values.last ? 8 : 0,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: palette.abyss,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? palette.cyan
+                                  : palette.surfaceLight,
+                              width: isSelected ? 2 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: palette.cyan.withValues(alpha: 0.28),
+                                      blurRadius: 10,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _swatchDot(palette.surface),
+                                  const SizedBox(width: 4),
+                                  _swatchDot(palette.cyan),
+                                  const SizedBox(width: 4),
+                                  _swatchDot(palette.purple),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                palette.name.split(' ').take(2).join('\n'),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: palette.textPrimary,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  fontSize: 11,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Icon(
+                                isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                size: 15,
+                                color: isSelected ? palette.cyan : palette.textMuted,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                Divider(color: HunterTheme.surfaceLight, height: 1),
+                const SizedBox(height: 14),
+                Text(
+                  'SYSTEM FONT FAMILY',
+                  style: TextStyle(
+                    color: HunterTheme.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...HunterFontId.values.map((fontId) {
+                  final isSelected = appearance.fontId == fontId;
+                  final previewStyle = fontId == HunterFontId.tacticalGrotesk
+                      ? GoogleFonts.spaceGrotesk(
+                          color: HunterTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        )
+                      : fontId == HunterFontId.terminalMono
+                          ? GoogleFonts.jetBrainsMono(
+                              color: HunterTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            )
+                          : GoogleFonts.rajdhani(
+                              color: HunterTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            );
+
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      notifier.setFont(fontId);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? HunterTheme.cyan.withValues(alpha: 0.12)
+                            : HunterTheme.abyss,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? HunterTheme.cyan : HunterTheme.surfaceLight,
+                          width: isSelected ? 1.6 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  HunterTheme.fontDisplayName(fontId),
+                                  style: previewStyle,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  HunterTheme.fontSubtitle(fontId),
+                                  style: previewStyle.copyWith(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.normal,
+                                    color: HunterTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: isSelected ? HunterTheme.cyan : HunterTheme.textMuted,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _swatchDot(Color color) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white24, width: 0.8),
+      ),
     );
   }
 }

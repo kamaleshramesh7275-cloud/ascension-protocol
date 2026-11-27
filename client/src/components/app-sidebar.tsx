@@ -121,12 +121,6 @@ export function AppSidebar() {
             tag: "METRICS",
         },
         {
-            title: "Global Leaderboard",
-            url: "/leaderboard",
-            icon: Trophy,
-            tag: "GLOBAL",
-        },
-        {
             title: "Operative Dossier",
             url: "/profile",
             icon: User,

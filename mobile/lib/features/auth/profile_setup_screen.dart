@@ -49,7 +49,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       if (!success && mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: HunterTheme.surface,
             content: Text(
               'Failed to update profile. Please check phone number.',
@@ -66,7 +66,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             backgroundColor: HunterTheme.surface,
             content: Text(
               'Error: ${e.toString().replaceAll("Exception: ", "")}',
-              style: const TextStyle(color: HunterTheme.crimson),
+              style: TextStyle(color: HunterTheme.crimson),
             ),
           ),
         );
@@ -95,7 +95,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       height: 68,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [HunterTheme.cyan, HunterTheme.purple],
                         ),
                         boxShadow: [
@@ -170,7 +170,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     decoration: InputDecoration(
                       hintText: 'Enter Hunter Codename',
                       hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-                      prefixIcon: const Icon(Icons.person, color: HunterTheme.cyanLight, size: 20),
+                      prefixIcon: Icon(Icons.person, color: HunterTheme.cyanLight, size: 20),
                       filled: true,
                       fillColor: HunterTheme.surface,
                       border: OutlineInputBorder(
@@ -183,7 +183,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: HunterTheme.cyan, width: 1.5),
+                        borderSide: BorderSide(color: HunterTheme.cyan, width: 1.5),
                       ),
                     ),
                     validator: (val) {
@@ -214,7 +214,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     decoration: InputDecoration(
                       hintText: '+91 9876543210',
                       hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-                      prefixIcon: const Icon(Icons.phone_android, color: HunterTheme.cyanLight, size: 20),
+                      prefixIcon: Icon(Icons.phone_android, color: HunterTheme.cyanLight, size: 20),
                       filled: true,
                       fillColor: HunterTheme.surface,
                       border: OutlineInputBorder(
@@ -227,7 +227,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: HunterTheme.cyan, width: 1.5),
+                        borderSide: BorderSide(color: HunterTheme.cyan, width: 1.5),
                       ),
                     ),
                     validator: (val) {

@@ -87,7 +87,6 @@ import OnboardingPage from "@/pages/onboarding";
 import Dashboard from "@/pages/dashboard";
 import QuestsPage from "@/pages/quests";
 import StatsPage from "@/pages/stats";
-import LeaderboardPage from "@/pages/leaderboard";
 import ProfilePage from "@/pages/profile";
 import LibraryPage from "@/pages/library";
 import ContentDetailPage from "@/pages/content-detail";
@@ -364,7 +363,6 @@ function Router() {
         <Route path="/workout" component={() => <ProtectedRoute component={withSeo(WorkoutPage, { title: "Workout Tracker" })} />} />
         <Route path="/focus" component={() => <ProtectedRoute component={withSeo(AirGapFocus, { title: "Air-Gap Focus" })} />} />
         <Route path="/stats" component={() => <ProtectedRoute component={withSeo(StatsPage, { title: "Stats" })} />} />
-        <Route path="/leaderboard" component={() => <ProtectedRoute component={withSeo(LeaderboardPage, { title: "Leaderboard" })} />} />
         <Route path="/profile/:id" component={() => <ProtectedRoute component={withSeo(ProfilePage, { title: "Profile" })} />} />
         <Route path="/profile" component={() => <ProtectedRoute component={withSeo(ProfilePage, { title: "Profile" })} />} />
         <Route path="/library" component={() => <ProtectedRoute component={withSeo(LibraryPage, { title: "Library" })} />} />

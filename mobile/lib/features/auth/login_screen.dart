@@ -71,12 +71,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         behavior: SnackBarBehavior.floating,
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: HunterTheme.crimson, size: 20),
+            Icon(Icons.error_outline, color: HunterTheme.crimson, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message.replaceAll("Exception: ", ""),
-                style: const TextStyle(color: HunterTheme.crimson, fontSize: 13),
+                style: TextStyle(color: HunterTheme.crimson, fontSize: 13),
               ),
             ),
           ],
@@ -195,15 +195,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: HunterTheme.cyan, width: 1.5),
+        borderSide: BorderSide(color: HunterTheme.cyan, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: HunterTheme.crimson, width: 1),
+        borderSide: BorderSide(color: HunterTheme.crimson, width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: HunterTheme.crimson, width: 1.5),
+        borderSide: BorderSide(color: HunterTheme.crimson, width: 1.5),
       ),
     );
   }
@@ -270,7 +270,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                                   width: 72,
                                   height: 72,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const Icon(
+                                  errorBuilder: (_, _, _) => Icon(
                                     Icons.shield,
                                     color: HunterTheme.cyan,
                                     size: 42,
@@ -452,7 +452,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'CONTINUE AS GUEST HUNTER',
                           style: TextStyle(
                             color: HunterTheme.cyanLight,
@@ -838,8 +838,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => setState(() => _showReferralField = true),
-                  icon: const Icon(Icons.add, size: 16, color: HunterTheme.cyanLight),
-                  label: const Text(
+                  icon: Icon(Icons.add, size: 16, color: HunterTheme.cyanLight),
+                  label: Text(
                     'Have an invitation / referral code?',
                     style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
                   ),

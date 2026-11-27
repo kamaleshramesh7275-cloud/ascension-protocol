@@ -7,8 +7,9 @@ import 'auth_provider.dart';
 class DivisionState {
   final DivisionPodModel? pod;
   final bool loading;
+  final String? error;
 
-  const DivisionState({this.pod, this.loading = false});
+  const DivisionState({this.pod, this.loading = false, this.error});
 }
 
 final divisionsProvider =
@@ -40,7 +41,12 @@ class DivisionsNotifier extends StateNotifier<DivisionState> {
         }
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        state = DivisionState(pod: state.pod, loading: false, error: e.toString());
+        return;
+      }
+    }
     if (mounted) state = DivisionState(pod: state.pod, loading: false);
   }
 

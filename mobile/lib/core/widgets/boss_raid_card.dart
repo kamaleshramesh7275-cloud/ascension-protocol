@@ -97,7 +97,7 @@ class _BossRaidCardState extends ConsumerState<BossRaidCard> {
                     const SizedBox(height: 2),
                     Text(
                       w.bossName ?? 'Blood-Red Sentinel',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.textPrimary,
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
@@ -130,7 +130,7 @@ class _BossRaidCardState extends ConsumerState<BossRaidCard> {
           if (w.bossWeaknessRule != null && w.bossWeaknessRule!.isNotEmpty)
             Text(
               'Weakness: ${w.bossWeaknessRule!}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.textMuted,
                 fontSize: 11,
                 height: 1.3,

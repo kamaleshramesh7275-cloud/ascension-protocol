@@ -112,7 +112,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
       appBar: AppBar(
         backgroundColor: HunterTheme.abyss,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'SYSTEM FEEDBACK TERMINAL',
           style: TextStyle(
             color: HunterTheme.cyanLight,
@@ -154,7 +154,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'REPORT TYPE',
               style: TextStyle(
                 color: HunterTheme.textMuted,
@@ -175,7 +175,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
             ),
             const SizedBox(height: 16),
 
-            const Text(
+            Text(
               'SYSTEM MODULE',
               style: TextStyle(
                 color: HunterTheme.textMuted,
@@ -188,7 +188,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
             DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
               dropdownColor: HunterTheme.surface,
-              style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13.5),
+              style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13.5),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: HunterTheme.surface,
@@ -213,7 +213,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
             TextFormField(
               controller: _titleController,
               maxLength: 120,
-              style: const TextStyle(color: HunterTheme.textPrimary),
+              style: TextStyle(color: HunterTheme.textPrimary),
               decoration: _inputDecoration(
                 label: 'SUMMARY TITLE',
                 hint: _selectedType == 'bug'
@@ -232,7 +232,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
               controller: _descController,
               maxLines: 5,
               maxLength: 2000,
-              style: const TextStyle(color: HunterTheme.textPrimary),
+              style: TextStyle(color: HunterTheme.textPrimary),
               decoration: _inputDecoration(
                 label: 'DETAILS & EXPECTED BEHAVIOR',
                 hint: _selectedType == 'bug'
@@ -251,20 +251,20 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
               color: HunterTheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: HunterTheme.surfaceLight),
+                side: BorderSide(color: HunterTheme.surfaceLight),
               ),
               clipBehavior: Clip.antiAlias,
               child: CheckboxListTile(
                 value: _includeDiagnostics,
                 activeColor: HunterTheme.cyan,
                 onChanged: (val) => setState(() => _includeDiagnostics = val ?? true),
-                title: const Text(
+                title: Text(
                   'Attach device info & recent error logs',
                   style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   'App v${FeedbackDiagnosticsService.appVersion} • $recentErrCount recent error(s) buffered (no tokens)',
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                 ),
               ),
             ),
@@ -286,10 +286,10 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                       )
-                    : const Icon(Icons.send_rounded, size: 18),
+                    : Icon(Icons.send_rounded, size: 18),
                 label: Text(
                   state.isSubmitting ? 'TRANSMITTING...' : 'TRANSMIT TO SYSTEM',
-                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
+                  style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.1),
                 ),
               ),
             ),
@@ -301,15 +301,15 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
 
   Widget _buildMyReportsTab(FeedbackState state) {
     if (state.isLoading && state.myReports.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: HunterTheme.cyan));
+      return Center(child: CircularProgressIndicator(color: HunterTheme.cyan));
     }
     if (state.myReports.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(Icons.inbox_outlined, color: HunterTheme.textMuted, size: 42),
               SizedBox(height: 12),
               Text(
@@ -350,14 +350,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                     const Spacer(),
                     Text(
                       item.category.toUpperCase(),
-                      style: const TextStyle(color: HunterTheme.textMuted, fontSize: 10.5),
+                      style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   item.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
@@ -368,7 +368,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                   item.description,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
                 ),
                 if (item.adminNotes != null && item.adminNotes!.trim().isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -383,7 +383,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'SYSTEM ARCHITECT RESPONSE',
                           style: TextStyle(
                             color: HunterTheme.cyanLight,
@@ -395,7 +395,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                         const SizedBox(height: 4),
                         Text(
                           item.adminNotes!,
-                          style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
+                          style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -416,7 +416,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Row(
             children: [
-              const Text(
+              Text(
                 'HUNTER COUNCIL WISHLIST',
                 style: TextStyle(
                   color: HunterTheme.textMuted,
@@ -450,9 +450,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
         ),
         Expanded(
           child: state.isLoading && state.popularRequests.isEmpty
-              ? const Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
+              ? Center(child: CircularProgressIndicator(color: HunterTheme.cyan))
               : state.popularRequests.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'No community requests yet.\nBe the first to propose a feature!',
                         textAlign: TextAlign.center,
@@ -535,14 +535,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                                           const SizedBox(width: 6),
                                           Text(
                                             'by ${item.userName}',
-                                            style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11),
+                                            style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
                                         item.title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: HunterTheme.textPrimary,
                                           fontWeight: FontWeight.w800,
                                           fontSize: 13.5,
@@ -553,7 +553,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
                                         item.description,
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -615,8 +615,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontWeight: FontWeight.bold),
-      hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
+      labelStyle: TextStyle(color: HunterTheme.cyanLight, fontSize: 12, fontWeight: FontWeight.bold),
+      hintStyle: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
       filled: true,
       fillColor: HunterTheme.surface,
       border: OutlineInputBorder(

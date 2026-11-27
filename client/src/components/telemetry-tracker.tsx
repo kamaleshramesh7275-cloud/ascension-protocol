@@ -22,8 +22,6 @@ export function mapPathToTabName(path: string): string {
       return "Store";
     case "/stats":
       return "Stats";
-    case "/leaderboard":
-      return "Leaderboard";
     case "/partners":
       return "Partners";
     case "/global-chat":

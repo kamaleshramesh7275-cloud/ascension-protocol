@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_error.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/divisions_provider.dart';
 import '../../core/providers/quests_provider.dart';
@@ -85,7 +86,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     final candidates = quests.where((q) => !q.completed && !q.isPenalty).toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surfaceLight,
           content: Text('No open quests left to anchor today.'),
         ),
@@ -105,7 +106,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '[ LOCK MORNING ANCHOR QUEST ]',
               style: TextStyle(
                 color: HunterTheme.gold,
@@ -115,7 +116,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Select 1 non-negotiable priority quest. Completing it protects your core momentum for today.',
               style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
             ),
@@ -123,17 +124,17 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             ...candidates.take(6).map(
                   (q) => ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.anchor, color: HunterTheme.gold),
+                    leading: Icon(Icons.anchor, color: HunterTheme.gold),
                     title: Text(
                       q.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
                       '+${q.xp} XP • ${q.attribute}',
-                      style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
+                      style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
                     ),
                     onTap: () async {
                       Navigator.of(ctx).pop();
@@ -233,7 +234,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
 
     if (!outcome.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.crimson,
           content: Text('Failed to sync quest status with System.'),
         ),
@@ -246,13 +247,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
         backgroundColor: HunterTheme.surfaceLight,
         content: Row(
           children: [
-            const Icon(Icons.bolt, color: HunterTheme.cyan),
+            Icon(Icons.bolt, color: HunterTheme.cyan),
             const SizedBox(width: 8),
             Text(
               outcome.offline
                   ? 'Quest Cached Offline — Syncing when online.'
                   : '+${outcome.xpAwarded} XP • +${outcome.coinsAwarded} Coins Synchronized.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.cyanLight,
                 fontWeight: FontWeight.bold,
               ),
@@ -290,6 +291,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appearanceProvider);
     final user = ref.watch(authProvider).value ?? widget.user;
     final quests = ref.watch(questsProvider);
     final trialsAsync = ref.watch(rankTrialsProvider);
@@ -380,11 +382,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield, color: HunterTheme.cyan, size: 16),
+                Icon(Icons.shield, color: HunterTheme.cyan, size: 16),
                 const SizedBox(width: 4),
                 Text(
                   '${user.streakShields} SHIELD',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -428,7 +430,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           '[ SYSTEM NOTICE // QUEST ASSIGNED ]',
                           style: TextStyle(
                             color: HunterTheme.cyanLight,
@@ -439,13 +441,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                         ),
                         InkWell(
                           onTap: _dismissArrivalBanner,
-                          child: const Icon(Icons.close,
+                          child: Icon(Icons.close,
                               size: 16, color: HunterTheme.textMuted),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'DAILY PREPARATION TO BECOME STRONG — Clear today\'s protocol targets before 00:00.',
                       style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
                     ),
@@ -464,7 +466,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                   : () => _openAnchorPicker(quests),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'INSPECT WINDOW',
                             style: TextStyle(
                               color: HunterTheme.cyanLight,
@@ -492,7 +494,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.gpp_bad_rounded, color: HunterTheme.crimson, size: 20),
                         SizedBox(width: 8),
@@ -508,7 +510,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Shop is restricted. Clear your crimson Penalty Quest or complete a 15m Focus session to escape.',
                       style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
                     ),
@@ -561,7 +563,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     children: [
                       Text(
                         'LV. ${user.level} ${(user.evolvedClass ?? user.hunterClass).toUpperCase()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.cyanLight,
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
@@ -570,7 +572,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                       ),
                       Text(
                         'STREAK: ${user.streak} DAYS 🔥',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.gold,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -584,7 +586,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     child: LinearProgressIndicator(
                       value: user.xpProgress,
                       backgroundColor: HunterTheme.abyss,
-                      valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
+                      valueColor: AlwaysStoppedAnimation<Color>(HunterTheme.cyan),
                       minHeight: 8,
                     ),
                   ),
@@ -594,11 +596,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     children: [
                       Text(
                         'XP: ${user.xpIntoLevel} / ${user.xpForNextLevel}',
-                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                       ),
                       Text(
                         'Quests Cleared: $completedCount/${quests.length}',
-                        style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
+                        style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -620,14 +622,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.door_front_door_outlined,
+                    Icon(Icons.door_front_door_outlined,
                         color: HunterTheme.crimson, size: 22),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'RED GATE: COMEBACK RESCUE ACTIVE',
                             style: TextStyle(
                               color: HunterTheme.crimson,
@@ -638,7 +640,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                           ),
                           Text(
                             'Clear 10m Focus + 1 Set to restore ${(user.comebackGate!['restoredFromStreak'] ?? 1)}d streak.',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textPrimary,
                               fontSize: 11.5,
                             ),
@@ -705,7 +707,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     if (user.currentGoal != null && user.currentGoal!.isNotEmpty)
                       Text(
                         'GOAL: ${user.currentGoal}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.cyanLight,
                           fontWeight: FontWeight.w900,
                           fontSize: 11.5,
@@ -716,7 +718,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Coach Rule: ${user.lastIfThenPlan}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.gold,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
@@ -750,14 +752,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.leaderboard_rounded,
+                        Icon(Icons.leaderboard_rounded,
                             color: HunterTheme.cyanLight, size: 18),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             label,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textPrimary,
                               fontWeight: FontWeight.w900,
                               fontSize: 11.5,
@@ -765,7 +767,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                             ),
                           ),
                         ),
-                        const Text(
+                        Text(
                           '10-HUNTER POD >',
                           style: TextStyle(
                             color: HunterTheme.cyanLight,
@@ -803,9 +805,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.anchor, color: HunterTheme.gold, size: 20),
+                    Icon(Icons.anchor, color: HunterTheme.gold, size: 20),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -827,7 +829,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     ),
                     TextButton(
                       onPressed: () => _openAnchorPicker(quests),
-                      child: const Text(
+                      child: Text(
                         'LOCK 1 QUEST',
                         style: TextStyle(
                           color: HunterTheme.gold,
@@ -856,7 +858,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.workspace_premium_rounded,
+                      Icon(Icons.workspace_premium_rounded,
                           color: HunterTheme.gold, size: 22),
                       const SizedBox(width: 10),
                       Expanded(
@@ -865,7 +867,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                           children: [
                             Text(
                               '48H RANK PROMOTION TRIAL: TIER ${t.tier}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.gold,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 11.5,
@@ -875,7 +877,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                             Text(
                               t.quest?.title ??
                                   'Clear your Tier ${t.tier} Examination Quest below to ascend.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: HunterTheme.textPrimary, fontSize: 12),
                             ),
                           ],
@@ -922,7 +924,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                             ),
                             Text(
                               '+${gate.rewardCoins} COINS',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.gold,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 11,
@@ -933,7 +935,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           gate.description,
-                          style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                          style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                         ),
                         const SizedBox(height: 10),
                         Row(
@@ -952,7 +954,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                             const SizedBox(width: 10),
                             Text(
                               '${gate.currentValue}/${gate.targetValue}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11.5,
@@ -999,7 +1001,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.spa_rounded, color: HunterTheme.purple),
+                      Icon(Icons.spa_rounded, color: HunterTheme.purple),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -1007,13 +1009,13 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                           children: [
                             Text(
                               'HIGH BIO-FATIGUE DETECTED (${fatigue.fatigueScore}%)',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.purple,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 11.5,
                               ),
                             ),
-                            const Text(
+                            Text(
                               'Trigger Super-Compensation deload to spawn recovery XP.',
                               style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                             ),
@@ -1025,7 +1027,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                           await SystemMechanicsActions.activateSuperCompensation(ref);
                           await ref.read(questsProvider.notifier).loadQuests();
                         },
-                        child: const Text(
+                        child: Text(
                           'DELOAD',
                           style: TextStyle(
                             color: HunterTheme.purple,
@@ -1037,7 +1039,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   ),
                 );
               },
-              orElse: () => const SizedBox.shrink(),
+              orElse: () => SizedBox.shrink(),
             ),
 
             // Quest Category Filters
@@ -1056,15 +1058,15 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Quest Cards List
             if (filteredQuests.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
+                padding: EdgeInsets.symmetric(vertical: 40),
                 child: Center(
                   child: Column(
-                    children: const [
+                    children: [
                       Icon(Icons.check_circle_outline, color: HunterTheme.cyan, size: 48),
                       SizedBox(height: 12),
                       Text(
@@ -1184,7 +1186,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                           color: HunterTheme.gold.withValues(alpha: 0.18),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
-                                        child: const Text(
+                                        child: Text(
                                           'ANCHOR',
                                           style: TextStyle(
                                             color: HunterTheme.gold,
@@ -1195,7 +1197,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                       ),
                                     Text(
                                       '+${quest.xp} XP • ${quest.attribute}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: HunterTheme.gold,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -1220,7 +1222,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   quest.description,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.textMuted,
                                     fontSize: 12,
                                   ),
@@ -1278,12 +1280,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                                         ),
                                       if (!quest.isWorkoutVerified)
                                         ActionChip(
-                                          avatar: const Icon(
+                                          avatar: Icon(
                                             Icons.bolt_rounded,
                                             size: 14,
                                             color: HunterTheme.gold,
                                           ),
-                                          label: const Text(
+                                          label: Text(
                                             'STUCK? 5M STEP',
                                             style: TextStyle(
                                               color: HunterTheme.gold,
@@ -1342,7 +1344,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               borderRadius: BorderRadius.circular(18),
               side: BorderSide(color: HunterTheme.gold.withValues(alpha: 0.5)),
             ),
-            title: const Row(
+            title: Row(
               children: [
                 Icon(Icons.bolt_rounded, color: HunterTheme.gold),
                 SizedBox(width: 8),
@@ -1360,7 +1362,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ],
             ),
             content: starterAction == null
-                ? const SizedBox(
+                ? SizedBox(
                     height: 76,
                     child: Center(
                       child: CircularProgressIndicator(color: HunterTheme.gold),
@@ -1372,7 +1374,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     children: [
                       Text(
                         starterAction!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1382,7 +1384,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                       const SizedBox(height: 10),
                       Text(
                         encouragement,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textMuted,
                           fontSize: 12,
                           height: 1.35,
@@ -1393,7 +1395,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogCtx).pop(),
-                child: const Text('CLOSE', style: TextStyle(color: HunterTheme.textMuted)),
+                child: Text('CLOSE', style: TextStyle(color: HunterTheme.textMuted)),
               ),
               if (starterAction != null)
                 ElevatedButton.icon(

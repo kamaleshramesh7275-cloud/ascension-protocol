@@ -16,19 +16,43 @@ class SessionStorage {
   // Secure Token
   static Future<void> saveToken(String token) async {
     await _storage.write(key: _keyToken, value: token);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyToken, token);
+    } catch (_) {}
   }
 
   static Future<String?> getToken() async {
-    return await _storage.read(key: _keyToken);
+    String? token;
+    try {
+      token = await _storage.read(key: _keyToken);
+    } catch (_) {}
+    if (token == null || token.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString(_keyToken);
+    }
+    return token;
   }
 
   // Firebase UID
   static Future<void> saveFirebaseUid(String uid) async {
     await _storage.write(key: _keyFirebaseUid, value: uid);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyFirebaseUid, uid);
+    } catch (_) {}
   }
 
   static Future<String?> getFirebaseUid() async {
-    return await _storage.read(key: _keyFirebaseUid);
+    String? uid;
+    try {
+      uid = await _storage.read(key: _keyFirebaseUid);
+    } catch (_) {}
+    if (uid == null || uid.isEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      uid = prefs.getString(_keyFirebaseUid);
+    }
+    return uid;
   }
 
   // Backward-compatible Guest UID accessor
@@ -58,19 +82,39 @@ class SessionStorage {
   // Offline Caching for User Profile
   static Future<void> saveCachedUser(UserModel user) async {
     try {
+      final userJson = jsonEncode(user.toJson());
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyCachedUser, jsonEncode(user.toJson()));
-    } catch (_) {}
+      await prefs.setString(_keyCachedUser, userJson);
+      // Double check in secure storage as resilient backup
+      await _storage.write(key: _keyCachedUser, value: userJson);
+      if (kDebugMode) {
+        debugPrint('[SessionStorage] Successfully saved cached user: ${user.id}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[SessionStorage] Error saving cached user: $e');
+      }
+    }
   }
 
   static Future<UserModel?> getCachedUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_keyCachedUser);
+      var raw = prefs.getString(_keyCachedUser);
+      if (raw == null || raw.isEmpty) {
+        raw = await _storage.read(key: _keyCachedUser);
+      }
       if (raw != null && raw.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('[SessionStorage] Successfully retrieved cached user');
+        }
         return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
       }
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[SessionStorage] Error retrieving cached user: $e');
+      }
+    }
     return null;
   }
 
@@ -99,8 +143,11 @@ class SessionStorage {
   static Future<void> clear() async {
     await _storage.deleteAll();
     final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyToken);
+    await prefs.remove(_keyFirebaseUid);
     await prefs.remove(_keyCachedUser);
     await prefs.remove(_keyCachedQuests);
+    await prefs.remove(_keyRegTs);
     if (!kReleaseMode) {
       await prefs.remove(_keyBaseUrl);
     }
@@ -110,6 +157,28 @@ class SessionStorage {
   static const String _keyBookmarkedContent = 'bookmarked_content_ids';
   static const String _keyLastArrivalDate = 'last_system_arrival_date';
   static const String _keyFcmToken = 'fcm_device_token';
+  static const String _keyRegTs = 'hunter_registration_timestamp';
+  static const String _keyPostRegFeedbackShown = 'hunter_post_reg_feedback_shown';
+
+  static Future<void> saveRegistrationTimestamp([int? timestampMs]) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyRegTs, timestampMs ?? DateTime.now().millisecondsSinceEpoch);
+  }
+
+  static Future<int?> getRegistrationTimestamp() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyRegTs);
+  }
+
+  static Future<bool> isPostRegFeedbackShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyPostRegFeedbackShown) ?? false;
+  }
+
+  static Future<void> markPostRegFeedbackShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPostRegFeedbackShown, true);
+  }
 
   static Future<void> saveWorkoutDraft(String draftJson) async {
     final prefs = await SharedPreferences.getInstance();

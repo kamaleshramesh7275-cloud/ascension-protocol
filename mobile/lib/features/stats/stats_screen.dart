@@ -78,7 +78,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
       if (!mounted) return;
       setState(() => _pendingAllocations.clear());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surfaceLight,
           content: Text(
             'Ability Points permanently imprinted onto Hunter Matrix.',
@@ -105,11 +105,11 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: HunterTheme.surface,
-          title: const Text(
+          title: Text(
             'ASCEND TO SHADOW MONARCH?',
             style: TextStyle(color: HunterTheme.gold, fontWeight: FontWeight.w900),
           ),
-          content: const Text(
+          content: Text(
             'Monarch Prestige resets your Level to 1 while permanently branding ★ Prestige Rank and granting +500 Coins and +10 Ability Points.',
             style: TextStyle(color: HunterTheme.textMuted),
           ),
@@ -182,7 +182,7 @@ Charisma:     ${user.charisma}/100
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.surfaceLight,
           content: Text(
             'Operative Attribute Dossier copied to clipboard.',
@@ -224,7 +224,7 @@ Charisma:     ${user.charisma}/100
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: HunterTheme.cyanLight),
+            icon: Icon(Icons.settings_outlined, color: HunterTheme.cyanLight),
             tooltip: 'Settings & Security',
             onPressed: () {
               Navigator.of(context).push(
@@ -233,7 +233,7 @@ Charisma:     ${user.charisma}/100
             },
           ),
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: HunterTheme.cyanLight),
+            icon: Icon(Icons.share_outlined, color: HunterTheme.cyanLight),
             tooltip: 'Share Dossier',
             onPressed: () => _exportDossier(user),
           ),
@@ -262,7 +262,7 @@ Charisma:     ${user.charisma}/100
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.workspace_premium, color: HunterTheme.gold),
+                    Icon(Icons.workspace_premium, color: HunterTheme.gold),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -270,7 +270,7 @@ Charisma:     ${user.charisma}/100
                         children: [
                           Text(
                             'PENDING RANK EXAM: ${t.tier}-RANK',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.gold,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
@@ -279,7 +279,7 @@ Charisma:     ${user.charisma}/100
                           Text(
                             t.quest?.title ??
                                 'Clear the Tier ${t.tier} Exam Quest on the Quests tab to promote.',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: HunterTheme.textPrimary, fontSize: 12),
                           ),
                         ],
@@ -304,7 +304,7 @@ Charisma:     ${user.charisma}/100
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.scanner_rounded, color: HunterTheme.cyanLight),
+                  Icon(Icons.scanner_rounded, color: HunterTheme.cyanLight),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -312,7 +312,7 @@ Charisma:     ${user.charisma}/100
                       children: [
                         Text(
                           'REAWAKENING RANK TEST (${user.tier}-RANK)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.cyanLight,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
@@ -322,7 +322,7 @@ Charisma:     ${user.charisma}/100
                           user.reawakeningState?['status'] == 'in_progress'
                               ? '24h Exam active — submit pushups, 25m Sprint & Deliverable.'
                               : 'Proctored test day (14d pass / 7d fail cooldown).',
-                          style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
+                          style: TextStyle(color: HunterTheme.textMuted, fontSize: 11.5),
                         ),
                       ],
                     ),
@@ -368,7 +368,7 @@ Charisma:     ${user.charisma}/100
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: HunterTheme.purple),
+                          Icon(Icons.auto_awesome, color: HunterTheme.purple),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -380,7 +380,7 @@ Charisma:     ${user.charisma}/100
                                       : jcStatus == 'active'
                                           ? 'JOB CHANGE TRIAL ACTIVE (7D WINDOW)'
                                           : 'LV.15+ JOB CHANGE AWAKENING',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: HunterTheme.purple,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 12,
@@ -394,7 +394,7 @@ Charisma:     ${user.charisma}/100
                                           : jcStatus == 'cooldown'
                                               ? '7-day retry cooldown active after expired trial.'
                                               : 'Unlock hidden 7-day NECROMANCER / SHADOW Trial (Lv.15 + Stat >= 35).',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: HunterTheme.textMuted, fontSize: 11.5),
                                 ),
                               ],
@@ -510,7 +510,7 @@ Charisma:     ${user.charisma}/100
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'STAT BALANCE RADAR (7 STATS)',
                         style: TextStyle(
@@ -524,7 +524,7 @@ Charisma:     ${user.charisma}/100
                     if (user.baselineStats != null)
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'GHOST',
                             style: TextStyle(
                               color: HunterTheme.textMuted,
@@ -576,7 +576,7 @@ Charisma:     ${user.charisma}/100
                   ],
                 ),
                 if (user.baselineStats != null && _showGhostBaseline)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text(
                       'Cyan: Live Matrix  •  Dashed Silver: Day-1 Ghost',
@@ -604,12 +604,12 @@ Charisma:     ${user.charisma}/100
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.radar, color: HunterTheme.crimson, size: 18),
+                          Icon(Icons.radar, color: HunterTheme.crimson, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'BOTTLENECK: ${(b['stat'] ?? 'FOCUS').toString().toUpperCase()} (${b['value'] ?? 10})',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.crimson,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 11.5,
@@ -622,7 +622,7 @@ Charisma:     ${user.charisma}/100
                       const SizedBox(height: 6),
                       Text(
                         b['reason']?.toString() ?? '',
-                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                       ),
                       const SizedBox(height: 10),
                       SizedBox(
@@ -633,7 +633,7 @@ Charisma:     ${user.charisma}/100
                             await ref.read(questsProvider.notifier).loadQuests();
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 backgroundColor: HunterTheme.surfaceLight,
                                 content: Text(
                                   'Targeted Bottleneck Fix Quest added to today\'s Quests.',
@@ -642,10 +642,10 @@ Charisma:     ${user.charisma}/100
                               ),
                             );
                           },
-                          icon: const Icon(Icons.add_task, size: 16, color: HunterTheme.cyanLight),
+                          icon: Icon(Icons.add_task, size: 16, color: HunterTheme.cyanLight),
                           label: Text(
                             'INJECT FIX: ${(b['actionTitle'] ?? 'Fix').toString().toUpperCase()}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.cyanLight,
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
@@ -666,7 +666,7 @@ Charisma:     ${user.charisma}/100
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'DETAILED ATTRIBUTE BREAKDOWN',
                   overflow: TextOverflow.ellipsis,
@@ -790,7 +790,7 @@ Charisma:     ${user.charisma}/100
                     color: HunterTheme.purple.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.shield_outlined, color: HunterTheme.purple),
+                  child: Icon(Icons.shield_outlined, color: HunterTheme.purple),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -799,14 +799,14 @@ Charisma:     ${user.charisma}/100
                     children: [
                       Text(
                         'Mana Shield: ${user.streakShields} Available',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Absorbs 1 missed daily quest without breaking your streak.',
                         style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
                       ),
@@ -823,8 +823,8 @@ Charisma:     ${user.charisma}/100
             height: 50,
             child: OutlinedButton.icon(
               onPressed: () => _exportDossier(user),
-              icon: const Icon(Icons.share, color: HunterTheme.cyan, size: 18),
-              label: const Text(
+              icon: Icon(Icons.share, color: HunterTheme.cyan, size: 18),
+              label: Text(
                 'COPY TEXT ATTRIBUTE DOSSIER',
                 style: TextStyle(
                   color: HunterTheme.cyanLight,
@@ -834,7 +834,7 @@ Charisma:     ${user.charisma}/100
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: HunterTheme.cyan),
+                side: BorderSide(color: HunterTheme.cyan),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -881,7 +881,7 @@ Charisma:     ${user.charisma}/100
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.textMuted,
                       fontSize: 11,
                     ),
@@ -904,7 +904,7 @@ Charisma:     ${user.charisma}/100
       ),
       child: Text(
         tag,
-        style: const TextStyle(
+        style: TextStyle(
           color: HunterTheme.cyanLight,
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -933,7 +933,7 @@ Charisma:     ${user.charisma}/100
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -945,7 +945,7 @@ Charisma:     ${user.charisma}/100
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  icon: const Icon(Icons.remove_circle_outline,
+                  icon: Icon(Icons.remove_circle_outline,
                       size: 18, color: HunterTheme.textMuted),
                   onPressed: staged > 0
                       ? () => _adjustStaged(statKey, -1, value, unspentPoints)
@@ -956,7 +956,7 @@ Charisma:     ${user.charisma}/100
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text(
                       '+$staged',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.gold,
                         fontWeight: FontWeight.w900,
                         fontSize: 12,

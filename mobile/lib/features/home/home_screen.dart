@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/quests_provider.dart';
 import '../../core/providers/roadmap_provider.dart';
@@ -30,6 +31,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appearanceProvider);
     final liveUser = ref.watch(authProvider).value ?? user;
     final quests = ref.watch(questsProvider);
     final ultimatum = ref.watch(ultimatumProvider).valueOrNull ?? liveUser.ultimatumState;
@@ -57,7 +59,7 @@ class HomeScreen extends ConsumerWidget {
                     liveUser.name.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.textPrimary,
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
@@ -66,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   Text(
                     'LV.${liveUser.level} ${(liveUser.evolvedClass ?? liveUser.hunterClass).toUpperCase()}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: HunterTheme.cyanLight,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -83,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
             label: 'Open System Command Quick Menu',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight),
+              icon: Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight),
               tooltip: 'System Command Menu',
               onPressed: () {
                 HapticFeedback.selectionClick();
@@ -125,7 +127,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'LEVEL ${liveUser.level} PROGRESS',
-                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         '$xpInLevel / 100 XP',
@@ -173,7 +175,7 @@ class HomeScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'QUICK ACTIONS',
                   style: TextStyle(
                     color: HunterTheme.textMuted,
@@ -184,7 +186,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: onOpenSystemCommand,
-                  child: const Text('ALL MODULES >', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
+                  child: Text('ALL MODULES >', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
                 ),
               ],
             ),
@@ -241,7 +243,7 @@ class HomeScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'TODAY\'S PRIORITY QUESTS',
                   style: TextStyle(
                     color: HunterTheme.textMuted,
@@ -252,7 +254,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => onNavigateTab(1),
-                  child: const Text('VIEW ALL >', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
+                  child: Text('VIEW ALL >', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11)),
                 ),
               ],
             ),
@@ -266,13 +268,13 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_outline, color: HunterTheme.emeraldLight),
+                    Icon(Icons.check_circle_outline, color: HunterTheme.emeraldLight),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'All current quests cleared!',
                             style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold),
                           ),
@@ -281,7 +283,7 @@ class HomeScreen extends ConsumerWidget {
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const RoadmapScreen()),
                             ),
-                            child: const Text('Check 30-Day Roadmap ->', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12)),
+                            child: Text('Check 30-Day Roadmap ->', style: TextStyle(color: HunterTheme.cyanLight, fontSize: 12)),
                           ),
                         ],
                       ),
@@ -296,7 +298,7 @@ class HomeScreen extends ConsumerWidget {
                       color: HunterTheme.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: HunterTheme.surfaceLight),
+                        side: BorderSide(color: HunterTheme.surfaceLight),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ListTile(
@@ -306,20 +308,20 @@ class HomeScreen extends ConsumerWidget {
                         backgroundColor: HunterTheme.cyan.withValues(alpha: 0.14),
                         child: Text(
                           q.attribute,
-                          style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 10, fontWeight: FontWeight.w900),
+                          style: TextStyle(color: HunterTheme.cyanLight, fontSize: 10, fontWeight: FontWeight.w900),
                         ),
                       ),
                       title: Text(
                         q.title,
-                        style: const TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+                        style: TextStyle(color: HunterTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
                       ),
                       subtitle: Text(
                         '+${q.xp} XP • +${q.coins} Coins',
-                        style: const TextStyle(color: HunterTheme.gold, fontSize: 11.5),
+                        style: TextStyle(color: HunterTheme.gold, fontSize: 11.5),
                       ),
                       trailing: IconButton(
                         tooltip: 'Go to Quests',
-                        icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: HunterTheme.cyanLight),
+                        icon: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: HunterTheme.cyanLight),
                         onPressed: () => onNavigateTab(1),
                       ),
                       onTap: () => onNavigateTab(1),
@@ -400,7 +402,7 @@ class HomeScreen extends ConsumerWidget {
                         label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: HunterTheme.textPrimary,
                           fontWeight: FontWeight.w800,
                           fontSize: 12.5,
@@ -410,7 +412,7 @@ class HomeScreen extends ConsumerWidget {
                         sub,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: HunterTheme.textMuted, fontSize: 10.5),
+                        style: TextStyle(color: HunterTheme.textMuted, fontSize: 10.5),
                       ),
                     ],
                   ),

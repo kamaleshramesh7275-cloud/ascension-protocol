@@ -183,8 +183,8 @@ export default function TermsOfServicePage() {
               <div className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 flex items-start gap-3">
                 <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs sm:text-sm text-slate-300">
-                  <strong className="text-white">Anti-Cheat & Leaderboard Integrity:</strong> You shall not use automated scripts, bots, macro recorders, 
-                  or modified clients to falsely simulate quest completion, spoof workout metrics, or manipulate global leaderboard rankings.
+                  <strong className="text-white">Anti-Cheat & Protocol Integrity:</strong> You shall not use automated scripts, bots, macro recorders, 
+                  or modified clients to falsely simulate quest completion, spoof workout metrics, or manipulate division standings.
                 </p>
               </div>
 
@@ -395,7 +395,7 @@ export default function TermsOfServicePage() {
             </p>
             <p>
               We reserve the right to suspend, terminate, or restrict your access immediately, without prior notice, if you breach these Terms, 
-              engage in fraudulent or leaderboard cheating activity, or compromise platform security.
+              engage in fraudulent or division cheating activity, or compromise platform security.
             </p>
           </div>
         </section>

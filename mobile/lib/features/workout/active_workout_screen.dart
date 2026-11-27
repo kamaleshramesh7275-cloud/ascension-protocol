@@ -292,11 +292,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               child: Column(
                 children: [
                   TextField(
-                    style: const TextStyle(color: HunterTheme.textPrimary),
+                    style: TextStyle(color: HunterTheme.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search 79+ exercises...',
-                      hintStyle: const TextStyle(color: HunterTheme.textMuted),
-                      prefixIcon: const Icon(Icons.search, color: HunterTheme.cyan),
+                      hintStyle: TextStyle(color: HunterTheme.textMuted),
+                      prefixIcon: Icon(Icons.search, color: HunterTheme.cyan),
                       filled: true,
                       fillColor: HunterTheme.surface,
                       border: OutlineInputBorder(
@@ -348,19 +348,19 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                         return ListTile(
                           title: Text(
                             ex.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           subtitle: Text(
                             '${ex.muscleGroup.toUpperCase()} • ${ex.equipment.toUpperCase()}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: HunterTheme.cyanLight,
                               fontSize: 11,
                             ),
                           ),
-                          trailing: const Icon(Icons.add_circle_outline,
+                          trailing: Icon(Icons.add_circle_outline,
                               color: HunterTheme.cyan),
                           onTap: () {
                             Navigator.of(ctx).pop();
@@ -391,7 +391,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
     if (completedSets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: HunterTheme.crimson,
           content: Text('Check off at least 1 working set with weight/reps first.'),
         ),
@@ -486,7 +486,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           children: [
             Text(
               widget.workoutName.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.textPrimary,
                 fontWeight: FontWeight.w900,
                 fontSize: 15,
@@ -495,7 +495,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             ),
             Text(
               'ELAPSED ${_formatElapsed(_elapsedSeconds)}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.cyanLight,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -508,7 +508,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             onPressed: _finishing ? null : _finishWorkout,
             child: Text(
               _finishing ? 'SAVING...' : 'FINISH',
-              style: const TextStyle(
+              style: TextStyle(
                 color: HunterTheme.emeraldLight,
                 fontWeight: FontWeight.w900,
                 fontSize: 13.5,
@@ -574,7 +574,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                   ),
                 if (_restRemainingSeconds > 0)
                   IconButton(
-                    icon: const Icon(Icons.close, size: 18, color: HunterTheme.crimson),
+                    icon: Icon(Icons.close, size: 18, color: HunterTheme.crimson),
                     onPressed: () {
                       _restTimer?.cancel();
                       setState(() => _restRemainingSeconds = 0);
@@ -597,7 +597,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                       border: Border.all(
                           color: HunterTheme.cyan.withValues(alpha: 0.25)),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Icon(Icons.fitness_center, color: HunterTheme.cyan, size: 40),
                         SizedBox(height: 10),
@@ -641,7 +641,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             Expanded(
                               child: Text(
                                 block.exercise.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: HunterTheme.cyanLight,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
@@ -649,7 +649,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline,
+                              icon: Icon(Icons.delete_outline,
                                   size: 18, color: HunterTheme.textMuted),
                               onPressed: () {
                                 setState(() => _blocks.removeAt(bIndex));
@@ -698,7 +698,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             ),
                             child: Text(
                               hint,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: HunterTheme.cyanLight,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
@@ -706,7 +706,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             ),
                           ),
                         ],
-                        const Row(
+                        Row(
                           children: [
                             SizedBox(width: 26, child: Text('SET', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold))),
                             SizedBox(width: 34, child: Text('TYPE', style: TextStyle(color: HunterTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold))),
@@ -734,7 +734,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                               alignment: Alignment.centerRight,
                               padding: const EdgeInsets.only(right: 12),
                               color: HunterTheme.crimson.withValues(alpha: 0.3),
-                              child: const Icon(Icons.delete, color: HunterTheme.crimson, size: 18),
+                              child: Icon(Icons.delete, color: HunterTheme.crimson, size: 18),
                             ),
                             onDismissed: (_) {
                               setState(() {
@@ -756,7 +756,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                         width: 26,
                                         child: Text(
                                           '${s.setNumber}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: HunterTheme.textPrimary,
                                             fontWeight: FontWeight.w900,
                                           ),
@@ -806,7 +806,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                               : '',
                                           keyboardType: const TextInputType.numberWithOptions(
                                               decimal: true),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: HunterTheme.textPrimary,
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -836,7 +836,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                         child: TextFormField(
                                           initialValue: s.reps > 0 ? '${s.reps}' : '',
                                           keyboardType: TextInputType.number,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: HunterTheme.textPrimary,
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -874,7 +874,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                           },
                                           child: Text(
                                             s.rpe?.toString() ?? '-',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: HunterTheme.gold,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 12,
@@ -923,7 +923,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                         ),
                                         child: Text(
                                           'NEW PR! Est. 1RM ${s.estimated1RM.toStringAsFixed(1)} kg',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: HunterTheme.gold,
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.w900,
@@ -991,10 +991,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 TextField(
                   controller: _notesController,
                   maxLines: 2,
-                  style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                  style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Session Notes (Optional)',
-                    labelStyle: const TextStyle(color: HunterTheme.textMuted),
+                    labelStyle: TextStyle(color: HunterTheme.textMuted),
                     filled: true,
                     fillColor: HunterTheme.surface,
                     border: OutlineInputBorder(
@@ -1006,7 +1006,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: Text(
                     'Save workout exercises as custom template',
                     style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
                   ),

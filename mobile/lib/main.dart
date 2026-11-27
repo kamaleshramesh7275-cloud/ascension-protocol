@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/hunter_theme.dart';
+import 'core/providers/appearance_provider.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/sync/sync_queue.dart';
@@ -13,13 +14,16 @@ import 'features/home/main_navigation_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Appearance (theme + font) before first paint
+  await AppearanceNotifier.initStatic();
+
   // Initialize Firebase Cloud Messaging & offline sync queue listener
   await NotificationService.initialize();
   SyncQueueService.initializeConnectivityListener();
 
   // Immersive Edge-to-Edge System Bar Styling
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
+    SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: HunterTheme.abyss,
@@ -40,11 +44,12 @@ class AscensionMobileApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final appearance = ref.watch(appearanceProvider);
 
     return MaterialApp(
       title: 'Ascension Protocol',
       debugShowCheckedModeBanner: false,
-      theme: HunterTheme.darkTheme,
+      theme: HunterTheme.buildTheme(appearance.themeId, appearance.fontId),
       home: authState.when(
         data: (user) {
           if (user != null) {
@@ -74,7 +79,7 @@ class AscensionMobileApp extends ConsumerWidget {
                   height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [HunterTheme.cyan, HunterTheme.purple],
                     ),
                   ),
@@ -86,7 +91,7 @@ class AscensionMobileApp extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'AWAKENING HUNTER SYSTEM...',
                   style: TextStyle(
                     color: HunterTheme.cyanLight,
@@ -99,7 +104,22 @@ class AscensionMobileApp extends ConsumerWidget {
             ),
           ),
         ),
-        error: (_, _) => const LoginScreen(),
+        error: (_, _) {
+          // If error occurs, check if there's any active cached state in authState value
+          final user = authState.value;
+          if (user != null) {
+            final isGuest =
+                user.id.startsWith('guest_') || user.email.endsWith('@ascension.app');
+            if (!isGuest && (user.phone == null || user.phone!.isEmpty)) {
+              return ProfileSetupScreen(user: user);
+            }
+            if (!user.onboardingCompleted) {
+              return BriefingScreen(user: user);
+            }
+            return MainNavigationScreen(initialUser: user);
+          }
+          return const LoginScreen();
+        },
       ),
     );
   }

@@ -162,14 +162,14 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
         : const <Map<String, dynamic>>[];
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: HunterTheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: HunterTheme.gold, width: 1.8)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
       child: _loading
-          ? const SizedBox(
+          ? SizedBox(
               height: 180,
               child: Center(child: CircularProgressIndicator(color: HunterTheme.gold)),
             )
@@ -181,7 +181,7 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         '[ CARTENON TEMPLE // 72H VOWS ]',
                         style: TextStyle(
                           color: HunterTheme.gold,
@@ -192,11 +192,11 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                        icon: Icon(Icons.close, color: HunterTheme.textMuted),
                       ),
                     ],
                   ),
-                  const Text(
+                  Text(
                     'Double Dungeon Commandments',
                     style: TextStyle(
                       color: HunterTheme.textPrimary,
@@ -205,7 +205,7 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     '7-day cooldown • Stake capped at 50% wallet (max 500c). Breaking a vow triggers Penalty Zone.',
                     style: TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   ),
@@ -213,7 +213,7 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                   if (isActive) ...[
                     Text(
                       'STAKED: ${_activeState!['stakeCoins']} COINS • PAYOUT ${_activeState!['payoutMultiplier']}x',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: HunterTheme.gold,
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
@@ -236,11 +236,11 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                         ),
                         title: Text(
                           r['title']?.toString() ?? '',
-                          style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                          style: TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
                         ),
                         subtitle: Text(
                           '$cur / $tgt',
-                          style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
+                          style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11.5),
                         ),
                       );
                     }),
@@ -279,11 +279,11 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                         activeColor: HunterTheme.gold,
                         title: Text(
                           r['title']?.toString() ?? '',
-                          style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
+                          style: TextStyle(color: HunterTheme.textPrimary, fontSize: 12.5),
                         ),
                         subtitle: Text(
                           '${r['tier']} Law • ${r['multiplier']}x boost tier',
-                          style: const TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
+                          style: TextStyle(color: HunterTheme.cyanLight, fontSize: 11),
                         ),
                       );
                     }),
@@ -291,7 +291,7 @@ class _CartenonDungeonSheetState extends ConsumerState<CartenonDungeonSheet> {
                       const SizedBox(height: 8),
                       Text(
                         'Stake Coins: $_stakeCoins / $_maxStake max',
-                        style: const TextStyle(color: HunterTheme.gold, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: HunterTheme.gold, fontWeight: FontWeight.bold),
                       ),
                       Slider(
                         value: _stakeCoins.toDouble().clamp(25, _maxStake.toDouble()),

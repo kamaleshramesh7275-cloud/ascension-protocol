@@ -209,7 +209,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     '[ SHADOW EXTRACTION GATE ]',
                     style: TextStyle(
                       color: HunterTheme.purple,
@@ -220,7 +220,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
                   ),
                   IconButton(
                     onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                    icon: Icon(Icons.close, color: HunterTheme.textMuted),
                   ),
                 ],
               ),
@@ -228,7 +228,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
               Text(
                 bossName.toUpperCase(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: HunterTheme.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -239,7 +239,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
               Text(
                 'Target Milestone: $source',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
+                style: TextStyle(color: HunterTheme.textMuted, fontSize: 12.5),
               ),
               const SizedBox(height: 10),
               Container(
@@ -251,7 +251,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
                 ),
                 child: Text(
                   'ATTEMPTS REMAINING: $_attemptsLeft / 3',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: HunterTheme.purple,
                     fontWeight: FontWeight.w900,
                     fontSize: 11.5,
@@ -274,7 +274,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
                         value: progress,
                         strokeWidth: 10,
                         backgroundColor: HunterTheme.surfaceLight,
-                        valueColor: const AlwaysStoppedAnimation<Color>(HunterTheme.purple),
+                        valueColor: AlwaysStoppedAnimation<Color>(HunterTheme.purple),
                       ),
                     ),
                     Container(
@@ -327,7 +327,7 @@ class _AriseExtractionOverlayState extends ConsumerState<AriseExtractionOverlay>
                 _statusMessage ??
                     'Press and hold for 10 uninterrupted seconds to extract this shadow into your army.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: HunterTheme.cyanLight,
                   fontSize: 12.5,
                   height: 1.4,

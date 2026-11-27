@@ -31,7 +31,6 @@ const moreNavItems = [
     { icon: Flame, label: "Squad Pact", path: "/squad-pact", color: "text-orange-400", bg: "bg-orange-500/10" },
     { icon: Eye, label: "Public Wall", path: "/public-commitments", color: "text-blue-400", bg: "bg-blue-500/10" },
     { icon: Activity, label: "Stats", path: "/stats", color: "text-sky-400", bg: "bg-sky-500/10" },
-    { icon: Trophy, label: "Leaderboard", path: "/leaderboard", color: "text-yellow-400", bg: "bg-yellow-500/10" },
     { icon: Award, label: "Achievements", path: "/achievements", color: "text-amber-400", bg: "bg-amber-500/10" },
     { icon: Trophy, label: "Hall of Immortals", path: "/hall-of-ascension", color: "text-amber-400", bg: "bg-amber-500/10" },
     { icon: User, label: "Profile", path: "/profile", color: "text-emerald-400", bg: "bg-emerald-500/10" },

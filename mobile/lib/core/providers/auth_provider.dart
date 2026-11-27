@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../api/api_client.dart';
 import '../api/auth_repository.dart';
 import '../notifications/notification_service.dart';
 import '../storage/session_storage.dart';
@@ -12,6 +14,7 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   final AuthRepository _repo;
 
   AuthStateNotifier(this._repo) : super(const AsyncValue.loading()) {
+    ApiClient.onRefreshToken = _repo.refreshTokenSilently;
     checkSession();
   }
 
@@ -19,15 +22,85 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     if (!mounted) return;
     state = const AsyncValue.loading();
     try {
-      final user = await _repo.getProfile();
-      if (!mounted) return;
-      state = AsyncValue.data(user);
-      if (user != null) {
-        NotificationService.syncDeviceToken();
+      // 1. Instant Cache-First Restore: check local cached user and tokens
+      final cachedUser = await SessionStorage.getCachedUser();
+      final token = await SessionStorage.getToken();
+      final uid = await SessionStorage.getFirebaseUid();
+
+      if (kDebugMode) {
+        debugPrint('[AuthPersistence] checkSession: cachedUser=${cachedUser?.id}, token=${token != null}, uid=$uid');
+      }
+
+      final isGuest = cachedUser != null &&
+          (cachedUser.id.startsWith('guest_') ||
+              cachedUser.email.endsWith('@ascension.app') ||
+              (uid != null && uid.startsWith('guest_')));
+
+      if (cachedUser != null) {
+        // Emit cached user immediately so the UI opens without showing the login screen
+        state = AsyncValue.data(cachedUser);
+
+        // If guest session, keep local state permanently until explicit logout,
+        // and silently ensure a valid server Bearer token is stored.
+        if (isGuest) {
+          if (kDebugMode) {
+            debugPrint('[AuthPersistence] Restored guest session: ${cachedUser.id}');
+          }
+          if (token == null || token.isEmpty) {
+            final guestUid = (uid != null && uid.startsWith('guest_')) ? uid : cachedUser.id;
+            try {
+              final freshGuest = await _repo.authenticateGuest(guestUid);
+              if (freshGuest != null && mounted) {
+                state = AsyncValue.data(freshGuest);
+              }
+            } catch (_) {}
+          }
+          return;
+        }
+
+        // 2. Silently revalidate against server in the background without logging out on failure
+        if (token != null && token.isNotEmpty) {
+          NotificationService.syncDeviceToken();
+          try {
+            final freshUser = await _repo.getProfile();
+            if (freshUser != null && mounted) {
+              state = AsyncValue.data(freshUser);
+            }
+          } catch (e) {
+            // Keep cached user active across app restarts until explicit logout
+            if (kDebugMode) {
+              debugPrint('[AuthPersistence] Background revalidation skipped/failed (keeping session): $e');
+            }
+          }
+          return;
+        }
+        return;
+      }
+
+      // No cache, check if token exists to fetch fresh profile
+      if (token != null && token.isNotEmpty) {
+        final user = await _repo.getProfile();
+        if (!mounted) return;
+        state = AsyncValue.data(user);
+        if (user != null) {
+          NotificationService.syncDeviceToken();
+        }
+      } else {
+        if (!mounted) return;
+        state = const AsyncValue.data(null);
       }
     } catch (e, st) {
       if (!mounted) return;
-      state = AsyncValue.error(e, st);
+      if (kDebugMode) {
+        debugPrint('[AuthPersistence] checkSession error: $e');
+      }
+      // In case of transient network error, try to fallback to cached user
+      final cached = await SessionStorage.getCachedUser();
+      if (cached != null) {
+        state = AsyncValue.data(cached);
+      } else {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 
@@ -136,12 +209,12 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       final guestUid = await SessionStorage.getOrCreateGuestUid();
       await SessionStorage.saveFirebaseUid(guestUid);
 
-      // Attempt to load profile from backend, with graceful local guest template fallback
+      // Authenticate guest on server to obtain a real Bearer JWT token
       UserModel? user;
       try {
-        user = await _repo.getProfile();
+        user = await _repo.authenticateGuest(guestUid);
       } catch (_) {
-        // Fallback local guest template for offline or fresh guest creation
+        // Fallback local guest template for offline creation
       }
 
       user ??= UserModel(
@@ -169,7 +242,6 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       await SessionStorage.saveCachedUser(user);
       if (!mounted) return;
       state = AsyncValue.data(user);
-      NotificationService.syncDeviceToken();
     } catch (e, st) {
       if (!mounted) return;
       state = AsyncValue.error(e, st);
@@ -180,11 +252,19 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   void updateUser(UserModel updatedUser) {
     if (!mounted) return;
     state = AsyncValue.data(updatedUser);
+    SessionStorage.saveCachedUser(updatedUser);
   }
 
   Future<void> logout() async {
     await NotificationService.unregisterDeviceToken();
     await _repo.signOut();
+    if (!mounted) return;
+    state = const AsyncValue.data(null);
+  }
+
+  Future<void> deleteAccount() async {
+    await NotificationService.unregisterDeviceToken();
+    await _repo.deleteAccount();
     if (!mounted) return;
     state = const AsyncValue.data(null);
   }

@@ -59,9 +59,9 @@ class SystemCommandSheet extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight, size: 22),
+              Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight, size: 22),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -85,7 +85,7 @@ class SystemCommandSheet extends StatelessWidget {
               IconButton(
                 tooltip: 'Close',
                 onPressed: () => Navigator.of(ctx).pop(),
-                icon: const Icon(Icons.close, color: HunterTheme.textMuted),
+                icon: Icon(Icons.close, color: HunterTheme.textMuted),
               ),
             ],
           ),
@@ -174,7 +174,7 @@ class SystemCommandSheet extends StatelessWidget {
                       ok
                           ? 'System Widget pin prompt dispatched.'
                           : 'Add via Android Home Screen -> Widgets -> Ascension Quest HUD.',
-                      style: const TextStyle(color: HunterTheme.cyanLight),
+                      style: TextStyle(color: HunterTheme.cyanLight),
                     ),
                   ),
                 );
@@ -254,7 +254,7 @@ class SystemCommandSheet extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           color: HunterTheme.textMuted,
           fontWeight: FontWeight.bold,
           fontSize: 11,
@@ -324,7 +324,7 @@ class SystemCommandSheet extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
@@ -335,7 +335,7 @@ class SystemCommandSheet extends StatelessWidget {
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: HunterTheme.textMuted,
                             fontSize: 10,
                           ),
