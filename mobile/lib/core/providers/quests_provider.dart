@@ -36,7 +36,17 @@ class QuestCompletionOutcome {
 }
 
 final questsProvider = StateNotifierProvider<QuestsNotifier, List<QuestModel>>((ref) {
-  return QuestsNotifier(ref);
+  final notifier = QuestsNotifier(ref);
+  ref.listen<AsyncValue<UserModel?>>(authProvider, (prev, next) {
+    final prevId = prev?.value?.id;
+    final nextId = next.value?.id;
+    if (nextId != null && nextId != prevId) {
+      notifier.loadQuests();
+    } else if (nextId == null && prevId != null) {
+      notifier.clearQuests();
+    }
+  });
+  return notifier;
 });
 
 class QuestsNotifier extends StateNotifier<List<QuestModel>> {
@@ -79,7 +89,13 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
   ];
 
   QuestsNotifier(this._ref) : super(defaultQuests) {
-    loadQuests();
+    if (_ref.read(authProvider).value != null) {
+      loadQuests();
+    }
+  }
+
+  void clearQuests() {
+    if (mounted) state = const [];
   }
 
   /// Fetch real quests from backend API, seamlessly backed by local cache when offline
@@ -98,13 +114,11 @@ class QuestsNotifier extends StateNotifier<List<QuestModel>> {
         final quests = data
             .map((item) => QuestModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        if (quests.isNotEmpty) {
-          state = quests;
-          await SessionStorage.saveCachedQuests(quests);
-          final u = _ref.read(authProvider).value;
-          if (u != null) {
-            HomeWidgetBridge.syncFromState(user: u, quests: quests);
-          }
+        state = quests;
+        await SessionStorage.saveCachedQuests(quests);
+        final u = _ref.read(authProvider).value;
+        if (u != null) {
+          HomeWidgetBridge.syncFromState(user: u, quests: quests);
         }
       }
     } on DioException catch (e) {

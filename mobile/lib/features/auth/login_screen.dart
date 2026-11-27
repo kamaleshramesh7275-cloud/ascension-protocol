@@ -377,15 +377,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.network(
-                                    'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                                    width: 20,
-                                    height: 20,
-                                    errorBuilder: (_, _, _) => const Icon(
-                                      Icons.g_mobiledata,
-                                      size: 28,
-                                      color: Colors.black,
-                                    ),
+                                  const Icon(
+                                    Icons.g_mobiledata,
+                                    size: 28,
+                                    color: Colors.black,
                                   ),
                                   const SizedBox(width: 10),
                                   const Text(
