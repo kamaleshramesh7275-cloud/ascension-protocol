@@ -247,12 +247,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen>
             ),
             const SizedBox(height: 8),
 
-            Container(
-              decoration: BoxDecoration(
-                color: HunterTheme.surface,
+            Material(
+              color: HunterTheme.surface,
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HunterTheme.surfaceLight),
+                side: const BorderSide(color: HunterTheme.surfaceLight),
               ),
+              clipBehavior: Clip.antiAlias,
               child: CheckboxListTile(
                 value: _includeDiagnostics,
                 activeColor: HunterTheme.cyan,
