@@ -1,6 +1,48 @@
 import type { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
 import { getStorage } from "../storage";
 import { verifyFirebaseToken } from "../firebase-admin";
+
+const LOCAL_TOKEN_SECRET =
+  process.env.SESSION_SECRET ||
+  process.env.DATABASE_URL ||
+  "ascension_local_session_secret_dev";
+
+export function signLocalSessionToken(firebaseUid: string): string {
+  const payload = Buffer.from(
+    JSON.stringify({
+      uid: firebaseUid,
+      exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    })
+  ).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", LOCAL_TOKEN_SECRET)
+    .update(payload)
+    .digest("base64url");
+  return `local_jwt.${payload}.${sig}`;
+}
+
+export function verifyLocalSessionToken(token: string): { uid: string } | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3 || parts[0] !== "local_jwt") return null;
+    const [, payload, sig] = parts;
+    const expected = crypto
+      .createHmac("sha256", LOCAL_TOKEN_SECRET)
+      .update(payload)
+      .digest("base64url");
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+      return null;
+    }
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (!parsed?.uid || (parsed.exp && Date.now() > Number(parsed.exp))) {
+      return null;
+    }
+    return { uid: String(parsed.uid) };
+  } catch {
+    return null;
+  }
+}
 
 function isValidTimezone(tz: string): boolean {
   try {
@@ -58,6 +100,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         name: `Test User ${uid.slice(0, 6)}`,
         isAnonymous: uid.startsWith("anon_"),
       };
+    } else if (token.startsWith("local_jwt.")) {
+      const verified = verifyLocalSessionToken(token);
+      if (!verified) {
+        return res.status(401).json({
+          code: "invalid_token",
+          error: "Invalid or expired local session token.",
+        });
+      }
+      decodedUser = { uid: verified.uid, isAnonymous: false };
     } else {
       decodedUser = await verifyFirebaseToken(token);
     }

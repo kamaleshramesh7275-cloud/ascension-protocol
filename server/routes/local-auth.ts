@@ -4,7 +4,7 @@ import { getStorage } from "../storage";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { verifyFirebaseToken } from "../firebase-admin";
-import { enrichUserWithLevelData } from "../middleware/auth";
+import { enrichUserWithLevelData, signLocalSessionToken } from "../middleware/auth";
 import type { User } from "@shared/schema";
 
 // Helper to generate referral code
@@ -207,6 +207,7 @@ export function registerLocalAuthRoutes(app: Express) {
             console.log("[REGISTER] Success:", user.id);
             res.json({
                 success: true,
+                token: signLocalSessionToken(user.firebaseUid),
                 userId: user.id,
                 firebaseUid: user.firebaseUid,
                 username: user.name,
@@ -262,7 +263,7 @@ export function registerLocalAuthRoutes(app: Express) {
                         await storage.updateUser(demoUser.id, { coins: 1000 });
                     }
                     const enrichedDemo = enrichUserWithLevelData(demoUser);
-                    return res.json({ success: true, userId: demoUser.id, firebaseUid: demoUser.firebaseUid, user: enrichedDemo });
+                    return res.json({ success: true, token: signLocalSessionToken(demoUser.firebaseUid), userId: demoUser.id, firebaseUid: demoUser.firebaseUid, user: enrichedDemo });
                 }
 
                 credentials = await storage.getCredentialsByUsername(data.username);
@@ -279,6 +280,7 @@ export function registerLocalAuthRoutes(app: Express) {
             const enrichedUser = enrichUserWithLevelData(user);
             res.json({
                 success: true,
+                token: signLocalSessionToken(user.firebaseUid),
                 userId: user.id,
                 firebaseUid: user.firebaseUid,
                 username: user.name,
@@ -322,6 +324,7 @@ export function registerLocalAuthRoutes(app: Express) {
             const enrichedUser = enrichUserWithLevelData(user);
             res.json({
                 success: true,
+                token: signLocalSessionToken(user.firebaseUid),
                 userId: user.id,
                 firebaseUid: user.firebaseUid,
                 username: user.name,
@@ -527,6 +530,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
             res.json({
                 success: true,
+                token: signLocalSessionToken(user.firebaseUid),
                 userId: user.id,
                 firebaseUid: user.firebaseUid,
                 username: user.name,
