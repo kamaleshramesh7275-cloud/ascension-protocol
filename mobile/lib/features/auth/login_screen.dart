@@ -236,116 +236,133 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             ),
 
             SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-
-                    // System Emblem
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [HunterTheme.cyan, HunterTheme.purple],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: HunterTheme.cyan.withValues(alpha: 0.35),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.shield,
-                        color: Colors.black,
-                        size: 32,
-                      ),
-                    ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-
-                    const SizedBox(height: 12),
-
-                    // Title
-                    Text(
-                      'ASCENSION PROTOCOL',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2.5,
-                          ),
-                      textAlign: TextAlign.center,
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: (constraints.maxHeight - 32).clamp(0.0, double.infinity),
                     ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [
+                            const SizedBox(height: 8),
 
-                    const SizedBox(height: 4),
+                            // System Emblem (App Logo)
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: HunterTheme.cyan.withValues(alpha: 0.4),
+                                    blurRadius: 22,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  'assets/images/app_logo.png',
+                                  width: 72,
+                                  height: 72,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(
+                                    Icons.shield,
+                                    color: HunterTheme.cyan,
+                                    size: 42,
+                                  ),
+                                ),
+                              ),
+                            ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
 
-                    Text(
-                      'THE HUNTER SYSTEM OS • AWAKENING',
-                      style: TextStyle(
-                        color: HunterTheme.cyanLight,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
+                            const SizedBox(height: 12),
 
-                    const SizedBox(height: 24),
+                            // Title
+                            Text(
+                              'ASCENSION PROTOCOL',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2.5,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
 
-                    // Dual Tab Selector (Sign In / Register)
-                    Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: HunterTheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        dividerColor: Colors.transparent,
-                        indicator: BoxDecoration(
-                          color: HunterTheme.cyan,
-                          borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 4),
+
+                            Text(
+                              'THE HUNTER SYSTEM OS • AWAKENING',
+                              style: TextStyle(
+                                color: HunterTheme.cyanLight,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Dual Tab Selector (Sign In / Register)
+                            Container(
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: HunterTheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                              ),
+                              child: TabBar(
+                                controller: _tabController,
+                                indicatorSize: TabBarIndicatorSize.tab,
+                                dividerColor: Colors.transparent,
+                                indicator: BoxDecoration(
+                                  color: HunterTheme.cyan,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                labelColor: Colors.black,
+                                unselectedLabelColor: HunterTheme.textMuted,
+                                labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13,
+                                  letterSpacing: 1.2,
+                                ),
+                                unselectedLabelStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  letterSpacing: 1.2,
+                                ),
+                                tabs: const [
+                                  Tab(text: 'SIGN IN'),
+                                  Tab(text: 'REGISTER'),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            // Responsive Tab View content
+                            SizedBox(
+                              height: (constraints.maxHeight * 0.45).clamp(320.0, 480.0),
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  // Tab 0: Phone + Password Login
+                                  _buildSignInTab(),
+
+                                  // Tab 1: Direct Registration
+                                  _buildRegisterTab(),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        labelColor: Colors.black,
-                        unselectedLabelColor: HunterTheme.textMuted,
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          letterSpacing: 1.2,
-                        ),
-                        unselectedLabelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          letterSpacing: 1.2,
-                        ),
-                        tabs: const [
-                          Tab(text: 'SIGN IN'),
-                          Tab(text: 'REGISTER'),
-                        ],
-                      ),
-                    ),
 
-                    const SizedBox(height: 20),
-
-                    // Tab View content
-                    SizedBox(
-                      height: 330,
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // Tab 0: Phone + Password Login
-                          _buildSignInTab(),
-
-                          // Tab 1: Direct Registration
-                          _buildRegisterTab(),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
+                        Column(
+                          children: [
+                            const SizedBox(height: 12),
 
                     // Divider: OR CONTINUE WITH
                     Row(
@@ -448,7 +465,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                     ),
 
                     const SizedBox(height: 16),
-                  ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

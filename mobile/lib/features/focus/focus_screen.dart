@@ -360,12 +360,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
           ),
         ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: (constraints.maxHeight - 40).clamp(0.0, double.infinity)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
               // Pre-Session Intention & Linked Quest Selector
               if (!_isRunning) ...[
                 Builder(builder: (ctx) {
@@ -605,6 +607,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
               ),
             ],
           ),
+        ),
         ),
       ),
     );
