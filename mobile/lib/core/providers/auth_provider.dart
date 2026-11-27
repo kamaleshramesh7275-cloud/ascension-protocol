@@ -73,6 +73,13 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     required String phone,
     required String password,
     String? referralCode,
+    int? age,
+    int? weight,
+    int? height,
+    String? gender,
+    String? occupation,
+    String? experienceLevel,
+    String? primaryGoal,
   }) async {
     if (!mounted) return false;
     state = const AsyncValue.loading();
@@ -83,6 +90,13 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         phone: phone,
         password: password,
         referralCode: referralCode,
+        age: age,
+        weight: weight,
+        height: height,
+        gender: gender,
+        occupation: occupation,
+        experienceLevel: experienceLevel,
+        primaryGoal: primaryGoal,
       );
       if (!mounted) return user != null;
       state = AsyncValue.data(user);

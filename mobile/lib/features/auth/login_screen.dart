@@ -28,7 +28,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   final _registerEmailController = TextEditingController();
   final _registerPhoneController = TextEditingController();
   final _registerPasswordController = TextEditingController();
+  final _registerConfirmPasswordController = TextEditingController();
+  final _registerAgeController = TextEditingController();
+  final _registerWeightController = TextEditingController();
+  final _registerHeightController = TextEditingController();
+  final _registerGoalController = TextEditingController();
   final _registerReferralController = TextEditingController();
+  String _selectedGender = 'prefer_not_to_say';
+  String _selectedOccupation = 'student';
+  String _selectedExperience = 'beginner';
   bool _showReferralField = false;
 
   @override
@@ -46,6 +54,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     _registerEmailController.dispose();
     _registerPhoneController.dispose();
     _registerPasswordController.dispose();
+    _registerConfirmPasswordController.dispose();
+    _registerAgeController.dispose();
+    _registerWeightController.dispose();
+    _registerHeightController.dispose();
+    _registerGoalController.dispose();
     _registerReferralController.dispose();
     super.dispose();
   }
@@ -108,6 +121,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             password: _registerPasswordController.text,
             referralCode: _registerReferralController.text.trim().isNotEmpty
                 ? _registerReferralController.text.trim()
+                : null,
+            age: int.tryParse(_registerAgeController.text.trim()),
+            weight: int.tryParse(_registerWeightController.text.trim()),
+            height: int.tryParse(_registerHeightController.text.trim()),
+            gender: _selectedGender,
+            occupation: _selectedOccupation,
+            experienceLevel: _selectedExperience,
+            primaryGoal: _registerGoalController.text.trim().isNotEmpty
+                ? _registerGoalController.text.trim()
                 : null,
           );
 
@@ -440,6 +462,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   Widget _buildSignInTab() {
     return Form(
       key: _signInFormKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -457,8 +480,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 return 'Phone number is required';
               }
               final digits = val.replaceAll(RegExp(r'\D'), '');
-              if (digits.length < 10) {
-                return 'Enter valid 10+ digit phone number';
+              if (digits.length < 10 || digits.length > 15) {
+                return 'Enter a valid 10–15 digit phone number';
               }
               return null;
             },
@@ -472,7 +495,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             obscureText: _obscurePassword,
             style: const TextStyle(color: Colors.white, fontSize: 14),
             decoration: _inputDecor(
-              hint: 'Password',
+              hint: 'Password (min 8 chars)',
               icon: Icons.lock_outline,
               suffixIcon: IconButton(
                 icon: Icon(
@@ -486,6 +509,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             validator: (val) {
               if (val == null || val.isEmpty) {
                 return 'Password is required';
+              }
+              if (val.length < 8) {
+                return 'Password must be at least 8 characters';
               }
               return null;
             },
@@ -529,25 +555,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     );
   }
 
-  // Register Tab (Name, Email, Phone, Password, Referral)
+  // Register Tab (Full Profile + Strict Field Validation)
   Widget _buildRegisterTab() {
     return Form(
       key: _registerFormKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Name
+            // Hunter Codename
             TextFormField(
               controller: _registerNameController,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: _inputDecor(
-                hint: 'Hunter Codename *',
+                hint: 'Hunter Codename (3-24 chars) *',
                 icon: Icons.person_outline,
               ),
               validator: (val) {
-                if (val == null || val.trim().length < 2) {
-                  return 'Name must be at least 2 characters';
+                final v = val?.trim() ?? '';
+                if (v.length < 3 || v.length > 24) {
+                  return 'Codename must be 3–24 characters';
+                }
+                if (!RegExp(r'^[a-zA-Z0-9_ -]+$').hasMatch(v)) {
+                  return 'Use letters, numbers, spaces, - or _ only';
                 }
                 return null;
               },
@@ -565,11 +596,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 icon: Icons.email_outlined,
               ),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) {
-                  return 'Email is required';
-                }
-                if (!val.contains('@') || !val.contains('.')) {
-                  return 'Enter valid email address';
+                final v = val?.trim() ?? '';
+                if (v.isEmpty) return 'Email is required';
+                if (!RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]{2,}$').hasMatch(v)) {
+                  return 'Enter a valid email address';
                 }
                 return null;
               },
@@ -583,7 +613,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               keyboardType: TextInputType.phone,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: _inputDecor(
-                hint: 'Phone Number (Mandatory) *',
+                hint: 'Phone Number (10-15 digits) *',
                 icon: Icons.phone_android,
               ),
               validator: (val) {
@@ -591,8 +621,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   return 'Phone number is mandatory';
                 }
                 final digits = val.replaceAll(RegExp(r'\D'), '');
-                if (digits.length < 10) {
-                  return 'Enter at least 10 digits';
+                if (digits.length < 10 || digits.length > 15) {
+                  return 'Enter a valid 10–15 digit phone number';
                 }
                 return null;
               },
@@ -600,24 +630,186 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
             const SizedBox(height: 10),
 
-            // Password (Mandatory, min 8)
+            // Password (Mandatory, min 8 + letter + number)
             TextFormField(
               controller: _registerPasswordController,
               obscureText: _obscurePassword,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: _inputDecor(
-                hint: 'Password (min 8 characters) *',
+                hint: 'Password (8+ chars, letter & number) *',
                 icon: Icons.lock_outline,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white38,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
               ),
               validator: (val) {
                 if (val == null || val.length < 8) {
-                  return 'Password must be at least 8 characters';
+                  return 'Minimum 8 characters required';
+                }
+                if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)').hasMatch(val)) {
+                  return 'Include at least 1 letter and 1 number';
                 }
                 return null;
               },
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+
+            // Confirm Password
+            TextFormField(
+              controller: _registerConfirmPasswordController,
+              obscureText: _obscurePassword,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: _inputDecor(
+                hint: 'Confirm Password *',
+                icon: Icons.verified_user_outlined,
+              ),
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Confirm your password';
+                if (val != _registerPasswordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // Physical Biometrics Row (Age, Weight, Height)
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _registerAgeController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: _inputDecor(hint: 'Age *', icon: Icons.cake_outlined),
+                    validator: (val) {
+                      final n = int.tryParse(val?.trim() ?? '');
+                      if (n == null || n < 13 || n > 100) return '13-100';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _registerWeightController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: _inputDecor(hint: 'Kg *', icon: Icons.monitor_weight_outlined),
+                    validator: (val) {
+                      final n = int.tryParse(val?.trim() ?? '');
+                      if (n == null || n < 25 || n > 300) return '25-300';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _registerHeightController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: _inputDecor(hint: 'Cm *', icon: Icons.height),
+                    validator: (val) {
+                      final n = int.tryParse(val?.trim() ?? '');
+                      if (n == null || n < 100 || n > 250) return '100-250';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Gender & Occupation Dropdowns
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedGender,
+                    dropdownColor: HunterTheme.surface,
+                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                    decoration: _inputDecor(hint: 'Gender', icon: Icons.wc),
+                    items: const [
+                      DropdownMenuItem(value: 'male', child: Text('Male')),
+                      DropdownMenuItem(value: 'female', child: Text('Female')),
+                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                      DropdownMenuItem(value: 'prefer_not_to_say', child: Text('Private')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) setState(() => _selectedGender = v);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedOccupation,
+                    dropdownColor: HunterTheme.surface,
+                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                    decoration: _inputDecor(hint: 'Role', icon: Icons.work_outline),
+                    items: const [
+                      DropdownMenuItem(value: 'student', child: Text('Student')),
+                      DropdownMenuItem(value: 'developer', child: Text('Developer')),
+                      DropdownMenuItem(value: 'founder', child: Text('Founder')),
+                      DropdownMenuItem(value: 'corporate', child: Text('Corporate')),
+                      DropdownMenuItem(value: 'creative', child: Text('Creative')),
+                      DropdownMenuItem(value: 'athlete', child: Text('Athlete')),
+                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) setState(() => _selectedOccupation = v);
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Experience Level
+            DropdownButtonFormField<String>(
+              initialValue: _selectedExperience,
+              dropdownColor: HunterTheme.surface,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: _inputDecor(hint: 'Discipline Level', icon: Icons.fitness_center),
+              items: const [
+                DropdownMenuItem(value: 'beginner', child: Text('Beginner (E-Rank Start)')),
+                DropdownMenuItem(value: 'intermediate', child: Text('Intermediate (Consistent)')),
+                DropdownMenuItem(value: 'advanced', child: Text('Advanced (High Intensity)')),
+              ],
+              onChanged: (v) {
+                if (v != null) setState(() => _selectedExperience = v);
+              },
+            ),
+
+            const SizedBox(height: 10),
+
+            // Primary Goal
+            TextFormField(
+              controller: _registerGoalController,
+              maxLength: 120,
+              style: const TextStyle(color: Colors.white, fontSize: 13.5),
+              decoration: _inputDecor(
+                hint: 'Primary 30-Day Goal *',
+                icon: Icons.flag_outlined,
+              ),
+              validator: (val) {
+                final v = val?.trim() ?? '';
+                if (v.length < 4) return 'Enter your main goal (min 4 chars)';
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 6),
 
             // Referral toggle
             if (!_showReferralField)
@@ -643,6 +835,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                     hint: 'Referral Code (Optional)',
                     icon: Icons.card_giftcard,
                   ),
+                  validator: (val) {
+                    final v = val?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    if (!RegExp(r'^[A-Za-z0-9]{4,20}$').hasMatch(v)) {
+                      return 'Referral code must be 4-20 alphanumeric chars';
+                    }
+                    return null;
+                  },
                 ),
               ),
 

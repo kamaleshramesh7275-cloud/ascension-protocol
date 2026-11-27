@@ -18,16 +18,24 @@ function generateReferralCode(): string {
 }
 
 // Validation Schemas
+const phoneRegex = /^\+?\d{10,15}$/;
+const codenameRegex = /^[a-zA-Z0-9_ -]{3,24}$/;
+const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,100}$/;
+
 const registerSchema = z.object({
-    username: z.string().min(2, "Username/Name must be at least 2 characters").optional(),
-    name: z.string().min(2, "Name must be at least 2 characters").optional(),
-    email: z.string().email("Valid email address is required"),
-    phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    referralCode: z.string().optional(),
-    age: z.coerce.number().int().positive().optional().default(20),
-    weight: z.coerce.number().int().positive().optional().default(70),
-    height: z.coerce.number().int().positive().optional().default(175),
+    username: z.string().trim().regex(codenameRegex, "Codename must be 3-24 characters (letters, numbers, spaces, - or _)").optional(),
+    name: z.string().trim().regex(codenameRegex, "Codename must be 3-24 characters (letters, numbers, spaces, - or _)").optional(),
+    email: z.string().trim().toLowerCase().email("Valid email address is required"),
+    phone: z.string().trim().transform(v => v.replace(/[\s\-()]/g, "")).refine(v => phoneRegex.test(v), "Phone number must be 10-15 digits"),
+    password: z.string().regex(strongPasswordRegex, "Password must be 8+ characters with at least 1 letter and 1 number"),
+    referralCode: z.string().trim().max(24).optional(),
+    age: z.coerce.number().int().min(13, "Age must be at least 13").max(100, "Age must be 100 or under").optional().default(20),
+    weight: z.coerce.number().int().min(25, "Weight must be 25-300 kg").max(300, "Weight must be 25-300 kg").optional().default(70),
+    height: z.coerce.number().int().min(100, "Height must be 100-250 cm").max(250, "Height must be 100-250 cm").optional().default(175),
+    gender: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional().default("prefer_not_to_say"),
+    occupation: z.enum(["student", "developer", "founder", "corporate", "creative", "athlete", "other"]).optional().default("other"),
+    experienceLevel: z.enum(["beginner", "intermediate", "advanced"]).optional().default("beginner"),
+    primaryGoal: z.string().trim().max(120).optional(),
     pushups: z.coerce.number().int().nonnegative().optional().default(20),
     pullups: z.coerce.number().int().nonnegative().optional().default(5),
     intelligence: z.coerce.number().int().min(1).max(10).optional().default(5),
@@ -45,14 +53,14 @@ const googleRegisterSchema = registerSchema.extend({
 const loginSchema = z.object({
     phone: z.string().optional(),
     username: z.string().optional(),
-    password: z.string().min(1, "Password is required"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
 }).refine(data => data.phone || data.username, {
     message: "Either phone number or username is required",
 });
 
 const loginPhoneSchema = z.object({
-    phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    password: z.string().min(1, "Password is required"),
+    phone: z.string().trim().transform(v => v.replace(/[\s\-()]/g, "")).refine(v => phoneRegex.test(v), "Phone number must be 10-15 digits"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export function registerLocalAuthRoutes(app: Express) {
@@ -111,6 +119,10 @@ export function registerLocalAuthRoutes(app: Express) {
                     age: data.age,
                     weight: data.weight,
                     height: data.height,
+                    gender: data.gender,
+                    occupation: data.occupation,
+                    experienceLevel: data.experienceLevel,
+                    primaryGoal: data.primaryGoal || null,
                     pushups: data.pushups,
                     pullups: data.pullups,
                     intelligence: data.intelligence,
@@ -662,6 +674,10 @@ export function registerLocalAuthRoutes(app: Express) {
                     age: data.age,
                     weight: data.weight,
                     height: data.height,
+                    gender: data.gender,
+                    occupation: data.occupation,
+                    experienceLevel: data.experienceLevel,
+                    primaryGoal: data.primaryGoal || null,
                     pushups: data.pushups,
                     pullups: data.pullups,
                     intelligence: data.intelligence,

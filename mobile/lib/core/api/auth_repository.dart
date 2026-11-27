@@ -96,6 +96,13 @@ class AuthRepository {
     required String phone,
     required String password,
     String? referralCode,
+    int? age,
+    int? weight,
+    int? height,
+    String? gender,
+    String? occupation,
+    String? experienceLevel,
+    String? primaryGoal,
   }) async {
     try {
       final dio = await ApiClient.getInstance();
@@ -108,6 +115,13 @@ class AuthRepository {
           'phone': phone,
           'password': password,
           if (referralCode != null && referralCode.isNotEmpty) 'referralCode': referralCode,
+          'age': ?age,
+          'weight': ?weight,
+          'height': ?height,
+          'gender': ?gender,
+          'occupation': ?occupation,
+          'experienceLevel': ?experienceLevel,
+          if (primaryGoal != null && primaryGoal.isNotEmpty) 'primaryGoal': primaryGoal,
         },
       );
 
