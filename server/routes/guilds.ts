@@ -95,8 +95,10 @@ router.get("/", async (req, res) => {
         const storage = getStorage();
         await seedGuilds(); // Ensure guilds exist
         const guilds = await storage.getAllGuilds();
+        const monarchNames = new Set(MONARCH_GUILDS.map((g) => g.name));
+        const monarchGuilds = guilds.filter((g) => monarchNames.has(g.name));
         const enriched = await Promise.all(
-            guilds.map(async (g) => {
+            monarchGuilds.map(async (g) => {
                 const members = await storage.getGuildMembers(g.id);
                 const totalXP = members.reduce((sum: number, m: any) => sum + m.xp, 0);
                 return { ...g, memberCount: members.length, totalXP };

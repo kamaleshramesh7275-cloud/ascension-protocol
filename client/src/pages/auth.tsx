@@ -132,7 +132,7 @@ const PROGRESSION_TIERS = [
     requirement: "Level 76+",
     color: "text-amber-400 border-amber-500/40 bg-amber-950/20 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
     badge: "Apex Tier",
-    desc: "The pinnacle of self-mastery. Top 1% of executors globally on the global leaderboard.",
+    desc: "The pinnacle of self-mastery. Top 1% of disciplined Hunters.",
   },
 ];
 
@@ -191,7 +191,7 @@ export default function AuthPage() {
     } else if (ios) {
       setShowIOSGuide(true);
     } else {
-      setShowQRModal(true);
+      setLocation('/download');
     }
   };
 
@@ -295,73 +295,7 @@ export default function AuthPage() {
         )}
       </AnimatePresence>
 
-      {/* Desktop-to-Mobile QR Launch Modal */}
-      <AnimatePresence>
-        {showQRModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
-              onClick={() => setShowQRModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-[#090d16] border border-cyan-500/40 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center relative shadow-[0_0_50px_rgba(6,182,212,0.25)]"
-              >
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-medium mb-4">
-                  <QrCode className="w-3.5 h-3.5" />
-                  <span>Mobile Device Access</span>
-                </div>
-
-                <h3 className="text-xl font-bold text-white mb-2">Scan to Open on Mobile</h3>
-                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                  Open your camera to access your personal leveling system, daily directives, and rank progression on mobile.
-                </p>
-
-                {/* QR Code Container */}
-                <div className="bg-white p-4 rounded-xl inline-block shadow-inner mb-6 mx-auto border-4 border-cyan-500/30">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}&color=020617&bgcolor=ffffff`}
-                    alt="Scan to open Ascension Protocol Mobile"
-                    className="w-48 h-48 block mx-auto"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={copyAppUrl}
-                    variant="outline"
-                    className="flex-1 border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 text-xs py-5 rounded-xl"
-                  >
-                    {copiedLink ? (
-                      <>
-                        <Check className="w-4 h-4 mr-1.5 text-emerald-400" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 mr-1.5 text-cyan-400" />
-                        Copy Link
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => setShowQRModal(false)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 px-5 rounded-xl"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* QR modal removed — direct GitHub Release download via /download */}
 
       {/* ============ NATIVE MOBILE WELCOME VIEW ============ */}
       {isMobile && view === 'hero' && (
@@ -590,7 +524,7 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* Slide 3: Peer Escrow & Leaderboard Pacts */}
+              {/* Slide 3: Peer Escrow & Squad Pacts */}
               {activeSlide === 3 && (
                 <div>
                   <div className="flex items-center justify-between mb-2 border-b border-cyan-500/20 pb-1.5">
@@ -611,8 +545,8 @@ export default function AuthPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 text-center">
                       <div className="p-1.5 rounded bg-slate-900 border border-slate-800">
-                        <div className="text-[11px] font-bold text-white font-mono">Top 3%</div>
-                        <div className="text-[8px] text-slate-400">Global Leaderboard</div>
+                        <div className="text-[11px] font-bold text-white font-mono">Top 2</div>
+                        <div className="text-[8px] text-slate-400">Rival Division</div>
                       </div>
                       <div className="p-1.5 rounded bg-slate-900 border border-slate-800">
                         <div className="text-[11px] font-bold text-cyan-400 font-mono">30-Day</div>
@@ -898,7 +832,7 @@ export default function AuthPage() {
                         <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block mb-1">Step 03 • Rank Promotion</span>
                         <h3 className="text-lg font-bold text-white mb-2">Climb From E to S-Tier</h3>
                         <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
-                          Accumulate verified execution XP. Unlock Rank Awakening Trials at milestone thresholds to permanently promote your Hunter Rank and climb the global leaderboards.
+                          Accumulate verified execution XP. Unlock Rank Awakening Trials at milestone thresholds to permanently promote your Hunter Rank.
                         </p>
                       </div>
                       <div className="pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-center gap-1.5">
@@ -1082,16 +1016,16 @@ export default function AuthPage() {
                 </section>
 
                 {/* ======================================================== */}
-                {/* SECTION 5: SQUAD ACCOUNTABILITY & LEADERBOARDS */}
+                {/* SECTION 5: SQUAD ACCOUNTABILITY & RIVAL DIVISIONS */}
                 {/* ======================================================== */}
                 <section className="w-full max-w-5xl mx-auto mb-20 text-left">
                   <div className="text-center mb-12">
                     <span className="text-xs font-semibold text-cyan-400 tracking-wider uppercase">Social Architecture</span>
                     <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
-                      Accountability Squads & Global Standing
+                      Rival Divisions & Accountability Squads
                     </h2>
                     <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-xl mx-auto leading-relaxed">
-                      Compete with disciplined peers or form a close-knit squad with shared commitments.
+                      Compete in weekly 10-hunter pods or form a close-knit squad with shared commitments.
                     </p>
                   </div>
 
@@ -1100,12 +1034,12 @@ export default function AuthPage() {
                       <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                         <Trophy className="w-5 h-5" />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Global Hunter Leaderboards</h3>
+                      <h3 className="text-lg font-bold text-white">Weekly Rival Divisions</h3>
                       <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                        Climb the global tier rankings based on verified habit consistency, completed quest volume, and streak length. Filter by Class (Assassin, Tank, Ranger, Scholar) or region.
+                        Face off against 9 matched Hunters each week based on verified focus minutes, completed quests, and consistency. Top 2 promote a tier; bottom 2 demote.
                       </p>
                       <div className="pt-2 text-xs text-cyan-400 flex items-center gap-1">
-                        <span>Transparent proof-of-work ranking</span>
+                        <span>Fair 10-hunter weekly pods</span>
                       </div>
                     </div>
 

@@ -17,24 +17,18 @@ export default function DownloadPage() {
   const [downloading, setDownloading] = useState(false);
   const isMobile = isMobilePhoneBrowser();
 
-  const apkDownloadUrl = "/api/download/apk";
-  const githubReleaseUrl = "https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases";
+  const apkDownloadUrl = "https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest/download/AscensionProtocol-Flutter.apk";
+  const githubReleaseUrl = "https://github.com/kamaleshramesh7275-cloud/ascension-protocol/releases/latest";
 
   const handleDownloadClick = () => {
     hapticSuccess();
     setDownloading(true);
     toast({
-      title: "Downloading Ascension Protocol Native APK...",
-      description: "File: AscensionProtocol-Flutter.apk. Tap the notification once finished to install.",
+      title: "Opening GitHub Release APK Download...",
+      description: "Downloading AscensionProtocol-Flutter.apk from GitHub Releases.",
     });
 
-    // Trigger direct download of the Native Flutter APK
-    const link = document.createElement("a");
-    link.href = apkDownloadUrl;
-    link.setAttribute("download", "AscensionProtocol-Flutter.apk");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.open(apkDownloadUrl, "_blank", "noopener,noreferrer");
 
     setTimeout(() => setDownloading(false), 3000);
   };
