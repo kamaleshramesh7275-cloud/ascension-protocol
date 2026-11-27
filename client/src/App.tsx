@@ -288,6 +288,21 @@ function Router() {
     enabled: !!user
   });
 
+  // Website-Only Direct Admin Route (ascensions.in/admin)
+  // Accessible on desktop & mobile web browsers when directly navigating to /admin,
+  // never inside the native Capacitor/mobile app wrapper.
+  if (
+    !Capacitor.isNativePlatform() &&
+    (window.location.pathname === "/admin" || window.location.pathname === "/admin/dashboard")
+  ) {
+    return (
+      <Switch>
+        <Route path="/admin" component={withSeo(AdminDashboard, { title: "Admin Control", url: "/admin" })} />
+        <Route path="/admin/dashboard">{() => <Redirect to="/admin" />}</Route>
+      </Switch>
+    );
+  }
+
   // Mobile Phone Web Browser:
   // When opened on a phone web browser (NOT inside the native app), ONLY show the download button for the app!
   // All core features, login, briefing room, and missions run exclusively inside the native mobile app.

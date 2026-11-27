@@ -106,5 +106,62 @@ class SessionStorage {
     }
   }
 
+  static const String _keyWorkoutDraft = 'active_workout_draft';
+  static const String _keyBookmarkedContent = 'bookmarked_content_ids';
+  static const String _keyLastArrivalDate = 'last_system_arrival_date';
+  static const String _keyFcmToken = 'fcm_device_token';
+
+  static Future<void> saveWorkoutDraft(String draftJson) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyWorkoutDraft, draftJson);
+  }
+
+  static Future<String?> getWorkoutDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyWorkoutDraft);
+  }
+
+  static Future<void> clearWorkoutDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyWorkoutDraft);
+  }
+
+  static Future<List<String>> getBookmarkedContentIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_keyBookmarkedContent) ?? const [];
+  }
+
+  static Future<List<String>> toggleBookmarkedContentId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = List<String>.from(prefs.getStringList(_keyBookmarkedContent) ?? const []);
+    if (current.contains(id)) {
+      current.remove(id);
+    } else {
+      current.add(id);
+    }
+    await prefs.setStringList(_keyBookmarkedContent, current);
+    return current;
+  }
+
+  static Future<String?> getLastArrivalDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLastArrivalDate);
+  }
+
+  static Future<void> saveLastArrivalDate(String yyyyMmDd) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLastArrivalDate, yyyyMmDd);
+  }
+
+  static Future<void> saveFcmToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyFcmToken, token);
+  }
+
+  static Future<String?> getFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyFcmToken);
+  }
+
   static Future<void> clearSession() => clear();
 }

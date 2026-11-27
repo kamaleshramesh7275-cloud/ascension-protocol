@@ -6,10 +6,12 @@ import '../../models/user_model.dart';
 class StatRadarPainter extends CustomPainter {
   final UserModel user;
   final double animationValue;
+  final bool showGhostBaseline;
 
   StatRadarPainter({
     required this.user,
     this.animationValue = 1.0,
+    this.showGhostBaseline = true,
   });
 
   static const List<String> statNames = [
@@ -21,6 +23,74 @@ class StatRadarPainter extends CustomPainter {
     'WIL',
     'CHA',
   ];
+
+  static const List<String> baselineKeys = [
+    'strength',
+    'agility',
+    'stamina',
+    'vitality',
+    'intelligence',
+    'willpower',
+    'charisma',
+  ];
+
+  /// Computes normalized [0.01..1.0] radar coordinates from current user attributes.
+  static List<double> normalizeCurrentStats(UserModel user) {
+    return [
+      user.strength.clamp(1, 100) / 100.0,
+      user.agility.clamp(1, 100) / 100.0,
+      user.stamina.clamp(1, 100) / 100.0,
+      user.vitality.clamp(1, 100) / 100.0,
+      user.intelligence.clamp(1, 100) / 100.0,
+      user.willpower.clamp(1, 100) / 100.0,
+      user.charisma.clamp(1, 100) / 100.0,
+    ];
+  }
+
+  /// Computes normalized [0.01..1.0] radar coordinates from Day-1 baseline snapshot.
+  static List<double>? normalizeBaselineStats(Map<String, int>? baseline) {
+    if (baseline == null || baseline.isEmpty) return null;
+    return baselineKeys
+        .map((k) => (baseline[k] ?? 10).clamp(1, 100) / 100.0)
+        .toList();
+  }
+
+  Path _buildPolygonPath(
+    Offset center,
+    double maxRadius,
+    List<double> normalizedValues,
+    double progress,
+  ) {
+    const sides = 7;
+    const angleStep = (2 * pi) / sides;
+    final path = Path();
+    for (int i = 0; i < sides; i++) {
+      final angle = -pi / 2 + i * angleStep;
+      final statRadius = maxRadius * normalizedValues[i] * progress;
+      final x = center.dx + statRadius * cos(angle);
+      final y = center.dy + statRadius * sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    for (final metric in path.computeMetrics()) {
+      double distance = 0.0;
+      const double dashLen = 6.0;
+      const double gapLen = 4.0;
+      while (distance < metric.length) {
+        final double next = min(distance + dashLen, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance += dashLen + gapLen;
+      }
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -41,45 +111,31 @@ class StatRadarPainter extends CustomPainter {
 
     // Draw 4 concentric 7-sided polygon rings
     for (int r = 1; r <= 4; r++) {
-      final ringRadius = radius * (r / 4.0);
-      final path = Path();
-      for (int i = 0; i < sides; i++) {
-        final angle = -pi / 2 + i * angleStep;
-        final x = center.dx + ringRadius * cos(angle);
-        final y = center.dy + ringRadius * sin(angle);
-        if (i == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-      path.close();
+      final path = _buildPolygonPath(center, radius, List.filled(7, r / 4.0), 1.0);
       canvas.drawPath(path, ringPaint);
     }
 
-    // Draw axes from center to vertices and label vertices
+    // Draw axes & labels
     for (int i = 0; i < sides; i++) {
       final angle = -pi / 2 + i * angleStep;
       final x = center.dx + radius * cos(angle);
       final y = center.dy + radius * sin(angle);
       canvas.drawLine(center, Offset(x, y), axisPaint);
 
-      // Draw Attribute Vertex Name Label
-      final labelRadius = radius + 14;
+      final labelRadius = radius + 15;
       final lx = center.dx + labelRadius * cos(angle);
       final ly = center.dy + labelRadius * sin(angle);
 
-      final textSpan = TextSpan(
-        text: statNames[i],
-        style: const TextStyle(
-          color: HunterTheme.cyanLight,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1,
-        ),
-      );
       final textPainter = TextPainter(
-        text: textSpan,
+        text: TextSpan(
+          text: statNames[i],
+          style: const TextStyle(
+            color: HunterTheme.cyanLight,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
       )..layout();
@@ -90,34 +146,26 @@ class StatRadarPainter extends CustomPainter {
       );
     }
 
-    // Prepare stat normalized values (1 to 100)
-    final values = [
-      user.strength.clamp(1, 100) / 100.0,
-      user.agility.clamp(1, 100) / 100.0,
-      user.stamina.clamp(1, 100) / 100.0,
-      user.vitality.clamp(1, 100) / 100.0,
-      user.intelligence.clamp(1, 100) / 100.0,
-      user.willpower.clamp(1, 100) / 100.0,
-      user.charisma.clamp(1, 100) / 100.0,
-    ];
-
-    // Build the user stat polygon
-    final polygonPath = Path();
-    for (int i = 0; i < sides; i++) {
-      final angle = -pi / 2 + i * angleStep;
-      final statRadius = radius * values[i] * animationValue;
-      final x = center.dx + statRadius * cos(angle);
-      final y = center.dy + statRadius * sin(angle);
-
-      if (i == 0) {
-        polygonPath.moveTo(x, y);
-      } else {
-        polygonPath.lineTo(x, y);
-      }
+    // RET-2: Optional Day-1 Ghost Baseline overlay polygon
+    final baselineValues =
+        showGhostBaseline ? normalizeBaselineStats(user.baselineStats) : null;
+    if (baselineValues != null) {
+      final ghostPath = _buildPolygonPath(center, radius, baselineValues, animationValue);
+      final ghostFill = Paint()
+        ..color = HunterTheme.textMuted.withValues(alpha: 0.10 * animationValue)
+        ..style = PaintingStyle.fill;
+      final ghostStroke = Paint()
+        ..color = HunterTheme.textMuted.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4;
+      canvas.drawPath(ghostPath, ghostFill);
+      _drawDashedPath(canvas, ghostPath, ghostStroke);
     }
-    polygonPath.close();
 
-    // Fill with glowing translucent cyan/purple gradient
+    // Current attribute polygon
+    final values = normalizeCurrentStats(user);
+    final polygonPath = _buildPolygonPath(center, radius, values, animationValue);
+
     final fillPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -128,18 +176,15 @@ class StatRadarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawPath(polygonPath, fillPaint);
 
-    // Stroke with neon cyan outline
     final strokePaint = Paint()
       ..color = HunterTheme.cyanLight
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawPath(polygonPath, strokePaint);
 
-    // Draw glowing vertex points
     final dotPaint = Paint()
       ..color = HunterTheme.cyanLight
       ..style = PaintingStyle.fill;
-
     for (int i = 0; i < sides; i++) {
       final angle = -pi / 2 + i * angleStep;
       final statRadius = radius * values[i] * animationValue;
@@ -152,6 +197,7 @@ class StatRadarPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant StatRadarPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue ||
-        oldDelegate.user != user;
+        oldDelegate.user != user ||
+        oldDelegate.showGhostBaseline != showGhostBaseline;
   }
 }

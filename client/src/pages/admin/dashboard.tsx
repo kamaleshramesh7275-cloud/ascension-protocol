@@ -21,6 +21,14 @@ import { AdminNotificationHistory } from "@/components/admin-notification-histor
 import { NotificationsTab } from "@/components/admin-push-sender";
 import { apiRequest } from "@/lib/queryClient";
 import BridgePage from "./bridge";
+import {
+    MasterPulseView,
+    MasterProgressMatrixView,
+    MasterAiLimitsView,
+    MasterControlsExportView,
+    MasterFeedbackTriageView,
+    MasterPushAuditView,
+} from "./components/master-command-center";
 
 // Types
 interface User {
@@ -581,6 +589,12 @@ export default function AdminDashboard() {
 
                 <nav className="flex flex-col gap-2 flex-1">
                     {[
+                        { id: "master-pulse", icon: Activity, label: "Day Pulse & Retention" },
+                        { id: "master-matrix", icon: Users, label: "Progress & User Matrix" },
+                        { id: "master-ai", icon: Settings, label: "AI & Remaining Limits" },
+                        { id: "master-controls", icon: Shield, label: "Master Controls & Export" },
+                        { id: "master-feedback", icon: MessageSquare, label: "Feedback & Bugs" },
+                        { id: "master-push", icon: Bell, label: "Push All & Audit Log" },
                         { id: "overview", icon: LayoutDashboard, label: "Overview" },
                         { id: "users", icon: Users, label: "User Management" },
                         { id: "quests", icon: Award, label: "Quest Management" },
@@ -2171,6 +2185,24 @@ export default function AdminDashboard() {
                         activeTab === "notifications" && (
                             <NotificationsTab users={users} getAdminHeaders={getAdminHeaders} showNotification={showNotification} />
                         )
+                    }
+                    {
+                        activeTab === "master-pulse" && <MasterPulseView />
+                    }
+                    {
+                        activeTab === "master-matrix" && <MasterProgressMatrixView />
+                    }
+                    {
+                        activeTab === "master-ai" && <MasterAiLimitsView />
+                    }
+                    {
+                        activeTab === "master-controls" && <MasterControlsExportView />
+                    }
+                    {
+                        activeTab === "master-feedback" && <MasterFeedbackTriageView />
+                    }
+                    {
+                        activeTab === "master-push" && <MasterPushAuditView />
                     }
                     {
                         activeTab === "bridge" && (

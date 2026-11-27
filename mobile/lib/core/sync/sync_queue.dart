@@ -8,6 +8,8 @@ enum SyncOpType {
   completeQuest,
   completeFocus,
   submitDebrief,
+  finishWorkout,
+  toggleRoadmapTask,
 }
 
 class PendingOperation {
@@ -108,8 +110,9 @@ class SyncQueueService {
             res = await dio.get(op.endpoint, options: options);
           }
 
-          // 200 or 409 already_completed are treated as successfully synchronized
-          if (res.statusCode == 200 || res.statusCode == 409) {
+          // 2xx or 409 already_completed are treated as successfully synchronized
+          if ((res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300) ||
+              res.statusCode == 409) {
             continue; // Successfully synced, do not keep
           }
         } on DioException catch (e) {

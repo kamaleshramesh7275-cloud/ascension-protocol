@@ -139,9 +139,7 @@ const PROGRESSION_TIERS = [
 export default function AuthPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const [view, setView] = useState<'hero' | 'selection' | 'admin-login'>('hero');
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminError, setAdminError] = useState("");
+  const [view, setView] = useState<'hero' | 'selection'>('hero');
   const { isInstallable, promptInstall } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -186,17 +184,6 @@ export default function AuthPage() {
       }
     }
   }, [user, loading, setLocation]);
-
-  const handleAdminSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPassword === "admin123") {
-      sessionStorage.setItem("adminAuth", "true");
-      sessionStorage.setItem("adminPassword", adminPassword);
-      setLocation("/admin/dashboard");
-    } else {
-      setAdminError("Invalid authorization code");
-    }
-  };
 
   const handleInstall = () => {
     if (isInstallable) {
@@ -1247,27 +1234,6 @@ export default function AuthPage() {
                     </span>
                   </div>
                 </motion.div>
-
-                {/* Administrator Console */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setView('admin-login')}
-                  className="cursor-pointer group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-md p-8 hover:border-amber-500/40 transition-all"
-                >
-                  <div className="relative z-10 flex flex-col items-center text-center gap-4">
-                    <div className="p-4 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <Shield className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white">Administrator Access</h3>
-                    <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                      System diagnostics, performance audits, and platform management.
-                    </p>
-                    <span className="text-amber-400 text-xs font-semibold flex items-center gap-1 mt-2">
-                      Admin Passphrase Login <Lock className="w-4 h-4" />
-                    </span>
-                  </div>
-                </motion.div>
               </div>
 
               <button
@@ -1276,62 +1242,6 @@ export default function AuthPage() {
               >
                 ← Return to Home Overview
               </button>
-            </motion.div>
-          )}
-
-          {/* ============ ADMIN LOGIN VIEW ============ */}
-          {view === 'admin-login' && (
-            <motion.div
-              key="admin-login"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-              className="min-h-[85vh] flex flex-col items-center justify-center px-6 py-12"
-            >
-              <Card className="bg-[#090d16] border-slate-800 backdrop-blur-xl w-full max-w-sm shadow-2xl rounded-2xl">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-2 text-amber-400">
-                    <Lock className="w-6 h-6" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-white">Administrator Sign-In</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
-                    Enter root administrator passphrase
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleAdminSubmit} className="space-y-4">
-                    <input
-                      type="password"
-                      value={adminPassword}
-                      onChange={(e) => { setAdminPassword(e.target.value); setAdminError(""); }}
-                      placeholder="Root security passphrase"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 transition-all"
-                      autoFocus
-                    />
-                    {adminError && (
-                      <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /> {adminError}
-                      </p>
-                    )}
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs py-5 rounded-xl"
-                    >
-                      Authenticate
-                    </Button>
-                    <div className="text-center pt-2">
-                      <button 
-                        type="button" 
-                        onClick={() => setView('selection')} 
-                        className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
             </motion.div>
           )}
 

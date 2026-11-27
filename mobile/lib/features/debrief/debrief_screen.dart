@@ -20,6 +20,10 @@ class DebriefScreen extends ConsumerStatefulWidget {
 class _DebriefScreenState extends ConsumerState<DebriefScreen> {
   final _reflectionController = TextEditingController();
   int _rating = 4;
+  double _sleepHours = 7.5;
+  String _blockerTag = 'none';
+  String? _aiVerdict;
+  String? _tomorrowIfThenCue;
   bool _submitted = false;
   bool _isLoading = true;
   bool _isClaimingRestDay = false;
@@ -41,6 +45,13 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
           _reflectionController.text = data['reflectionText']?.toString() ?? '';
           final rawRating = (data['selfHonestyRating'] as num?)?.toInt() ?? 8;
           _rating = (rawRating ~/ 2).clamp(1, 5);
+          _blockerTag = data['blockerTag']?.toString() ?? 'none';
+          _aiVerdict = data['aiFeedback']?.toString();
+          _tomorrowIfThenCue = data['tomorrowIfThenCue']?.toString();
+          if (data['sleepHours'] != null) {
+            final parsedSleep = double.tryParse(data['sleepHours'].toString());
+            if (parsedSleep != null) _sleepHours = parsedSleep.clamp(4.0, 10.0);
+          }
         });
       }
     } catch (_) {}
@@ -79,14 +90,31 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
 
     try {
       final dio = await ApiClient.getInstance();
-      await dio.post(
+      final res = await dio.post(
         ApiEndpoints.debrief,
         data: {
           'date': todayStr,
           'reflectionText': text,
           'selfHonestyRating': honestyScore,
+          'sleepHours': _sleepHours,
+          'blockerTag': _blockerTag,
+          'energyRating': honestyScore,
         },
       );
+      if (res.data is Map && mounted) {
+        final data = Map<String, dynamic>.from(res.data as Map);
+        setState(() {
+          _aiVerdict = data['aiFeedback']?.toString();
+          _tomorrowIfThenCue = data['tomorrowIfThenCue']?.toString();
+        });
+        final current = ref.read(authProvider).value ?? widget.user;
+        ref.read(authProvider.notifier).updateUser(current.copyWith(
+              lastSleepHours: _sleepHours,
+              lastIfThenPlan: _tomorrowIfThenCue,
+              lastBlockerTag: _blockerTag,
+              lastCoachSummary: _aiVerdict,
+            ));
+      }
     } on DioException catch (e) {
       if (ApiClient.isOffline(e)) {
         await SyncQueueService.enqueue(
@@ -98,6 +126,7 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               'date': todayStr,
               'reflectionText': text,
               'selfHonestyRating': honestyScore,
+              'sleepHours': _sleepHours,
             },
             createdAt: DateTime.now(),
           ),
@@ -313,7 +342,96 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               );
             }),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+
+          // SR-7 Sleep Recovery Hours Slider
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HunterTheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'SLEEP & BIO-RECOVERY (SR-7)',
+                      style: TextStyle(
+                        color: HunterTheme.cyanLight,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                    Text(
+                      '${_sleepHours.toStringAsFixed(1)} HRS',
+                      style: const TextStyle(
+                        color: HunterTheme.gold,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                Slider(
+                  min: 4.0,
+                  max: 10.0,
+                  divisions: 12,
+                  activeColor: _sleepHours < 6.0 ? HunterTheme.crimson : HunterTheme.cyan,
+                  value: _sleepHours,
+                  onChanged: _submitted ? null : (v) => setState(() => _sleepHours = v),
+                ),
+                const Text(
+                  'Sub-6h sleep accelerates Bio-Fatigue telemetry & suggests Super-Compensation deload.',
+                  style: TextStyle(color: HunterTheme.textMuted, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Obstacle / Blocker Tag Picker
+          const Text(
+            'PRIMARY FRICTION / BLOCKER TODAY',
+            style: TextStyle(
+              color: HunterTheme.cyanLight,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: const [
+              ('none', 'Zero Blockers'),
+              ('distraction', 'Distraction'),
+              ('fatigue', 'Low Energy / Sleep'),
+              ('overscoped', 'Too Much Scope'),
+              ('unclear', 'Unclear Next Step'),
+            ].map((pair) {
+              final selected = _blockerTag == pair.$1;
+              return ChoiceChip(
+                label: Text(pair.$2, style: const TextStyle(fontSize: 11.5)),
+                selected: selected,
+                onSelected: _submitted
+                    ? null
+                    : (_) => setState(() => _blockerTag = pair.$1),
+                selectedColor: HunterTheme.cyan,
+                backgroundColor: HunterTheme.surface,
+                labelStyle: TextStyle(
+                  color: selected ? Colors.black : HunterTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
 
           // Tactical Reflection Input
           const Text(
@@ -366,6 +484,70 @@ class _DebriefScreenState extends ConsumerState<DebriefScreen> {
               ),
             ),
           ),
+          if (_tomorrowIfThenCue != null || _aiVerdict != null) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: HunterTheme.surfaceLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HunterTheme.cyan.withValues(alpha: 0.45)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'COACH DIAGNOSTIC & TOMORROW RULE',
+                    style: TextStyle(
+                      color: HunterTheme.cyanLight,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                  if (_aiVerdict != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _aiVerdict!,
+                      style: const TextStyle(
+                        color: HunterTheme.textPrimary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  if (_tomorrowIfThenCue != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: HunterTheme.gold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: HunterTheme.gold.withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.bolt, color: HunterTheme.gold, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _tomorrowIfThenCue!,
+                              style: const TextStyle(
+                                color: HunterTheme.gold,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

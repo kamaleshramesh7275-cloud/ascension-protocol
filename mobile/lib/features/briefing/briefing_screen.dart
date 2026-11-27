@@ -25,8 +25,13 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
   int _pushups = 25;
   String _selectedClass = 'assassin';
   String _equipment = 'bodyweight';
+  String _goalDomain = 'fitness';
+  int _dailyCapacityMinutes = 90;
+  final int _deadlineDays = 30;
   final TextEditingController _goalController =
-      TextEditingController(text: 'Master Peak Physical & Mental Discipline');
+      TextEditingController(text: 'Lose 6kg and complete 4 workouts/week');
+  final TextEditingController _distractorController =
+      TextEditingController(text: 'Late-night phone scrolling');
 
   final List<Map<String, dynamic>> _archetypes = [
     {
@@ -99,16 +104,32 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
     // Persist onboarding data to production backend
     try {
       final dio = await ApiClient.getInstance();
-      await dio.post(
+      final res = await dio.post(
         ApiEndpoints.onboarding,
         data: {
           'hunterClass': _selectedClass,
           'equipmentProfile': _equipment,
-          'currentGoal': _goalController.text,
+          'currentGoal': _goalController.text.trim(),
+          'goalDomain': _goalDomain,
+          'dailyCapacityMinutes': _dailyCapacityMinutes,
+          'deadlineDays': _deadlineDays,
+          'primaryDistractor': _distractorController.text.trim(),
           'pushups': _pushups,
           'onboardingCompleted': true,
         },
       );
+      if (res.data is Map<String, dynamic>) {
+        final serverUser = UserModel.fromJson(res.data as Map<String, dynamic>);
+        ref.read(authProvider.notifier).updateUser(serverUser);
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => MainNavigationScreen(initialUser: serverUser),
+            ),
+          );
+        }
+        return;
+      }
     } catch (_) {
       // Local fallback in case of network variance
     }
@@ -152,6 +173,7 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
   void dispose() {
     _pageController.dispose();
     _goalController.dispose();
+    _distractorController.dispose();
     super.dispose();
   }
 
@@ -366,17 +388,115 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Current Primary Ascension Goal',
+                'Goal Track & Target',
                 style: TextStyle(
                   color: HunterTheme.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: const [
+                  ('fitness', 'Fitness / Body'),
+                  ('career_code', 'Coding / Career'),
+                  ('study_exam', 'Exam / Study'),
+                  ('business', 'Business / Income'),
+                  ('discipline', 'Habits / Focus'),
+                ].map((pair) {
+                  final selected = _goalDomain == pair.$1;
+                  return ChoiceChip(
+                    label: Text(pair.$2, style: const TextStyle(fontSize: 12)),
+                    selected: selected,
+                    onSelected: (_) {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _goalDomain = pair.$1;
+                        if (pair.$1 == 'fitness') {
+                          _goalController.text = 'Lose 6kg and hit 4 workouts/week';
+                        } else if (pair.$1 == 'career_code') {
+                          _goalController.text = 'Ship my portfolio project & solve 60 DSA problems';
+                        } else if (pair.$1 == 'study_exam') {
+                          _goalController.text = 'Clear upcoming certification exam in 30 days';
+                        } else if (pair.$1 == 'business') {
+                          _goalController.text = 'Launch MVP and close first 5 paying clients';
+                        } else {
+                          _goalController.text = 'Lock 90m morning deep focus and 7h sleep daily';
+                        }
+                      });
+                    },
+                    selectedColor: HunterTheme.cyan,
+                    backgroundColor: HunterTheme.surfaceLight,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.black : HunterTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _goalController,
                 style: const TextStyle(color: HunterTheme.textPrimary),
                 decoration: InputDecoration(
+                  hintText: 'What specific outcome do you want in 30 days?',
+                  hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
+                  filled: true,
+                  fillColor: HunterTheme.surfaceLight,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Daily Available Deep-Work / Training Time',
+                    style: TextStyle(
+                      color: HunterTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    '${_dailyCapacityMinutes}m/day',
+                    style: const TextStyle(
+                      color: HunterTheme.cyanLight,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: _dailyCapacityMinutes.toDouble(),
+                min: 30,
+                max: 240,
+                divisions: 14,
+                activeColor: HunterTheme.cyan,
+                inactiveColor: HunterTheme.surfaceLight,
+                onChanged: (val) => setState(() => _dailyCapacityMinutes = val.toInt()),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Biggest Daily Distraction / Blocker',
+                style: TextStyle(
+                  color: HunterTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _distractorController,
+                style: const TextStyle(color: HunterTheme.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g., Late-night phone scrolling, Reels, Fatigue',
+                  hintStyle: const TextStyle(color: HunterTheme.textMuted, fontSize: 12),
                   filled: true,
                   fillColor: HunterTheme.surfaceLight,
                   border: OutlineInputBorder(

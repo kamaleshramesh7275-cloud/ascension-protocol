@@ -4,6 +4,7 @@ import { db } from "../db";
 import { citadelBuildings } from "@shared/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { pushNotifications } from "../utils/push-notifications";
+import { settleExpiredDivisions } from "./divisions";
 
 const CRON_INTERVAL = 60 * 60 * 1000; // 1 hour
 const CONTAGION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
@@ -70,7 +71,10 @@ export function initCronJobs(storage: IStorage) {
     // ── 4 Pillars Autonomous Execution Protocol Schedulers ──
     scheduleDaily(6, 30, "Morning Briefing Dispatcher", () => processMorningBriefings(storage));
     scheduleDaily(13, 0, "Mid-Day Pulse Intercept Dispatcher", () => processMidDayPulses(storage));
-    scheduleDaily(21, 0, "Evening Debrief Audit Dispatcher", () => processEveningDebriefs(storage));
+    scheduleDaily(21, 0, "Evening Debrief & Penalty Imminent Dispatcher", async () => {
+        await processEveningDebriefs(storage);
+        await processPenaltyWarnings(storage);
+    });
     scheduleWeekly(0, 20, 0, "Weekly Performance Court & Squad Liquidation", () => processWeeklyPerformanceCourts(storage));
 }
 
@@ -82,28 +86,48 @@ async function processStreakReminders(storage: IStorage) {
         today.setHours(0, 0, 0, 0);
 
         for (const user of users) {
-            // Only remind users who have an active streak
-            if (!user.streak || user.streak < 1) continue;
+            if (user.notificationsEnabled === false) continue;
+            if (!user.streak || user.streak < 1 || user.activeRecoveryDay) continue;
 
-            // Check if they already completed a quest today
-            const lastCompleted = (user as any).lastQuestCompletedAt
-                ? new Date((user as any).lastQuestCompletedAt)
-                : null;
+            const userQuests = await storage.getUserQuests(user.id);
+            const completedToday = userQuests.some(
+                (q) => q.completed && q.completedAt && new Date(q.completedAt).getTime() >= today.getTime()
+            );
+            if (completedToday) continue;
 
-            if (lastCompleted) {
-                lastCompleted.setHours(0, 0, 0, 0);
-                if (lastCompleted.getTime() >= today.getTime()) {
-                    // Already active today — no reminder needed
-                    continue;
-                }
-            }
-
-            // Fire the push notification
             await pushNotifications.streakReminder(user.id, user.streak);
         }
         console.log("[Cron] Streak reminder push notifications sent.");
     } catch (error) {
         console.error("[Cron] Error sending streak reminders:", error);
+    }
+}
+
+async function processPenaltyWarnings(storage: IStorage) {
+    try {
+        const users = await storage.getAllUsers();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const user of users) {
+            if (user.notificationsEnabled === false || user.inPenaltyZone || user.activeRecoveryDay) continue;
+            if (!user.penaltyModeEnabled) continue;
+
+            const quests = await storage.getUserQuests(user.id);
+            const todayDaily = quests.filter(
+                (q) => q.type === "daily" && new Date(q.createdAt).getTime() >= today.getTime()
+            );
+            if (todayDaily.length === 0) continue;
+
+            const completedToday = todayDaily.some((q) => q.completed);
+            const remaining = todayDaily.filter((q) => !q.completed).length;
+
+            if (!completedToday && remaining > 0) {
+                await pushNotifications.penaltyImminentWarning(user.id, remaining);
+            }
+        }
+    } catch (error) {
+        console.error("[Cron] Error sending penalty imminent warnings:", error);
     }
 }
 
@@ -382,8 +406,14 @@ async function processMorningBriefings(storage: IStorage) {
         const users = await storage.getAllUsers();
         for (const user of users) {
             const profile = await storage.getExecutionProfile(user.id);
-            if (profile) {
-                await pushNotifications.morningBriefing(user.id, profile.failureStatement);
+            const anchorMsg = (user as any).lastIfThenPlan
+                ? `If-Then Rule: ${(user as any).lastIfThenPlan}`
+                : profile?.failureStatement;
+            if (profile || (user as any).lastIfThenPlan || user.currentGoal) {
+                await pushNotifications.morningBriefing(
+                    user.id,
+                    anchorMsg || `Focus Goal: ${user.currentGoal}`
+                );
             }
         }
         console.log(`[Cron] Morning Briefings dispatched to ${users.length} operators.`);
@@ -447,33 +477,77 @@ async function processWeeklyPerformanceCourts(storage: IStorage) {
         const now = new Date();
         const weekNumber = Math.ceil((now.getDate() - now.getDay() + 1) / 7) || 1;
 
+        const { generateWeeklyStrategyAudit } = await import("./goal-coach");
+        const { getDivisionWeekKey } = await import("./divisions");
+        const weekKey = getDivisionWeekKey(now);
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
         for (const user of users) {
             const missions = await storage.getDailyMissions(user.id, 7);
             const sessions = await storage.getFocusDensitySessions(user.id, 14);
             const breaches = await storage.getDisciplineBreaches(user.id, 14);
+            const focusHistory = await storage.getUserFocusSessions(user.id);
+            const focus7d = focusHistory.filter((f) => new Date(f.completedAt) >= sevenDaysAgo);
+            const workoutHistory = await storage.getUserWorkoutSessions(user.id, 30);
+            const workouts7d = workoutHistory.filter((w) => new Date(w.startedAt) >= sevenDaysAgo);
+            const allQuests = await storage.getUserQuests(user.id);
+            const completedQuests7d = allQuests.filter(
+                (q) => q.completed && q.completedAt && new Date(q.completedAt) >= sevenDaysAgo
+            ).length;
+
+            let roadmapProgressPercent = 0;
+            const activeRoadmap = await storage.getActiveRoadmap(user.id);
+            if (activeRoadmap) {
+                const weeks = await storage.getRoadmapWeeks(activeRoadmap.id);
+                let totalTasks = 0;
+                let doneTasks = 0;
+                for (const w of weeks) {
+                    const tasks = await storage.getRoadmapTasks(w.id);
+                    totalTasks += tasks.length;
+                    doneTasks += tasks.filter((t) => t.completed).length;
+                }
+                roadmapProgressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+            }
 
             const completedCount = missions.filter(m => m.status === "completed").length;
-            const actualMinutes = sessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
-            const targetMinutes = 900;
+            const densityMinutes = sessions.reduce((acc, s) => acc + (s.actualMinutes || 0), 0);
+            const focusMinutes7d = focus7d.reduce((acc, f) => acc + (f.duration || 0), 0);
+            const actualMinutes = Math.max(densityMinutes, focusMinutes7d);
+            const targetMinutes = Math.max(150, (user.dailyCapacityMinutes || 90) * 5);
             const focusDensity = Math.min(100, Math.round((actualMinutes / targetMinutes) * 100));
 
             let verdict = "Violated";
-            let aiVerdict = "";
-            let roadmapImpact = "";
-
-            if (completedCount >= 5 && actualMinutes >= 700) {
+            if ((completedCount >= 5 || completedQuests7d >= 8) && actualMinutes >= targetMinutes * 0.7) {
                 verdict = "Distinction";
-                aiVerdict = `COURT VERDICT: High-velocity execution verified. Delivered ${completedCount}/7 missions with ${actualMinutes}m deep work.`;
-                roadmapImpact = `Trajectory on schedule. Days saved: +2.`;
-            } else if (completedCount >= 3) {
+            } else if (completedCount >= 3 || completedQuests7d >= 4 || actualMinutes >= targetMinutes * 0.4) {
                 verdict = "Met";
-                aiVerdict = `COURT VERDICT: Compromised velocity. Completed ${completedCount}/7 missions. Behavioral logs reveal hesitation.`;
-                roadmapImpact = `Deadline slipped by 4 days. +30% focus minutes required next week.`;
-            } else {
-                verdict = "Violated";
-                aiVerdict = `COURT VERDICT: Severe execution failure. Completed ${completedCount}/7 missions with ${breaches.length} breaches.`;
-                roadmapImpact = `Roadmap recalculation recommended. Deadline probability degraded.`;
             }
+
+            const hasWeeklyActivity =
+                focus7d.length > 0 || workouts7d.length > 0 || completedQuests7d > 0 || completedCount > 0;
+            let weeklyAudit = user.weeklyAuditCache;
+            if ((!weeklyAudit || weeklyAudit.weekKey !== weekKey) && hasWeeklyActivity) {
+                weeklyAudit = await generateWeeklyStrategyAudit({
+                    weekKey,
+                    user,
+                    focusSessions7d: focus7d,
+                    workouts7d,
+                    completedQuestsCount: completedQuests7d,
+                    roadmapProgressPercent,
+                });
+                await storage.updateUser(user.id, { weeklyAuditCache: weeklyAudit });
+            }
+
+            const aiVerdict = weeklyAudit?.coachSummary || (
+                verdict === "Distinction"
+                    ? `COURT VERDICT: High-velocity execution verified. Delivered ${completedQuests7d} quests with ${actualMinutes}m deep work.`
+                    : verdict === "Met"
+                        ? `COURT VERDICT: Steady progress logged (${completedQuests7d} quests, ${actualMinutes}m focus). Lock morning anchor early.`
+                        : `COURT VERDICT: Low output this week (${actualMinutes}m deep work, ${breaches.length} breaches). Scale daily cap down to restart streak.`
+            );
+            const roadmapImpact = weeklyAudit
+                ? `${weeklyAudit.dayPatternInsight} ${weeklyAudit.mondayAdjustment}`.trim()
+                : `Adjust Monday daily target toward ${user.dailyCapacityMinutes || 90}m.`;
 
             // Create court audit
             await storage.createPerformanceCourtAudit({
@@ -500,7 +574,10 @@ async function processWeeklyPerformanceCourts(storage: IStorage) {
             // Fire push notification
             await pushNotifications.sundayPerformanceCourt(user.id, verdict);
         }
-        console.log(`[Cron] Weekly Performance Court evaluations completed for ${users.length} operators.`);
+
+        // Settle Weekly 10-Hunter Rival Divisions (promotions, demotions, bonus coins)
+        const settledPods = await settleExpiredDivisions(storage);
+        console.log(`[Cron] Weekly Performance Court & ${settledPods} Rival Division pods settled for ${users.length} operators.`);
     } catch (error) {
         console.error("[Cron] Error processing weekly performance courts:", error);
     }

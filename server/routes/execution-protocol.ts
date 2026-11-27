@@ -752,21 +752,20 @@ router.post("/daily-mission/:id/proof", requireAuth, async (req: Request, res: R
       return res.status(400).json({ error: "Proof submission cannot be empty. Tangible evidence is required." });
     }
 
-    // AI Grader Logic (Evaluates deliverable rigor)
-    let proofQualityScore = 75; // baseline Silver
-    const textLength = (content || "").trim().length;
-
-    if (textLength > 300 || url) {
-      proofQualityScore = 95; // Platinum L1
-    } else if (textLength > 100) {
-      proofQualityScore = 85; // Gold L2
-    } else {
-      proofQualityScore = 70; // Silver L3
-    }
-
-    const feedback = proofQualityScore >= 90
-      ? "L1 Platinum Evidence Verified. Tangible deliverable demonstrates rigorous execution. Zero cognitive compromise detected."
-      : "Evidence Accepted with Moderate Density. Ensure subsequent submissions articulate deeper structural proof.";
+    // AI Grader Logic (Evaluates deliverable rigor via multi-AI coach + 0ms fallback)
+    const userRecord = await storage.getUser(user.id);
+    const { reviewFocusDeliverable } = await import("../services/goal-coach");
+    const review = await reviewFocusDeliverable({
+      goalText: userRecord?.currentGoal ?? user.currentGoal,
+      intentionTask: "Daily Execution Protocol Deliverable",
+      deliverableText: String(content || url || JSON.stringify(mcqAnswers || {})).trim(),
+      durationMinutes: 45,
+      breachCount: 0,
+    });
+    const proofQualityScore = review.qualityScore;
+    const feedback = review.nextMicroStep
+      ? `${review.verdict} Next step: ${review.nextMicroStep}`
+      : review.verdict;
 
     const updatedMission = await storage.updateDailyMission(missionId, {
       status: "completed",
@@ -777,7 +776,6 @@ router.post("/daily-mission/:id/proof", requireAuth, async (req: Request, res: R
     });
 
     // Reward XP & update discipline reputation
-    const userRecord = await storage.getUser(user.id);
     if (userRecord) {
       await storage.updateUser(user.id, {
         xp: userRecord.xp + 150,

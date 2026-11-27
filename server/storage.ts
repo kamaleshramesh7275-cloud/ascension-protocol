@@ -172,7 +172,30 @@ import {
   type InsertHallOfAscensionEntry,
   wallOfConsequence,
   type WallOfConsequenceEntry,
-  type InsertWallOfConsequenceEntry
+  type InsertWallOfConsequenceEntry,
+  peerCovenants,
+  type PeerCovenant,
+  type InsertPeerCovenant,
+  rivalDivisions,
+  type RivalDivision,
+  type InsertRivalDivision,
+  rivalDivisionMembers,
+  feedback,
+  type FeedbackItem,
+  type InsertFeedbackItem,
+  feedbackUpvotes,
+  type FeedbackUpvote,
+  systemConfig,
+  DEFAULT_SYSTEM_CONFIG,
+  type GlobalSystemConfigValue,
+  aiUsageLogs,
+  type AiUsageLog,
+  type InsertAiUsageLog,
+  adminAuditLogs,
+  type AdminAuditLog,
+  type InsertAdminAuditLog,
+  type RivalDivisionMember,
+  type InsertRivalDivisionMember
 } from "@shared/schema";
 import { eq, and, desc, asc, lt, gt, gte, lte, ne, or, inArray, isNotNull } from "drizzle-orm"; // Import operators
 import { CAMPAIGNS_DATA, getCampaignDailyQuests } from "./data/campaigns";
@@ -484,6 +507,46 @@ export interface IStorage {
   getWallOfConsequenceEntries(): Promise<WallOfConsequenceEntry[]>;
   createWallOfConsequenceEntry(entry: InsertWallOfConsequenceEntry): Promise<WallOfConsequenceEntry>;
   getFocusDensityLeaderboard(limit?: number): Promise<Array<{ user: User; focusDensityScore: number; verifiedMinutes: number; disciplineScore: number }>>;
+
+  // Bilateral Discipline Covenants (SR-4 Persistent)
+  getCovenantByCode(code: string): Promise<PeerCovenant | undefined>;
+  createCovenant(covenant: InsertPeerCovenant): Promise<PeerCovenant>;
+  updateCovenant(code: string, updates: Partial<PeerCovenant>): Promise<PeerCovenant>;
+  getUserCovenants(userId: string): Promise<PeerCovenant[]>;
+
+  // Weekly 10-Hunter Rival Divisions (RET-5)
+  getRivalDivisionsByWeek(weekKey: string): Promise<RivalDivision[]>;
+  createRivalDivision(division: InsertRivalDivision): Promise<RivalDivision>;
+  updateRivalDivision(id: string, updates: Partial<RivalDivision>): Promise<RivalDivision>;
+  getRivalDivisionMembers(divisionId: string): Promise<RivalDivisionMember[]>;
+  getUserDivisionMembership(userId: string, weekKey: string): Promise<{ division: RivalDivision; member: RivalDivisionMember } | undefined>;
+  addRivalDivisionMember(member: InsertRivalDivisionMember): Promise<RivalDivisionMember>;
+  updateRivalDivisionMember(id: string, updates: Partial<RivalDivisionMember>): Promise<RivalDivisionMember>;
+  getUnsettledPastDivisions(currentWeekKey: string): Promise<RivalDivision[]>;
+  getUnseenDivisionOutcome(userId: string): Promise<(RivalDivisionMember & { divisionTier: string; weekKey: string }) | undefined>;
+  markDivisionOutcomeSeen(memberId: string): Promise<void>;
+
+  // User Feedback, Bug Reports & Feature Requests
+  createFeedback(item: InsertFeedbackItem): Promise<FeedbackItem>;
+  countUserFeedbackSince(userId: string, since: Date): Promise<number>;
+  getUserFeedback(userId: string): Promise<FeedbackItem[]>;
+  getPublicFeatureRequests(userId: string, options?: { status?: string; sort?: "top" | "new" }): Promise<Array<FeedbackItem & { hasVoted: boolean }>>;
+  toggleFeedbackUpvote(feedbackId: string, userId: string): Promise<{ voted: boolean; upvoteCount: number }>;
+  getAllFeedbackAdmin(filters?: { type?: string; status?: string }): Promise<FeedbackItem[]>;
+  updateFeedbackAdmin(id: string, updates: { status?: string; adminNotes?: string | null }): Promise<FeedbackItem>;
+
+  // Master Admin Config, AI Usage Logs & Audit Logs
+  getSystemConfig(): Promise<GlobalSystemConfigValue>;
+  updateSystemConfig(patch: Partial<GlobalSystemConfigValue>): Promise<GlobalSystemConfigValue>;
+  logAiUsage(entry: InsertAiUsageLog): Promise<void>;
+  getAiUsageLogsSince(since: Date): Promise<AiUsageLog[]>;
+  createAdminAuditLog(entry: InsertAdminAuditLog): Promise<AdminAuditLog>;
+  getAdminAuditLogs(limit?: number): Promise<AdminAuditLog[]>;
+  getAllTelemetryEventsSince(since: Date): Promise<TelemetryEvent[]>;
+  getAllFocusSessionsAll(): Promise<FocusSession[]>;
+  getAllWorkoutSessionsAll(): Promise<WorkoutSession[]>;
+  getAllQuestsAll(): Promise<Quest[]>;
+  getAllNotificationsAdmin(limit?: number): Promise<Notification[]>;
 }
 
 // Shop Items
@@ -554,7 +617,65 @@ function normalizeUser(user: any): User {
     streakShields: user.streakShields ?? 1,
     activeRecoveryDay: user.activeRecoveryDay ?? false,
     lastRestDayClaimedAt: user.lastRestDayClaimedAt || null,
+    unspentStatPoints: user.unspentStatPoints ?? 0,
+    statBias: user.statBias || null,
+    inPenaltyZone: user.inPenaltyZone ?? false,
+    penaltyExpiresAt: user.penaltyExpiresAt || null,
+    penaltyModeEnabled: user.penaltyModeEnabled ?? true,
+    baselineStats: user.baselineStats || null,
+    anchorQuestId: user.anchorQuestId || null,
+    anchorDate: user.anchorDate || null,
+    activeGateEvent: user.activeGateEvent || null,
+    unlockedShadows: Array.isArray(user.unlockedShadows) ? user.unlockedShadows : [],
+    equippedShadows: Array.isArray(user.equippedShadows) ? user.equippedShadows : [],
+    evolvedClass: user.evolvedClass || null,
+    prestigeRank: user.prestigeRank ?? 0,
+    lastSleepHours: user.lastSleepHours || null,
+    divisionTier: user.divisionTier || "Bronze",
+    goalDomain: user.goalDomain || null,
+    dailyCapacityMinutes: user.dailyCapacityMinutes ?? 90,
+    goalDeadline: user.goalDeadline || null,
+    primaryDistractor: user.primaryDistractor || null,
+    lastIfThenPlan: user.lastIfThenPlan || null,
+    lastBlockerTag: user.lastBlockerTag || null,
+    lastCoachSummary: user.lastCoachSummary || null,
+    lastCoachAt: user.lastCoachAt || null,
+    preferredPeakHour: user.preferredPeakHour ?? null,
+    nextFocusStep: user.nextFocusStep || null,
+    weeklyAuditCache: user.weeklyAuditCache || null,
+    activeFocusEscrow: user.activeFocusEscrow || null,
+    ultimatumState: user.ultimatumState || null,
+    lastUltimatumAlertDate: user.lastUltimatumAlertDate || null,
+    preBreakStreak: user.preBreakStreak ?? 0,
+    comebackGate: user.comebackGate || null,
+    pendingExtraction: user.pendingExtraction || null,
+    extractedShadows: Array.isArray(user.extractedShadows) ? user.extractedShadows : [],
+    jobChangeState: user.jobChangeState || null,
+    doubleDungeonState: user.doubleDungeonState || null,
+    reawakeningState: user.reawakeningState || null,
+    monarchDomainState: user.monarchDomainState || null,
+    guildCooldownUntil: user.guildCooldownUntil || null,
   } as User;
+}
+
+/** Compute workout XP (with Tank shadow buff) and level-up ability point rewards. */
+function computeWorkoutCompletionRewards(user: User, setsCount: number, totalVolume: number) {
+  const baseXP = Math.min(200, Math.floor(totalVolume / 1000) * 10 + setsCount * 5);
+  const hasTankShadow = Array.isArray(user.equippedShadows) && user.equippedShadows.includes("tank") && setsCount >= 12;
+  const xpEarned = hasTankShadow ? Math.round(baseXP * 1.15) : baseXP;
+  const oldLevel = Math.floor((user.xp || 0) / 100) + 1;
+  const newXP = (user.xp || 0) + xpEarned;
+  const newLevel = Math.floor(newXP / 100) + 1;
+  const levelDiff = Math.max(0, newLevel - oldLevel);
+
+  return {
+    xpEarned,
+    newXP,
+    newLevel,
+    unspentStatPoints: (user.unspentStatPoints ?? 0) + levelDiff * 3,
+    strength: Math.min(100, (user.strength ?? 10) + 1),
+    stamina: Math.min(100, (user.stamina ?? 10) + 1),
+  };
 }
 
 export class MemStorage implements IStorage {
@@ -597,6 +718,14 @@ export class MemStorage implements IStorage {
   private workoutSessions: Map<string, WorkoutSession>;
   private workoutSets: Map<string, WorkoutSet>;
   private personalRecords: Map<string, PersonalRecord>;
+  private peerCovenantsMap: Map<string, PeerCovenant>;
+  private rivalDivisionsMap: Map<string, RivalDivision>;
+  private rivalDivisionMembersMap: Map<string, RivalDivisionMember>;
+  private feedbackMap: Map<string, FeedbackItem>;
+  private feedbackUpvotesMap: Map<string, FeedbackUpvote>;
+  private systemConfigValue: GlobalSystemConfigValue;
+  private aiUsageLogsList: AiUsageLog[];
+  private adminAuditLogsList: AdminAuditLog[];
 
   constructor() {
     this.guilds = new Map();
@@ -691,6 +820,30 @@ export class MemStorage implements IStorage {
     this.workoutSessions = new Map();
     this.workoutSets = new Map();
     this.personalRecords = new Map();
+    this.peerCovenantsMap = new Map();
+    this.rivalDivisionsMap = new Map();
+    this.rivalDivisionMembersMap = new Map();
+    this.feedbackMap = new Map();
+    this.feedbackUpvotesMap = new Map();
+    this.systemConfigValue = structuredClone(DEFAULT_SYSTEM_CONFIG);
+    this.aiUsageLogsList = [];
+    this.adminAuditLogsList = [];
+
+    // Seed default exercises in MemStorage for workout logging without Postgres
+    DEFAULT_EXERCISES.forEach((ex, idx) => {
+      const id = `ex_${idx + 1}`;
+      this.exercises.set(id, {
+        id,
+        name: ex.name,
+        category: ex.category,
+        muscleGroup: ex.muscleGroup,
+        equipment: ex.equipment ?? "bodyweight",
+        instructions: ex.instructions ?? null,
+        isCustom: false,
+        createdByUserId: null,
+        createdAt: new Date(),
+      });
+    });
 
     // Pre-populate guild perks catalog
     const defaultPerks: InsertGuildPerk[] = [
@@ -1504,6 +1657,10 @@ export class MemStorage implements IStorage {
       rewardStats: insertQuest.rewardStats || null,
       content: insertQuest.content || null,
       dayNumber: insertQuest.dayNumber || null,
+      roadmapTaskId: insertQuest.roadmapTaskId || null,
+      executionMode: insertQuest.executionMode || "checkbox",
+      targetMinutes: insertQuest.targetMinutes ?? null,
+      sourceType: insertQuest.sourceType || "goal",
       expiresAt: insertQuest.expiresAt || null,
     };
     this.quests.set(id, quest);
@@ -1694,6 +1851,44 @@ export class MemStorage implements IStorage {
       streakShields: (user as any).streakShields ?? 1,
       activeRecoveryDay: false,
       lastRestDayClaimedAt: null,
+      unspentStatPoints: 0,
+      statBias: null,
+      inPenaltyZone: false,
+      penaltyExpiresAt: null,
+      penaltyModeEnabled: true,
+      baselineStats: null,
+      anchorQuestId: null,
+      anchorDate: null,
+      activeGateEvent: null,
+      unlockedShadows: [],
+      equippedShadows: [],
+      evolvedClass: null,
+      prestigeRank: 0,
+      lastSleepHours: null,
+      divisionTier: "Bronze",
+      goalDomain: (user as any).goalDomain || null,
+      dailyCapacityMinutes: (user as any).dailyCapacityMinutes ?? 90,
+      goalDeadline: (user as any).goalDeadline || null,
+      primaryDistractor: (user as any).primaryDistractor || null,
+      lastIfThenPlan: null,
+      lastBlockerTag: null,
+      lastCoachSummary: null,
+      lastCoachAt: null,
+      preferredPeakHour: null,
+      nextFocusStep: null,
+      weeklyAuditCache: null,
+      activeFocusEscrow: null,
+      ultimatumState: null,
+      lastUltimatumAlertDate: null,
+      preBreakStreak: 0,
+      comebackGate: null,
+      pendingExtraction: null,
+      extractedShadows: [],
+      jobChangeState: null,
+      doubleDungeonState: null,
+      reawakeningState: null,
+      monarchDomainState: null,
+      guildCooldownUntil: null,
       createdAt: new Date(),
       lastActive: new Date(),
       streak: 0,
@@ -1771,7 +1966,9 @@ export class MemStorage implements IStorage {
       avatarUrl: null,
       createdAt: new Date(),
       level: 1, xp: 0, memberCount: 0, maxMembers: 50, isPublic: true, vicePresidentIds: [],
-      treasury: 0, activePerks: []
+      treasury: 0, activePerks: [],
+      raidBossName: null, raidBossMaxHp: 5000, raidBossCurrentHp: 5000,
+      raidWeekKey: null, weeklyDispatchCache: null,
     };
     this.guilds.set(id, guild);
     this.autoSave();
@@ -1872,6 +2069,12 @@ export class MemStorage implements IStorage {
       ...insertSession,
       task: insertSession.task || null,
       backgroundType: insertSession.backgroundType || null,
+      questId: insertSession.questId || null,
+      roadmapTaskId: insertSession.roadmapTaskId || null,
+      outputNote: insertSession.outputNote || null,
+      aiReview: insertSession.aiReview || null,
+      nextMicroStep: insertSession.nextMicroStep || null,
+      breachCount: insertSession.breachCount ?? 0,
       completedAt: new Date(),
     };
     this.focusSessions.set(id, session);
@@ -2088,6 +2291,9 @@ export class MemStorage implements IStorage {
       directMessages: Array.from(this.directMessages.entries()),
       premiumRequests: Array.from(this.premiumRequests.entries()),
       habitTracking: Array.from(this.habitTracking.entries()),
+      peerCovenants: Array.from(this.peerCovenantsMap.entries()),
+      rivalDivisions: Array.from(this.rivalDivisionsMap.entries()),
+      rivalDivisionMembers: Array.from(this.rivalDivisionMembersMap.entries()),
     };
     try {
       const backupDir = path.resolve(process.cwd(), ".backup");
@@ -2171,6 +2377,9 @@ export class MemStorage implements IStorage {
       this.tasks = new Map(data.tasks || []);
       this.premiumRequests = new Map(data.premiumRequests || []);
       this.habitTracking = new Map(data.habitTracking || []);
+      this.peerCovenantsMap = new Map(data.peerCovenants || []);
+      this.rivalDivisionsMap = new Map(data.rivalDivisions || []);
+      this.rivalDivisionMembersMap = new Map(data.rivalDivisionMembers || []);
 
       console.log(`🌊 Data hydrated from backup.json. Users: ${this.users.size}`);
     } catch (e) {
@@ -2190,7 +2399,9 @@ export class MemStorage implements IStorage {
       id,
       startDate: new Date(),
       status: roadmap.status ?? "active",
-      currentWeek: roadmap.currentWeek ?? 1
+      currentWeek: roadmap.currentWeek ?? 1,
+      linkedGoalText: roadmap.linkedGoalText ?? null,
+      goalDomain: roadmap.goalDomain ?? null,
     };
     this.roadmaps.set(id, newRoadmap);
     return newRoadmap;
@@ -2220,7 +2431,21 @@ export class MemStorage implements IStorage {
       ...week,
       id,
       description: week.description ?? null,
-      isLocked: week.isLocked ?? true
+      isLocked: week.isLocked ?? true,
+      targetFocusMinutes: week.targetFocusMinutes ?? 180,
+      loggedFocusMinutes: week.loggedFocusMinutes ?? 0,
+      targetWorkouts: week.targetWorkouts ?? 3,
+      loggedWorkouts: week.loggedWorkouts ?? 0,
+      bossName: (week as any).bossName ?? null,
+      bossTitle: (week as any).bossTitle ?? null,
+      bossWeaknessRule: (week as any).bossWeaknessRule ?? null,
+      bossMaxHp: (week as any).bossMaxHp ?? 1000,
+      bossCurrentHp: (week as any).bossCurrentHp ?? 1000,
+      bossDamageToday: 0,
+      bossDamageDate: null,
+      bossRegenCount: 0,
+      bossDefeated: false,
+      bossLootClaimed: false,
     };
     this.roadmapWeeks.set(id, newWeek);
     return newWeek;
@@ -2773,7 +2998,12 @@ export class MemStorage implements IStorage {
       }
     }
 
-    const xpEarned = Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5);
+    const user = await this.getUser(session.userId);
+    const rewardSummary = user
+      ? computeWorkoutCompletionRewards(user, sets.length, totalVolume)
+      : { xpEarned: Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5) };
+
+    const xpEarned = rewardSummary.xpEarned;
 
     const updatedSession: WorkoutSession = {
       ...session,
@@ -2786,13 +3016,14 @@ export class MemStorage implements IStorage {
     };
     this.workoutSessions.set(id, updatedSession);
 
-    // Give user XP
-    const user = await this.getUser(session.userId);
-    if (user) {
+    if (user && "newXP" in rewardSummary) {
       await this.updateUser(user.id, {
-        xp: user.xp + xpEarned,
-        strength: user.strength + 1,
-        stamina: user.stamina + 1
+        xp: rewardSummary.newXP,
+        level: rewardSummary.newLevel,
+        unspentStatPoints: rewardSummary.unspentStatPoints,
+        strength: rewardSummary.strength,
+        stamina: rewardSummary.stamina,
+        lastActive: now,
       });
     }
 
@@ -3199,6 +3430,10 @@ export class MemStorage implements IStorage {
       aiFeedback: debrief.aiFeedback || null,
       selfHonestyRating: debrief.selfHonestyRating ?? 8,
       focusDensityScoreOfDay: debrief.focusDensityScoreOfDay ?? 0,
+      sleepHours: debrief.sleepHours !== undefined && debrief.sleepHours !== null ? String(debrief.sleepHours) : null,
+      blockerTag: debrief.blockerTag || null,
+      tomorrowIfThenCue: debrief.tomorrowIfThenCue || null,
+      coachActionType: debrief.coachActionType || null,
       submittedAt: new Date(),
     };
     this.eveningDebriefsMap.set(id, newDebrief);
@@ -3563,9 +3798,366 @@ export class MemStorage implements IStorage {
 
     return results.sort((a, b) => b.disciplineScore - a.disciplineScore).slice(0, limit);
   }
+
+  async getCovenantByCode(code: string): Promise<PeerCovenant | undefined> {
+    return this.peerCovenantsMap.get(code.toUpperCase());
+  }
+
+  async createCovenant(covenant: InsertPeerCovenant): Promise<PeerCovenant> {
+    const id = randomUUID();
+    const code = covenant.covenantCode.toUpperCase();
+    const created: PeerCovenant = {
+      id,
+      covenantCode: code,
+      initiatorId: covenant.initiatorId,
+      initiatorName: covenant.initiatorName,
+      initiatorStreak: covenant.initiatorStreak ?? 0,
+      termsDays: covenant.termsDays ?? 7,
+      stakeCoins: covenant.stakeCoins ?? 250,
+      protocolObjective: covenant.protocolObjective ?? "Daily Protocol Execution",
+      counterpartyId: covenant.counterpartyId ?? null,
+      counterpartyName: covenant.counterpartyName ?? null,
+      counterpartyStreak: covenant.counterpartyStreak ?? 0,
+      status: covenant.status ?? "pending",
+      winnerId: covenant.winnerId ?? null,
+      createdAt: new Date(),
+      acceptedAt: covenant.acceptedAt ?? null,
+      expiresAt: covenant.expiresAt ?? null,
+    };
+    this.peerCovenantsMap.set(code, created);
+    this.autoSave();
+    return created;
+  }
+
+  async updateCovenant(code: string, updates: Partial<PeerCovenant>): Promise<PeerCovenant> {
+    const normalizedCode = code.toUpperCase();
+    const existing = this.peerCovenantsMap.get(normalizedCode);
+    if (!existing) throw new Error("Covenant not found");
+    const updated = { ...existing, ...updates };
+    this.peerCovenantsMap.set(normalizedCode, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async getUserCovenants(userId: string): Promise<PeerCovenant[]> {
+    return Array.from(this.peerCovenantsMap.values())
+      .filter(c => c.initiatorId === userId || c.counterpartyId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getRivalDivisionsByWeek(weekKey: string): Promise<RivalDivision[]> {
+    return Array.from(this.rivalDivisionsMap.values())
+      .filter(d => d.weekKey === weekKey)
+      .sort((a, b) => a.podNumber - b.podNumber);
+  }
+
+  async createRivalDivision(division: InsertRivalDivision): Promise<RivalDivision> {
+    const id = randomUUID();
+    const created: RivalDivision = {
+      id,
+      weekKey: division.weekKey,
+      tier: division.tier ?? "Bronze",
+      podNumber: division.podNumber ?? 1,
+      settled: division.settled ?? false,
+      createdAt: new Date(),
+    };
+    this.rivalDivisionsMap.set(id, created);
+    this.autoSave();
+    return created;
+  }
+
+  async updateRivalDivision(id: string, updates: Partial<RivalDivision>): Promise<RivalDivision> {
+    const existing = this.rivalDivisionsMap.get(id);
+    if (!existing) throw new Error("Division not found");
+    const updated = { ...existing, ...updates };
+    this.rivalDivisionsMap.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async getRivalDivisionMembers(divisionId: string): Promise<RivalDivisionMember[]> {
+    return Array.from(this.rivalDivisionMembersMap.values())
+      .filter(m => m.divisionId === divisionId);
+  }
+
+  async getUserDivisionMembership(userId: string, weekKey: string): Promise<{ division: RivalDivision; member: RivalDivisionMember } | undefined> {
+    for (const m of Array.from(this.rivalDivisionMembersMap.values())) {
+      if (m.userId !== userId) continue;
+      const div = this.rivalDivisionsMap.get(m.divisionId);
+      if (div && div.weekKey === weekKey) {
+        return { division: div, member: m };
+      }
+    }
+    return undefined;
+  }
+
+  async addRivalDivisionMember(member: InsertRivalDivisionMember): Promise<RivalDivisionMember> {
+    const id = randomUUID();
+    const created: RivalDivisionMember = {
+      id,
+      divisionId: member.divisionId,
+      userId: member.userId,
+      userName: member.userName,
+      userTier: member.userTier ?? "D",
+      weeklyXp: member.weeklyXp ?? 0,
+      finalRank: member.finalRank ?? null,
+      outcome: member.outcome ?? "pending",
+      rewardCoins: member.rewardCoins ?? 0,
+      resultSeen: member.resultSeen ?? false,
+      updatedAt: new Date(),
+    };
+    this.rivalDivisionMembersMap.set(id, created);
+    this.autoSave();
+    return created;
+  }
+
+  async updateRivalDivisionMember(id: string, updates: Partial<RivalDivisionMember>): Promise<RivalDivisionMember> {
+    const existing = this.rivalDivisionMembersMap.get(id);
+    if (!existing) throw new Error("Division member not found");
+    const updated = { ...existing, ...updates };
+    this.rivalDivisionMembersMap.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  async getUnsettledPastDivisions(currentWeekKey: string): Promise<RivalDivision[]> {
+    return Array.from(this.rivalDivisionsMap.values())
+      .filter(d => !d.settled && d.weekKey !== currentWeekKey);
+  }
+
+  async getUnseenDivisionOutcome(userId: string): Promise<(RivalDivisionMember & { divisionTier: string; weekKey: string }) | undefined> {
+    const matches = Array.from(this.rivalDivisionMembersMap.values())
+      .filter(m => m.userId === userId && m.outcome !== "pending" && !m.resultSeen)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    const top = matches[0];
+    if (!top) return undefined;
+    const div = this.rivalDivisionsMap.get(top.divisionId);
+    if (!div) return undefined;
+    return { ...top, divisionTier: div.tier, weekKey: div.weekKey };
+  }
+
+  async markDivisionOutcomeSeen(memberId: string): Promise<void> {
+    const existing = this.rivalDivisionMembersMap.get(memberId);
+    if (existing) {
+      this.rivalDivisionMembersMap.set(memberId, { ...existing, resultSeen: true });
+      this.autoSave();
+    }
+  }
+
+  // ─── User Feedback, Bug Reports & Feature Requests (MemStorage) ───
+  async createFeedback(item: InsertFeedbackItem): Promise<FeedbackItem> {
+    const id = randomUUID();
+    const now = new Date();
+    const created: FeedbackItem = {
+      id,
+      userId: item.userId,
+      userName: item.userName,
+      type: item.type,
+      category: item.category ?? "other",
+      title: item.title,
+      description: item.description,
+      diagnostics: item.diagnostics ?? null,
+      status: item.status ?? "open",
+      adminNotes: item.adminNotes ?? null,
+      upvoteCount: item.upvoteCount ?? 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.feedbackMap.set(id, created);
+    this.autoSave();
+    return created;
+  }
+
+  async countUserFeedbackSince(userId: string, since: Date): Promise<number> {
+    const sinceMs = since.getTime();
+    let count = 0;
+    for (const item of Array.from(this.feedbackMap.values())) {
+      if (item.userId === userId && new Date(item.createdAt).getTime() >= sinceMs) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  async getUserFeedback(userId: string): Promise<FeedbackItem[]> {
+    return Array.from(this.feedbackMap.values())
+      .filter((item) => item.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getPublicFeatureRequests(
+    userId: string,
+    options?: { status?: string; sort?: "top" | "new" }
+  ): Promise<Array<FeedbackItem & { hasVoted: boolean }>> {
+    const votedIds = new Set(
+      Array.from(this.feedbackUpvotesMap.values())
+        .filter((v) => v.userId === userId)
+        .map((v) => v.feedbackId)
+    );
+    return Array.from(this.feedbackMap.values())
+      .filter((item) => item.type !== "bug")
+      .filter((item) => !options?.status || item.status === options.status)
+      .sort((a, b) => {
+        if (options?.sort === "new") {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        if (b.upvoteCount !== a.upvoteCount) return b.upvoteCount - a.upvoteCount;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 50)
+      .map((item) => ({ ...item, hasVoted: votedIds.has(item.id) }));
+  }
+
+  async toggleFeedbackUpvote(feedbackId: string, userId: string): Promise<{ voted: boolean; upvoteCount: number }> {
+    const existing = this.feedbackMap.get(feedbackId);
+    if (!existing) throw new Error("Feedback item not found");
+
+    const voteKey = Array.from(this.feedbackUpvotesMap.entries()).find(
+      ([, v]) => v.feedbackId === feedbackId && v.userId === userId
+    )?.[0];
+
+    let voted: boolean;
+    let upvoteCount = existing.upvoteCount;
+    if (voteKey) {
+      this.feedbackUpvotesMap.delete(voteKey);
+      upvoteCount = Math.max(0, upvoteCount - 1);
+      voted = false;
+    } else {
+      const id = randomUUID();
+      this.feedbackUpvotesMap.set(id, {
+        id,
+        feedbackId,
+        userId,
+        createdAt: new Date(),
+      });
+      upvoteCount += 1;
+      voted = true;
+    }
+
+    this.feedbackMap.set(feedbackId, { ...existing, upvoteCount, updatedAt: new Date() });
+    this.autoSave();
+    return { voted, upvoteCount };
+  }
+
+  async getAllFeedbackAdmin(filters?: { type?: string; status?: string }): Promise<FeedbackItem[]> {
+    return Array.from(this.feedbackMap.values())
+      .filter((item) => !filters?.type || item.type === filters.type)
+      .filter((item) => !filters?.status || item.status === filters.status)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateFeedbackAdmin(
+    id: string,
+    updates: { status?: string; adminNotes?: string | null }
+  ): Promise<FeedbackItem> {
+    const existing = this.feedbackMap.get(id);
+    if (!existing) throw new Error("Feedback item not found");
+    const updated: FeedbackItem = {
+      ...existing,
+      ...(updates.status !== undefined ? { status: updates.status } : {}),
+      ...(updates.adminNotes !== undefined ? { adminNotes: updates.adminNotes } : {}),
+      updatedAt: new Date(),
+    };
+    this.feedbackMap.set(id, updated);
+    this.autoSave();
+    return updated;
+  }
+
+  // ─── Master Admin Config, AI Usage Logs & Audit Logs (MemStorage) ───
+  async getSystemConfig(): Promise<GlobalSystemConfigValue> {
+    return this.systemConfigValue;
+  }
+
+  async updateSystemConfig(patch: Partial<GlobalSystemConfigValue>): Promise<GlobalSystemConfigValue> {
+    this.systemConfigValue = {
+      ...this.systemConfigValue,
+      ...patch,
+      featureFlags: {
+        ...this.systemConfigValue.featureFlags,
+        ...(patch.featureFlags || {}),
+      },
+      multipliers: {
+        ...this.systemConfigValue.multipliers,
+        ...(patch.multipliers || {}),
+      },
+      limits: {
+        ...this.systemConfigValue.limits,
+        ...(patch.limits || {}),
+      },
+    };
+    this.autoSave();
+    return this.systemConfigValue;
+  }
+
+  async logAiUsage(entry: InsertAiUsageLog): Promise<void> {
+    this.aiUsageLogsList.push({
+      id: randomUUID(),
+      userId: entry.userId ?? null,
+      feature: entry.feature,
+      provider: entry.provider,
+      cacheHit: entry.cacheHit ?? false,
+      success: entry.success ?? true,
+      latencyMs: entry.latencyMs ?? 0,
+      errorCode: entry.errorCode ?? null,
+      createdAt: new Date(),
+    });
+    if (this.aiUsageLogsList.length > 5000) {
+      this.aiUsageLogsList.splice(0, this.aiUsageLogsList.length - 5000);
+    }
+  }
+
+  async getAiUsageLogsSince(since: Date): Promise<AiUsageLog[]> {
+    const sinceMs = since.getTime();
+    return this.aiUsageLogsList.filter((l) => new Date(l.createdAt).getTime() >= sinceMs);
+  }
+
+  async createAdminAuditLog(entry: InsertAdminAuditLog): Promise<AdminAuditLog> {
+    const log: AdminAuditLog = {
+      id: randomUUID(),
+      action: entry.action,
+      targetUserId: entry.targetUserId ?? null,
+      beforeState: entry.beforeState ?? null,
+      afterState: entry.afterState ?? null,
+      note: entry.note ?? null,
+      createdAt: new Date(),
+    };
+    this.adminAuditLogsList.unshift(log);
+    if (this.adminAuditLogsList.length > 2000) {
+      this.adminAuditLogsList.length = 2000;
+    }
+    this.autoSave();
+    return log;
+  }
+
+  async getAdminAuditLogs(limit = 100): Promise<AdminAuditLog[]> {
+    return this.adminAuditLogsList.slice(0, limit);
+  }
+
+  async getAllTelemetryEventsSince(since: Date): Promise<TelemetryEvent[]> {
+    const sinceMs = since.getTime();
+    return Array.from(this.telemetryEvents.values()).filter(
+      (e) => new Date(e.timestamp).getTime() >= sinceMs
+    );
+  }
+
+  async getAllFocusSessionsAll(): Promise<FocusSession[]> {
+    return Array.from(this.focusSessions.values());
+  }
+
+  async getAllWorkoutSessionsAll(): Promise<WorkoutSession[]> {
+    return Array.from(this.workoutSessions.values());
+  }
+
+  async getAllQuestsAll(): Promise<Quest[]> {
+    return Array.from(this.quests.values());
+  }
+
+  async getAllNotificationsAdmin(limit = 200): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+  }
 }
-
-
 
 export class DatabaseStorage implements IStorage {
   private campaignsCache: Campaign[] | null = null;
@@ -5420,7 +6012,12 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    const xpEarned = Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5);
+    const user = await this.getUser(session.userId);
+    const rewardSummary = user
+      ? computeWorkoutCompletionRewards(user, sets.length, totalVolume)
+      : { xpEarned: Math.min(200, Math.floor(totalVolume / 1000) * 10 + sets.length * 5) };
+
+    const xpEarned = rewardSummary.xpEarned;
 
     const [updatedSession] = await db!.update(workoutSessions).set({
       finishedAt: now,
@@ -5431,13 +6028,14 @@ export class DatabaseStorage implements IStorage {
       notes: notes || session.notes,
     }).where(eq(workoutSessions.id, id)).returning();
 
-    // Give user XP
-    const user = await this.getUser(session.userId);
-    if (user) {
+    if (user && "newXP" in rewardSummary) {
       await this.updateUser(user.id, {
-        xp: user.xp + xpEarned,
-        strength: user.strength + 1,
-        stamina: user.stamina + 1
+        xp: rewardSummary.newXP,
+        level: rewardSummary.newLevel,
+        unspentStatPoints: rewardSummary.unspentStatPoints,
+        strength: rewardSummary.strength,
+        stamina: rewardSummary.stamina,
+        lastActive: now,
       });
     }
 
@@ -5860,6 +6458,10 @@ export class DatabaseStorage implements IStorage {
       aiFeedback: debrief.aiFeedback || null,
       selfHonestyRating: debrief.selfHonestyRating ?? 8,
       focusDensityScoreOfDay: debrief.focusDensityScoreOfDay ?? 0,
+      sleepHours: debrief.sleepHours !== undefined && debrief.sleepHours !== null ? String(debrief.sleepHours) : null,
+      blockerTag: debrief.blockerTag || null,
+      tomorrowIfThenCue: debrief.tomorrowIfThenCue || null,
+      coachActionType: debrief.coachActionType || null,
     }).returning();
     return created;
   }
@@ -6135,6 +6737,330 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return results.sort((a, b) => b.disciplineScore - a.disciplineScore).slice(0, limit);
+  }
+
+  async getCovenantByCode(code: string): Promise<PeerCovenant | undefined> {
+    if (!db) return undefined;
+    const [found] = await db.select().from(peerCovenants).where(eq(peerCovenants.covenantCode, code.toUpperCase()));
+    return found;
+  }
+
+  async createCovenant(covenant: InsertPeerCovenant): Promise<PeerCovenant> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(peerCovenants).values({
+      ...covenant,
+      covenantCode: covenant.covenantCode.toUpperCase(),
+    }).returning();
+    return created;
+  }
+
+  async updateCovenant(code: string, updates: Partial<PeerCovenant>): Promise<PeerCovenant> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(peerCovenants)
+      .set(updates)
+      .where(eq(peerCovenants.covenantCode, code.toUpperCase()))
+      .returning();
+    if (!updated) throw new Error("Covenant not found");
+    return updated;
+  }
+
+  async getUserCovenants(userId: string): Promise<PeerCovenant[]> {
+    if (!db) return [];
+    return await db.select().from(peerCovenants)
+      .where(or(eq(peerCovenants.initiatorId, userId), eq(peerCovenants.counterpartyId, userId)))
+      .orderBy(desc(peerCovenants.createdAt));
+  }
+
+  async getRivalDivisionsByWeek(weekKey: string): Promise<RivalDivision[]> {
+    if (!db) return [];
+    return await db.select().from(rivalDivisions)
+      .where(eq(rivalDivisions.weekKey, weekKey))
+      .orderBy(asc(rivalDivisions.podNumber));
+  }
+
+  async createRivalDivision(division: InsertRivalDivision): Promise<RivalDivision> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(rivalDivisions).values(division).returning();
+    return created;
+  }
+
+  async updateRivalDivision(id: string, updates: Partial<RivalDivision>): Promise<RivalDivision> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(rivalDivisions).set(updates).where(eq(rivalDivisions.id, id)).returning();
+    if (!updated) throw new Error("Division not found");
+    return updated;
+  }
+
+  async getRivalDivisionMembers(divisionId: string): Promise<RivalDivisionMember[]> {
+    if (!db) return [];
+    return await db.select().from(rivalDivisionMembers)
+      .where(eq(rivalDivisionMembers.divisionId, divisionId));
+  }
+
+  async getUserDivisionMembership(userId: string, weekKey: string): Promise<{ division: RivalDivision; member: RivalDivisionMember } | undefined> {
+    if (!db) return undefined;
+    const rows = await db.select({
+      division: rivalDivisions,
+      member: rivalDivisionMembers,
+    })
+      .from(rivalDivisionMembers)
+      .innerJoin(rivalDivisions, eq(rivalDivisionMembers.divisionId, rivalDivisions.id))
+      .where(and(eq(rivalDivisionMembers.userId, userId), eq(rivalDivisions.weekKey, weekKey)));
+    return rows[0];
+  }
+
+  async addRivalDivisionMember(member: InsertRivalDivisionMember): Promise<RivalDivisionMember> {
+    if (!db) throw new Error("Database not connected");
+    const [created] = await db.insert(rivalDivisionMembers).values(member).returning();
+    return created;
+  }
+
+  async updateRivalDivisionMember(id: string, updates: Partial<RivalDivisionMember>): Promise<RivalDivisionMember> {
+    if (!db) throw new Error("Database not connected");
+    const [updated] = await db.update(rivalDivisionMembers).set(updates).where(eq(rivalDivisionMembers.id, id)).returning();
+    if (!updated) throw new Error("Division member not found");
+    return updated;
+  }
+
+  async getUnsettledPastDivisions(currentWeekKey: string): Promise<RivalDivision[]> {
+    if (!db) return [];
+    return await db.select().from(rivalDivisions)
+      .where(and(eq(rivalDivisions.settled, false), ne(rivalDivisions.weekKey, currentWeekKey)));
+  }
+
+  async getUnseenDivisionOutcome(userId: string): Promise<(RivalDivisionMember & { divisionTier: string; weekKey: string }) | undefined> {
+    if (!db) return undefined;
+    const rows = await db.select({
+      member: rivalDivisionMembers,
+      division: rivalDivisions,
+    })
+      .from(rivalDivisionMembers)
+      .innerJoin(rivalDivisions, eq(rivalDivisionMembers.divisionId, rivalDivisions.id))
+      .where(and(
+        eq(rivalDivisionMembers.userId, userId),
+        ne(rivalDivisionMembers.outcome, "pending"),
+        eq(rivalDivisionMembers.resultSeen, false)
+      ))
+      .orderBy(desc(rivalDivisionMembers.updatedAt))
+      .limit(1);
+    if (!rows[0]) return undefined;
+    return {
+      ...rows[0].member,
+      divisionTier: rows[0].division.tier,
+      weekKey: rows[0].division.weekKey,
+    };
+  }
+
+  async markDivisionOutcomeSeen(memberId: string): Promise<void> {
+    if (!db) return;
+    await db.update(rivalDivisionMembers)
+      .set({ resultSeen: true })
+      .where(eq(rivalDivisionMembers.id, memberId));
+  }
+
+  // ─── User Feedback, Bug Reports & Feature Requests (DatabaseStorage) ───
+  async createFeedback(item: InsertFeedbackItem): Promise<FeedbackItem> {
+    if (!db) throw new Error("Database not initialized");
+    const [created] = await db.insert(feedback).values(item).returning();
+    return created;
+  }
+
+  async countUserFeedbackSince(userId: string, since: Date): Promise<number> {
+    if (!db) return 0;
+    const rows = await db
+      .select({ id: feedback.id })
+      .from(feedback)
+      .where(and(eq(feedback.userId, userId), gte(feedback.createdAt, since)));
+    return rows.length;
+  }
+
+  async getUserFeedback(userId: string): Promise<FeedbackItem[]> {
+    if (!db) return [];
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.userId, userId))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async getPublicFeatureRequests(
+    userId: string,
+    options?: { status?: string; sort?: "top" | "new" }
+  ): Promise<Array<FeedbackItem & { hasVoted: boolean }>> {
+    if (!db) return [];
+    const conditions = [ne(feedback.type, "bug")];
+    if (options?.status) conditions.push(eq(feedback.status, options.status));
+
+    const items = await db
+      .select()
+      .from(feedback)
+      .where(and(...conditions))
+      .orderBy(
+        options?.sort === "new" ? desc(feedback.createdAt) : desc(feedback.upvoteCount),
+        desc(feedback.createdAt)
+      )
+      .limit(50);
+
+    if (items.length === 0) return [];
+    const itemIds = items.map((i) => i.id);
+    const votes = await db
+      .select({ feedbackId: feedbackUpvotes.feedbackId })
+      .from(feedbackUpvotes)
+      .where(and(eq(feedbackUpvotes.userId, userId), inArray(feedbackUpvotes.feedbackId, itemIds)));
+
+    const votedSet = new Set(votes.map((v) => v.feedbackId));
+    return items.map((item) => ({ ...item, hasVoted: votedSet.has(item.id) }));
+  }
+
+  async toggleFeedbackUpvote(feedbackId: string, userId: string): Promise<{ voted: boolean; upvoteCount: number }> {
+    if (!db) throw new Error("Database not initialized");
+    const [existing] = await db.select().from(feedback).where(eq(feedback.id, feedbackId));
+    if (!existing) throw new Error("Feedback item not found");
+
+    const [existingVote] = await db
+      .select()
+      .from(feedbackUpvotes)
+      .where(and(eq(feedbackUpvotes.feedbackId, feedbackId), eq(feedbackUpvotes.userId, userId)));
+
+    let voted: boolean;
+    let upvoteCount = existing.upvoteCount;
+    if (existingVote) {
+      await db.delete(feedbackUpvotes).where(eq(feedbackUpvotes.id, existingVote.id));
+      upvoteCount = Math.max(0, upvoteCount - 1);
+      voted = false;
+    } else {
+      await db.insert(feedbackUpvotes).values({ feedbackId, userId });
+      upvoteCount += 1;
+      voted = true;
+    }
+
+    await db
+      .update(feedback)
+      .set({ upvoteCount, updatedAt: new Date() })
+      .where(eq(feedback.id, feedbackId));
+
+    return { voted, upvoteCount };
+  }
+
+  async getAllFeedbackAdmin(filters?: { type?: string; status?: string }): Promise<FeedbackItem[]> {
+    if (!db) return [];
+    const conditions = [];
+    if (filters?.type) conditions.push(eq(feedback.type, filters.type));
+    if (filters?.status) conditions.push(eq(feedback.status, filters.status));
+
+    const query = db.select().from(feedback);
+    return conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(desc(feedback.createdAt))
+      : await query.orderBy(desc(feedback.createdAt));
+  }
+
+  async updateFeedbackAdmin(
+    id: string,
+    updates: { status?: string; adminNotes?: string | null }
+  ): Promise<FeedbackItem> {
+    if (!db) throw new Error("Database not initialized");
+    const [updated] = await db
+      .update(feedback)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(feedback.id, id))
+      .returning();
+    if (!updated) throw new Error("Feedback item not found");
+    return updated;
+  }
+
+  // ─── Master Admin Config, AI Usage Logs & Audit Logs (DatabaseStorage) ───
+  async getSystemConfig(): Promise<GlobalSystemConfigValue> {
+    if (!db) return structuredClone(DEFAULT_SYSTEM_CONFIG);
+    const [row] = await db.select().from(systemConfig).where(eq(systemConfig.key, "global_controls"));
+    if (!row?.value) return structuredClone(DEFAULT_SYSTEM_CONFIG);
+    return {
+      ...DEFAULT_SYSTEM_CONFIG,
+      ...row.value,
+      featureFlags: { ...DEFAULT_SYSTEM_CONFIG.featureFlags, ...(row.value.featureFlags || {}) },
+      multipliers: { ...DEFAULT_SYSTEM_CONFIG.multipliers, ...(row.value.multipliers || {}) },
+      limits: { ...DEFAULT_SYSTEM_CONFIG.limits, ...(row.value.limits || {}) },
+    };
+  }
+
+  async updateSystemConfig(patch: Partial<GlobalSystemConfigValue>): Promise<GlobalSystemConfigValue> {
+    const current = await this.getSystemConfig();
+    const merged: GlobalSystemConfigValue = {
+      ...current,
+      ...patch,
+      featureFlags: { ...current.featureFlags, ...(patch.featureFlags || {}) },
+      multipliers: { ...current.multipliers, ...(patch.multipliers || {}) },
+      limits: { ...current.limits, ...(patch.limits || {}) },
+    };
+    if (db) {
+      await db
+        .insert(systemConfig)
+        .values({ key: "global_controls", value: merged, updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: systemConfig.key,
+          set: { value: merged, updatedAt: new Date() },
+        });
+    }
+    return merged;
+  }
+
+  async logAiUsage(entry: InsertAiUsageLog): Promise<void> {
+    if (!db) return;
+    try {
+      await db.insert(aiUsageLogs).values(entry);
+    } catch (e) {
+      console.error("[AI USAGE] Log insert failed:", e);
+    }
+  }
+
+  async getAiUsageLogsSince(since: Date): Promise<AiUsageLog[]> {
+    if (!db) return [];
+    return await db.select().from(aiUsageLogs).where(gte(aiUsageLogs.createdAt, since)).orderBy(desc(aiUsageLogs.createdAt));
+  }
+
+  async createAdminAuditLog(entry: InsertAdminAuditLog): Promise<AdminAuditLog> {
+    if (!db) {
+      return {
+        id: randomUUID(),
+        action: entry.action,
+        targetUserId: entry.targetUserId ?? null,
+        beforeState: entry.beforeState ?? null,
+        afterState: entry.afterState ?? null,
+        note: entry.note ?? null,
+        createdAt: new Date(),
+      };
+    }
+    const [created] = await db.insert(adminAuditLogs).values(entry).returning();
+    return created;
+  }
+
+  async getAdminAuditLogs(limit = 100): Promise<AdminAuditLog[]> {
+    if (!db) return [];
+    return await db.select().from(adminAuditLogs).orderBy(desc(adminAuditLogs.createdAt)).limit(limit);
+  }
+
+  async getAllTelemetryEventsSince(since: Date): Promise<TelemetryEvent[]> {
+    if (!db) return [];
+    return await db.select().from(telemetryEvents).where(gte(telemetryEvents.timestamp, since));
+  }
+
+  async getAllFocusSessionsAll(): Promise<FocusSession[]> {
+    if (!db) return [];
+    return await db.select().from(focusSessions);
+  }
+
+  async getAllWorkoutSessionsAll(): Promise<WorkoutSession[]> {
+    if (!db) return [];
+    return await db.select().from(workoutSessions);
+  }
+
+  async getAllQuestsAll(): Promise<Quest[]> {
+    if (!db) return [];
+    return await db.select().from(quests);
+  }
+
+  async getAllNotificationsAdmin(limit = 200): Promise<Notification[]> {
+    if (!db) return [];
+    return await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(limit);
   }
 }
 

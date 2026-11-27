@@ -1,4 +1,5 @@
-import { User, InsertQuest, Quest, InsertGuildQuest } from "@shared/schema";
+import { User, InsertQuest, Quest, InsertGuildQuest, RoadmapTask, RoadmapWeek } from "@shared/schema";
+import { inferGoalDomain, generateCoachDailyQuests } from "./goal-coach";
 
 interface QuestHistory {
     completedCount: number;
@@ -159,11 +160,64 @@ export function generateMilestoneQuests(user: User): InsertQuest[] {
     }));
 }
 
-// Enhanced Daily Quest Generator with all features
-export function generateDailyQuests(user: User, questHistory?: QuestHistory, userHabits?: any[]): InsertQuest[] {
+export interface DailyCoachContext {
+    activeWeek?: RoadmapWeek | null;
+    incompleteTasks?: RoadmapTask[];
+    fatigueScore?: number;
+    sleepHours?: number | null;
+    focusMinutes7d?: number;
+    workoutsCount7d?: number;
+}
+
+// Enhanced Daily Quest Generator connected to user's real Goal, Roadmap & Bio-Fatigue
+export function generateDailyQuests(
+    user: User,
+    questHistory?: QuestHistory,
+    userHabits?: any[],
+    coachContext?: DailyCoachContext
+): InsertQuest[] {
+    // Route goal-driven plans through unified Goal Coach when context is supplied or free-text goals are used
+    const rawGoal = user.currentGoal || "";
+    const inferredDomain = (user as any).goalDomain || inferGoalDomain(rawGoal, (user as any).hunterClass);
+    const hasLegacyColon = /^(fitness|intellect|wealth|social|mindfulness):/i.test(rawGoal);
+
+    if (coachContext || !hasLegacyColon) {
+        const coachQuests = generateCoachDailyQuests({
+            user,
+            activeWeek: coachContext?.activeWeek,
+            incompleteTasks: coachContext?.incompleteTasks,
+            fatigueScore: coachContext?.fatigueScore,
+            sleepHours: coachContext?.sleepHours,
+            focusMinutes7d: coachContext?.focusMinutes7d,
+            workoutsCount7d: coachContext?.workoutsCount7d,
+        });
+
+        if (userHabits && userHabits.length > 0) {
+            const firstDailyHabit = userHabits.find((h: any) => h.frequency === "daily");
+            if (firstDailyHabit) {
+                coachQuests.push({
+                    userId: user.id,
+                    title: `Habit Anchor: ${firstDailyHabit.habitName}`,
+                    description: `Maintain your ${firstDailyHabit.habitName} streak (${firstDailyHabit.currentStreak || 0} days).`,
+                    type: "daily",
+                    difficulty: "easy",
+                    category: "discipline",
+                    rewardXP: 15,
+                    rewardCoins: 5,
+                    rewardStats: { willpower: 1 },
+                    executionMode: "checkbox",
+                    sourceType: "goal",
+                    dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                });
+            }
+        }
+        return coachQuests;
+    }
+
     const quests: InsertQuest[] = [];
-    const goal = user.currentGoal || "fitness:General Health";
-    const [category, specific] = goal.split(":");
+    const goal = rawGoal || "fitness:General Health";
+    const [rawCategory, specific] = goal.split(":");
+    const category = rawCategory || (inferredDomain === "fitness" ? "fitness" : inferredDomain === "business" ? "wealth" : "intellect");
     const target = specific?.trim() || "Improvement";
 
     // Calculate difficulty multiplier
@@ -425,6 +479,22 @@ export function generateDailyQuests(user: User, questHistory?: QuestHistory, use
         'hard'
     ));
 
+    // 4. Stat Bias Bonus Quest (SL-6 Spendable Stat Point Alignment)
+    const bias = (user as any).statBias as string | undefined;
+    if (bias === "intelligence" || bias === "willpower") {
+        quests.push(createQuest(
+            `🔮 Affinity Calibration: Deep Focus Synthesis`,
+            `Execute an extra 35-minute cognitive block calibrated to your ${bias.toUpperCase()} investment.`,
+            14, 3, { [bias]: 3 }, 'normal'
+        ));
+    } else if (bias === "strength" || bias === "stamina" || bias === "agility") {
+        quests.push(createQuest(
+            `⚔️ Affinity Calibration: Physical Overload`,
+            `Perform an extra conditioning finisher calibrated to your ${bias.toUpperCase()} build.`,
+            14, 3, { [bias]: 3 }, 'normal'
+        ));
+    }
+
     return quests;
 }
 
@@ -442,31 +512,36 @@ export function generateWeeklyQuests(user: User): InsertQuest[] {
         });
     }
 
-    // 2. Weekly Goal Challenge
-    const goal = user.currentGoal || "fitness:General Health";
-    const [category] = goal.split(":");
+    // 2. Weekly Goal Challenge (domain-aware for natural-language & colon goals)
+    const domain = (user as any).goalDomain || inferGoalDomain(user.currentGoal, (user as any).hunterClass);
+    const goalLabel = user.currentGoal || "your active objective";
 
-    if (category === "fitness") {
+    if (domain === "fitness") {
         quests.push({
             userId: user.id,
-            title: "Weekly Endurance Challenge",
-            description: "Complete 3 workout sessions of at least 45 minutes this week.",
+            title: "Weekly Overload Benchmark",
+            description: `Complete 3+ progressive training sessions advancing "${goalLabel}" and log your sets/PRs.`,
             type: "weekly",
             difficulty: "hard",
-            rewardXP: 50,
-            rewardCoins: 10,
-            rewardStats: { stamina: 5, strength: 3 },
+            category: "fitness",
+            executionMode: "workout_verified",
+            rewardXP: 75,
+            rewardCoins: 25,
+            rewardStats: { stamina: 4, strength: 4 },
             dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
-    } else if (category === "intellect") {
+    } else {
         quests.push({
             userId: user.id,
-            title: "Weekly Knowledge Synthesis",
-            description: "Read a book or complete a course module and write a comprehensive summary.",
+            title: "Weekly Deep Execution Benchmark",
+            description: `Complete 180+ verified Focus minutes shipping concrete deliverables for "${goalLabel}".`,
             type: "weekly",
             difficulty: "hard",
-            rewardXP: 50,
-            rewardCoins: 10,
+            category: "productivity",
+            executionMode: "focus_verified",
+            targetMinutes: 180,
+            rewardXP: 75,
+            rewardCoins: 25,
             rewardStats: { intelligence: 5, willpower: 3 },
             dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });

@@ -112,6 +112,154 @@ router.get("/", async (req, res) => {
     }
 });
 
+// Feature #8: Weekly Shared Guild Raid Boss State + 1x/week Cached AI Dispatch
+router.get("/raid/active", async (req, res) => {
+    try {
+        const storage = getStorage();
+        const user = (req as any).user;
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+        if (!user.guildId) return res.status(400).json({ error: "Join a Guild first." });
+
+        const guild = await storage.getGuild(user.guildId);
+        if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+        const { getDivisionWeekKey } = await import("../services/divisions");
+        const weekKey = getDivisionWeekKey();
+        const members = await storage.getGuildMembers(guild.id);
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+
+        const maxHp = Math.max(2500, members.length * 1000);
+        let totalDamage = 0;
+        let totalFocusMins = 0;
+        let totalWorkouts = 0;
+        const memberBreakdown = await Promise.all(
+            members.map(async (m: any) => {
+                const [focus, workouts] = await Promise.all([
+                    storage.getUserFocusSessions(m.id),
+                    storage.getUserWorkoutSessions(m.id, 30),
+                ]);
+                const f7d = focus.filter((s: any) => new Date(s.completedAt) >= sevenDaysAgo);
+                const w7d = workouts.filter((w: any) => new Date(w.startedAt) >= sevenDaysAgo);
+                const mins = f7d.reduce((acc: number, s: any) => acc + (s.duration || 0), 0);
+                // Per-member daily contribution cap approximated over 7d window (300/day max)
+                const byDay = new Map<string, number>();
+                for (const s of f7d) {
+                    const d = new Date(s.completedAt).toISOString().split("T")[0];
+                    byDay.set(d, Math.min(300, (byDay.get(d) || 0) + (s.duration || 0) * 5));
+                }
+                for (const w of w7d) {
+                    const d = new Date(w.startedAt).toISOString().split("T")[0];
+                    byDay.set(d, Math.min(300, (byDay.get(d) || 0) + 120));
+                }
+                const dmg = Array.from(byDay.values()).reduce((a, b) => a + b, 0);
+                const qualified = mins >= 60 || w7d.length >= 2;
+                totalDamage += dmg;
+                totalFocusMins += mins;
+                totalWorkouts += w7d.length;
+                return {
+                    id: m.id,
+                    name: m.name,
+                    focusMinutes: mins,
+                    workouts: w7d.length,
+                    damage: dmg,
+                    qualified,
+                };
+            })
+        );
+
+        memberBreakdown.sort((a, b) => b.damage - a.damage);
+        const currentHp = Math.max(0, maxHp - totalDamage);
+        const bossDefeated = currentHp === 0;
+        const bossName = (guild as any).raidBossName || "Guild Citadel Leviathan";
+        let dispatch = (guild as any).weeklyDispatchCache;
+
+        if (!dispatch || dispatch.weekKey !== weekKey) {
+            const slackingCount = memberBreakdown.filter((m) => !m.qualified).length;
+            const mvpName = memberBreakdown[0]?.name || user.name;
+            const totalHours = Number((totalFocusMins / 60).toFixed(1));
+            const { generateGuildWeeklyDispatch } = await import("../services/goal-coach");
+            const gen = await generateGuildWeeklyDispatch({
+                guildName: guild.name,
+                mvpName,
+                totalHours,
+                totalWorkouts,
+                slackingCount,
+                bossDefeated,
+            });
+            dispatch = {
+                weekKey,
+                summary: gen.summary,
+                mvpName,
+                totalHours,
+                totalWorkouts,
+                callout: gen.callout,
+            };
+            await storage.updateGuild(guild.id, {
+                raidBossName: bossName,
+                raidBossMaxHp: maxHp,
+                raidBossCurrentHp: currentHp,
+                raidWeekKey: weekKey,
+                weeklyDispatchCache: dispatch,
+            } as any);
+        }
+
+        res.json({
+            weekKey,
+            guild,
+            bossName,
+            bossMaxHp: maxHp,
+            bossCurrentHp: currentHp,
+            bossDefeated,
+            members: memberBreakdown,
+            dispatch,
+        });
+    } catch (e) {
+        console.error("GET active guild raid error", e);
+        res.status(500).json({ error: "Failed to load guild raid" });
+    }
+});
+
+router.post("/raid/claim", async (req, res) => {
+    try {
+        const storage = getStorage();
+        const user = (req as any).user;
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+        if (!user.guildId) return res.status(400).json({ error: "Not in a guild." });
+
+        const guild = await storage.getGuild(user.guildId);
+        if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+        const [focus, workouts] = await Promise.all([
+            storage.getUserFocusSessions(user.id),
+            storage.getUserWorkoutSessions(user.id, 30),
+        ]);
+        const mins7d = focus
+            .filter((f) => new Date(f.completedAt) >= sevenDaysAgo)
+            .reduce((s, f) => s + (f.duration || 0), 0);
+        const workouts7d = workouts.filter((w) => new Date(w.startedAt) >= sevenDaysAgo).length;
+
+        if (mins7d < 60 && workouts7d < 2) {
+            return res.status(403).json({
+                error: "Participation floor unmet: log >=60m Focus or >=2 Workouts this week to claim Raid loot.",
+            });
+        }
+
+        const updatedUser = await storage.updateUser(user.id, {
+            coins: (user.coins || 0) + 150,
+            xp: (user.xp || 0) + 100,
+        });
+        res.json({
+            success: true,
+            coinsAwarded: 150,
+            xpAwarded: 100,
+            user: updatedUser,
+        });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to claim guild raid loot" });
+    }
+});
+
 // Get guild by ID (with members)
 router.get("/:id", async (req, res) => {
     try {
@@ -154,6 +302,14 @@ router.post("/:id/join", async (req, res) => {
         if (user.guildId) {
             console.log("User already in guild:", user.guildId);
             return res.status(400).json({ error: "Already in a guild" });
+        }
+
+        // Enforce 24h Guild-Switch Cooldown (#8 anti-guild-hopping lock)
+        if ((user as any).guildCooldownUntil && new Date((user as any).guildCooldownUntil).getTime() > Date.now()) {
+            const hrsLeft = Math.max(1, Math.ceil((new Date((user as any).guildCooldownUntil).getTime() - Date.now()) / 3600000));
+            return res.status(429).json({
+                error: `Guild relocation cooldown active (${hrsLeft}h remaining to prevent raid hopping).`,
+            });
         }
 
         const { id } = req.params;
@@ -239,7 +395,10 @@ router.post("/leave", async (req, res) => {
             await storage.updateGuild(guild.id, { memberCount: Math.max(0, members.length - 1) });
         }
 
-        await storage.updateUser(user.id, { guildId: null });
+        await storage.updateUser(user.id, {
+            guildId: null,
+            guildCooldownUntil: new Date(Date.now() + 24 * 3600000),
+        } as any);
         res.json({ success: true });
     } catch (e) {
         console.error("Leave guild error", e);

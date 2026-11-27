@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/auth_repository.dart';
+import '../notifications/notification_service.dart';
 import '../storage/session_storage.dart';
 import '../../models/user_model.dart';
 
@@ -21,6 +22,9 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       final user = await _repo.getProfile();
       if (!mounted) return;
       state = AsyncValue.data(user);
+      if (user != null) {
+        NotificationService.syncDeviceToken();
+      }
     } catch (e, st) {
       if (!mounted) return;
       state = AsyncValue.error(e, st);
@@ -34,6 +38,9 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       final user = await _repo.signInWithGoogle();
       if (!mounted) return user != null;
       state = AsyncValue.data(user);
+      if (user != null) {
+        NotificationService.syncDeviceToken();
+      }
       return user != null;
     } catch (e, st) {
       if (!mounted) return false;
@@ -49,6 +56,9 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       final user = await _repo.loginWithPhone(phone, password);
       if (!mounted) return user != null;
       state = AsyncValue.data(user);
+      if (user != null) {
+        NotificationService.syncDeviceToken();
+      }
       return user != null;
     } catch (e, st) {
       if (!mounted) return false;
@@ -76,6 +86,9 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       );
       if (!mounted) return user != null;
       state = AsyncValue.data(user);
+      if (user != null) {
+        NotificationService.syncDeviceToken();
+      }
       return user != null;
     } catch (e, st) {
       if (!mounted) return false;
@@ -142,6 +155,7 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       await SessionStorage.saveCachedUser(user);
       if (!mounted) return;
       state = AsyncValue.data(user);
+      NotificationService.syncDeviceToken();
     } catch (e, st) {
       if (!mounted) return;
       state = AsyncValue.error(e, st);
@@ -155,6 +169,7 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   }
 
   Future<void> logout() async {
+    await NotificationService.unregisterDeviceToken();
     await _repo.signOut();
     if (!mounted) return;
     state = const AsyncValue.data(null);

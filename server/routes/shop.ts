@@ -18,10 +18,18 @@ async function seedShop() {
     
     // Check which types are missing (allows adding new types to existing DB)
     const existingTypes = new Set(items.map(i => i.type));
-    const missingTypes = ['avatar', 'badge', 'title', 'theme', 'consumable'].filter(t => !existingTypes.has(t));
-    const hasStreakShield = items.some(i => i.value === "streak_shield");
-    
-    if (missingTypes.length === 0 && hasStreakShield) {
+    const missingTypes = ['avatar', 'badge', 'title', 'theme', 'consumable', 'program'].filter(t => !existingTypes.has(t));
+    const requiredUtilities = [
+        "streak_shield",
+        "reschedule_pass",
+        "focus_escrow_ticket",
+        "protocol_audit_ticket",
+        "program_pack_ppl",
+        "program_pack_5k",
+    ];
+    const hasAllUtilities = requiredUtilities.every(val => items.some(i => i.value === val));
+
+    if (missingTypes.length === 0 && hasAllUtilities) {
         hasSeeded = true;
         return;
     }
@@ -215,7 +223,7 @@ async function seedShop() {
             isPremium: false,
         },
 
-        // --- Consumables & Operational Equipment ---
+        // --- Consumables & Goal Execution Armory (Tools That Help You Succeed) ---
         {
             name: "Streak Shield",
             description: "Automated protocol preservation. Deploys if a day is missed to safeguard active streak.",
@@ -224,13 +232,57 @@ async function seedShop() {
             cost: 75,
             rarity: "rare",
             isPremium: false,
+        },
+        {
+            name: "Deload / Reschedule Pass",
+            description: "Use on high-fatigue or busy days: scales today's uncompleted hard quests down to lighter Minimum Viable wins without breaking streak.",
+            type: "consumable",
+            value: "reschedule_pass",
+            cost: 60,
+            rarity: "rare",
+            isPremium: false,
+        },
+        {
+            name: "Focus Escrow Ticket (150m / 48h)",
+            description: "Use to lock 100 Coins in commitment escrow: log 150 verified Air-Gap Focus minutes within 48h to win back 150 Coins (1.5x return).",
+            type: "consumable",
+            value: "focus_escrow_ticket",
+            cost: 100,
+            rarity: "epic",
+            isPremium: false,
+        },
+        {
+            name: "AI Protocol Recalibration Audit",
+            description: "Triggers a fresh Goal Coach audit rebuilding your active 4-week Roadmap around current capacity and obstacles.",
+            type: "consumable",
+            value: "protocol_audit_ticket",
+            cost: 90,
+            rarity: "epic",
+            isPremium: false,
+        },
+        {
+            name: "4-Week Progressive PPL Pack",
+            description: "Structured Push/Pull/Legs progressive overload blueprint calibrated for compound strength PRs.",
+            type: "program",
+            value: "program_pack_ppl",
+            cost: 120,
+            rarity: "rare",
+            isPremium: false,
+        },
+        {
+            name: "4-Week Hybrid Endurance Pack",
+            description: "Conditioning & aerobic threshold training block boosting Stamina and metabolic work capacity.",
+            type: "program",
+            value: "program_pack_5k",
+            cost: 120,
+            rarity: "rare",
+            isPremium: false,
         }
     ];
 
     for (const seed of seeds) {
-        // Insert seeds if their type is missing, or if specific critical consumable is missing
         const alreadyExists = items.some(i => i.value === seed.value);
-        if (!alreadyExists && (missingTypes.includes(seed.type) || seed.value === "streak_shield")) {
+        if (!alreadyExists && (missingTypes.includes(seed.type) || requiredUtilities.includes(seed.value))) {
             await storage.createShopItem(seed);
         }
     }
@@ -299,7 +351,22 @@ router.post("/buy", requireAuth, async (req, res) => {
     // Premium membership check removed as per user request
 
     const dbUser = await storage.getUser(user.id);
-    if (!dbUser) return res.status(404).send("User not found");
+    if (!dbUser) return res.status(404).json({ error: "User not found" });
+
+    // SL-2: Gate store purchases while Penalty Zone is active
+    if (dbUser.inPenaltyZone) {
+        return res.status(403).json({ error: "System Restricted: Clear your Penalty Zone survival quest before accessing the Supply Depot." });
+    }
+
+    // Milestone-gate prestige cosmetics so high-tier Titles/Badges represent earned real achievement
+    if ((item.type === "title" || item.type === "badge") && item.rarity === "legendary") {
+        const qualified = (dbUser.level || 1) >= 5 || (dbUser.streak || 0) >= 7;
+        if (!qualified) {
+            return res.status(403).json({
+                error: "Milestone Locked: Reach Level 5 or a 7-day unbroken streak to unlock Legendary prestige cosmetics.",
+            });
+        }
+    }
 
     // Calculate actual cost
     let effectiveCost = item.cost;
@@ -312,17 +379,17 @@ router.post("/buy", requireAuth, async (req, res) => {
         const ownedCount = inventory.filter(i => i.itemId === itemId).length;
         if (ownedCount >= 2) {
             console.log("Consumable capacity reached (max 2)");
-            return res.status(400).send("Maximum capacity reached for this item (limit: 2)");
+            return res.status(400).json({ error: "Maximum capacity reached for this item (limit: 2)" });
         }
     } else if (inventory.some(i => i.itemId === itemId)) {
         console.log("Item already owned");
-        return res.status(400).send("Item already owned");
+        return res.status(400).json({ error: "Item already owned" });
     }
 
     // Check funds
     if (dbUser.coins < effectiveCost) {
         console.log("Insufficient funds");
-        return res.status(400).send("Insufficient funds");
+        return res.status(400).json({ error: "Insufficient coins" });
     }
 
     // Deduct coins & apply consumable effects
@@ -393,6 +460,98 @@ router.post("/equip", requireAuth, async (req, res) => {
     await storage.updateUserItem(userItem.id, { equipped: true });
 
     res.json({ success: true });
+});
+
+// Use Utility Armory Consumable / Program Item (Real Goal Execution Effect)
+router.post("/use", requireAuth, async (req, res) => {
+    try {
+        const storage = getStorage();
+        const user = (req as any).user;
+        if (!user) return res.status(401).send("Unauthorized");
+
+        const { itemId, value } = req.body || {};
+        if (!itemId && !value) {
+            return res.status(400).json({ error: "Provide itemId or utility value to activate." });
+        }
+
+        const inventory = await storage.getUserItems(user.id);
+        const allShopItems = await storage.getShopItems();
+        let matchedUserItem: (typeof inventory)[number] | undefined;
+        let matchedShopItem: (typeof allShopItems)[number] | undefined;
+
+        for (const ui of inventory) {
+            const si = allShopItems.find((s) => s.id === ui.itemId);
+            if (!si) continue;
+            if ((itemId && (ui.itemId === itemId || ui.id === itemId)) || (value && si.value === value)) {
+                matchedUserItem = ui;
+                matchedShopItem = si;
+                break;
+            }
+        }
+
+        if (!matchedUserItem || !matchedShopItem) {
+            return res.status(404).json({ error: "Utility item not owned in inventory." });
+        }
+
+        const dbUser = await storage.getUser(user.id);
+        if (!dbUser) return res.status(404).json({ error: "User not found." });
+
+        let effectMessage = "";
+
+        if (matchedShopItem.value === "reschedule_pass") {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const quests = await storage.getUserQuests(user.id);
+            let scaledCount = 0;
+            for (const q of quests) {
+                if (!q.completed && q.type === "daily" && new Date(q.createdAt) >= today) {
+                    await storage.updateQuest(q.id, {
+                        difficulty: "easy",
+                        targetMinutes: q.targetMinutes ? Math.min(20, q.targetMinutes) : q.targetMinutes,
+                        description: `[DELOAD PASS] Scaled to Minimum Viable step: ${q.description}`,
+                    });
+                    scaledCount++;
+                }
+            }
+            await storage.deleteUserItem(matchedUserItem.id);
+            effectMessage = `Deload Pass activated: ${scaledCount} today quest(s) scaled into Minimum Viable steps.`;
+        } else if (matchedShopItem.value === "focus_escrow_ticket") {
+            if (dbUser.activeFocusEscrow) {
+                return res.status(409).json({ error: "An active Focus Escrow contract is already running." });
+            }
+            const now = Date.now();
+            await storage.updateUser(user.id, {
+                activeFocusEscrow: {
+                    stakeCoins: matchedShopItem.cost,
+                    targetMinutes: 150,
+                    progressMinutes: 0,
+                    createdAt: new Date(now).toISOString(),
+                    expiresAt: new Date(now + 48 * 60 * 60 * 1000).toISOString(),
+                },
+            });
+            await storage.deleteUserItem(matchedUserItem.id);
+            effectMessage = "Focus Escrow LOCKED: Complete 150 Air-Gap minutes in 48h to earn 150 Coins (1.5x payout).";
+        } else if (matchedShopItem.value === "protocol_audit_ticket") {
+            const { provisionRoadmapForGoal } = await import("./roadmaps");
+            await provisionRoadmapForGoal(storage, dbUser, { replaceExisting: true });
+            await storage.deleteUserItem(matchedUserItem.id);
+            effectMessage = "AI Protocol Recalibration Audit complete: Active 4-week Roadmap updated to your current pace.";
+        } else if (matchedShopItem.value.startsWith("program_pack_")) {
+            await storage.updateUser(user.id, {
+                lastCoachSummary: `Active Training Blueprint: ${matchedShopItem.name}. Launch sets from Workout -> Official Templates.`,
+                lastCoachAt: new Date(),
+            });
+            effectMessage = `${matchedShopItem.name} activated! Open Workout Templates to run your structured progressive sessions.`;
+        } else {
+            return res.status(400).json({ error: "This item has no manual activation action." });
+        }
+
+        const refreshed = await storage.getUser(user.id);
+        res.json({ success: true, message: effectMessage, user: refreshed });
+    } catch (err: any) {
+        console.error("Shop item activation error:", err);
+        res.status(500).json({ error: err.message || "Failed to activate item" });
+    }
 });
 
 export default router;

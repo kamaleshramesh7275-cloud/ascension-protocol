@@ -110,7 +110,7 @@ export function createReferralRouter(storage: IStorage): Router {
     router.get("/admin/all", async (req, res) => {
         try {
             const adminPassword = req.headers["x-admin-password"] as string;
-            const EXPECTED_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+            const EXPECTED_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
 
             if (!adminPassword || adminPassword !== EXPECTED_PASSWORD) {
                 return res.status(403).json({ message: "Forbidden" });
@@ -146,7 +146,7 @@ export function createReferralRouter(storage: IStorage): Router {
     router.post("/admin/backfill", async (req, res) => {
         try {
             const adminPassword = req.headers["x-admin-password"] as string;
-            const EXPECTED_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+            const EXPECTED_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
 
             if (!adminPassword || adminPassword !== EXPECTED_PASSWORD) {
                 return res.status(403).json({ message: "Forbidden" });

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/hunter_theme.dart';
 import 'core/providers/auth_provider.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/sync/sync_queue.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/profile_setup_screen.dart';
@@ -12,7 +13,8 @@ import 'features/home/main_navigation_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize offline sync queue listener
+  // Initialize Firebase Cloud Messaging & offline sync queue listener
+  await NotificationService.initialize();
   SyncQueueService.initializeConnectivityListener();
 
   // Immersive Edge-to-Edge System Bar Styling
@@ -46,8 +48,10 @@ class AscensionMobileApp extends ConsumerWidget {
       home: authState.when(
         data: (user) {
           if (user != null) {
-            // 1. Mandatory Phone verification check
-            if (user.phone == null || user.phone!.isEmpty) {
+            // 1. Mandatory Phone verification check (bypassed for local Guest Hunter sessions)
+            final isGuest =
+                user.id.startsWith('guest_') || user.email.endsWith('@ascension.app');
+            if (!isGuest && (user.phone == null || user.phone!.isEmpty)) {
               return ProfileSetupScreen(user: user);
             }
             // 2. Customization / Briefing calibration check

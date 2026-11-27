@@ -63,6 +63,19 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
             body: payload.body,
             imageUrl: payload.icon || undefined,
         },
+        data: {
+            route: payload.url || "/quests",
+            title: payload.title,
+            body: payload.body,
+        },
+        android: {
+            priority: "high" as const,
+            notification: {
+                channelId: "system_alerts",
+                sound: "default",
+                clickAction: "FLUTTER_NOTIFICATION_CLICK",
+            },
+        },
         webpush: {
             notification: {
                 icon: payload.icon || "/icon-192.png",
@@ -193,5 +206,31 @@ export const pushNotifications = {
             title: "[RECOVERY DIRECTIVE] Inactivity Detected",
             body: `${hoursInactive} hours of radio silence. Your accumulated capital is at risk. Return to authorize Resurrection Protocol.`,
             url: "/dashboard",
+        }),
+
+    penaltyImminentWarning: (userId: string, remainingQuests: number) =>
+        sendPushToUser(userId, {
+            title: "⚠️ [SYSTEM ALERT]: PENALTY ZONE IN 3 HOURS",
+            body: `${remainingQuests} daily quest(s) incomplete. Complete a quest or your Anchor Mission before midnight to avoid Penalty Zone lockdown.`,
+            url: "/quests",
+        }),
+
+    divisionResult: (
+        userId: string,
+        tier: string,
+        rank: number,
+        outcome: "promoted" | "stayed" | "demoted",
+        rewardCoins: number
+    ) =>
+        sendPushToUser(userId, {
+            title:
+                outcome === "promoted"
+                    ? `[DIVISION PROMOTED] #${rank} in ${tier} Pod!`
+                    : `[WEEKLY POD SETTLED] Placed #${rank} (${tier})`,
+            body:
+                outcome === "promoted"
+                    ? `You ascended from ${tier} Pod at Rank #${rank}${rewardCoins > 0 ? ` (+${rewardCoins} Coins)` : ""}!`
+                    : `Weekly Rival Division settled at Rank #${rank}${rewardCoins > 0 ? ` (+${rewardCoins} Coins)` : ""}. New 10-Hunter Pod live.`,
+            url: "/divisions",
         }),
 };

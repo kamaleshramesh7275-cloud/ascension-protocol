@@ -6,7 +6,7 @@ import { requireAuth } from "../middleware/auth";
 const router = Router();
 
 // Admin password check helper
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
 const isAdmin = (req: any) => req.headers["x-admin-password"] === ADMIN_PASSWORD;
 
 // POST /api/push/register — save FCM token for current user

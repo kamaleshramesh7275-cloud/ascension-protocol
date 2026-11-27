@@ -89,6 +89,139 @@ export const users = pgTable("users", {
   streakShields: integer("streak_shields").default(1).notNull(), // Starts with 1 free Mana Shield
   activeRecoveryDay: boolean("active_recovery_day").default(false).notNull(),
   lastRestDayClaimedAt: timestamp("last_rest_day_claimed_at"),
+
+  // Solo Leveling System Mechanics (SL-7, 6, 2) & Retention Systems (RET-2, SR-1, 2, 3, 7, 8)
+  unspentStatPoints: integer("unspent_stat_points").default(0).notNull(),
+  statBias: text("stat_bias"),
+  inPenaltyZone: boolean("in_penalty_zone").default(false).notNull(),
+  penaltyExpiresAt: timestamp("penalty_expires_at"),
+  penaltyModeEnabled: boolean("penalty_mode_enabled").default(true).notNull(),
+  baselineStats: jsonb("baseline_stats").$type<Record<string, number>>(),
+  anchorQuestId: text("anchor_quest_id"),
+  anchorDate: text("anchor_date"),
+  activeGateEvent: jsonb("active_gate_event").$type<{
+    id: string;
+    gateType: "blue_gate" | "red_gate";
+    title: string;
+    description: string;
+    targetType: "focus_minutes" | "workouts" | "quests";
+    targetValue: number;
+    currentValue: number;
+    expiresAt: string;
+    rewardCoins: number;
+    claimed: boolean;
+  }>(),
+  unlockedShadows: jsonb("unlocked_shadows").$type<string[]>().default([]).notNull(),
+  equippedShadows: jsonb("equipped_shadows").$type<string[]>().default([]).notNull(),
+  evolvedClass: text("evolved_class"),
+  prestigeRank: integer("prestige_rank").default(0).notNull(),
+  lastSleepHours: decimal("last_sleep_hours", { precision: 4, scale: 2 }),
+  divisionTier: text("division_tier").default("Bronze").notNull(), // Bronze, Silver, Gold, Monarch
+  goalDomain: text("goal_domain"), // fitness, career_code, study_exam, business, discipline
+  dailyCapacityMinutes: integer("daily_capacity_minutes").default(90).notNull(),
+  goalDeadline: timestamp("goal_deadline"),
+  primaryDistractor: text("primary_distractor"),
+  lastIfThenPlan: text("last_if_then_plan"),
+  lastBlockerTag: text("last_blocker_tag"),
+  lastCoachSummary: text("last_coach_summary"),
+  lastCoachAt: timestamp("last_coach_at"),
+  preferredPeakHour: integer("preferred_peak_hour"),
+  nextFocusStep: text("next_focus_step"),
+  weeklyAuditCache: jsonb("weekly_audit_cache").$type<{
+    weekKey: string;
+    coachSummary: string;
+    mondayAdjustment: string;
+    dayPatternInsight: string;
+    suggestedDailyMinutes: number;
+    providerUsed: string;
+    generatedAt: string;
+  } | null>(),
+  activeFocusEscrow: jsonb("active_focus_escrow").$type<{
+    stakeCoins: number;
+    targetMinutes: number;
+    progressMinutes: number;
+    createdAt: string;
+    expiresAt: string;
+  } | null>(),
+  ultimatumState: jsonb("ultimatum_state").$type<{
+    date: string;
+    warningLine: string;
+    shieldAbsorbed: boolean;
+    cardShared: boolean;
+  } | null>(),
+  lastUltimatumAlertDate: text("last_ultimatum_alert_date"),
+  preBreakStreak: integer("pre_break_streak").default(0).notNull(),
+  comebackGate: jsonb("comeback_gate").$type<{
+    active: boolean;
+    triggeredAt: string;
+    expiresAt: string;
+    restoredFromStreak: number;
+    focusDone: boolean;
+    workoutDone: boolean;
+    aiBrief: string;
+    lastTriggeredAt: string;
+  } | null>(),
+  pendingExtraction: jsonb("pending_extraction").$type<{
+    id: string;
+    sourceMilestone: string;
+    bossName: string;
+    rank: string;
+    attemptsRemaining: number;
+    targetHoldSeconds: number;
+    expiresAt: string;
+    seededAt: string;
+  } | null>(),
+  extractedShadows: jsonb("extracted_shadows").$type<Array<{
+    id: string;
+    baseShadowId: string;
+    name: string;
+    title: string;
+    loreOrigin: string;
+    passiveType: string;
+    acquiredAt: string;
+  }>>().default([]).notNull(),
+  jobChangeState: jsonb("job_change_state").$type<{
+    status: "locked" | "available" | "active" | "completed" | "cooldown";
+    startedAt?: string;
+    expiresAt?: string;
+    cooldownUntil?: string;
+    awakenedTitle?: string;
+    steps: Array<{ id: string; label: string; target: number; current: number }>;
+  } | null>(),
+  doubleDungeonState: jsonb("double_dungeon_state").$type<{
+    id: string;
+    status: "active" | "completed" | "broken";
+    startedAt: string;
+    expiresAt: string;
+    stakeCoins: number;
+    payoutMultiplier: number;
+    rules: Array<{ key: string; title: string; tier: string; target: number; current: number; violated: boolean }>;
+  } | null>(),
+  reawakeningState: jsonb("reawakening_state").$type<{
+    status: "eligible" | "in_progress" | "passed" | "failed";
+    startedAt?: string;
+    expiresAt?: string;
+    lastAttemptAt?: string;
+    nextEligibleAt?: string;
+    pushupsLogged?: number;
+    focusVerified?: boolean;
+    deliverableText?: string;
+    examinerVerdict?: string;
+    awardedRank?: string;
+  } | null>(),
+  monarchDomainState: jsonb("monarch_domain_state").$type<{
+    status: "idle" | "active" | "completed" | "shattered";
+    startedAt?: string;
+    expiresAt?: string;
+    lastStartedAt?: string;
+    sprintsDone: number;
+    workoutDone: boolean;
+    breaches: number;
+    bonusXpAwarded: number;
+    planSteps: string[];
+    loreSummary?: string;
+  } | null>(),
+  guildCooldownUntil: timestamp("guild_cooldown_until"),
 }, (table) => {
   return {
     firebaseUidIdx: index("idx_users_firebase_uid").on(table.firebaseUid),
@@ -126,6 +259,18 @@ export const guilds = pgTable("guilds", {
   vicePresidentIds: jsonb('vice_president_ids').$type<string[]>().default([]).notNull(),
   treasury: integer("treasury").default(0).notNull(), // Guild coins from donations
   activePerks: jsonb('active_perks').$type<string[]>().default([]).notNull(), // Array of active perk IDs
+  raidBossName: text("raid_boss_name"),
+  raidBossMaxHp: integer("raid_boss_max_hp").default(5000).notNull(),
+  raidBossCurrentHp: integer("raid_boss_current_hp").default(5000).notNull(),
+  raidWeekKey: text("raid_week_key"),
+  weeklyDispatchCache: jsonb("weekly_dispatch_cache").$type<{
+    weekKey: string;
+    summary: string;
+    mvpName: string;
+    totalHours: number;
+    totalWorkouts: number;
+    callout: string;
+  } | null>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -152,6 +297,10 @@ export const quests = pgTable("quests", {
 
   content: text("content"), // Rich text tips/guide
   dayNumber: integer("day_number"), // Order within campaign
+  roadmapTaskId: varchar("roadmap_task_id"), // Linked roadmap task auto-synced on completion
+  executionMode: text("execution_mode").default("checkbox").notNull(), // checkbox, focus_verified, workout_verified, proof_text
+  targetMinutes: integer("target_minutes"), // Focus timer preload minutes
+  sourceType: text("source_type").default("goal").notNull(), // goal, roadmap, bottleneck, recovery, gate, comeback
   expiresAt: timestamp("expires_at"), // For 24h rotation
   createdAt: timestamp("created_at").defaultNow().notNull(),
   dueAt: timestamp("due_at").notNull(),
@@ -271,6 +420,12 @@ export const focusSessions = pgTable("focus_sessions", {
   xpEarned: integer("xp_earned").notNull(),
   task: text("task"), // Optional: what the user was working on
   backgroundType: text("background_type"), // rain, forest, ocean, cyberpunk, space
+  questId: varchar("quest_id"),
+  roadmapTaskId: varchar("roadmap_task_id"),
+  outputNote: text("output_note"),
+  aiReview: text("ai_review"),
+  nextMicroStep: text("next_micro_step"),
+  breachCount: integer("breach_count").default(0).notNull(),
   completedAt: timestamp("completed_at").defaultNow().notNull(),
 }, (table) => {
   return {
@@ -511,6 +666,10 @@ export const insertQuestSchema = z.object({
   bossMaxHealth: z.number().int().nullable().optional(),
   content: z.string().nullable().optional(),
   dayNumber: z.number().int().nullable().optional(),
+  roadmapTaskId: z.string().nullable().optional(),
+  executionMode: z.string().optional(),
+  targetMinutes: z.number().int().nullable().optional(),
+  sourceType: z.string().optional(),
   expiresAt: z.date().nullable().optional(),
   dueAt: z.date(),
 });
@@ -603,6 +762,12 @@ export const insertFocusSessionSchema = z.object({
   xpEarned: z.number().int().min(0),
   task: z.string().nullable().optional(),
   backgroundType: z.string().nullable().optional(),
+  questId: z.string().nullable().optional(),
+  roadmapTaskId: z.string().nullable().optional(),
+  outputNote: z.string().nullable().optional(),
+  aiReview: z.string().nullable().optional(),
+  nextMicroStep: z.string().nullable().optional(),
+  breachCount: z.number().int().optional(),
 });
 
 export const insertNotificationSchema = z.object({
@@ -730,7 +895,7 @@ export type UserStats = {
 };
 
 export type Tier = "D" | "C" | "B" | "A" | "S";
-export type QuestType = "daily" | "weekly" | "ai" | "campaign" | "boss";
+export type QuestType = "daily" | "weekly" | "ai" | "campaign" | "boss" | "penalty";
 export type QuestDifficulty = "easy" | "normal" | "hard" | "epic";
 export type ContentType = "article" | "video" | "guide" | "template";
 export type ContentCategory = "fitness" | "productivity" | "mindfulness" | "nutrition" | "sleep";
@@ -1040,6 +1205,8 @@ export const roadmaps = pgTable("roadmaps", {
   status: text("status").notNull().default("active"),
   startDate: timestamp("start_date").defaultNow().notNull(),
   currentWeek: integer("current_week").default(1).notNull(),
+  linkedGoalText: text("linked_goal_text"),
+  goalDomain: text("goal_domain"),
 }, (table) => ({
   userIdIdx: index("roadmaps_user_id_idx").on(table.userId),
 }));
@@ -1052,6 +1219,20 @@ export const roadmapWeeks = pgTable("roadmap_weeks", {
   goal: text("goal").notNull(),
   description: text("description"),
   isLocked: boolean("is_locked").default(true).notNull(),
+  targetFocusMinutes: integer("target_focus_minutes").default(180).notNull(),
+  loggedFocusMinutes: integer("logged_focus_minutes").default(0).notNull(),
+  targetWorkouts: integer("target_workouts").default(3).notNull(),
+  loggedWorkouts: integer("logged_workouts").default(0).notNull(),
+  bossName: text("boss_name"),
+  bossTitle: text("boss_title"),
+  bossWeaknessRule: text("boss_weakness_rule"),
+  bossMaxHp: integer("boss_max_hp").default(1000).notNull(),
+  bossCurrentHp: integer("boss_current_hp").default(1000).notNull(),
+  bossDamageToday: integer("boss_damage_today").default(0).notNull(),
+  bossDamageDate: text("boss_damage_date"),
+  bossRegenCount: integer("boss_regen_count").default(0).notNull(),
+  bossDefeated: boolean("boss_defeated").default(false).notNull(),
+  bossLootClaimed: boolean("boss_loot_claimed").default(false).notNull(),
 }, (table) => ({
   roadmapIdIdx: index("roadmap_weeks_roadmap_id_idx").on(table.roadmapId),
 }));
@@ -1072,6 +1253,8 @@ export const insertRoadmapSchema = z.object({
   userId: z.string().min(1),
   status: z.string().optional(),
   currentWeek: z.number().int().optional(),
+  linkedGoalText: z.string().nullable().optional(),
+  goalDomain: z.string().nullable().optional(),
 });
 
 export const insertRoadmapWeekSchema = z.object({
@@ -1081,6 +1264,15 @@ export const insertRoadmapWeekSchema = z.object({
   goal: z.string().min(1),
   description: z.string().nullable().optional(),
   isLocked: z.boolean().optional(),
+  targetFocusMinutes: z.number().int().optional(),
+  loggedFocusMinutes: z.number().int().optional(),
+  targetWorkouts: z.number().int().optional(),
+  loggedWorkouts: z.number().int().optional(),
+  bossName: z.string().nullable().optional(),
+  bossTitle: z.string().nullable().optional(),
+  bossWeaknessRule: z.string().nullable().optional(),
+  bossMaxHp: z.number().int().optional(),
+  bossCurrentHp: z.number().int().optional(),
 });
 
 export const insertRoadmapTaskSchema = z.object({
@@ -1683,6 +1875,10 @@ export const eveningDebriefs = pgTable("evening_debriefs", {
   aiFeedback: text("ai_feedback"),
   selfHonestyRating: integer("self_honesty_rating").default(8).notNull(), // 1 - 10
   focusDensityScoreOfDay: integer("focus_density_score_of_day").default(0).notNull(), // 0 - 100
+  sleepHours: decimal("sleep_hours", { precision: 4, scale: 1 }),
+  blockerTag: text("blocker_tag"), // distraction, fatigue, overscoped, unclear, none
+  tomorrowIfThenCue: text("tomorrow_if_then_cue"),
+  coachActionType: text("coach_action_type"), // standard, scale_down_25, recovery_focus, bottleneck_fix
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
 
@@ -1694,6 +1890,10 @@ export const insertEveningDebriefSchema = z.object({
   aiFeedback: z.string().nullable().optional(),
   selfHonestyRating: z.number().int().min(1).max(10).optional(),
   focusDensityScoreOfDay: z.number().int().min(0).max(100).optional(),
+  sleepHours: z.union([z.number(), z.string()]).nullable().optional(),
+  blockerTag: z.string().nullable().optional(),
+  tomorrowIfThenCue: z.string().nullable().optional(),
+  coachActionType: z.string().nullable().optional(),
 });
 
 export type EveningDebrief = typeof eveningDebriefs.$inferSelect;
@@ -1896,5 +2096,229 @@ export const insertWallOfConsequenceSchema = z.object({
 
 export type WallOfConsequenceEntry = typeof wallOfConsequence.$inferSelect;
 export type InsertWallOfConsequenceEntry = z.infer<typeof insertWallOfConsequenceSchema>;
+
+// 15. Weekly 10-Hunter Rival Divisions (Micro-Leaderboards / Pods)
+export const DIVISION_TIERS = ["Bronze", "Silver", "Gold", "Monarch"] as const;
+export type DivisionTier = (typeof DIVISION_TIERS)[number];
+
+export const rivalDivisions = pgTable("rival_divisions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  weekKey: text("week_key").notNull(),
+  tier: text("tier").default("Bronze").notNull(),
+  podNumber: integer("pod_number").default(1).notNull(),
+  settled: boolean("settled").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  weekTierIdx: index("rival_divisions_week_tier_idx").on(table.weekKey, table.tier),
+}));
+
+export type RivalDivision = typeof rivalDivisions.$inferSelect;
+export type InsertRivalDivision = typeof rivalDivisions.$inferInsert;
+
+export const rivalDivisionMembers = pgTable("rival_division_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  divisionId: varchar("division_id").notNull().references(() => rivalDivisions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userName: text("user_name").notNull(),
+  userTier: text("user_tier").default("D").notNull(),
+  weeklyXp: integer("weekly_xp").default(0).notNull(),
+  finalRank: integer("final_rank"),
+  outcome: text("outcome").default("pending").notNull(), // pending, promoted, stayed, demoted
+  rewardCoins: integer("reward_coins").default(0).notNull(),
+  resultSeen: boolean("result_seen").default(false).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  divisionUserIdx: index("rival_div_members_div_user_idx").on(table.divisionId, table.userId),
+  userIdx: index("rival_div_members_user_idx").on(table.userId),
+}));
+
+export type RivalDivisionMember = typeof rivalDivisionMembers.$inferSelect;
+export type InsertRivalDivisionMember = typeof rivalDivisionMembers.$inferInsert;
+
+// 16. User Feedback, Bug Reports & Feature Requests
+export const FEEDBACK_TYPES = ["bug", "feature", "suggestion"] as const;
+export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
+
+export const FEEDBACK_CATEGORIES = [
+  "ui",
+  "focus",
+  "workouts",
+  "quests",
+  "social",
+  "performance",
+  "other",
+] as const;
+export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
+
+export const FEEDBACK_STATUSES = [
+  "open",
+  "reviewed",
+  "planned",
+  "resolved",
+  "declined",
+] as const;
+export type FeedbackStatus = (typeof FEEDBACK_STATUSES)[number];
+
+export const feedback = pgTable("feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userName: text("user_name").notNull(),
+  type: text("type").notNull(), // bug | feature | suggestion
+  category: text("category").default("other").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  diagnostics: jsonb("diagnostics").$type<{
+    appVersion?: string;
+    os?: string;
+    osVersion?: string;
+    currentScreen?: string;
+    recentErrors?: Array<{ time: string; message: string; endpoint?: string; statusCode?: number }>;
+  } | null>(),
+  status: text("status").default("open").notNull(), // open | reviewed | planned | resolved | declined
+  adminNotes: text("admin_notes"),
+  upvoteCount: integer("upvote_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("feedback_user_idx").on(table.userId),
+  typeStatusIdx: index("feedback_type_status_idx").on(table.type, table.status),
+}));
+
+export const insertFeedbackSchema = z.object({
+  type: z.enum(FEEDBACK_TYPES),
+  category: z.enum(FEEDBACK_CATEGORIES).default("other"),
+  title: z.string().trim().min(4, "Title must be at least 4 characters").max(120, "Title cannot exceed 120 characters"),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000, "Description cannot exceed 2000 characters"),
+  diagnostics: z.object({
+    appVersion: z.string().max(40).optional(),
+    os: z.string().max(40).optional(),
+    osVersion: z.string().max(120).optional(),
+    currentScreen: z.string().max(120).optional(),
+    recentErrors: z.array(z.object({
+      time: z.string().max(60),
+      message: z.string().max(300),
+      endpoint: z.string().max(150).optional(),
+      statusCode: z.number().int().optional(),
+    })).max(15).optional(),
+  }).nullable().optional(),
+});
+
+export type FeedbackItem = typeof feedback.$inferSelect;
+export type InsertFeedbackItem = typeof feedback.$inferInsert;
+
+export const feedbackUpvotes = pgTable("feedback_upvotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  feedbackId: varchar("feedback_id").notNull().references(() => feedback.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  feedbackUserIdx: index("feedback_upvotes_fb_user_idx").on(table.feedbackId, table.userId),
+}));
+
+export type FeedbackUpvote = typeof feedbackUpvotes.$inferSelect;
+
+// 17. Master Admin System Config, AI Usage Logs & Audit Logs
+export interface GlobalSystemConfigValue {
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  signupsEnabled: boolean;
+  aiCoachingEnabled: boolean;
+  featureFlags: {
+    focus: boolean;
+    workouts: boolean;
+    ariseExtraction: boolean;
+    bossRaids: boolean;
+    jobChange: boolean;
+    doubleDungeon: boolean;
+    reawakening: boolean;
+    monarchDomain: boolean;
+    guildRaids: boolean;
+    shop: boolean;
+  };
+  multipliers: {
+    xpMultiplier: number;
+    coinMultiplier: number;
+  };
+  limits: {
+    dailyFeedbackLimit: number;
+    aiDailyCapPerProvider: number;
+    aiDailyCapPerUser: number;
+    bossDailyDamageCapPct: number;
+    guildSwitchCooldownHours: number;
+  };
+}
+
+export const DEFAULT_SYSTEM_CONFIG: GlobalSystemConfigValue = {
+  maintenanceMode: false,
+  maintenanceMessage: "System Architects are calibrating the Gate. Check back shortly.",
+  signupsEnabled: true,
+  aiCoachingEnabled: true,
+  featureFlags: {
+    focus: true,
+    workouts: true,
+    ariseExtraction: true,
+    bossRaids: true,
+    jobChange: true,
+    doubleDungeon: true,
+    reawakening: true,
+    monarchDomain: true,
+    guildRaids: true,
+    shop: true,
+  },
+  multipliers: {
+    xpMultiplier: 1.0,
+    coinMultiplier: 1.0,
+  },
+  limits: {
+    dailyFeedbackLimit: 5,
+    aiDailyCapPerProvider: 5000,
+    aiDailyCapPerUser: 2,
+    bossDailyDamageCapPct: 35,
+    guildSwitchCooldownHours: 24,
+  },
+};
+
+export const systemConfig = pgTable("system_config", {
+  key: varchar("key").primaryKey(),
+  value: jsonb("value").$type<GlobalSystemConfigValue>().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SystemConfigRow = typeof systemConfig.$inferSelect;
+
+export const aiUsageLogs = pgTable("ai_usage_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  feature: text("feature").notNull(), // roadmap | deliverable_review | unstick | workout_split | weekly_audit | coach_flavor
+  provider: text("provider").notNull(), // gemini | openai | groq | cache
+  cacheHit: boolean("cache_hit").default(false).notNull(),
+  success: boolean("success").default(true).notNull(),
+  latencyMs: integer("latency_ms").default(0).notNull(),
+  errorCode: text("error_code"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  createdAtIdx: index("ai_usage_created_at_idx").on(table.createdAt),
+  providerIdx: index("ai_usage_provider_idx").on(table.provider),
+}));
+
+export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
+export type InsertAiUsageLog = typeof aiUsageLogs.$inferInsert;
+
+export const adminAuditLogs = pgTable("admin_audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: text("action").notNull(),
+  targetUserId: varchar("target_user_id"),
+  beforeState: jsonb("before_state"),
+  afterState: jsonb("after_state"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  createdAtIdx: index("admin_audit_created_at_idx").on(table.createdAt),
+}));
+
+export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
+export type InsertAdminAuditLog = typeof adminAuditLogs.$inferInsert;
+
+
 
 

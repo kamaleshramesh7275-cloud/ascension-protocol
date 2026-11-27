@@ -5,9 +5,6 @@ import { randomUUID } from "crypto";
 
 const router = Router();
 
-// In-memory fallback map for covenants when direct table isn't migrated yet
-const inMemoryCovenants = new Map<string, any>();
-
 // Create a new bilateral covenant (wager challenge)
 router.post("/create", requireAuth, async (req, res) => {
   try {
@@ -30,10 +27,9 @@ router.post("/create", requireAuth, async (req, res) => {
     });
 
     const covenantCode = `COV-${randomUUID().slice(0, 8).toUpperCase()}`;
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + Number(termsDays) * 24 * 60 * 60 * 1000);
 
-    const covenant = {
-      id: randomUUID(),
+    const covenant = await storage.createCovenant({
       covenantCode,
       initiatorId: dbUser.id,
       initiatorName: dbUser.name,
@@ -46,12 +42,9 @@ router.post("/create", requireAuth, async (req, res) => {
       counterpartyStreak: 0,
       status: "pending",
       winnerId: null,
-      createdAt: new Date(),
       acceptedAt: null,
       expiresAt,
-    };
-
-    inMemoryCovenants.set(covenantCode, covenant);
+    });
 
     await storage.createActivity({
       userId: dbUser.id,
@@ -74,7 +67,8 @@ router.post("/create", requireAuth, async (req, res) => {
 router.get("/:code", async (req, res) => {
   try {
     const { code } = req.params;
-    const covenant = inMemoryCovenants.get(code.toUpperCase());
+    const storage = getStorage();
+    const covenant = await storage.getCovenantByCode(code.toUpperCase());
 
     if (!covenant) {
       return res.status(404).json({ error: "Covenant record not found or expired." });
@@ -95,7 +89,7 @@ router.post("/:code/accept", requireAuth, async (req, res) => {
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
     const { code } = req.params;
-    const covenant = inMemoryCovenants.get(code.toUpperCase());
+    const covenant = await storage.getCovenantByCode(code.toUpperCase());
 
     if (!covenant) {
       return res.status(404).json({ error: "Covenant not found." });
@@ -123,13 +117,13 @@ router.post("/:code/accept", requireAuth, async (req, res) => {
       coins: (dbUser.coins || 0) - covenant.stakeCoins,
     });
 
-    covenant.counterpartyId = dbUser.id;
-    covenant.counterpartyName = dbUser.name;
-    covenant.counterpartyStreak = dbUser.streak || 0;
-    covenant.status = "active";
-    covenant.acceptedAt = new Date();
-
-    inMemoryCovenants.set(code.toUpperCase(), covenant);
+    const updatedCovenant = await storage.updateCovenant(code.toUpperCase(), {
+      counterpartyId: dbUser.id,
+      counterpartyName: dbUser.name,
+      counterpartyStreak: dbUser.streak || 0,
+      status: "active",
+      acceptedAt: new Date(),
+    });
 
     // Notify Initiator
     await storage.createNotification({
@@ -149,7 +143,7 @@ router.post("/:code/accept", requireAuth, async (req, res) => {
 
     res.json({
       success: true,
-      covenant,
+      covenant: updatedCovenant,
     });
   } catch (error: any) {
     console.error("Accept covenant error:", error);
@@ -163,9 +157,8 @@ router.get("/user/active", requireAuth, async (req, res) => {
     const user = (req as any).user;
     if (!user) return res.status(401).json({ error: "Unauthorized" });
 
-    const userCovenants = Array.from(inMemoryCovenants.values()).filter(
-      (c) => c.initiatorId === user.id || c.counterpartyId === user.id
-    );
+    const storage = getStorage();
+    const userCovenants = await storage.getUserCovenants(user.id);
 
     res.json(userCovenants);
   } catch (error: any) {

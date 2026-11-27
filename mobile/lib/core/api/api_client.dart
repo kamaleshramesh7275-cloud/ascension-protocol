@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_endpoints.dart';
 import '../storage/session_storage.dart';
+import '../services/feedback_diagnostics_service.dart';
 
 class ApiClient {
   static Dio? _dio;
@@ -73,6 +74,13 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
+          // Record non-sensitive error summary for bug report diagnostics
+          FeedbackDiagnosticsService.recordError(
+            message: e.message ?? e.type.name,
+            endpoint: e.requestOptions.path,
+            statusCode: e.response?.statusCode,
+          );
+
           // Handle 401 token expiration and re-auth contract
           if (e.response?.statusCode == 401) {
             final data = e.response?.data;

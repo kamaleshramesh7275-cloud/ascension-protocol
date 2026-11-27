@@ -261,6 +261,15 @@ const rankTrialQuests: QuestTemplate[] = [
   },
 ];
 
+// Helper function to get a rank trial quest matched to target Tier
+export function getRankTrialForTier(targetTier: string): QuestTemplate {
+  const prefix = `${targetTier.toUpperCase()}-Tier Trial`;
+  return (
+    rankTrialQuests.find((q) => q.title.startsWith(prefix)) ||
+    rankTrialQuests[0]
+  );
+}
+
 // Helper function to get a rank trial quest
 export function getRankTrialQuest(): QuestTemplate {
   const randomIndex = Math.floor(Math.random() * rankTrialQuests.length);

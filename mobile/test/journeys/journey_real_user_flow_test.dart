@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ascension_mobile/main.dart';
@@ -14,47 +15,72 @@ void main() {
       await RutHarness.resetStorage();
     });
 
-    testWidgets('Journey 1: Cold Boot -> Guest Login -> Navigate All 4 Sector Tabs', (tester) async {
-      final robot = RutRobot(tester);
+    testWidgets(
+      'Journey 1: Cold Boot -> Guest Login -> Navigate All 5 Sector Tabs & Arsenal Stats',
+      (tester) async {
+        tester.view.physicalSize = const Size(540, 960);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      // 1. Launch Mobile App
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: AscensionMobileApp(),
-        ),
-      );
-      await tester.pumpAndSettle();
+        final robot = RutRobot(tester);
 
-      // Verify Login Screen is present
-      expect(find.byType(LoginScreen), findsOneWidget);
-      robot.assertNoRenderOverflow();
+        // 1. Launch Mobile App
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: AscensionMobileApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // 2. Tap Continue as Guest
-      await robot.tapGuestLogin();
-      await tester.pumpAndSettle();
+        // Verify Login Screen is present
+        expect(find.byType(LoginScreen), findsOneWidget);
+        robot.assertNoRenderOverflow();
 
-      // 3. User lands on Main Navigation Screen
-      expect(find.byType(MainNavigationScreen), findsOneWidget);
-      robot.assertNoRenderOverflow();
+        // 2. Tap Continue as Guest
+        await tester.ensureVisible(find.text('CONTINUE AS GUEST HUNTER'));
+        await tester.pumpAndSettle();
+        await robot.tapGuestLogin();
+        await tester.pumpAndSettle();
 
-      // 4. Navigate through all 4 Hunter Systems
-      // Tab 1: Quests (Default)
-      expect(find.text('HUNTER SYSTEM'), findsOneWidget);
+        // 3. User lands on Main Navigation Screen
+        expect(find.byType(MainNavigationScreen), findsOneWidget);
+        robot.assertNoRenderOverflow();
 
-      // Tab 2: Stats
-      await robot.switchTab('STATS');
-      expect(find.text('HUNTER ATTRIBUTES'), findsOneWidget);
-      robot.assertNoRenderOverflow();
+        // 4. Navigate through all 5 Hunter Systems
+        // Tab 1: Quests (Default)
+        expect(find.text('HUNTER SYSTEM'), findsOneWidget);
 
-      // Tab 3: Focus
-      await robot.switchTab('FOCUS');
-      expect(find.text('AIR-GAP FOCUS'), findsOneWidget);
-      robot.assertNoRenderOverflow();
+        // Tab 2: Workout
+        await robot.switchTab('WORKOUT');
+        expect(find.text('COMBAT TRAINING'), findsOneWidget);
+        robot.assertNoRenderOverflow();
 
-      // Tab 4: Debrief
-      await robot.switchTab('DEBRIEF');
-      expect(find.text('EVENING DEBRIEF'), findsOneWidget);
-      robot.assertNoRenderOverflow();
-    });
+        // Tab 3: Focus
+        await robot.switchTab('FOCUS');
+        expect(find.text('AIR-GAP FOCUS'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+
+        // Tab 4: Debrief
+        await robot.switchTab('DEBRIEF');
+        expect(find.text('EVENING DEBRIEF'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+
+        // Tab 5: Arsenal -> Stats Drill-In
+        await robot.switchTab('ARSENAL');
+        expect(find.text('HUNTER ARSENAL'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+
+        final statsCard = find.text('HUNTER ATTRIBUTES & LICENSE');
+        await tester.ensureVisible(statsCard);
+        await tester.pumpAndSettle();
+        await tester.tap(statsCard);
+        await tester.pumpAndSettle();
+        expect(find.text('HUNTER ATTRIBUTES'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+      },
+    );
   });
 }
