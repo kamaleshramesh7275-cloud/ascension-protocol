@@ -12,7 +12,7 @@ export function signLocalSessionToken(firebaseUid: string): string {
   const payload = Buffer.from(
     JSON.stringify({
       uid: firebaseUid,
-      exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      exp: Date.now() + 365 * 24 * 60 * 60 * 1000,
     })
   ).toString("base64url");
   const sig = crypto

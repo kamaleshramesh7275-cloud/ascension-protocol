@@ -293,8 +293,8 @@ export function generateDailyQuests(
                 ));
             }
             quests.push(createQuest(
-                `🥩 Hypertrophy Fuel: High Protein Matrix`,
-                `Hit your protein target today (~1.6g per kg of bodyweight) and hydrate with 3L water.`,
+                `🥩 Hypertrophy Fuel: High Protein Target`,
+                `Hit your protein target today (~1.6g per kg of bodyweight) and drink 3L of water.`,
                 10, 2, { vitality: 2 }, 'easy'
             ));
         } else if (hunterClass === "ranger") {
@@ -311,7 +311,7 @@ export function generateDailyQuests(
             ));
             quests.push(createQuest(
                 `💧 Electrolyte Replenishment`,
-                `Drink at least 2.5L water with electrolytes post-cardio to maximize cardiac recovery.`,
+                `Drink at least 2.5L water with electrolytes after your workout to help your body recover.`,
                 10, 2, { vitality: 2 }, 'easy'
             ));
         } else if (hunterClass === "mage") {
@@ -328,7 +328,7 @@ export function generateDailyQuests(
             ));
             quests.push(createQuest(
                 `🧘 Mental Clarity: Digital Fast`,
-                `Take a 30-minute screen-free walk or meditation to reset dopamine receptors.`,
+                `Take a 30-minute screen-free walk or meditate to clear your mind.`,
                 10, 2, { willpower: 2, vitality: 1 }, 'easy'
             ));
         } else if (hunterClass === "monarch") {

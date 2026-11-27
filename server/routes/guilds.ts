@@ -4,16 +4,67 @@ import { getStorage } from "../storage";
 
 const router = Router();
 
-// Seed Guilds if empty
+const MONARCH_GUILDS = [
+    {
+        name: "Monarch of Shadows",
+        description: "Command the Shadow Army through relentless daily discipline and silent execution.",
+    },
+    {
+        name: "Monarch of Destruction",
+        description: "Overwhelm every obstacle with unstoppable focus, intensity, and raw willpower.",
+    },
+    {
+        name: "Monarch of Frost",
+        description: "Master icy composure, emotional control, and unbroken mental clarity under pressure.",
+    },
+    {
+        name: "Monarch of Fangs",
+        description: "Hunt down physical limits with primal endurance, strength training, and grit.",
+    },
+    {
+        name: "Monarch of Plagues",
+        description: "Outlast every rival through compounding daily habits and relentless consistency.",
+    },
+    {
+        name: "Monarch of Iron Body",
+        description: "Forge an unbreakable physique and stoic resilience that never misses a session.",
+    },
+    {
+        name: "Monarch of White Flames",
+        description: "Burn away distractions in deep work sprints and emerge forged in white fire.",
+    },
+    {
+        name: "Monarch of Beginning",
+        description: "Stand tall among giants by starting strong, owning every morning, and finishing what you begin.",
+    },
+];
+
+// Ensure the 8 Solo Leveling Monarch guilds exist (flat structure, no hierarchy)
 async function seedGuilds() {
     const storage = getStorage();
-    const guilds = await storage.getAllGuilds();
-    if (guilds.length > 0) return;
+    const existingGuilds = await storage.getAllGuilds();
+    const monarchNames = new Set(MONARCH_GUILDS.map((g) => g.name));
 
-    // Find or create a system user for guild leadership
+    // Remove legacy non-Monarch seed guilds that have no members
+    for (const g of existingGuilds) {
+        if (!monarchNames.has(g.name)) {
+            const members = await storage.getGuildMembers(g.id);
+            if (members.length === 0) {
+                try {
+                    await storage.deleteGuild(g.id);
+                } catch (_) {}
+            }
+        }
+    }
+
+    const refreshed = await storage.getAllGuilds();
+    const existingByName = new Set(refreshed.map((g) => g.name));
+    const missing = MONARCH_GUILDS.filter((g) => !existingByName.has(g.name));
+    if (missing.length === 0) return;
+
+    // Find or create a system anchor user (no member holds leadership hierarchy)
     let systemUser = await storage.getUserByFirebaseUid("system_guild_leader");
     if (!systemUser) {
-        console.log("Creating system user for guild leadership...");
         systemUser = await storage.createUser({
             firebaseUid: "system_guild_leader",
             name: "System Admin",
@@ -28,67 +79,13 @@ async function seedGuilds() {
         });
     }
 
-    const seedGuilds = [
-        {
-            name: "Iron Warriors",
-            description: "Forge your body and mind through discipline and strength",
+    for (const guild of missing) {
+        await storage.createGuild({
+            name: guild.name,
+            description: guild.description,
             leaderId: systemUser.id,
             isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Mindful Ascendants",
-            description: "Elevate consciousness through meditation and self-reflection",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Code Crusaders",
-            description: "Master the art of programming and technology",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Fitness Fanatics",
-            description: "Push your physical limits and achieve peak performance",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Knowledge Seekers",
-            description: "Pursue wisdom and continuous learning",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Creative Collective",
-            description: "Express yourself through art, music, and creativity",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Business Builders",
-            description: "Develop entrepreneurial skills and build successful ventures",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-        {
-            name: "Social Champions",
-            description: "Improve charisma and build meaningful connections",
-            leaderId: systemUser.id,
-            isPublic: true,
-            maxMembers: 50,
-        },
-    ];
-
-    for (const guild of seedGuilds) {
-        await storage.createGuild(guild);
+        });
     }
 }
 
@@ -328,31 +325,14 @@ router.post("/:id/join", async (req, res) => {
             return res.status(400).json({ error: "Guild is full" });
         }
 
-        // Determine Role and Updates
+        // Flat guild membership — no hierarchy (no leader/VP roles assigned)
         const updates: any = {
             memberCount: members.length + 1
         };
 
-        console.log(`User ${user.id} joining guild ${id}. Current members: ${members.length}`);
-
-        // If no members (or leaderId is empty/invalid), this user becomes leader
-        if (members.length === 0 || !guild.leaderId) {
-            console.log("Assigning as leader");
-            updates.leaderId = user.id;
-        } else if (members.length < 6) {
-            console.log("Assigning as Vice President");
-            // Next 5 members become Vice Presidents
-            const currentVPs = guild.vicePresidentIds || [];
-            updates.vicePresidentIds = [...currentVPs, user.id];
-        }
-
-        console.log("Updating guild with:", updates);
         await storage.updateGuild(id, updates);
-
-        console.log("Updating user with guildId:", id);
         await storage.updateUser(user.id, { guildId: id });
 
-        console.log("Join successful!");
         res.json({ success: true });
     } catch (e) {
         console.error("Join guild error:", e);
@@ -374,26 +354,16 @@ router.post("/leave", async (req, res) => {
         const guild = await storage.getGuild(user.guildId);
         if (!guild) return res.status(404).json({ error: "Guild not found" });
 
-        // If leader leaves, disband if no other members
-        if (guild.leaderId === user.id) {
-            const members = await storage.getGuildMembers(guild.id);
-            if (members.length > 1) {
-                return res.status(400).json({ error: "Transfer leadership before leaving" });
-            }
-            await storage.deleteGuild(guild.id);
-        } else {
-            // Remove from vice‑president list if present
-            const vpIds = (guild as any).vicePresidentIds || [];
-            const idx = vpIds.indexOf(user.id);
-            if (idx !== -1) {
-                vpIds.splice(idx, 1);
-                await storage.updateGuild(guild.id, { vicePresidentIds: vpIds });
-            }
-
-            // Update member count
-            const members = await storage.getGuildMembers(guild.id);
-            await storage.updateGuild(guild.id, { memberCount: Math.max(0, members.length - 1) });
+        // Flat guild — any member can leave freely without hierarchy transfer
+        const vpIds = (guild as any).vicePresidentIds || [];
+        const idx = vpIds.indexOf(user.id);
+        if (idx !== -1) {
+            vpIds.splice(idx, 1);
+            await storage.updateGuild(guild.id, { vicePresidentIds: vpIds });
         }
+
+        const members = await storage.getGuildMembers(guild.id);
+        await storage.updateGuild(guild.id, { memberCount: Math.max(0, members.length - 1) });
 
         await storage.updateUser(user.id, {
             guildId: null,

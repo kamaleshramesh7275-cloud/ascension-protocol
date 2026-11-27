@@ -1116,7 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           userId: user.id,
           title: "Cellular Hydration Protocol",
-          description: "Infuse your physical matrix with at least 2.5 Liters of water throughout the day.",
+          description: "Drink at least 2.5 liters of water throughout the day.",
           type: "daily",
           category: "vitality",
           rewardXP: 35,
@@ -1129,7 +1129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           userId: user.id,
           title: "Myofascial Mobility & Light Stretch",
-          description: "Perform 15 minutes of joint mobility, gentle yoga, or foam rolling for tissue repair.",
+          description: "Do 15 minutes of light stretching, yoga, or foam rolling to recover.",
           type: "daily",
           category: "stamina",
           rewardXP: 40,
@@ -1142,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           userId: user.id,
           title: "Deep Parasympathetic Sleep",
-          description: "Prioritize neural recovery with 7.5+ hours of uninterrupted sleep tonight.",
+          description: "Get 7.5+ hours of good sleep tonight to help your body recover.",
           type: "daily",
           category: "willpower",
           rewardXP: 45,
@@ -1885,7 +1885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createQuest({
         userId: user.id,
         title: "Super-Compensation: Parasympathetic Deload",
-        description: "Execute 15 minutes of mobility stretching and hit 8 hours sleep to super-compensate recovery.",
+        description: "Do 15 minutes of gentle stretching and get 8 hours of sleep tonight to recover.",
         type: "daily",
         category: "vitality",
         difficulty: "easy",
@@ -3078,23 +3078,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Complete quest error:", error);
       res.status(500).json({ error: "Failed to complete quest" });
-    }
-  });
-
-  // Leaderboard
-  app.get("/api/leaderboard", async (req, res) => {
-    try {
-      const allUsers = await storage.getAllUsers();
-
-      // Sort by XP descending
-      const leaderboard = allUsers
-        .sort((a, b) => b.xp - a.xp)
-        .slice(0, 100); // Top 100
-
-      res.json(leaderboard);
-    } catch (error) {
-      console.error("Leaderboard error:", error);
-      res.status(500).json({ error: "Failed to get leaderboard" });
     }
   });
 

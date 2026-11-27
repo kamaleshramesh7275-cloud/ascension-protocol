@@ -402,6 +402,62 @@ export function registerLocalAuthRoutes(app: Express) {
         res.json({ exists });
     });
 
+    // Guest Login & Token Issuance (persistent device guest UID -> signed local JWT)
+    app.post("/api/auth/login-guest", async (req, res) => {
+        try {
+            const rawGuestUid = typeof req.body?.guestUid === "string" ? req.body.guestUid.trim() : "";
+            const guestUid = rawGuestUid.startsWith("guest_") && rawGuestUid.length >= 8 && rawGuestUid.length <= 80
+                ? rawGuestUid
+                : `guest_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+
+            const storage = getStorage();
+            if (await storage.isUserDeleted(guestUid)) {
+                return res.status(403).json({ error: "Account has been deleted" });
+            }
+
+            let user = await storage.getUserByFirebaseUid(guestUid);
+            if (!user) {
+                user = await storage.createUser({
+                    firebaseUid: guestUid,
+                    name: "Guest Ascendant",
+                    email: `${guestUid}@ascension.app`,
+                    avatarUrl: null,
+                    timezone: (req.headers["x-timezone"] as string) || "UTC",
+                    onboardingCompleted: true,
+                    coins: 100,
+                    level: 1,
+                    xp: 0,
+                    tier: "D",
+                    streak: 1,
+                    hunterClass: "assassin",
+                    strength: 15,
+                    agility: 20,
+                    endurance: 12,
+                    discipline: 25,
+                    intelligence: 18,
+                    perception: 15,
+                    vitality: 15,
+                    recovery: 15,
+                    charisma: 14,
+                } as any);
+            }
+
+            const enrichedUser = enrichUserWithLevelData(user);
+            const token = signLocalSessionToken(guestUid);
+
+            res.json({
+                success: true,
+                token,
+                userId: user.id,
+                firebaseUid: guestUid,
+                user: enrichedUser,
+            });
+        } catch (error) {
+            console.error("Guest Login Error:", error);
+            res.status(500).json({ error: "Guest login failed" });
+        }
+    });
+
     // Google Auth Login & Auto-Provisioning (SEC-01/02 Secure implementation)
     app.post("/api/auth/login-google", async (req, res) => {
         try {

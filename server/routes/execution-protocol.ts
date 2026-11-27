@@ -1701,21 +1701,7 @@ router.post("/wall-of-consequence", requireAuth, async (req: Request, res: Respo
   }
 });
 
-// ─── 11. Focus Density & Discipline Leaderboard ────────────────────────────────
-
-// GET /api/focus-density-leaderboard
-router.get("/focus-density-leaderboard", async (req: Request, res: Response) => {
-  try {
-    const storage = getStorage();
-    const leaderboard = await storage.getFocusDensityLeaderboard(50);
-    res.json(leaderboard);
-  } catch (error: any) {
-    console.error("Error fetching focus density leaderboard:", error);
-    res.status(500).json({ error: error.message || "Failed to fetch leaderboard" });
-  }
-});
-
-// ─── 12. Tactical Scenario Injector (Admin / Demo Engine) ─────────────────────
+// ─── 11. Tactical Scenario Injector (Admin / Demo Engine) ─────────────────────
 
 // POST /api/protocol/scenario-inject
 // Triggers live simulations of high-stakes events (defector liquidation, court audits, breaches)

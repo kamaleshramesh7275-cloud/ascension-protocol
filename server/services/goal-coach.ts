@@ -535,7 +535,7 @@ export async function generateGoalRoadmapBlueprint(params: {
   const fallback = buildDeterministicRoadmapWeeks(params);
 
   const systemPrompt =
-    "You are an elite performance strategist inside Ascension Protocol. Output ONLY valid JSON matching: { \"weeks\": [ { \"weekNumber\": 1..4, \"phaseName\": string, \"goal\": string, \"description\": string, \"targetFocusMinutes\": number, \"targetWorkouts\": number, \"tasks\": [ { \"dayNumber\": 1..7, \"text\": string, \"isBoss\": boolean } ] } ] }. Make every task concrete, measurable, specific to the user's actual goal, equipment, and distractor.";
+    "You are an elite performance strategist inside Ascension Protocol. Output ONLY valid JSON matching: { \"weeks\": [ { \"weekNumber\": 1..4, \"phaseName\": string, \"goal\": string, \"description\": string, \"targetFocusMinutes\": number, \"targetWorkouts\": number, \"tasks\": [ { \"dayNumber\": 1..7, \"text\": string, \"isBoss\": boolean } ] } ] }. STYLE RULE: Headings/titles can use cool technical/System RPG terms, but all descriptions and task content MUST use simple, plain, direct human language (e.g. say 'drink water' not 'infuse your matrix with water'; say 'write 2 pages of code' not 'synthesize neural logic'). Make every task concrete, measurable, specific to the user's actual goal, equipment, and distractor.";
   const userPrompt = JSON.stringify({
     goal: cleanGoalLabel(params.goalText),
     domain: params.goalDomain,
@@ -809,7 +809,7 @@ export async function analyzeEveningDebrief(params: {
   }
 
   const systemPrompt =
-    "You are a concise, practical execution coach. Given today's metrics and reflection, output ONLY valid JSON: { \"diagnosticFeedback\": string (max 220 chars, specific to their goal & reflection), \"tomorrowIfThenCue\": string (strict \"If [trigger], then [first concrete 5-15m step]\" max 160 chars), \"coachActionType\": \"standard\"|\"scale_down_25\"|\"recovery_focus\"|\"bottleneck_fix\", \"prescribedCategory\": \"fitness\"|\"productivity\"|\"wellness\"|\"discipline\" }.";
+    "You are a concise, practical execution coach. Use simple, direct, everyday words in all advice and instructions (no convoluted sci-fi jargon). Given today's metrics and reflection, output ONLY valid JSON: { \"diagnosticFeedback\": string (max 220 chars, simple plain English, specific to their goal & reflection), \"tomorrowIfThenCue\": string (strict \"If [trigger], then [first concrete 5-15m step]\" max 160 chars in plain language), \"coachActionType\": \"standard\"|\"scale_down_25\"|\"recovery_focus\"|\"bottleneck_fix\", \"prescribedCategory\": \"fitness\"|\"productivity\"|\"wellness\"|\"discipline\" }.";
 
   const userPrompt = JSON.stringify({
     goal,
@@ -944,7 +944,7 @@ export async function generateAiDailyQuests(params: {
   const domain = (user.goalDomain as GoalDomain) || inferGoalDomain(user.currentGoal, user.hunterClass);
 
   const systemPrompt =
-    'You are the daily planner for Ascension Protocol. Given the user\'s goal, active roadmap task, yesterday\'s focus outputs, and fatigue/sleep, create 3 concrete today quests. Return ONLY valid JSON: { "quests": [ { "title": string, "description": string, "executionMode": "focus_verified"|"workout_verified"|"checkbox", "targetMinutes": number|null, "difficulty": "easy"|"normal"|"hard", "category": "fitness"|"productivity"|"wellness"|"discipline", "linkPrimaryRoadmapTask": boolean } ] }. Make quest 1 build directly on recent outputs/next step.';
+    'You are the daily planner for Ascension Protocol. Given the user\'s goal, active roadmap task, yesterday\'s focus outputs, and fatigue/sleep, create 3 concrete today quests. Return ONLY valid JSON: { "quests": [ { "title": string, "description": string, "executionMode": "focus_verified"|"workout_verified"|"checkbox", "targetMinutes": number|null, "difficulty": "easy"|"normal"|"hard", "category": "fitness"|"productivity"|"wellness"|"discipline", "linkPrimaryRoadmapTask": boolean } ] }. STYLE RULE: Titles can use immersive Hunter/System terms, but all quest descriptions MUST use simple, plain, everyday words (e.g., "drink 3L water" instead of "infuse your matrix with water"; "walk 20 mins" instead of "engage biomechanical traversal"). Make quest 1 build directly on recent outputs/next step.';
 
   const userPrompt = JSON.stringify({
     goal: cleanGoalLabel(user.currentGoal),
