@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/home_widget_bridge.dart';
+import '../../core/widgets/system_command_sheet.dart';
+import '../../core/widgets/system_panel.dart';
 import '../../models/user_model.dart';
 import '../accountability/contracts_arena_screen.dart';
 import '../divisions/rival_divisions_screen.dart';
@@ -42,6 +44,11 @@ class ArsenalHubScreen extends ConsumerWidget {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'System Command Grid',
+            icon: const Icon(Icons.grid_view_rounded, color: HunterTheme.cyanLight),
+            onPressed: () => SystemCommandSheet.show(context, liveUser),
+          ),
           InkWell(
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ShopScreen()),
@@ -76,34 +83,13 @@ class ArsenalHubScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Quick Identity Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [HunterTheme.surfaceLight, HunterTheme.surface],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: liveUser.inPenaltyZone
-                    ? HunterTheme.crimson
-                    : HunterTheme.cyan.withValues(alpha: 0.4),
-              ),
-            ),
+          // Quick Identity Header (SystemPanel)
+          SystemPanel(
+            tag: liveUser.inPenaltyZone ? 'PENALTY' : 'HUNTER PROFILE',
+            accentColor: liveUser.inPenaltyZone ? HunterTheme.crimson : HunterTheme.cyan,
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: HunterTheme.cyan.withValues(alpha: 0.18),
-                  child: Text(
-                    liveUser.tier,
-                    style: const TextStyle(
-                      color: HunterTheme.cyanLight,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
+                RankDiamondBadge(tier: liveUser.tier, size: 46),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(

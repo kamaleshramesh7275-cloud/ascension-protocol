@@ -50,22 +50,30 @@ void main() {
         robot.assertNoRenderOverflow();
 
         // 4. Navigate through all 5 Hunter Systems
-        // Tab 1: Quests (Default)
-        expect(find.text('HUNTER SYSTEM'), findsOneWidget);
+        // Tab 1: Home (Default) -> Quick Launch to Evening Debrief
+        final debriefTile = find.text('Evening Debrief');
+        await tester.ensureVisible(debriefTile);
+        await tester.pumpAndSettle();
+        await tester.tap(debriefTile);
+        await tester.pumpAndSettle();
+        expect(find.text('EVENING DEBRIEF'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+        await tester.pageBack();
+        await tester.pumpAndSettle();
 
-        // Tab 2: Workout
+        // Tab 2: Quests
+        await robot.switchTab('QUESTS');
+        expect(find.text('HUNTER SYSTEM'), findsOneWidget);
+        robot.assertNoRenderOverflow();
+
+        // Tab 3: Workout
         await robot.switchTab('WORKOUT');
         expect(find.text('COMBAT TRAINING'), findsOneWidget);
         robot.assertNoRenderOverflow();
 
-        // Tab 3: Focus
+        // Tab 4: Focus
         await robot.switchTab('FOCUS');
         expect(find.text('AIR-GAP FOCUS'), findsOneWidget);
-        robot.assertNoRenderOverflow();
-
-        // Tab 4: Debrief
-        await robot.switchTab('DEBRIEF');
-        expect(find.text('EVENING DEBRIEF'), findsOneWidget);
         robot.assertNoRenderOverflow();
 
         // Tab 5: Arsenal -> Stats Drill-In
