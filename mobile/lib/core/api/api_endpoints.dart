@@ -103,11 +103,6 @@ class ApiEndpoints {
   static String roadmapToggleTask(String taskId) => '/api/roadmap/tasks/$taskId/toggle';
   static const String roadmapTrajectory = '/api/protocol/roadmap/trajectory';
 
-  // Knowledge Library (#8)
-  static const String content = '/api/content';
-  static const String contentPrescribed = '/api/content/prescribed';
-  static String contentDetail(String id) => '/api/content/$id';
-  static String contentLike(String id) => '/api/content/$id/like';
 
   // Leaderboard, Guilds & Rival Divisions
   static const String leaderboard = '/api/leaderboard';

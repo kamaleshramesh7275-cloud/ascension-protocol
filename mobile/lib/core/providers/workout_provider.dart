@@ -4,6 +4,7 @@ import '../../models/user_model.dart';
 import '../../models/workout_models.dart';
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
+import '../storage/local_cache_service.dart';
 import '../storage/session_storage.dart';
 import '../sync/sync_queue.dart';
 import 'auth_provider.dart';
@@ -102,11 +103,28 @@ class WorkoutNotifier extends StateNotifier<WorkoutState> {
 
     try {
       final dio = await ApiClient.getInstance();
+      final cachedExercises = await LocalCacheService.getJson(
+        'workout_exercises_v1',
+        maxAge: const Duration(hours: 24),
+      );
+      final cachedOfficial = await LocalCacheService.getJson(
+        'workout_official_v1',
+        maxAge: const Duration(hours: 24),
+      );
+
       final results = await Future.wait([
-        dio.get(ApiEndpoints.workoutExercises).catchError((_) => Response(
-            requestOptions: RequestOptions(), data: const <dynamic>[])),
-        dio.get(ApiEndpoints.workoutOfficialTemplates).catchError((_) =>
-            Response(requestOptions: RequestOptions(), data: const <dynamic>[])),
+        cachedExercises is List
+            ? Future.value(Response(requestOptions: RequestOptions(), data: cachedExercises))
+            : dio.get(ApiEndpoints.workoutExercises).then((r) async {
+                if (r.data is List) await LocalCacheService.setJson('workout_exercises_v1', r.data);
+                return r;
+              }).catchError((_) => Response(requestOptions: RequestOptions(), data: const <dynamic>[])),
+        cachedOfficial is List
+            ? Future.value(Response(requestOptions: RequestOptions(), data: cachedOfficial))
+            : dio.get(ApiEndpoints.workoutOfficialTemplates).then((r) async {
+                if (r.data is List) await LocalCacheService.setJson('workout_official_v1', r.data);
+                return r;
+              }).catchError((_) => Response(requestOptions: RequestOptions(), data: const <dynamic>[])),
         dio.get(ApiEndpoints.workoutTemplates).catchError((_) => Response(
             requestOptions: RequestOptions(), data: const <dynamic>[])),
         dio.get(ApiEndpoints.workoutSessions).catchError((_) => Response(

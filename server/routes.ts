@@ -2,6 +2,8 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import fs from "fs";
 import path from "path";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 // import { DrizzleStorage } from "./drizzle-storage";
 import { getStorage } from "./storage";
 import {
@@ -376,12 +378,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     initCronJobs(storage);
   }
 
-  // DEBUG: Endpoint to list users
-  app.get("/api/debug/users", async (req, res) => {
-    // No caching for debug
-    const users = await storage.getAllUsers();
-    res.json(users.map(u => ({ id: u.id, name: u.name, firebaseUid: u.firebaseUid })));
+  // Security headers (HSTS, X-Frame-Options, X-Content-Type-Options, etc.)
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+  // Rate limiters for brute-force & DDoS protection
+  const adminLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many admin login attempts. Try again in 15 minutes." },
   });
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 40,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many authentication requests. Please wait and try again." },
+  });
+  const contactLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many inquiries submitted. Please try again later." },
+  });
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 400,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.use("/api/admin/login", adminLoginLimiter);
+  app.use("/api/auth", authLimiter);
+  app.use("/api/contact", contactLimiter);
+  app.use("/api", apiLimiter);
 
   // DEBUG: Ping route
   app.get("/api/ping-direct", (req, res) => res.json({ status: "ok", time: Date.now(), location: "routes.ts" }));

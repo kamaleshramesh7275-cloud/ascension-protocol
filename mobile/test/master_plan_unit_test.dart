@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ascension_mobile/core/providers/journal_provider.dart';
 import 'package:ascension_mobile/core/sync/sync_queue.dart';
 import 'package:ascension_mobile/core/widgets/daily_countdown_banner.dart';
 import 'package:ascension_mobile/core/widgets/home_widget_bridge.dart';
 import 'package:ascension_mobile/features/stats/stat_radar_painter.dart';
 import 'package:ascension_mobile/features/workout/active_workout_screen.dart';
 import 'package:ascension_mobile/models/accountability_models.dart';
-import 'package:ascension_mobile/models/content_models.dart';
 import 'package:ascension_mobile/models/division_models.dart';
 import 'package:ascension_mobile/models/gate_shadow_models.dart';
 import 'package:ascension_mobile/models/quest_model.dart';
@@ -178,16 +178,15 @@ void main() {
       });
       expect(roadmap.weeks.first.progress, closeTo(0.5, 0.001));
 
-      final content = ContentItemModel.fromJson({
-        'id': '1',
-        'title': 'Overload',
-        'description': 'Guide',
-        'type': 'article',
-        'category': 'fitness',
-        'content': '# Header\nBody text here.',
-        'likes': 10,
+      final journal = JournalEntry.fromJson({
+        'id': 'j1',
+        'title': 'Day 1 Log',
+        'body': 'Cleared deep work sprint.',
+        'mood': 'Locked In',
+        'tags': ['Focus', 'Win'],
       });
-      expect(content.estimatedReadMinutes, equals(1));
+      expect(journal.mood, equals('Locked In'));
+      expect(journal.tags, contains('Focus'));
 
       final gate = GateEventModel.fromJson({
         'id': 'g1',
@@ -420,24 +419,6 @@ void main() {
       expect(roadmap.linkedGoalText, equals('Ship SaaS MVP in 30 days'));
       expect(roadmap.weeks.first.loggedFocusMinutes, equals(120));
       expect(roadmap.weeks.first.loggedWorkouts, equals(1));
-
-      final guide = ContentItemModel.fromJson({
-        'id': '2',
-        'title': 'The Pomodoro Technique',
-        'description': 'Deep work protocol',
-        'type': 'article',
-        'category': 'productivity',
-        'content': 'Body text',
-        'prescriptionReason': 'Prescribed to counter focus drift',
-        'ctaAction': {
-          'label': 'Launch 25m Air-Gap Focus',
-          'actionType': 'focus',
-          'durationMinutes': 25,
-        },
-      });
-      expect(guide.prescriptionReason, contains('focus drift'));
-      expect(guide.ctaActionType, equals('focus'));
-      expect(guide.ctaDurationMinutes, equals(25));
     });
 
     test('Dynamic AI Coaching (#1, #5, #6) parses nextFocusStep, unstick content & weekly audit', () {

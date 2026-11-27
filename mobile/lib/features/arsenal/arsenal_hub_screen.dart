@@ -9,7 +9,7 @@ import '../divisions/rival_divisions_screen.dart';
 import '../focus/monarch_domain_screen.dart';
 import '../feedback/feedback_screen.dart';
 import '../guilds/guilds_screen.dart';
-import '../library/library_screen.dart';
+import '../journal/journal_screen.dart';
 import '../roadmap/roadmap_screen.dart';
 import '../settings/settings_screen.dart';
 import '../shadows/shadow_army_screen.dart';
@@ -253,12 +253,12 @@ class ArsenalHubScreen extends ConsumerWidget {
           ),
           _hubTile(
             context: context,
-            icon: Icons.menu_book_rounded,
+            icon: Icons.auto_stories_rounded,
             color: HunterTheme.purple,
-            title: 'KNOWLEDGE LIBRARY',
-            subtitle: 'Training Manuals, Mindset Guides & Bookmarks',
+            title: 'HUNTER\'S CHRONICLE (JOURNAL)',
+            subtitle: 'Private On-Device Journal, Prompts & Markdown Export',
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const LibraryScreen()),
+              MaterialPageRoute(builder: (_) => const JournalScreen()),
             ),
           ),
           _hubTile(

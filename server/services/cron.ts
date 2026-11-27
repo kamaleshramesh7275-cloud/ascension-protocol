@@ -1,29 +1,24 @@
 import { IStorage } from "../storage";
 import { generateDailyGuildQuest } from "./quest-generator";
 import { db } from "../db";
-import { citadelBuildings } from "@shared/schema";
+import { citadelBuildings, telemetryEvents, aiUsageLogs } from "@shared/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { pushNotifications } from "../utils/push-notifications";
 import { settleExpiredDivisions } from "./divisions";
 
-const CRON_INTERVAL = 60 * 60 * 1000; // 1 hour
-const CONTAGION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+// Reduced frequency (6h) so Neon PostgreSQL can scale-to-zero between sessions
+const CRON_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+const CONTAGION_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
 
 export function initCronJobs(storage: IStorage) {
-    console.log("[Cron] Initializing Cron Jobs...");
+    console.log("[Cron] Initializing Neon-friendly Cron Jobs (6h/12h/24h)...");
 
-    processPremiumBonuses(storage);
-    processCitadelContagion(storage); // run immediately
-    // storage.deleteOldMessages(48) - Removed immediate run to strictly follow midnight schedule, 
-    // or we could keep it for safety. User said "set a time a 12 am", implying the schedule is key.
-    // I'll leave other checks passing hourly.
-
-    // Schedule periodic run for general tasks
+    // Schedule periodic run for general tasks (no immediate DB wakeup on cold boot)
     setInterval(() => {
         processPremiumBonuses(storage);
     }, CRON_INTERVAL);
 
-    // Citadel contagion: spread ruins every 6h
+    // Citadel contagion: spread ruins every 12h
     setInterval(() => {
         processCitadelContagion(storage);
     }, CONTAGION_INTERVAL);
@@ -42,10 +37,23 @@ export function initCronJobs(storage: IStorage) {
 
         // Repeat every 24 hours
         setInterval(() => {
-            console.log("[Cron] Running scheduled midnight message cleanup...");
+            console.log("[Cron] Running scheduled midnight message & log cleanup...");
             storage.deleteOldMessages(48);
+            pruneOldTelemetryAndAiLogs();
         }, 24 * 60 * 60 * 1000);
     }, timeToMidnight);
+
+async function pruneOldTelemetryAndAiLogs() {
+    if (!db) return;
+    try {
+        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        await db.delete(telemetryEvents).where(lt(telemetryEvents.timestamp, cutoff));
+        await db.delete(aiUsageLogs).where(lt(aiUsageLogs.createdAt, cutoff));
+        console.log("[Cron] Pruned telemetry_events & ai_usage_logs older than 30 days");
+    } catch (e) {
+        console.error("[Cron] Log prune error:", e);
+    }
+}
 
     // ── Streak Reminder Push Notifications ──────────────────────────────────
     // Fire at 8 PM local time every day: remind users who haven't done a quest today
