@@ -63,14 +63,24 @@ class ApiClient {
     _dio!.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // 1. Strictly attach Bearer token (x-firebase-uid is eliminated per contract)
-          var token = await SessionStorage.getToken();
-          if ((token == null || token.isEmpty) && onRefreshToken != null) {
-            // Proactively obtain or refresh token before sending request
-            token = await onRefreshToken!.call();
-          }
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Public auth endpoints MUST NOT block on or trigger proactive token refresh
+          final isPublicAuth = options.path.startsWith('/api/auth/') ||
+              options.path.startsWith('/api/user/complete-profile');
+
+          if (!isPublicAuth) {
+            var token = await SessionStorage.getToken();
+            if ((token == null || token.isEmpty) && onRefreshToken != null) {
+              // Proactively obtain or refresh token before sending request
+              token = await onRefreshToken!.call();
+            }
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+          } else {
+            final token = await SessionStorage.getToken();
+            if (token != null && token.isNotEmpty && !options.headers.containsKey('Authorization')) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
 
           // 2. Attach X-Timezone header
@@ -86,8 +96,11 @@ class ApiClient {
             statusCode: e.response?.statusCode,
           );
 
-          // Handle 401 token expiration or missing token via silent refresh without wiping persistent local session
-          if (e.response?.statusCode == 401 &&
+          final isPublicAuth = e.requestOptions.path.startsWith('/api/auth/');
+
+          // Handle 401 token expiration or missing token via silent refresh strictly for protected endpoints
+          if (!isPublicAuth &&
+              e.response?.statusCode == 401 &&
               e.requestOptions.extra['retry_count'] == null) {
             final data = e.response?.data;
             final isTokenError = !e.requestOptions.headers.containsKey('Authorization') ||

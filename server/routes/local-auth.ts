@@ -320,17 +320,26 @@ export function registerLocalAuthRoutes(app: Express) {
 
             const user = await storage.getUserByPhone(normalizedPhone);
             if (!user) {
-                return res.status(401).json({ error: "Invalid phone number or password" });
+                return res.status(401).json({
+                    code: "user_not_found",
+                    error: "No Hunter account registered with this phone number. Please register to awaken.",
+                });
             }
 
             const credentials = await storage.getCredentialsByUserId(user.id);
             if (!credentials) {
-                return res.status(401).json({ error: "Invalid phone number or password" });
+                return res.status(401).json({
+                    code: "no_credentials",
+                    error: "No password credentials set for this Hunter. Please sign in via Google or register.",
+                });
             }
 
             const isValid = await bcrypt.compare(data.password, credentials.passwordHash);
             if (!isValid) {
-                return res.status(401).json({ error: "Invalid phone number or password" });
+                return res.status(401).json({
+                    code: "invalid_password",
+                    error: "Incorrect password. Please verify your credentials and try again.",
+                });
             }
 
             const enrichedUser = enrichUserWithLevelData(user);

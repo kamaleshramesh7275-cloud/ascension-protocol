@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/api/api_error.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/providers/auth_provider.dart';
 
@@ -63,24 +64,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     super.dispose();
   }
 
-  void _showError(String message) {
+  void _showSystemAlert({
+    required String title,
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+    bool isError = false,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) => AlertDialog(
         backgroundColor: HunterTheme.surface,
-        behavior: SnackBarBehavior.floating,
-        content: Row(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isError ? HunterTheme.crimson : HunterTheme.cyan,
+            width: 1.5,
+          ),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.error_outline, color: HunterTheme.crimson, size: 20),
+            Icon(
+              isError ? Icons.warning_amber_rounded : Icons.info_outline,
+              color: isError ? HunterTheme.crimson : HunterTheme.cyanLight,
+              size: 24,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                message.replaceAll("Exception: ", ""),
-                style: TextStyle(color: HunterTheme.crimson, fontSize: 13),
+                title,
+                style: TextStyle(
+                  color: isError ? HunterTheme.crimson : HunterTheme.cyanLight,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ],
         ),
+        content: Text(
+          message,
+          style: TextStyle(
+            color: HunterTheme.textPrimary,
+            fontSize: 13.5,
+            height: 1.45,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              'DISMISS',
+              style: TextStyle(
+                color: HunterTheme.textMuted,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          if (actionLabel != null && onAction != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogCtx).pop();
+                onAction();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HunterTheme.cyan,
+                foregroundColor: Colors.black,
+              ),
+              child: Text(
+                actionLabel,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -90,20 +150,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     HapticFeedback.heavyImpact();
     setState(() => _isLoading = true);
 
+    final enteredPhone = _loginPhoneController.text.trim();
+
     try {
       final success = await ref.read(authProvider.notifier).loginWithPhone(
-            _loginPhoneController.text.trim(),
+            enteredPhone,
             _loginPasswordController.text,
           );
 
       if (!success && mounted) {
         setState(() => _isLoading = false);
-        _showError('Invalid phone number or password');
+        _showSystemAlert(
+          title: 'ACCESS RESTRICTED',
+          message: 'Unable to authenticate hunter credentials. Please verify your phone number and password.',
+          isError: true,
+        );
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showError(e.toString());
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      final errMsg = extractApiError(e, 'Login failed');
+      final errLower = errMsg.toLowerCase();
+
+      if (errLower.contains('no hunter account') ||
+          errLower.contains('not registered') ||
+          errLower.contains('user_not_found') ||
+          errLower.contains('register first')) {
+        _showSystemAlert(
+          title: 'HUNTER NOT REGISTERED',
+          message: 'No active Hunter account was found for $enteredPhone.\n\nAwaken your credentials now to begin your ascension journey.',
+          actionLabel: 'REGISTER NOW',
+          onAction: () {
+            _registerPhoneController.text = enteredPhone;
+            _tabController.animateTo(1);
+          },
+          isError: true,
+        );
+      } else if (errLower.contains('incorrect password') || errLower.contains('invalid_password')) {
+        _showSystemAlert(
+          title: 'AUTHENTICATION FAILED',
+          message: 'Incorrect password provided for this Hunter ID. Please verify your credentials and try again.',
+          isError: true,
+        );
+      } else {
+        _showSystemAlert(
+          title: 'LOGIN FAILED',
+          message: errMsg,
+          isError: true,
+        );
       }
     }
   }
@@ -113,11 +207,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     HapticFeedback.heavyImpact();
     setState(() => _isLoading = true);
 
+    final enteredPhone = _registerPhoneController.text.trim();
+
     try {
       final success = await ref.read(authProvider.notifier).registerDirect(
             name: _registerNameController.text.trim(),
             email: _registerEmailController.text.trim(),
-            phone: _registerPhoneController.text.trim(),
+            phone: enteredPhone,
             password: _registerPasswordController.text,
             referralCode: _registerReferralController.text.trim().isNotEmpty
                 ? _registerReferralController.text.trim()
@@ -135,12 +231,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
       if (!success && mounted) {
         setState(() => _isLoading = false);
-        _showError('Registration failed. Phone or email may already be in use.');
+        _showSystemAlert(
+          title: 'REGISTRATION INCOMPLETE',
+          message: 'Awakening could not be finalized. Please check your network connection and retry.',
+          isError: true,
+        );
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showError(e.toString());
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      final errMsg = extractApiError(e, 'Registration failed');
+      final errLower = errMsg.toLowerCase();
+
+      if (errLower.contains('phone number already') ||
+          errLower.contains('already registered') ||
+          errLower.contains('phone_exists')) {
+        _showSystemAlert(
+          title: 'HUNTER ALREADY EXISTS',
+          message: 'Phone number $enteredPhone is already registered in the Hunter System.',
+          actionLabel: 'SIGN IN',
+          onAction: () {
+            _loginPhoneController.text = enteredPhone;
+            _tabController.animateTo(0);
+          },
+          isError: true,
+        );
+      } else {
+        _showSystemAlert(
+          title: 'REGISTRATION ERROR',
+          message: errMsg,
+          isError: true,
+        );
       }
     }
   }
@@ -157,7 +278,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showError('Google Sign-in failed: ${e.toString()}');
+        _showSystemAlert(
+          title: 'GOOGLE SIGN-IN FAILED',
+          message: extractApiError(e, 'Google authentication could not be completed.'),
+          isError: true,
+        );
       }
     }
   }

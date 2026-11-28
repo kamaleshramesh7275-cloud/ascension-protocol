@@ -106,37 +106,35 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
   Future<bool> signInWithGoogle() async {
     if (!mounted) return false;
-    state = const AsyncValue.loading();
     try {
       final user = await _repo.signInWithGoogle();
       if (!mounted) return user != null;
-      state = AsyncValue.data(user);
       if (user != null) {
+        state = AsyncValue.data(user);
         NotificationService.syncDeviceToken();
+        return true;
       }
-      return user != null;
-    } catch (e, st) {
-      if (!mounted) return false;
-      state = AsyncValue.error(e, st);
       return false;
+    } catch (e) {
+      if (!mounted) return false;
+      rethrow;
     }
   }
 
   Future<bool> loginWithPhone(String phone, String password) async {
     if (!mounted) return false;
-    state = const AsyncValue.loading();
     try {
       final user = await _repo.loginWithPhone(phone, password);
       if (!mounted) return user != null;
-      state = AsyncValue.data(user);
       if (user != null) {
+        state = AsyncValue.data(user);
         NotificationService.syncDeviceToken();
+        return true;
       }
-      return user != null;
-    } catch (e, st) {
-      if (!mounted) return false;
-      state = AsyncValue.error(e, st);
       return false;
+    } catch (e) {
+      if (!mounted) return false;
+      rethrow;
     }
   }
 
@@ -155,7 +153,6 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     String? primaryGoal,
   }) async {
     if (!mounted) return false;
-    state = const AsyncValue.loading();
     try {
       final user = await _repo.registerDirect(
         name: name,
@@ -172,15 +169,15 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         primaryGoal: primaryGoal,
       );
       if (!mounted) return user != null;
-      state = AsyncValue.data(user);
       if (user != null) {
+        state = AsyncValue.data(user);
         NotificationService.syncDeviceToken();
+        return true;
       }
-      return user != null;
-    } catch (e, st) {
-      if (!mounted) return false;
-      state = AsyncValue.error(e, st);
       return false;
+    } catch (e) {
+      if (!mounted) return false;
+      rethrow;
     }
   }
 
