@@ -7,6 +7,7 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/quests_provider.dart';
+import '../../core/providers/roadmap_provider.dart';
 import '../../core/storage/session_storage.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/home_widget_bridge.dart';
@@ -25,6 +26,7 @@ import '../shop/shop_screen.dart';
 import '../stats/stats_screen.dart';
 import '../stats/weekly_recap_sheet.dart';
 import '../workout/workout_screen.dart';
+import 'comeback_gate_sheet.dart';
 import 'home_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
@@ -71,9 +73,18 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkComebackGate();
       _maybeSchedulePostRegFeedback();
       _checkFirstTimeTour();
     });
+  }
+
+  void _checkComebackGate() {
+    final u = ref.read(authProvider).value ?? widget.initialUser;
+    final gate = u?.comebackGate;
+    if (gate != null && gate['active'] == true && mounted) {
+      ComebackGateSheet.show(context, gate);
+    }
   }
 
   Future<void> _checkFirstTimeTour() async {
@@ -115,7 +126,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       });
       final u = ref.read(authProvider).value;
       if (u != null) {
-        HomeWidgetBridge.syncFromState(user: u, quests: ref.read(questsProvider));
+        final activeWeek = ref.read(roadmapProvider).roadmap?.activeWeek;
+        final bossName = activeWeek?.bossName ?? 'WEEKLY BOSS: COMMANDER IGRIS';
+        final bossHpPercent = activeWeek == null || activeWeek.bossMaxHp <= 0
+            ? 100
+            : ((activeWeek.bossCurrentHp / activeWeek.bossMaxHp) * 100).round().clamp(0, 100);
+        final bossDefeated = activeWeek?.bossDefeated ?? false;
+        HomeWidgetBridge.syncFromState(
+          user: u,
+          quests: ref.read(questsProvider),
+          bossName: bossName,
+          bossHpPercent: bossHpPercent,
+          bossDefeated: bossDefeated,
+        );
       }
     }
   }
@@ -227,12 +250,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   @override
   Widget build(BuildContext context) {
     ref.watch(appearanceProvider);
+    final activeWeek = ref.watch(roadmapProvider).roadmap?.activeWeek;
+    final bossName = activeWeek?.bossName ?? 'WEEKLY BOSS: COMMANDER IGRIS';
+    final bossHpPercent = activeWeek == null || activeWeek.bossMaxHp <= 0
+        ? 100
+        : ((activeWeek.bossCurrentHp / activeWeek.bossMaxHp) * 100).round().clamp(0, 100);
+    final bossDefeated = activeWeek?.bossDefeated ?? false;
+
     ref.listen<AsyncValue<UserModel?>>(authProvider, (_, next) {
       final nextUser = next.value;
       if (nextUser != null) {
         HomeWidgetBridge.syncFromState(
           user: nextUser,
           quests: ref.read(questsProvider),
+          bossName: bossName,
+          bossHpPercent: bossHpPercent,
+          bossDefeated: bossDefeated,
         );
       }
     });
@@ -242,6 +275,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
         HomeWidgetBridge.syncFromState(
           user: currentUser,
           quests: nextQuests,
+          bossName: bossName,
+          bossHpPercent: bossHpPercent,
+          bossDefeated: bossDefeated,
         );
       }
     });

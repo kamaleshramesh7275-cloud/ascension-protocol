@@ -35,7 +35,10 @@ class MainActivity : FlutterActivity() {
                                 args["anchorTitle"]?.toString() ?: "Tap to inspect daily directives"
                             )
                             putBoolean("inPenaltyZone", args["inPenaltyZone"] as? Boolean ?: false)
-                            putString("statusLine", args["statusLine"]?.toString() ?: "RESETS AT 00:00")
+                            putString("statusLine", args["statusLine"]?.toString() ?: "PENALTY COUNTDOWN: 23:59")
+                            putString("bossName", args["bossName"]?.toString() ?: "WEEKLY BOSS: COMMANDER IGRIS")
+                            putInt("bossHpPercent", (args["bossHpPercent"] as? Number)?.toInt() ?: 100)
+                            putBoolean("bossDefeated", args["bossDefeated"] as? Boolean ?: false)
                             apply()
                         }
                         QuestHudWidgetProvider.updateAllWidgets(applicationContext)

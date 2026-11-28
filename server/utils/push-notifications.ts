@@ -156,62 +156,62 @@ export const pushNotifications = {
             url: "/stats",
         }),
 
-    // ─── 4 Pillars Execution Protocol Push Notifications ───
+    // ─── Solo Leveling System Directives ───
     morningBriefing: (userId: string, failureStatement?: string) =>
         sendPushToUser(userId, {
-            title: "[06:00 DIRECTIVE] Morning Briefing Locked",
+            title: "[SYSTEM TRANSMISSION // DAILY MANDATE GENERATED]",
             body: failureStatement
-                ? `Orders locked: "${failureStatement.substring(0, 60)}..." Authorize your mission now.`
-                : "Daily orders generated. Confirm your single mission before cognitive drift sets in.",
-            url: "/mission-command",
+                ? `Mandate locked: "${failureStatement.substring(0, 60)}..." Authorize your mission now.`
+                : "Hunter. A new gate has materialized for today. Review your 4 daily pillars before embarking.",
+            url: "/quests",
         }),
 
     midDayPulse: (userId: string, missionTitle?: string) =>
         sendPushToUser(userId, {
-            title: "[13:00 INTERCEPT] Mid-Day Execution Audit",
-            body: `50% of today has elapsed. "${missionTitle || 'Primary mission'}" incomplete. Declare your 30-min action now.`,
-            url: "/mission-command",
+            title: "[ALERT: ZERO COGNITIVE OUTPUT DETECTED]",
+            body: `Half of today has elapsed. "${missionTitle || 'Primary mission'}" incomplete. The Sanctum awaits your calibration.`,
+            url: "/focus",
         }),
 
     eveningDebrief: (userId: string) =>
         sendPushToUser(userId, {
-            title: "[21:00 MANDATORY AUDIT] Evening Debrief Required",
-            body: "Day concluding. The Chief of Staff requires your written assessment before 23:59.",
+            title: "[COUNTDOWN: 59 MINUTES REMAINING]",
+            body: "The System requires your daily debrief before 23:59 or disciplinary proceedings commence.",
             url: "/evening-debrief",
         }),
 
     sundayPerformanceCourt: (userId: string, verdict: string = "Audit In Session") =>
         sendPushToUser(userId, {
-            title: "[PERFORMANCE COURT] Judicial Audit Convened",
-            body: `Weekly judicial audit complete. Status: ${verdict}. Review your roadmap trajectory.`,
-            url: "/performance-court",
+            title: "[SYSTEM VERDICT: WEEKLY DOSSIER SEALED]",
+            body: `Weekly performance audit concluded. Trajectory: ${verdict}. Review your roadmap status.`,
+            url: "/roadmap",
         }),
 
     squadDefectorAlert: (userId: string, defectorName: string, dividendPoints: number) =>
         sendPushToUser(userId, {
-            title: "[PACT LIQUIDATION] Defaulter Stake Distributed",
-            body: `${defectorName} defaulted on their contract. Stake liquidated. +${dividendPoints} pts performance dividend credited.`,
+            title: "[COVENANT ENFORCED // DEFECTION DETECTED]",
+            body: `${defectorName} severed protocol. Stake liquidated. +${dividendPoints} pts performance dividend credited.`,
             url: "/squad-pact",
         }),
 
     covenantBreachWarning: (userId: string, covenantCode: string, counterpartyName: string) =>
         sendPushToUser(userId, {
-            title: "[COVENANT ALERT] Bilateral Pot in Jeopardy",
+            title: "[COVENANT BREACH IMMINENT]",
             body: `Counterparty ${counterpartyName} held protocol today. Your stake will be forfeited if you do not execute before midnight.`,
             url: `/covenant/${covenantCode}`,
         }),
 
     resurrectionAlert: (userId: string, hoursInactive: number) =>
         sendPushToUser(userId, {
-            title: "[RECOVERY DIRECTIVE] Inactivity Detected",
-            body: `${hoursInactive} hours of radio silence. Your accumulated capital is at risk. Return to authorize Resurrection Protocol.`,
-            url: "/dashboard",
+            title: "[WARNING: RED GATE DETECTED // DIMENSIONAL SECLUSION ENFORCED]",
+            body: `Hunter. You have severed connection for ${hoursInactive} hours. Clear the Comeback Trial to reclaim 50% of your streak.`,
+            url: "/quests",
         }),
 
     penaltyImminentWarning: (userId: string, remainingQuests: number) =>
         sendPushToUser(userId, {
-            title: "⚠️ [SYSTEM ALERT]: PENALTY ZONE IN 3 HOURS",
-            body: `${remainingQuests} daily quest(s) incomplete. Complete a quest or your Anchor Mission before midnight to avoid Penalty Zone lockdown.`,
+            title: "[URGENT: PENALTY ZONE APPROACHING // T-MINUS 3 HOURS]",
+            body: `${remainingQuests} daily quest pillar(s) remain unfulfilled. Complete your mandate before midnight or face Penalty Zone lockdown.`,
             url: "/quests",
         }),
 

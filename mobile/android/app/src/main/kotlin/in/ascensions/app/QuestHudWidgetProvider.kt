@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 
 class QuestHudWidgetProvider : AppWidgetProvider() {
@@ -41,18 +42,23 @@ class QuestHudWidgetProvider : AppWidgetProvider() {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val tier = prefs.getString("tier", "D") ?: "D"
             val completed = prefs.getInt("completedCount", 0)
-            val total = prefs.getInt("totalCount", 3)
+            val total = prefs.getInt("totalCount", 4)
             val streak = prefs.getInt("streak", 0)
             val anchorTitle = prefs.getString(
                 "anchorTitle",
-                "Tap to review today's daily directives."
-            ) ?: "Tap to review today's daily directives."
+                "Initialize your 30-day mandate. The System awaits."
+            ) ?: "Initialize your 30-day mandate. The System awaits."
             val inPenalty = prefs.getBoolean("inPenaltyZone", false)
             val statusText = if (inPenalty) {
-                "PENALTY ZONE ACTIVE — ESCAPE BEFORE 00:00"
+                "PENALTY ZONE ACTIVE - ESCAPE BEFORE 23:59"
             } else {
-                prefs.getString("statusLine", "RESETS AT 00:00") ?: "RESETS AT 00:00"
+                prefs.getString("statusLine", "PENALTY COUNTDOWN: 23:59") ?: "PENALTY COUNTDOWN: 23:59"
             }
+
+            // Boss Raid metadata
+            val bossName = prefs.getString("bossName", "WEEKLY BOSS: COMMANDER IGRIS") ?: "WEEKLY BOSS: COMMANDER IGRIS"
+            val bossHpPercent = prefs.getInt("bossHpPercent", 100)
+            val bossDefeated = prefs.getBoolean("bossDefeated", false)
 
             val views = RemoteViews(context.packageName, R.layout.quest_hud_widget)
             views.setInt(
@@ -62,10 +68,22 @@ class QuestHudWidgetProvider : AppWidgetProvider() {
             )
             views.setTextViewText(R.id.widget_rank_badge, "[ RANK $tier ]")
             views.setTextViewText(R.id.widget_quest_count, "QUESTS: $completed/$total")
-            views.setTextViewText(R.id.widget_streak, "${streak}D 🔥")
+            views.setTextViewText(R.id.widget_streak, "${streak}D STREAK")
+            
+            // Boss HP Binding
+            views.setTextViewText(
+                R.id.widget_boss_name,
+                if (bossDefeated) "[ BOSS DEFEATED ]" else bossName.uppercase()
+            )
+            views.setTextViewText(
+                R.id.widget_boss_hp_text,
+                if (bossDefeated) "SLAIN" else "$bossHpPercent% HP"
+            )
+            views.setProgressBar(R.id.widget_boss_progress, 100, if (bossDefeated) 0 else bossHpPercent, false)
+
             views.setTextViewText(
                 R.id.widget_anchor_label,
-                if (inPenalty) "SYSTEM SURVIVAL ALERT" else "MORNING ANCHOR DIRECTIVE"
+                if (inPenalty) "SYSTEM SURVIVAL ALERT" else "SYSTEM DIRECTIVE // MANDATE"
             )
             views.setTextViewText(R.id.widget_anchor_title, anchorTitle)
             views.setTextViewText(R.id.widget_status_line, statusText)

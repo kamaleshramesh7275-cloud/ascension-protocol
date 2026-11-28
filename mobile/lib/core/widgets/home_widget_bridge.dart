@@ -18,11 +18,14 @@ class HomeWidgetBridge {
     required UserModel user,
     required List<QuestModel> quests,
     String? bossLabel,
+    String? bossName,
+    int? bossHpPercent,
+    bool? bossDefeated,
   }) {
     final completed = quests.where((q) => q.completed).length;
     final total = quests.length;
 
-    String anchorTitle = 'Tap to review today\'s daily directives.';
+    String anchorTitle = 'Initialize your 30-day mandate. The System awaits.';
     QuestModel? anchor;
     if (user.anchorQuestId != null && user.anchorQuestId!.isNotEmpty) {
       for (final q in quests) {
@@ -43,14 +46,14 @@ class HomeWidgetBridge {
     final remaining = total - completed;
     final hasIfThen = user.lastIfThenPlan != null && user.lastIfThenPlan!.trim().isNotEmpty;
     final statusLine = user.inPenaltyZone
-        ? 'COMEBACK SPRINT ACTIVE — 10M RESET'
+        ? 'PENALTY ZONE ACTIVE - ESCAPE BEFORE 23:59'
         : hasIfThen
             ? user.lastIfThenPlan!.trim()
             : (bossLabel != null && bossLabel.isNotEmpty
                 ? bossLabel
                 : (remaining == 0 && total > 0
                     ? 'ALL DAILY QUESTS CLEARED'
-                    : '$remaining REMAINING • RESETS 00:00'));
+                    : 'PENALTY COUNTDOWN: 23:59 ($remaining REMAINING)'));
 
     return {
       'tier': user.tier,
@@ -60,6 +63,9 @@ class HomeWidgetBridge {
       'anchorTitle': anchorTitle,
       'inPenaltyZone': user.inPenaltyZone,
       'statusLine': statusLine,
+      'bossName': bossName ?? 'WEEKLY BOSS: COMMANDER IGRIS',
+      'bossHpPercent': bossHpPercent ?? 100,
+      'bossDefeated': bossDefeated ?? false,
     };
   }
 
@@ -78,11 +84,20 @@ class HomeWidgetBridge {
   static Future<void> syncFromState({
     required UserModel user,
     required List<QuestModel> quests,
+    String? bossName,
+    int? bossHpPercent,
+    bool? bossDefeated,
   }) async {
     try {
       await _channel.invokeMethod<bool>(
         'updateWidgetHud',
-        buildHudPayload(user: user, quests: quests),
+        buildHudPayload(
+          user: user,
+          quests: quests,
+          bossName: bossName,
+          bossHpPercent: bossHpPercent,
+          bossDefeated: bossDefeated,
+        ),
       );
     } catch (_) {}
   }

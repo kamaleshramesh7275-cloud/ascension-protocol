@@ -34,7 +34,7 @@ class _BossRaidCardState extends ConsumerState<BossRaidCard> {
         context,
         headerTag: 'BOSS DEFEATED',
         title: '${widget.week.bossName ?? "WEEKLY BOSS"} SLAIN!',
-        body: '+${res['coinsAwarded'] ?? 120} Coins & +${res['xpAwarded'] ?? 100} XP secured. A shadowy aura lingers over the corpse.',
+        body: '+${res['coinsAwarded'] ?? 120} Coins and +${res['xpAwarded'] ?? 100} XP secured. A shadowy aura lingers over the corpse.',
         tone: SystemWindowTone.purple,
         icon: Icons.whatshot_rounded,
         primaryLabel: ext != null ? 'PROCEED TO ARISE' : 'CLAIM LOOT',
@@ -85,8 +85,8 @@ class _BossRaidCardState extends ConsumerState<BossRaidCard> {
                   children: [
                     Text(
                       w.bossDefeated
-                          ? '[ BOSS SLAIN • WEEK ${w.weekNumber} ]'
-                          : '[ DUNGEON BOSS • WEEK ${w.weekNumber} ]',
+                          ? '[ BOSS SLAIN // WEEK ${w.weekNumber} ]'
+                          : '[ DUNGEON BOSS // WEEK ${w.weekNumber} ]',
                       style: TextStyle(
                         color: accent,
                         fontWeight: FontWeight.w900,
@@ -150,7 +150,7 @@ class _BossRaidCardState extends ConsumerState<BossRaidCard> {
                       )
                     : const Icon(Icons.card_giftcard_rounded, size: 17),
                 label: const Text(
-                  'CLAIM BOSS LOOT (+120C) & OPEN ARISE GATE',
+                  'CLAIM BOSS LOOT (+120C) AND OPEN ARISE GATE',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -7,6 +7,7 @@
     android:orientation="vertical"
     android:padding="14dp">
 
+    <!-- Top Status Bar: Rank, Quests, Streak -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,13 +18,13 @@
             android:id="@+id/widget_rank_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#2606B6D4"
+            android:background="#2600D2FF"
             android:paddingLeft="8dp"
             android:paddingTop="3dp"
             android:paddingRight="8dp"
             android:paddingBottom="3dp"
             android:text="[ RANK D ]"
-            android:textColor="#67E8F9"
+            android:textColor="#00D2FF"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -34,7 +35,7 @@
             android:layout_weight="1"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:text="QUESTS: 0/3"
+            android:text="QUESTS: 0/4"
             android:textColor="#F8FAFC"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -43,20 +44,65 @@
             android:id="@+id/widget_streak"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0D 🔥"
+            android:text="0D STREAK"
             android:textColor="#F59E0B"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- Weekly Boss Raid Row -->
+    <LinearLayout
+        android:id="@+id/widget_boss_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_boss_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="WEEKLY BOSS: COMMANDER IGRIS"
+                android:textColor="#EF4444"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_boss_hp_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100% HP"
+                android:textColor="#EF4444"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/widget_boss_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="2dp"
+            android:max="100"
+            android:progress="100"
+            android:progressTint="#EF4444" />
+    </LinearLayout>
+
+    <!-- Priority Mandate / Directive -->
     <TextView
         android:id="@+id/widget_anchor_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="MORNING ANCHOR DIRECTIVE"
-        android:textColor="#94A3B8"
-        android:textSize="10sp"
+        android:layout_marginTop="6dp"
+        android:text="SYSTEM DIRECTIVE // MANDATE"
+        android:textColor="#64748B"
+        android:textSize="9.5sp"
         android:textStyle="bold" />
 
     <TextView
@@ -67,15 +113,16 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:maxLines="2"
-        android:text="Open Ascension Protocol to lock your priority quest."
+        android:text="Initialize your 30-day mandate. The System awaits."
         android:textColor="#F8FAFC"
-        android:textSize="13sp"
+        android:textSize="12.5sp"
         android:textStyle="bold" />
 
+    <!-- Bottom Status & Action: Countdown & Focus Button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -84,8 +131,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RESETS AT 00:00"
-            android:textColor="#67E8F9"
+            android:text="PENALTY COUNTDOWN: 23:59"
+            android:textColor="#00D2FF"
             android:textSize="10sp"
             android:textStyle="bold" />
 
@@ -93,7 +140,7 @@
             android:id="@+id/widget_focus_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#06B6D4"
+            android:background="#00D2FF"
             android:paddingLeft="12dp"
             android:paddingTop="5dp"
             android:paddingRight="12dp"
