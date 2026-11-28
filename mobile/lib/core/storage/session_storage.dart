@@ -58,7 +58,9 @@ class SessionStorage {
   // Backward-compatible Guest UID accessor
   static Future<String> getOrCreateGuestUid() async {
     final existing = await getFirebaseUid();
-    if (existing != null && existing.isNotEmpty) return existing;
+    if (existing != null && existing.isNotEmpty && existing.startsWith('guest_')) {
+      return existing;
+    }
     final guestUid = 'guest_${DateTime.now().millisecondsSinceEpoch}';
     await saveFirebaseUid(guestUid);
     return guestUid;

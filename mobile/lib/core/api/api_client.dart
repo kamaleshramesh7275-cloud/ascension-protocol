@@ -64,7 +64,11 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           // 1. Strictly attach Bearer token (x-firebase-uid is eliminated per contract)
-          final token = await SessionStorage.getToken();
+          var token = await SessionStorage.getToken();
+          if ((token == null || token.isEmpty) && onRefreshToken != null) {
+            // Proactively obtain or refresh token before sending request
+            token = await onRefreshToken!.call();
+          }
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }

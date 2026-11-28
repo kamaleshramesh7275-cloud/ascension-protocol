@@ -174,6 +174,24 @@ class HunterTheme {
     }
   }
 
+  static TextStyle baseTextStyle(
+    HunterFontId font, {
+    bool isDisplay = false,
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+  }) {
+    return _themedStyle(
+      font,
+      isDisplay: isDisplay,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+    );
+  }
+
   static TextStyle _themedStyle(
     HunterFontId font, {
     bool isDisplay = false,
@@ -251,17 +269,57 @@ class HunterTheme {
           displayMedium: _themedStyle(
             font,
             isDisplay: true,
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
             color: palette.textPrimary,
             letterSpacing: 1.2,
           ),
-          titleLarge: _themedStyle(
+          displaySmall: _themedStyle(
+            font,
+            isDisplay: true,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: palette.textPrimary,
+            letterSpacing: 1.0,
+          ),
+          headlineLarge: _themedStyle(
+            font,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: palette.textPrimary,
+            letterSpacing: 0.8,
+          ),
+          headlineMedium: _themedStyle(
             font,
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: palette.textPrimary,
+            letterSpacing: 0.6,
+          ),
+          headlineSmall: _themedStyle(
+            font,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: palette.textPrimary,
+          ),
+          titleLarge: _themedStyle(
+            font,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: palette.textPrimary,
             letterSpacing: 0.8,
+          ),
+          titleMedium: _themedStyle(
+            font,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: palette.textPrimary,
+          ),
+          titleSmall: _themedStyle(
+            font,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: palette.textPrimary,
           ),
           bodyLarge: _themedStyle(
             font,
@@ -273,6 +331,30 @@ class HunterTheme {
             font,
             fontSize: 14,
             fontWeight: FontWeight.normal,
+            color: palette.textMuted,
+          ),
+          bodySmall: _themedStyle(
+            font,
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+            color: palette.textMuted,
+          ),
+          labelLarge: _themedStyle(
+            font,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: palette.textPrimary,
+          ),
+          labelMedium: _themedStyle(
+            font,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: palette.textMuted,
+          ),
+          labelSmall: _themedStyle(
+            font,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
             color: palette.textMuted,
           ),
         );

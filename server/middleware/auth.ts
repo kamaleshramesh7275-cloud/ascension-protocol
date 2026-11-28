@@ -143,7 +143,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   // Auto-provision ONLY upon first presentation of a cryptographically valid token
   if (!user) {
-    const isGuest = decodedUser.isAnonymous || firebaseUid.startsWith("anon_");
+    const isGuest = decodedUser.isAnonymous || firebaseUid.startsWith("anon_") || firebaseUid.startsWith("guest_");
     const email = decodedUser.email || (isGuest ? `guest_${firebaseUid.slice(0, 8)}@ascensions.in` : `${firebaseUid.slice(0, 10)}@ascension.protocol`);
     const name = decodedUser.name || (isGuest ? "Guest Ascendant" : "Ascendant");
 

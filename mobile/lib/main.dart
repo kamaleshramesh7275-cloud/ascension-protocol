@@ -50,6 +50,13 @@ class AscensionMobileApp extends ConsumerWidget {
       title: 'Ascension Protocol',
       debugShowCheckedModeBanner: false,
       theme: HunterTheme.buildTheme(appearance.themeId, appearance.fontId),
+      builder: (context, child) {
+        final baseStyle = HunterTheme.baseTextStyle(appearance.fontId);
+        return DefaultTextStyle.merge(
+          style: baseStyle,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: authState.when(
         data: (user) {
           if (user != null) {

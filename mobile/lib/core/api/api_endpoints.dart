@@ -7,6 +7,7 @@ class ApiEndpoints {
   static const String loginGuest = '/api/auth/login-guest';
   static const String loginPhone = '/api/auth/login-phone';
   static const String registerLocal = '/api/auth/register-local';
+  static const String refreshSession = '/api/auth/refresh-session';
   static const String completeProfile = '/api/user/complete-profile';
   static const String authMe = '/api/user';
   static const String updateUser = '/api/user';

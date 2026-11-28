@@ -402,6 +402,54 @@ export function registerLocalAuthRoutes(app: Express) {
         res.json({ exists });
     });
 
+    // Refresh session token for any valid existing user or UID
+    app.post("/api/auth/refresh-session", async (req, res) => {
+        try {
+            const firebaseUid = typeof req.body?.firebaseUid === "string" ? req.body.firebaseUid.trim() : "";
+            if (!firebaseUid) {
+                return res.status(400).json({ error: "firebaseUid is required" });
+            }
+
+            const storage = getStorage();
+            if (await storage.isUserDeleted(firebaseUid)) {
+                return res.status(403).json({ error: "Account has been deleted" });
+            }
+
+            let user = await storage.getUserByFirebaseUid(firebaseUid);
+            if (!user) {
+                // If it's a guest UID, auto-provision
+                if (firebaseUid.startsWith("guest_")) {
+                    user = await storage.createUser({
+                        firebaseUid,
+                        name: "Guest Ascendant",
+                        email: `${firebaseUid}@ascension.app`,
+                        avatarUrl: null,
+                        timezone: (req.headers["x-timezone"] as string) || "UTC",
+                        onboardingCompleted: true,
+                        coins: 100,
+                        level: 1,
+                        xp: 0,
+                        tier: "D",
+                        streak: 1,
+                        hunterClass: "assassin",
+                    } as any);
+                } else {
+                    return res.status(404).json({ error: "User not found" });
+                }
+            }
+
+            const token = signLocalSessionToken(firebaseUid);
+            res.json({
+                success: true,
+                token,
+                user: enrichUserWithLevelData(user),
+            });
+        } catch (error) {
+            console.error("Refresh Session Error:", error);
+            res.status(500).json({ error: "Failed to refresh session" });
+        }
+    });
+
     // Guest Login & Token Issuance (persistent device guest UID -> signed local JWT)
     app.post("/api/auth/login-guest", async (req, res) => {
         try {

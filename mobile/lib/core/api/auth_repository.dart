@@ -232,7 +232,7 @@ class AuthRepository {
     }
   }
 
-  /// Unified silent token refresh (handles both Guest and Google sessions)
+  /// Unified silent token refresh (handles both Guest, Google, and Local sessions)
   Future<String?> refreshTokenSilently() async {
     final cached = await SessionStorage.getCachedUser();
     final uid = await SessionStorage.getFirebaseUid();
@@ -253,7 +253,37 @@ class AuthRepository {
       }
     }
 
-    return await refreshGoogleTokenSilently();
+    final googleToken = await refreshGoogleTokenSilently();
+    if (googleToken != null && googleToken.isNotEmpty) {
+      return googleToken;
+    }
+
+    // Fallback: If we have a saved firebaseUid or cached user, call /api/auth/refresh-session
+    final activeUid = uid ?? cached?.id;
+    if (activeUid != null && activeUid.isNotEmpty) {
+      try {
+        final dio = await ApiClient.getInstance();
+        final res = await dio.post(
+          ApiEndpoints.refreshSession,
+          data: {'firebaseUid': activeUid},
+        );
+        if (res.statusCode == 200 && res.data != null) {
+          final data = res.data;
+          final token = data['token']?.toString();
+          if (token != null && token.isNotEmpty) {
+            await SessionStorage.saveToken(token);
+            if (data['user'] is Map<String, dynamic>) {
+              await SessionStorage.saveCachedUser(
+                UserModel.fromJson(data['user'] as Map<String, dynamic>),
+              );
+            }
+            return token;
+          }
+        }
+      } catch (_) {}
+    }
+
+    return null;
   }
 
   /// Silent Google token refresh & server JWT exchange if session expired

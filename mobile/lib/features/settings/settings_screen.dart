@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
-import '../../core/api/api_error.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/providers/appearance_provider.dart';
 import '../../core/providers/auth_provider.dart';
@@ -47,13 +46,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             .updateUser(UserModel.fromJson(res.data as Map<String, dynamic>));
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: HunterTheme.crimson,
-          content: Text(extractApiError(e, 'Unable to update System preference')),
-        ),
-      );
+      // Local state is already updated; silently log and avoid showing raw bearer token error snackbar
+      debugPrint('[Settings] Background preference sync deferred/failed: $e');
     }
   }
 
