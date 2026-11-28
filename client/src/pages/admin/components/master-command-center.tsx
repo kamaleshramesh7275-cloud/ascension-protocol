@@ -99,7 +99,7 @@ export function MasterPulseView() {
       ) : (
         <>
           {/* Full-Day KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard label="Logged In (Full Day)" value={summary.dau ?? 0} sub={`New: ${summary.newSignups ?? 0} • Returning: ${summary.returningUsers ?? 0}`} />
             <StatCard label="WAU / MAU" value={`${summary.wau ?? 0} / ${summary.mau ?? 0}`} sub={`Stickiness: ${summary.stickinessPct ?? 0}%`} />
             <StatCard label="Activity That Day" value={`${summary.questsCompleted ?? 0} Quests`} sub={`${summary.focusMinutes ?? 0}m Focus • ${summary.workoutsLogged ?? 0} Workouts`} />
@@ -264,7 +264,7 @@ export function MasterProgressMatrixView() {
   return (
     <div className="space-y-6">
       {/* Global Progress & Economy */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard label="Avg Level / XP" value={`Lv.${progress?.avgLevel ?? 0}`} sub={`${progress?.avgXp ?? 0} avg XP • ${progress?.avgStreak ?? 0}d streak`} />
         <StatCard label="Evolved Classes" value={progress?.evolvedCount ?? 0} sub={`Out of ${progress?.totalUsers ?? 0} Hunters`} />
         <StatCard label="Coins in Circulation" value={usage?.economy?.totalCoinsInCirculation ?? 0} sub={`Avg ${usage?.economy?.avgCoinsPerUser ?? 0}/user`} />
@@ -462,7 +462,7 @@ export function MasterAiLimitsView() {
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw className="w-4 h-4 mr-2" /> Refresh Quotas</Button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard label="AI Calls Today" value={data?.aiSummary?.callsToday ?? 0} sub={`7d Total: ${data?.aiSummary?.calls7d ?? 0}`} />
         <StatCard label="AI Errors Today" value={data?.aiSummary?.errorsToday ?? 0} sub="Fallback/provider failures" />
         <StatCard label="Active Cooldowns" value={(data?.activeCooldowns?.doubleDungeonActive ?? 0) + (data?.activeCooldowns?.monarchDomainActive ?? 0)} sub={`Guild CDs: ${data?.activeCooldowns?.guildCooldownUsers ?? 0}`} />
@@ -811,11 +811,13 @@ export function MasterPushAuditView() {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub: string }) {
   return (
-    <Card className="bg-zinc-900/80 border-zinc-800">
-      <CardContent className="p-4">
-        <div className="text-xs text-zinc-400 uppercase tracking-wider">{label}</div>
-        <div className="text-2xl font-bold text-white mt-1">{value}</div>
-        <div className="text-xs text-zinc-400 mt-1">{sub}</div>
+    <Card className="bg-zinc-900/80 border-zinc-800 overflow-hidden min-w-0">
+      <CardContent className="p-4 flex flex-col justify-between min-h-[105px]">
+        <div className="min-w-0">
+          <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold truncate" title={label}>{label}</div>
+          <div className="text-2xl font-bold text-white mt-1 break-words">{value}</div>
+        </div>
+        <div className="text-xs text-zinc-400 mt-2 truncate" title={sub}>{sub}</div>
       </CardContent>
     </Card>
   );

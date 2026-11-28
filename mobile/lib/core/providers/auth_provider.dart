@@ -191,10 +191,9 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         return true;
       }
       return false;
-    } catch (e, st) {
+    } catch (e) {
       if (!mounted) return false;
-      state = AsyncValue.error(e, st);
-      return false;
+      rethrow;
     }
   }
 

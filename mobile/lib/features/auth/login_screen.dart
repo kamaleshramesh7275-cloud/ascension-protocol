@@ -44,6 +44,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -361,246 +366,211 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             ),
 
             SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: (constraints.maxHeight - 32).clamp(0.0, double.infinity),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            const SizedBox(height: 8),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
 
-                            // System Emblem (App Logo)
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: HunterTheme.cyan.withValues(alpha: 0.4),
-                                    blurRadius: 22,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/images/app_logo.png',
-                                  width: 72,
-                                  height: 72,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Icon(
-                                    Icons.shield,
-                                    color: HunterTheme.cyan,
-                                    size: 42,
-                                  ),
-                                ),
-                              ),
-                            ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
-
-                            const SizedBox(height: 12),
-
-                            // Title
-                            Text(
-                              'ASCENSION PROTOCOL',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2.5,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              'THE HUNTER SYSTEM OS • AWAKENING',
-                              style: TextStyle(
-                                color: HunterTheme.cyanLight,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Dual Tab Selector (Sign In / Register)
-                            Container(
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color: HunterTheme.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                              ),
-                              child: TabBar(
-                                controller: _tabController,
-                                indicatorSize: TabBarIndicatorSize.tab,
-                                dividerColor: Colors.transparent,
-                                indicator: BoxDecoration(
-                                  color: HunterTheme.cyan,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                labelColor: Colors.black,
-                                unselectedLabelColor: HunterTheme.textMuted,
-                                labelStyle: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                  letterSpacing: 1.2,
-                                ),
-                                unselectedLabelStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  letterSpacing: 1.2,
-                                ),
-                                tabs: const [
-                                  Tab(text: 'SIGN IN'),
-                                  Tab(text: 'REGISTER'),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 18),
-
-                            // Responsive Tab View content
-                            SizedBox(
-                              height: (constraints.maxHeight * 0.45).clamp(320.0, 480.0),
-                              child: TabBarView(
-                                controller: _tabController,
-                                children: [
-                                  // Tab 0: Phone + Password Login
-                                  _buildSignInTab(),
-
-                                  // Tab 1: Direct Registration
-                                  _buildRegisterTab(),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        Column(
-                          children: [
-                            const SizedBox(height: 12),
-
-                    // Divider: OR CONTINUE WITH
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(color: Colors.white.withValues(alpha: 0.15)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR CONTINUE WITH',
-                            style: TextStyle(
-                              color: HunterTheme.textMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
+                    // System Emblem (App Logo)
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: HunterTheme.cyan.withValues(alpha: 0.4),
+                            blurRadius: 22,
+                            spreadRadius: 2,
                           ),
-                        ),
-                        Expanded(
-                          child: Divider(color: Colors.white.withValues(alpha: 0.15)),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Google Sign-In Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleGoogleSignIn,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.g_mobiledata,
-                                    size: 28,
-                                    color: Colors.black,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    'Sign in with Google',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        ],
                       ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Guest Mode
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: _isLoading ? null : _handleGuestLogin,
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          side: BorderSide(
-                            color: HunterTheme.cyan.withValues(alpha: 0.25),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          'CONTINUE AS GUEST HUNTER',
-                          style: TextStyle(
-                            color: HunterTheme.cyanLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            letterSpacing: 1.2,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/app_logo.png',
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.shield,
+                            color: HunterTheme.cyan,
+                            size: 42,
                           ),
                         ),
                       ),
+                    ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+
+                    const SizedBox(height: 12),
+
+                    // Title
+                    Text(
+                      'ASCENSION PROTOCOL',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.5,
+                          ),
+                      textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 16),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+
+                    Text(
+                      'THE HUNTER SYSTEM OS • AWAKENING',
+                      style: TextStyle(
+                        color: HunterTheme.cyanLight,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    // Dual Tab Selector (Sign In / Register)
+                    Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: HunterTheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        indicator: BoxDecoration(
+                          color: HunterTheme.cyan,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        labelColor: Colors.black,
+                        unselectedLabelColor: HunterTheme.textMuted,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
+                        tabs: const [
+                          Tab(text: 'SIGN IN'),
+                          Tab(text: 'REGISTER'),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Active Tab Content without nested scrollview conflict
+                    if (_tabController.index == 0) ...[
+                      _buildSignInTab(),
+                      const SizedBox(height: 24),
+                      _buildSocialAndGuestSection(),
+                    ] else ...[
+                      _buildRegisterTab(),
+                    ],
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSocialAndGuestSection() {
+    return Column(
+      children: [
+        // Divider: OR CONTINUE WITH
+        Row(
+          children: [
+            Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.15))),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'OR CONTINUE WITH',
+                style: TextStyle(
+                  color: HunterTheme.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.15))),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Google Sign-In Button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _handleGoogleSignIn,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 2,
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.g_mobiledata, size: 28, color: Colors.black),
+                      SizedBox(width: 10),
+                      Text(
+                        'Sign in with Google',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Guest Mode Button
+        SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _handleGuestLogin,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              side: BorderSide(color: HunterTheme.cyan.withValues(alpha: 0.25)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: Text(
+              'CONTINUE AS GUEST HUNTER',
+              style: TextStyle(
+                color: HunterTheme.cyanLight,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -612,22 +582,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Phone Input
+          // Phone or Codename Input
           TextFormField(
             controller: _loginPhoneController,
-            keyboardType: TextInputType.phone,
+            keyboardType: TextInputType.text,
             style: const TextStyle(color: Colors.white, fontSize: 14),
             decoration: _inputDecor(
-              hint: 'Phone Number (e.g. +91 9876543210)',
-              icon: Icons.phone_android,
+              hint: 'Phone Number or Codename',
+              icon: Icons.person_outline,
             ),
             validator: (val) {
-              if (val == null || val.trim().isEmpty) {
-                return 'Phone number is required';
+              final v = val?.trim() ?? '';
+              if (v.isEmpty) {
+                return 'Phone number or Codename is required';
               }
-              final digits = val.replaceAll(RegExp(r'\D'), '');
-              if (digits.length < 10 || digits.length > 15) {
-                return 'Enter a valid 10–15 digit phone number';
+              if (v.length < 3) {
+                return 'Enter at least 3 characters';
               }
               return null;
             },
@@ -641,7 +611,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             obscureText: _obscurePassword,
             style: const TextStyle(color: Colors.white, fontSize: 14),
             decoration: _inputDecor(
-              hint: 'Password (min 8 chars)',
+              hint: 'Password',
               icon: Icons.lock_outline,
               suffixIcon: IconButton(
                 icon: Icon(
@@ -655,9 +625,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             validator: (val) {
               if (val == null || val.isEmpty) {
                 return 'Password is required';
-              }
-              if (val.length < 8) {
-                return 'Password must be at least 8 characters';
               }
               return null;
             },
@@ -706,10 +673,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     return Form(
       key: _registerFormKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
             // Hunter Codename
             TextFormField(
               controller: _registerNameController,
@@ -1025,9 +991,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                       ),
               ),
             ),
+
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  _loginPhoneController.text = _registerPhoneController.text.trim();
+                  _tabController.animateTo(0);
+                },
+                child: Text(
+                  'Already an awakened Hunter? Sign in',
+                  style: TextStyle(
+                    color: HunterTheme.cyanLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
-      ),
     );
   }
 }

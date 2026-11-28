@@ -189,14 +189,14 @@ export async function callMultiAiJson<T = any>(
       new Set(
         taskType === "plan"
           ? [
-              process.env.GEMINI_PLANNER_MODEL || "gemini-3.5-flash",
-              "gemini-3.5-flash-lite",
-              "gemini-3.1-flash-lite",
+              process.env.GEMINI_PLANNER_MODEL || "gemini-2.0-flash",
+              "gemini-1.5-flash",
+              "gemini-2.0-flash-lite",
             ]
           : [
-              process.env.GEMINI_COACH_MODEL || "gemini-3.5-flash-lite",
-              "gemini-3.1-flash-lite",
-              "gemini-3.5-flash",
+              process.env.GEMINI_COACH_MODEL || "gemini-2.0-flash-lite",
+              "gemini-2.0-flash",
+              "gemini-1.5-flash",
             ]
       )
     );
@@ -220,14 +220,14 @@ export async function callMultiAiJson<T = any>(
       new Set(
         taskType === "plan"
           ? [
-              process.env.GROQ_PLANNER_MODEL || "openai/gpt-oss-120b",
-              "qwen/qwen3.8-27b",
-              "openai/gpt-oss-20b",
+              process.env.GROQ_PLANNER_MODEL || "llama-3.3-70b-versatile",
+              "llama-3.1-8b-instant",
+              "gemma2-9b-it",
             ]
           : [
-              process.env.GROQ_COACH_MODEL || "qwen/qwen3.8-27b",
-              "openai/gpt-oss-20b",
-              "openai/gpt-oss-120b",
+              process.env.GROQ_COACH_MODEL || "llama-3.1-8b-instant",
+              "llama-3.3-70b-versatile",
+              "gemma2-9b-it",
             ]
       )
     );

@@ -59,8 +59,8 @@ const loginSchema = z.object({
 });
 
 const loginPhoneSchema = z.object({
-    phone: z.string().trim().transform(v => v.replace(/[\s\-()]/g, "")).refine(v => phoneRegex.test(v), "Phone number must be 10-15 digits"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    phone: z.string().trim().min(3, "Phone number or codename must be at least 3 characters"),
+    password: z.string().min(1, "Password is required"),
 });
 
 export function registerLocalAuthRoutes(app: Express) {
@@ -316,13 +316,21 @@ export function registerLocalAuthRoutes(app: Express) {
         try {
             const data = loginPhoneSchema.parse(req.body);
             const storage = getStorage();
-            const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, "").trim();
+            const rawIdentifier = data.phone.trim();
+            const normalizedPhone = rawIdentifier.replace(/[\s\-\(\)]/g, "");
 
-            const user = await storage.getUserByPhone(normalizedPhone);
+            let user = await storage.getUserByPhone(normalizedPhone);
+            if (!user && rawIdentifier.length >= 3) {
+                const creds = await storage.getCredentialsByUsername(rawIdentifier);
+                if (creds) {
+                    user = await storage.getUser(creds.userId);
+                }
+            }
+
             if (!user) {
                 return res.status(401).json({
                     code: "user_not_found",
-                    error: "No Hunter account registered with this phone number. Please register to awaken.",
+                    error: "No Hunter account registered with this phone number or codename. Please register to awaken.",
                 });
             }
 

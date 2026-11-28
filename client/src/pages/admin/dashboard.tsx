@@ -587,7 +587,7 @@ export default function AdminDashboard() {
                     <span className="font-bold text-xl tracking-tight">Admin<span className="text-purple-500">OS</span></span>
                 </div>
 
-                <nav className="flex flex-col gap-2 flex-1">
+                <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
                     {[
                         { id: "master-pulse", icon: Activity, label: "Day Pulse & Retention" },
                         { id: "master-matrix", icon: Users, label: "Progress & User Matrix" },
