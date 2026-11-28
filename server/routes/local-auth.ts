@@ -4,7 +4,7 @@ import { getStorage } from "../storage";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { verifyFirebaseToken } from "../firebase-admin";
-import { enrichUserWithLevelData, signLocalSessionToken } from "../middleware/auth";
+import { enrichUserWithLevelData, signLocalSessionToken, verifyLocalSessionToken } from "../middleware/auth";
 import type { User } from "@shared/schema";
 
 // Helper to generate referral code
@@ -423,23 +423,28 @@ export function registerLocalAuthRoutes(app: Express) {
     app.post("/api/auth/refresh-session", async (req, res) => {
         try {
             const firebaseUid = typeof req.body?.firebaseUid === "string" ? req.body.firebaseUid.trim() : "";
-            if (!firebaseUid) {
-                return res.status(400).json({ error: "firebaseUid is required" });
+            const userId = typeof req.body?.userId === "string" ? req.body.userId.trim() : "";
+            const targetId = firebaseUid || userId;
+            if (!targetId) {
+                return res.status(400).json({ error: "firebaseUid or userId is required" });
             }
 
             const storage = getStorage();
-            if (await storage.isUserDeleted(firebaseUid)) {
+            if (await storage.isUserDeleted(targetId)) {
                 return res.status(403).json({ error: "Account has been deleted" });
             }
 
-            let user = await storage.getUserByFirebaseUid(firebaseUid);
+            let user = await storage.getUserByFirebaseUid(targetId);
+            if (!user && userId) {
+                user = await storage.getUser(userId);
+            }
             if (!user) {
                 // If it's a guest UID, auto-provision
-                if (firebaseUid.startsWith("guest_")) {
+                if (targetId.startsWith("guest_")) {
                     user = await storage.createUser({
-                        firebaseUid,
+                        firebaseUid: targetId,
                         name: "Guest Ascendant",
-                        email: `${firebaseUid}@ascension.app`,
+                        email: `${targetId}@ascension.app`,
                         avatarUrl: null,
                         timezone: (req.headers["x-timezone"] as string) || "UTC",
                         onboardingCompleted: true,
@@ -455,10 +460,12 @@ export function registerLocalAuthRoutes(app: Express) {
                 }
             }
 
-            const token = signLocalSessionToken(firebaseUid);
+            const token = signLocalSessionToken(user.firebaseUid);
             res.json({
                 success: true,
                 token,
+                userId: user.id,
+                firebaseUid: user.firebaseUid,
                 user: enrichUserWithLevelData(user),
             });
         } catch (error) {
@@ -688,6 +695,9 @@ export function registerLocalAuthRoutes(app: Express) {
                 const token = authHeader.slice(7).trim();
                 if (process.env.ALLOW_TEST_AUTH === "true" && token.startsWith("test_token_")) {
                     currentUid = token.replace("test_token_", "");
+                } else if (token.startsWith("local_jwt.")) {
+                    const verified = verifyLocalSessionToken(token);
+                    if (verified) currentUid = verified.uid;
                 } else {
                     try {
                         const decoded = await verifyFirebaseToken(token);
@@ -739,6 +749,9 @@ export function registerLocalAuthRoutes(app: Express) {
 
             return res.json({
                 success: true,
+                token: signLocalSessionToken(updatedUser.firebaseUid),
+                userId: updatedUser.id,
+                firebaseUid: updatedUser.firebaseUid,
                 user: enrichedUser,
                 requiresPhone: false,
                 requiresOnboarding: !updatedUser.onboardingCompleted,

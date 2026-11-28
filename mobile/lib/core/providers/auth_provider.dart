@@ -59,7 +59,15 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         }
 
         // 2. Silently revalidate against server in the background without logging out on failure
-        if (token != null && token.isNotEmpty) {
+        var activeToken = token;
+        if (activeToken == null || activeToken.isEmpty) {
+          final refreshed = await _repo.refreshTokenSilently();
+          if (refreshed != null && refreshed.isNotEmpty) {
+            activeToken = refreshed;
+          }
+        }
+
+        if (activeToken != null && activeToken.isNotEmpty) {
           NotificationService.syncDeviceToken();
           try {
             final freshUser = await _repo.getProfile();

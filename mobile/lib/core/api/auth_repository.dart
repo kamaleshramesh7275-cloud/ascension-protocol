@@ -164,17 +164,26 @@ class AuthRepository {
     String? name,
   }) async {
     try {
+      final cached = await SessionStorage.getCachedUser();
+      final uid = await SessionStorage.getFirebaseUid();
+
       final dio = await ApiClient.getInstance();
       final response = await dio.post(
         ApiEndpoints.completeProfile,
         data: {
           'phone': phone,
           if (name != null && name.isNotEmpty) 'name': name,
+          if (uid != null && uid.isNotEmpty) 'firebaseUid': uid,
+          if (cached?.id != null) 'userId': cached!.id,
         },
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
+        final serverToken = data['token']?.toString();
+        if (serverToken != null && serverToken.isNotEmpty) {
+          await SessionStorage.saveToken(serverToken);
+        }
         if (data['user'] != null) {
           final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
           await SessionStorage.saveCachedUser(user);
@@ -265,7 +274,10 @@ class AuthRepository {
         final dio = await ApiClient.getInstance();
         final res = await dio.post(
           ApiEndpoints.refreshSession,
-          data: {'firebaseUid': activeUid},
+          data: {
+            'firebaseUid': activeUid,
+            if (cached?.id != null) 'userId': cached!.id,
+          },
         );
         if (res.statusCode == 200 && res.data != null) {
           final data = res.data;

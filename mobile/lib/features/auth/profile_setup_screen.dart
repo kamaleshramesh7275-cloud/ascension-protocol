@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/api/api_error.dart';
 import '../../models/user_model.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -65,7 +66,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           SnackBar(
             backgroundColor: HunterTheme.surface,
             content: Text(
-              'Error: ${e.toString().replaceAll("Exception: ", "")}',
+              extractApiError(e, 'Profile update failed. Please try again.'),
               style: TextStyle(color: HunterTheme.crimson),
             ),
           ),

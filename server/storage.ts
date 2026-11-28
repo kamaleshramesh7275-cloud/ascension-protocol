@@ -1286,7 +1286,8 @@ export class MemStorage implements IStorage {
   // --- Implementation of IStorage Methods (In-Memory) ---
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    const user = Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid);
+    if (!firebaseUid) return undefined;
+    const user = Array.from(this.users.values()).find(u => u.firebaseUid === firebaseUid || u.id === firebaseUid);
     return user ? normalizeUser(user) : undefined;
   }
 
@@ -4248,17 +4249,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    const user = await db!.query.users.findFirst({ where: eq(users.firebaseUid, firebaseUid) });
-    // if (user && !user.referralCode) {
-    //   // Lazy load for firebase lookup too, as this is primary entry
-    //   const code = generateReferralCode();
-    //   try {
-    //     await db!.update(users).set({ referralCode: code }).where(eq(users.id, user.id));
-    //     (user as any).referralCode = code;
-    //   } catch (e) {
-    //     console.error("Failed to lazy generate referral code (firebase)", e);
-    //   }
-    // }
+    if (!firebaseUid) return undefined;
+    let user = await db!.query.users.findFirst({ where: eq(users.firebaseUid, firebaseUid) });
+    if (!user) {
+      user = await db!.query.users.findFirst({ where: eq(users.id, firebaseUid) });
+    }
     return user ? normalizeUser(user) : undefined;
   }
 
