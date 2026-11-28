@@ -180,7 +180,7 @@ class UserModel {
       hunterClass: json['hunterClass']?.toString() ?? 'assassin',
       streakShields: (json['streakShields'] as num?)?.toInt() ?? 1,
       activeRecoveryDay: json['activeRecoveryDay'] == true,
-      onboardingCompleted: json['onboardingCompleted'] != false,
+      onboardingCompleted: json['onboardingCompleted'] == true,
       strength: (json['strength'] as num?)?.toInt() ?? 10,
       agility: (json['agility'] as num?)?.toInt() ?? 10,
       stamina: (json['stamina'] as num?)?.toInt() ?? 10,

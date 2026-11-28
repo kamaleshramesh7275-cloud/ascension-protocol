@@ -11,6 +11,7 @@ import '../../core/storage/session_storage.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/home_widget_bridge.dart';
 import '../../core/widgets/system_command_sheet.dart';
+import '../../core/widgets/hunter_system_tour.dart';
 import '../../models/quest_model.dart';
 import '../../models/user_model.dart';
 import '../accountability/contracts_arena_screen.dart';
@@ -45,6 +46,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   StreamSubscription<String>? _widgetRouteSub;
   DateTime? _lastBackPressTime;
   Timer? _feedbackTimer;
+  bool _showTour = false;
 
   @override
   void initState() {
@@ -70,7 +72,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeSchedulePostRegFeedback();
+      _checkFirstTimeTour();
     });
+  }
+
+  Future<void> _checkFirstTimeTour() async {
+    final shouldTour = await HunterSystemTourOverlay.shouldShow();
+    if (shouldTour && mounted) {
+      setState(() => _showTour = true);
+    }
   }
 
   Future<void> _maybeSchedulePostRegFeedback() async {
@@ -278,83 +288,96 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: _handlePopInvoked,
-      child: Scaffold(
-        backgroundColor: HunterTheme.abyss,
-        body: Column(
-          children: [
-            if (_isOffline)
-              SafeArea(
-                bottom: false,
-                child: Container(
-                  width: double.infinity,
-                  color: Colors.amber.shade800,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.wifi_off, color: Colors.white, size: 14),
-                      SizedBox(width: 8),
-                      Text(
-                        'OFFLINE MODE — Local records will sync on reconnect',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (idx) {
-                  if (_currentIndex != idx) {
-                    HapticFeedback.selectionClick();
-                    setState(() => _currentIndex = idx);
-                  }
-                },
-                children: screens,
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: HunterTheme.abyss,
-            border: Border(
-              top: BorderSide(
-                color: navAccent.withValues(alpha: 0.4),
-                width: 1.2,
-              ),
-            ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Row(
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: HunterTheme.abyss,
+            body: Column(
               children: [
-                _navItem(0, Icons.home_outlined, Icons.home_rounded, 'HOME', navAccent),
-                _navItem(1, Icons.assignment_outlined, Icons.assignment, 'QUESTS', navAccent),
-                _navItem(2, Icons.fitness_center_outlined, Icons.fitness_center, 'WORKOUT', navAccent),
-                _navItem(3, Icons.timer_outlined, Icons.timer, 'FOCUS', navAccent),
-                _navItem(
-                  4,
-                  Icons.dashboard_customize_outlined,
-                  Icons.dashboard_customize,
-                  'ARSENAL',
-                  navAccent,
-                  onLongPress: () {
-                    HapticFeedback.mediumImpact();
-                    SystemCommandSheet.show(context, user);
-                  },
+                if (_isOffline)
+                  SafeArea(
+                    bottom: false,
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.amber.shade800,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.wifi_off, color: Colors.white, size: 14),
+                          SizedBox(width: 8),
+                          Text(
+                            'OFFLINE MODE — Local records will sync on reconnect',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (idx) {
+                      if (_currentIndex != idx) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _currentIndex = idx);
+                      }
+                    },
+                    children: screens,
+                  ),
                 ),
               ],
             ),
+            bottomNavigationBar: Container(
+              decoration: BoxDecoration(
+                color: HunterTheme.abyss,
+                border: Border(
+                  top: BorderSide(
+                    color: navAccent.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    _navItem(0, Icons.home_outlined, Icons.home_rounded, 'HOME', navAccent),
+                    _navItem(1, Icons.assignment_outlined, Icons.assignment, 'QUESTS', navAccent),
+                    _navItem(2, Icons.fitness_center_outlined, Icons.fitness_center, 'WORKOUT', navAccent),
+                    _navItem(3, Icons.timer_outlined, Icons.timer, 'FOCUS', navAccent),
+                    _navItem(
+                      4,
+                      Icons.dashboard_customize_outlined,
+                      Icons.dashboard_customize,
+                      'ARSENAL',
+                      navAccent,
+                      onLongPress: () {
+                        HapticFeedback.mediumImpact();
+                        SystemCommandSheet.show(context, user);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+          if (_showTour)
+            Positioned.fill(
+              child: HunterSystemTourOverlay(
+                onSwitchTab: _onTabTapped,
+                onFinished: () {
+                  if (mounted) setState(() => _showTour = false);
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

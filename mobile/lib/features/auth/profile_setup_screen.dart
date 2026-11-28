@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/hunter_theme.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/api/api_error.dart';
+import '../briefing/briefing_screen.dart';
 import '../../models/user_model.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -47,17 +48,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             name: _nameController.text.trim(),
           );
 
-      if (!success && mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: HunterTheme.surface,
-            content: Text(
-              'Failed to update profile. Please check phone number.',
-              style: TextStyle(color: HunterTheme.crimson),
+      if (mounted) {
+        if (success) {
+          final currentUser = ref.read(authProvider).value;
+          if (currentUser != null && !currentUser.onboardingCompleted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => BriefingScreen(user: currentUser)),
+            );
+            return;
+          }
+        } else {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: HunterTheme.surface,
+              content: Text(
+                'Failed to update profile. Please check phone number.',
+                style: TextStyle(color: HunterTheme.crimson),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

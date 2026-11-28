@@ -10,6 +10,7 @@ import '../../core/theme/hunter_theme.dart';
 import '../../core/widgets/boss_raid_card.dart';
 import '../../core/widgets/daily_countdown_banner.dart';
 import '../../core/widgets/system_panel.dart';
+import '../../core/widgets/system_goal_directive_card.dart';
 import '../../models/user_model.dart';
 import '../debrief/debrief_screen.dart';
 import '../journal/journal_screen.dart';
@@ -146,6 +147,15 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Designated Mandate (Primary Goal Directive)
+            SystemGoalDirectiveCard(
+              user: liveUser,
+              onOpenRoadmap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RoadmapScreen()),
               ),
             ),
             const SizedBox(height: 14),

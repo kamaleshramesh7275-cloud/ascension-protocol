@@ -6,6 +6,7 @@ import '../../core/theme/hunter_theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/widgets/system_awakening_dialog.dart';
 import '../../models/user_model.dart';
 import '../home/main_navigation_screen.dart';
 
@@ -122,11 +123,15 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
         final serverUser = UserModel.fromJson(res.data as Map<String, dynamic>);
         ref.read(authProvider.notifier).updateUser(serverUser);
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => MainNavigationScreen(initialUser: serverUser),
-            ),
-          );
+          await SystemAwakeningDialog.show(context, serverUser, () {
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => MainNavigationScreen(initialUser: serverUser),
+                ),
+              );
+            }
+          });
         }
         return;
       }
@@ -141,11 +146,13 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
       email: widget.user.email,
       phone: widget.user.phone,
       level: 1,
-      xp: 100,
-      tier: _selectedClass == 'monarch' ? 'C' : 'D',
+      xp: 0,
+      tier: 'E',
       streak: 1,
-      coins: 150,
+      coins: 100,
       hunterClass: _selectedClass,
+      currentGoal: _goalController.text.trim(),
+      goalDomain: _goalDomain,
       streakShields: 1,
       activeRecoveryDay: false,
       onboardingCompleted: true,
@@ -161,11 +168,15 @@ class _BriefingScreenState extends ConsumerState<BriefingScreen> {
     ref.read(authProvider.notifier).updateUser(awakenedUser);
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => MainNavigationScreen(initialUser: awakenedUser),
-        ),
-      );
+      await SystemAwakeningDialog.show(context, awakenedUser, () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => MainNavigationScreen(initialUser: awakenedUser),
+            ),
+          );
+        }
+      });
     }
   }
 

@@ -50,14 +50,14 @@ class HunterPalette {
 class HunterTheme {
   // Palettes
   static const HunterPalette systemAbyssPalette = HunterPalette(
-    name: 'System Abyss',
-    subtitle: 'Classic Solo Leveling Dark Navy & Cyan',
+    name: 'System Blue',
+    subtitle: 'Classic Solo Leveling Player HUD (Electric Cyan)',
     abyss: Color(0xFF020617),
     surface: Color(0xFF0B132B),
     surfaceLight: Color(0xFF1C2541),
-    cyan: Color(0xFF06B6D4),
+    cyan: Color(0xFF00D2FF), // Iconic Solo Leveling Electric Cyan
     cyanLight: Color(0xFF67E8F9),
-    purple: Color(0xFF8B5CF6),
+    purple: Color(0xFF3B82F6),
     gold: Color(0xFFEAB308),
     crimson: Color(0xFFEF4444),
     emerald: Color(0xFF10B981),
@@ -67,12 +67,12 @@ class HunterTheme {
   );
 
   static const HunterPalette crimsonGatePalette = HunterPalette(
-    name: 'Red Gate Crimson',
-    subtitle: 'High-Alert Blood Red & Ash Atmosphere',
+    name: 'Red Gate Survival',
+    subtitle: 'Bloodstone Obsidian & Red Gate Alert',
     abyss: Color(0xFF0D0406),
     surface: Color(0xFF1A0B10),
     surfaceLight: Color(0xFF2D141C),
-    cyan: Color(0xFFF43F5E), // Primary is Crimson/Rose
+    cyan: Color(0xFFEF4444), // Primary is Crimson/Rose
     cyanLight: Color(0xFFFB7185),
     purple: Color(0xFFD946EF), // Fuchsia / Purple accent
     gold: Color(0xFFF59E0B),
@@ -84,8 +84,8 @@ class HunterTheme {
   );
 
   static const HunterPalette emeraldCitadelPalette = HunterPalette(
-    name: 'Citadel Emerald',
-    subtitle: 'Monarch Relic Deep Forest & Gold',
+    name: 'Cartenon Temple',
+    subtitle: 'Ancient Basalt Stone & Runic Emerald Flame',
     abyss: Color(0xFF040D09),
     surface: Color(0xFF0A1C14),
     surfaceLight: Color(0xFF132F23),
